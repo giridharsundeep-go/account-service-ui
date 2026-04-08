@@ -1,0 +1,130 @@
+/* FULL SCREEN */
+.main {
+  height: 100vh;
+  width: 100%;
+  display: flex;
+  font-family: 'Inter', Roboto, sans-serif;
+}
+
+/* LEFT SIDE */
+.left-side {
+  flex: 1;
+  background: linear-gradient(135deg, #1c1e8c, #3b82f6, #6366f1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  padding: 60px;
+}
+
+.brand-container {
+  max-width: 400px;
+}
+
+.brand {
+  font-size: 48px;
+  font-weight: 700;
+}
+
+.tagline {
+  margin-top: 15px;
+  font-size: 18px;
+  opacity: 0.9;
+}
+
+/* RIGHT SIDE */
+.right-side {
+  flex: 1;
+  background: #f8fafc;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* CARD */
+.signup-card {
+  width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 30px;
+  border-radius: 20px;
+
+}
+
+/* TITLE */
+.title {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.subtitle {
+  margin-bottom: 20px;
+  color: #666;
+}
+
+/* FORM */
+.row {
+  display: flex;
+  gap: 10px;
+}
+
+.half-width {
+  flex: 1;
+}
+
+.full-width {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+/* BUTTONS */
+.signup-btn {
+  width: 100%;
+  height: 48px;
+  border-radius: 10px;
+  font-weight: 600;
+  margin-top: 10px;
+}
+
+.back-btn {
+  width: 100%;
+  height: 48px;
+  border-radius: 10px;
+}
+
+/* DIVIDER */
+.divider-text {
+  text-align: center;
+  margin: 20px 0;
+  color: #888;
+  font-size: 13px;
+}
+
+/* SCROLLBAR (clean) */
+.signup-card::-webkit-scrollbar {
+  width: 6px;
+}
+.signup-card::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .main {
+    flex-direction: column;
+  }
+
+  .left-side {
+    height: 30%;
+    text-align: center;
+  }
+
+  .right-side {
+    height: 70%;
+  }
+
+  .signup-card {
+    width: 90%;
+  }
+}

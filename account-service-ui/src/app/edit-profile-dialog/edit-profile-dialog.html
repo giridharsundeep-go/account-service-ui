@@ -1,0 +1,30 @@
+<h2 mat-dialog-title>Edit Profile</h2>
+
+<mat-dialog-content>
+
+  <div style="text-align:center; margin-bottom: 20px;">
+    <img *ngIf="image" [src]="image" style="width:100px; height:100px; border-radius:50%" />
+    <input type="file" (change)="onFileSelected($event)" />
+  </div>
+
+  <mat-form-field appearance="outline" style="width:100%">
+    <mat-label>Name</mat-label>
+    <input matInput [(ngModel)]="name">
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" style="width:100%">
+    <mat-label>Email</mat-label>
+    <input matInput [(ngModel)]="email">
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" style="width:100%">
+    <mat-label>Phone</mat-label>
+    <input matInput [(ngModel)]="phone">
+  </mat-form-field>
+
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancel</button>
+  <button mat-raised-button color="primary" (click)="save()">Save</button>
+</mat-dialog-actions>

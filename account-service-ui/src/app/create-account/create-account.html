@@ -1,0 +1,133 @@
+<main class="main">
+
+  <!-- LEFT HERO -->
+  <div class="left-side">
+    <div class="brand-container">
+      <h1 class="brand">greatley poshley</h1>
+      <p class="tagline">
+        Start your journey. Build your identity. Grow with confidence.
+      </p>
+    </div>
+  </div>
+
+  <!-- RIGHT FORM -->
+  <div class="right-side">
+
+    <div class="signup-card">
+
+      <h2 class="title">Create Account</h2>
+      <p class="subtitle">Join us in seconds</p>
+
+      <form [formGroup]="signupForm" (ngSubmit)="onSubmit()">
+
+        <!-- NAME -->
+        <div class="row">
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>First Name</mat-label>
+            <input matInput formControlName="firstName" />
+            <mat-error *ngIf="signupForm.get('firstName')?.hasError('required')">
+              Required
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Last Name</mat-label>
+            <input matInput formControlName="lastName" />
+            <mat-error *ngIf="signupForm.get('lastName')?.hasError('required')">
+              Required
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- EMAIL -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email</mat-label>
+          <input matInput formControlName="email" />
+          <mat-error *ngIf="signupForm.get('email')?.hasError('email')">
+            Invalid email
+          </mat-error>
+        </mat-form-field>
+
+        <!-- PHONE -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Phone</mat-label>
+          <input matInput formControlName="phone" />
+          <mat-error *ngIf="signupForm.get('phone')?.hasError('invalidPhone')">
+            Enter valid 10-digit number
+          </mat-error>
+        </mat-form-field>
+
+        <!-- GENDER -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Gender</mat-label>
+          <mat-select formControlName="gender">
+            <mat-option value="male">Male</mat-option>
+            <mat-option value="female">Female</mat-option>
+            <mat-option value="other">Other</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- PASSWORD -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Password</mat-label>
+
+          <input matInput
+                 [type]="hidePassword ? 'password' : 'text'"
+                 formControlName="password" />
+
+          <button mat-icon-button matSuffix type="button"
+                  (click)="hidePassword = !hidePassword">
+            <mat-icon>
+              {{ hidePassword ? 'visibility' : 'visibility_off' }}
+            </mat-icon>
+          </button>
+
+          <mat-error *ngIf="signupForm.get('password')?.hasError('weakPassword')">
+            Must contain uppercase, lowercase & number
+          </mat-error>
+        </mat-form-field>
+
+        <!-- CONFIRM -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Confirm Password</mat-label>
+
+          <input matInput
+                 [type]="hideConfirm ? 'password' : 'text'"
+                 formControlName="confirmPassword" />
+
+          <button mat-icon-button matSuffix type="button"
+                  (click)="hideConfirm = !hideConfirm">
+            <mat-icon>
+              {{ hideConfirm ? 'visibility' : 'visibility_off' }}
+            </mat-icon>
+          </button>
+
+          <mat-error *ngIf="signupForm.hasError('passwordMismatch')">
+            Passwords do not match
+          </mat-error>
+        </mat-form-field>
+
+        <!-- SUBMIT -->
+        <button mat-raised-button
+                color="primary"
+                class="signup-btn"
+                type="submit"
+                [disabled]="signupForm.invalid">
+          Create Account
+        </button>
+
+      </form>
+
+      <div class="divider-text">Already have an account?</div>
+
+      <button mat-stroked-button
+              class="back-btn"
+              (click)="goToLogin()">
+        Back to Login
+      </button>
+
+    </div>
+
+  </div>
+
+</main>

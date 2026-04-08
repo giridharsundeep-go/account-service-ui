@@ -1,0 +1,87 @@
+<main class="main">
+
+  <!-- LEFT HERO -->
+  <div class="left-side">
+    <div class="brand-container">
+      <h1 class="brand">greatley poshley</h1>
+      <p class="tagline">
+        Build. Connect. Grow your professional presence.
+      </p>
+    </div>
+  </div>
+
+  <!-- RIGHT LOGIN -->
+  <div class="right-side">
+
+    <div class="login-card">
+
+      <h2 class="login-title">Welcome</h2>
+      <p class="subtitle">Login to continue</p>
+
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email or Phone</mat-label>
+          <input matInput formControlName="username" />
+
+          <mat-error *ngIf="username?.invalid && username?.touched">
+            <span *ngIf="username?.hasError('required')">
+              Username is required
+            </span>
+            <span *ngIf="username?.hasError('invalidUsername')">
+              Enter valid email or phone
+            </span>
+          </mat-error>
+        </mat-form-field>
+
+        <!-- PASSWORD -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Password</mat-label>
+
+          <input matInput
+                 [type]="hidePassword ? 'password' : 'text'"
+                 formControlName="password" />
+
+          <button mat-icon-button matSuffix type="button"
+                  (click)="hidePassword = !hidePassword">
+            <mat-icon>
+              {{ hidePassword ? 'visibility' : 'visibility_off' }}
+            </mat-icon>
+          </button>
+
+          <mat-error *ngIf="password?.invalid && password?.touched">
+            Password is required
+          </mat-error>
+        </mat-form-field>
+
+        <!-- FORGOT -->
+        <div class="forgot-container">
+          <button mat-button type="button" (click)="goToForgotPassword()">
+            Forgot Password?
+          </button>
+        </div>
+
+        <!-- ERROR -->
+        <div class="error" *ngIf="errorMessage">
+          {{ errorMessage }}
+        </div>
+
+        <!-- LOGIN -->
+        <button mat-raised-button color="primary" class="login-btn" type="submit">
+          Continue
+        </button>
+
+      </form>
+
+      <div class="divider-text">OR</div>
+
+      <!-- CREATE -->
+      <button mat-stroked-button class="create-btn" (click)="goToCreateAccount()">
+        Create an Account
+      </button>
+
+    </div>
+
+  </div>
+
+</main>
