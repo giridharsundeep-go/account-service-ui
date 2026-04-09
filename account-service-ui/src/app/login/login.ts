@@ -85,7 +85,7 @@ export class Login {
           if (res?.success) {
 
             this.authService.setSession({
-              user: res.data.user.name,
+              user: res.user,
               token: res.token
             });
 

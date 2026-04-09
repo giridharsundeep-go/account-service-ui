@@ -1,94 +1,130 @@
 <main class="profile-page">
 
-  <!-- TOP BAR -->
-  <mat-toolbar class="toolbar">
-    <span class="brand">greatley poshley</span>
+    <!-- TOP BAR -->
+    <mat-toolbar class="toolbar">
+        <span class="brand">greatley poshley</span>
 
-    <span class="spacer"></span>
+        <span class="spacer"></span>
 
-    <button mat-icon-button>
-      <mat-icon>settings</mat-icon>
-    </button>
-  </mat-toolbar>
+        <button mat-icon-button>
+            <mat-icon>settings</mat-icon>
+        </button>
+    </mat-toolbar>
 
-  <section class="main-layout">
+    <section class="main-layout">
 
-    <!-- LEFT RAIL -->
-    <div class="left-rail">
-      <div class="vertical-line"></div>
-    </div>
-
-    <!-- CONTENT -->
-    <div class="content-area">
-
-      <!-- PROFILE CARD -->
-      <section class="profile-card">
-
-        <div class="card-header">
-          <h3>User Information</h3>
-
-          <button mat-icon-button (click)="openEditDialog()">
-            <mat-icon>edit</mat-icon>
-          </button>
+        <!-- LEFT RAIL -->
+        <div class="left-rail">
+            <div class="vertical-line"></div>
         </div>
 
-        <div class="profile-content">
+        <!-- CONTENT -->
+        <div class="content-area">
 
-          <!-- AVATAR -->
-          <div class="avatar-wrapper">
-            <img *ngIf="profileImage; else emptyAvatar"
-                 [src]="profileImage"
-                 class="avatar-img" />
+            <!-- PROFILE CARD -->
+            <section class="profile-card" style="background-color: #0842a0;color: white;">
 
-            <ng-template #emptyAvatar>
-              <div class="avatar">
-                <mat-icon>person</mat-icon>
-              </div>
-            </ng-template>
-          </div>
+                <div class="card-header">
+                    <h3>User Information</h3>
 
-          <!-- DETAILS -->
-          <div class="right-section">
-            <h2 class="name">{{ name }}</h2>
-            <p>✉️ {{ email }}</p>
-            <p>📞 {{ phone }}</p>
-          </div>
+                    <button mat-icon-button (click)="openEditDialog()">
+                        <mat-icon>edit</mat-icon>
+                    </button>
+                </div>
+
+                <div class="profile-content">
+
+                    <!-- AVATAR -->
+                    <div class="avatar-wrapper">
+                        <img *ngIf="user.image; else emptyAvatar" [src]="user.image" class="avatar-img" />
+
+                        <ng-template #emptyAvatar>
+                            <div class="avatar">
+                                <mat-icon>person</mat-icon>
+                            </div>
+                        </ng-template>
+                    </div>
+
+                    <!-- DETAILS -->
+                    <div class="right-section">
+                        <h2 class="name">{{ user.name }}</h2>
+                        <p>✉️ {{ user.email }}</p>
+                        <p>📞 {{ user.phone }}</p>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- APPLICATIONS -->
+            <section class="apps-section">
+
+                <h3 class="section-title">Applications</h3>
+
+                <div class="apps-grid">
+
+                    <mat-card class="app-card" (click)="openOrgCreateDialog()">
+
+                        <div class="app-header">
+                            <div class="app-icon">O</div>
+
+                        </div>
+
+                        <h4 class="app-name">Create Organisation</h4>
+
+                        <p class="app-desc">
+                            Add users, Teams and manager your Organisation
+                        </p>
+
+                    </mat-card>
+
+                </div>
+
+            </section>
+
+            <section class="apps-section">
+
+                <h3 class="section-title">Your Organisations</h3>
+
+                <div class="apps-grid">
+
+                    <mat-card class="app-card" *ngFor="let org of organisations">
+
+                        <div class="app-header">
+                            <div class="app-icon">
+                                {{ org.title?.charAt(0) || 'O' }}
+                            </div>
+
+                            <button mat-icon-button (click)="goToOrganisation()">
+                                <mat-icon>open_in_new</mat-icon>
+                            </button>
+                        </div>
+
+                        <h4 class="app-name">{{ org.title }}</h4>
+
+                        <p class="app-desc">
+                            {{ org.description || 'No description available' }}
+                        </p>
+
+                        <p class="app-meta">✉️ {{ org.email }}</p>
+                        <p class="app-meta">📞 {{ org.phone }}</p>
+
+                    </mat-card>
+
+                </div>
+
+                <!-- Empty State -->
+                <div *ngIf="!organisations?.length" class="empty-state">
+                    <mat-icon>business</mat-icon>
+                    <p>No organisations found. Create one to get started.</p>
+                </div>
+
+            </section>
 
         </div>
 
-      </section>
+    </section>
 
-      <!-- APPLICATIONS -->
-      <section class="apps-section">
 
-        <h3 class="section-title">Applications</h3>
-
-        <div class="apps-grid">
-
-          <mat-card class="app-card">
-
-            <div class="app-header">
-              <div class="app-icon">P</div>
-
-              <button mat-icon-button (click)="goToOrganisation()">
-                <mat-icon>open_in_new</mat-icon>
-              </button>
-            </div>
-
-            <h4 class="app-name">Create Organisation</h4>
-
-            <p class="app-desc">
-              Add users, Teams and manager your Organisation
-            </p>
-
-          </mat-card>
-
-        </div>
-
-      </section>
-
-    </div>
-
-  </section>
 
 </main>

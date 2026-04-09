@@ -17,6 +17,11 @@ export const routes: Routes = [
       import('./user-home/user-home').then(m => m.UserHome)
   },
   {
+    path: 'org',
+    loadComponent: () =>
+      import('./organisation/organisation').then(m => m.Organisation)
+  },
+  {
     path: '',
     redirectTo: 'login',
     pathMatch: 'full'
@@ -24,10 +29,5 @@ export const routes: Routes = [
   {
     path: '**',
     redirectTo: 'login'
-  },
-  {
-    path: 'organisation', 
-    loadComponent: () =>
-      import('./organisation/organisation').then(m => m.Organisation)
   }
 ];
