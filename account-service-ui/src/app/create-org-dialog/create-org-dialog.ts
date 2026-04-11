@@ -5,6 +5,8 @@ import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/materia
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
+import { HttpClient } from '@angular/common/http';
+import { AuthService } from '../auth.service';
 
 @Component({
   selector: 'app-create-org-dialog',
@@ -27,9 +29,14 @@ export class CreateOrgDialog {
   phone: string = '';
   organisationDescription: string = '';
 
+  loading = false;
+  errorMessage = '';
+
   constructor(
     private dialogRef: MatDialogRef<CreateOrgDialog>,
-    @Inject(MAT_DIALOG_DATA) public data: any
+    @Inject(MAT_DIALOG_DATA) public data: any,
+    private http: HttpClient,
+    private auth: AuthService
   ) {
     if (data) {
       this.organisationTitle = data.organisationTitle || '';
@@ -40,13 +47,37 @@ export class CreateOrgDialog {
   }
 
   save() {
+
     if (!this.organisationTitle?.trim()) return;
 
-    this.dialogRef.close({
-      organisationTitle: this.organisationTitle,
+    this.loading = true;
+    this.errorMessage = '';
+
+    const payload = {
+      title: this.organisationTitle,
+      description: this.organisationDescription,
       email: this.email,
       phone: this.phone,
-      organisationDescription: this.organisationDescription
+      user_id : localStorage.getItem('user')
+    };
+
+    this.http.post('http://127.0.0.1:5000/api/organisation', payload, {
+      headers: this.auth.getAuthHeaders()
+    }).subscribe({
+      next: (res: any) => {
+        this.loading = false;
+
+        if (res?.success) {
+          // ✅ close dialog with created org
+          this.dialogRef.close(res.data);
+        } else {
+          this.errorMessage = res.message || 'Failed to create organisation';
+        }
+      },
+      error: () => {
+        this.loading = false;
+        this.errorMessage = 'Something went wrong';
+      }
     });
   }
 

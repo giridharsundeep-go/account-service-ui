@@ -7,6 +7,8 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { filter } from 'rxjs/operators';
+import { NavigationEnd } from '@angular/router';
 
 import { EditProfileDialog } from '../edit-profile-dialog/edit-profile-dialog';
 import { CreateOrgDialog } from '../create-org-dialog/create-org-dialog';
@@ -31,14 +33,27 @@ export class UserHome implements OnInit {
     private dialog: MatDialog,
     private router: Router,
     private http: HttpClient   // ✅ FIXED
-  ) {}
+  ) { }
 
   organisations: any[] = [];
 
   ngOnInit() {
-    const userId = 1; // TODO: get from token
+    this.loadOrganisations();
 
-    this.http.get(`/api/organisations/${userId}`)
+    this.router.events
+      .pipe(filter(event => event instanceof NavigationEnd))
+      .subscribe(() => {
+        this.loadOrganisations();
+      });
+  }
+
+  loadOrganisations() {
+    const userId = sessionStorage.getItem('user');
+    console.log("user id is:" + userId)
+
+    if (!userId) return;
+
+    this.http.get(`http://127.0.0.1:5000/api/organisations/${userId}`)
       .subscribe({
         next: (res: any) => {
           this.organisations = res.data || [];
@@ -85,6 +100,7 @@ export class UserHome implements OnInit {
           image: result.image
         };
       }
+      this.ngOnInit();
     });
   }
 
@@ -115,6 +131,8 @@ export class UserHome implements OnInit {
   }
 
   goToOrganisation(orgId?: number) {
-    this.router.navigate(['/org']); // ✅ FIXED
+    if (!orgId) return;
+
+    this.router.navigate(['/org', orgId]);
   }
 }

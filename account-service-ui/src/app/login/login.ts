@@ -83,15 +83,18 @@ export class Login {
       .subscribe({
         next: (res) => {
           if (res?.success) {
-
+            console.log(res)
             this.authService.setSession({
-              user: res.user,
-              token: res.token
+              user: res.data.user,
+              token: res.data.token
             });
 
-            sessionStorage.setItem('user', JSON.stringify(res.user));
+            sessionStorage.setItem('user', JSON.stringify(res.data.user.id));
 
-            this.router.navigate(['/user-home']);
+            //this.router.navigate(['/user-home']);
+            setTimeout(() => {
+              this.router.navigate(['/user-home']);
+            }, 1000);
 
           } else {
             this.errorMessage = 'Username or password does not match';

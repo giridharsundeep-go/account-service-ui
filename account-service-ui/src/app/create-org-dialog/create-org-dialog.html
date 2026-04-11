@@ -2,10 +2,12 @@
 
 <mat-dialog-content>
 
+  <!-- ERROR -->
+  <p *ngIf="errorMessage" style="color:red">{{ errorMessage }}</p>
+
   <mat-form-field appearance="outline" style="width:100%">
     <mat-label>Organisation Title</mat-label>
     <input matInput [(ngModel)]="organisationTitle" required>
-    <mat-error *ngIf="!organisationTitle">Required</mat-error>
   </mat-form-field>
 
   <mat-form-field appearance="outline" style="width:100%">
@@ -27,10 +29,13 @@
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <button mat-button (click)="cancel()">Cancel</button>
-  <button mat-raised-button color="primary"
-          [disabled]="!organisationTitle"
+  <button mat-button (click)="cancel()" [disabled]="loading">Cancel</button>
+
+  <button mat-raised-button color="primary" type="submit"
+          [disabled]="!organisationTitle || loading"
           (click)="save()">
-    Save
+
+    {{ loading ? 'Saving...' : 'Save' }}
+
   </button>
 </mat-dialog-actions>

@@ -197,3 +197,164 @@
   display: block;
   margin-bottom: 8px;
 }
+
+/* SCROLL CONTAINER */
+.org-scroll-container {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+}
+
+/* hide scrollbar (optional clean look) */
+.org-scroll-container::-webkit-scrollbar {
+  height: 6px;
+}
+.org-scroll-container::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+
+/* CARD */
+.org-card {
+  min-width: 250px;
+  max-width: 250px;
+  flex: 0 0 auto;
+
+  padding: 16px;
+  border-radius: 16px;
+
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+
+  transition: 0.3s;
+}
+
+.org-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+}
+
+/* HEADER */
+.org-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ICON */
+.org-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+/* TEXT */
+.org-title {
+  margin-top: 10px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.org-desc {
+  font-size: 13px;
+  color: #666;
+}
+
+.org-meta {
+  font-size: 12px;
+  color: gray;
+  margin-top: 4px;
+}
+
+/* SECTION */
+.org-section {
+  margin-top: 30px;
+}
+
+/* HEADER */
+.org-header-row {
+  display: grid;
+  grid-template-columns: 2fr 3fr 2fr 2fr 60px;
+
+  padding: 12px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: gray;
+
+  border-bottom: 1px solid #eee;
+}
+
+/* LIST */
+.org-list {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ROW */
+.org-row {
+  display: grid;
+  grid-template-columns: 2fr 3fr 2fr 2fr 60px;
+
+  align-items: center;
+  padding: 16px 20px;
+
+  border-bottom: 1px solid #f1f1f1;
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+/* HOVER */
+.org-row:hover {
+  background: #f9fafb;
+}
+
+/* NAME COLUMN */
+.org-name {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ICON */
+.org-icon {
+  width: 35px;
+  height: 35px;
+  border-radius: 8px;
+
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+/* TEXT OVERFLOW */
+.col-desc,
+.col-email,
+.col-phone {
+  font-size: 13px;
+  color: #555;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* EMPTY */
+.empty-state {
+  text-align: center;
+  margin-top: 20px;
+  color: gray;
+}

@@ -1,5 +1,7 @@
 import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { HttpHeaders } from '@angular/common/http';
+
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -34,9 +36,9 @@ export class AuthService {
     if (!this.isBrowser()) return;
 
     const expiry = new Date().getTime() + (15 * 60 * 1000);
-
+    console.log(data)
     localStorage.setItem('token', data.token);
-    localStorage.setItem('user', JSON.stringify(data.user));
+    localStorage.setItem('user', JSON.stringify(data.user.id));
     localStorage.setItem('expiry', expiry.toString());
   }
 
@@ -44,5 +46,13 @@ export class AuthService {
     if (!this.isBrowser()) return;
 
     localStorage.clear();
+  }
+
+  getAuthHeaders(): HttpHeaders {
+    const token = this.isBrowser() ? localStorage.getItem('token') : null;
+
+    return new HttpHeaders({
+      Authorization: `Bearer ${token ?? ''}`
+    });
   }
 }

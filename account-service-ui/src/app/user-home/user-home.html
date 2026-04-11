@@ -22,7 +22,7 @@
         <div class="content-area">
 
             <!-- PROFILE CARD -->
-            <section class="profile-card" style="background-color: #0842a0;color: white;">
+            <section class="profile-card">
 
                 <div class="card-header">
                     <h3>User Information</h3>
@@ -82,49 +82,72 @@
 
             </section>
 
-            <section class="apps-section">
+           <section class="org-section">
 
-                <h3 class="section-title">Your Organisations</h3>
+  <h3 class="section-title">Your Organisations</h3>
 
-                <div class="apps-grid">
+  <!-- HEADER (like table header) -->
+  <div class="org-header-row">
+    <span class="col-name">Organisation</span>
+    <span class="col-desc">Description</span>
+    <span class="col-email">Email</span>
+    <span class="col-phone">Phone</span>
+    <span class="col-action"></span>
+  </div>
 
-                    <mat-card class="app-card" *ngFor="let org of organisations">
+  <!-- LIST -->
+  <div class="org-list">
 
-                        <div class="app-header">
-                            <div class="app-icon">
-                                {{ org.title?.charAt(0) || 'O' }}
-                            </div>
+    <div class="org-row"
+         *ngFor="let org of organisations"
+         (click)="goToOrganisation(org.id)">
 
-                            <button mat-icon-button (click)="goToOrganisation()">
-                                <mat-icon>open_in_new</mat-icon>
-                            </button>
-                        </div>
+      <!-- NAME -->
+      <div class="col-name org-name">
+        <div class="org-icon">
+          {{ org.title?.charAt(0) || 'O' }}
+        </div>
+        <span>{{ org.title }}</span>
+      </div>
 
-                        <h4 class="app-name">{{ org.title }}</h4>
+      <!-- DESCRIPTION -->
+      <div class="col-desc">
+        {{ org.description || '-' }}
+      </div>
 
-                        <p class="app-desc">
-                            {{ org.description || 'No description available' }}
-                        </p>
+      <!-- EMAIL -->
+      <div class="col-email">
+        {{ org.email || '-' }}
+      </div>
 
-                        <p class="app-meta">✉️ {{ org.email }}</p>
-                        <p class="app-meta">📞 {{ org.phone }}</p>
+      <!-- PHONE -->
+      <div class="col-phone">
+        {{ org.phone || '-' }}
+      </div>
 
-                    </mat-card>
+      <!-- ACTION -->
+      <div class="col-action">
+        <button mat-icon-button
+                (click)="goToOrganisation(org.id); $event.stopPropagation()">
+          <mat-icon>arrow_forward</mat-icon>
+        </button>
+      </div>
 
-                </div>
+    </div>
 
-                <!-- Empty State -->
-                <div *ngIf="!organisations?.length" class="empty-state">
-                    <mat-icon>business</mat-icon>
-                    <p>No organisations found. Create one to get started.</p>
-                </div>
+  </div>
 
-            </section>
+  <!-- EMPTY -->
+  <div *ngIf="!organisations?.length" class="empty-state">
+    <mat-icon>business</mat-icon>
+    <p>No organisations found</p>
+  </div>
+
+</section>
 
         </div>
 
     </section>
-
 
 
 </main>
