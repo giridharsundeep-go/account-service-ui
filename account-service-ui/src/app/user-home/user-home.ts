@@ -7,11 +7,12 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { filter } from 'rxjs/operators';
-import { NavigationEnd } from '@angular/router';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import { EditProfileDialog } from '../edit-profile-dialog/edit-profile-dialog';
 import { CreateOrgDialog } from '../create-org-dialog/create-org-dialog';
+import { AuthService } from '../auth.service';
 
 @Component({
   selector: 'app-user-home',
@@ -32,36 +33,28 @@ export class UserHome implements OnInit {
   constructor(
     private dialog: MatDialog,
     private router: Router,
-    private http: HttpClient   // ✅ FIXED
-  ) { }
+    private http: HttpClient,
+    private auth: AuthService
+  ) {}
 
-  organisations: any[] = [];
+  organisations$!: Observable<any[]>;
 
   ngOnInit() {
     this.loadOrganisations();
-
-    this.router.events
-      .pipe(filter(event => event instanceof NavigationEnd))
-      .subscribe(() => {
-        this.loadOrganisations();
-      });
   }
 
   loadOrganisations() {
     const userId = sessionStorage.getItem('user');
-    console.log("user id is:" + userId)
-
     if (!userId) return;
 
-    this.http.get(`http://127.0.0.1:5000/api/organisations/${userId}`)
-      .subscribe({
-        next: (res: any) => {
-          this.organisations = res.data || [];
-        },
-        error: (err) => {
-          console.error('Error fetching organisations', err);
-        }
-      });
+    this.organisations$ = this.http.get<any>(
+      `http://127.0.0.1:5000/api/organisations/get`,
+      {
+        headers: this.auth.getAuthHeaders()
+      }
+    ).pipe(
+      map(res => res.data || [])
+    );
   }
 
   // 👤 User Info
@@ -83,24 +76,13 @@ export class UserHome implements OnInit {
     const dialogRef = this.dialog.open(EditProfileDialog, {
       width: '600px',
       height: '600px',
-      data: {
-        name: this.user.name,
-        email: this.user.email,
-        phone: this.user.phone,
-        image: this.user.image
-      }
+      data: { ...this.user }
     });
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.user = {
-          name: result.name,
-          email: result.email,
-          phone: result.phone,
-          image: result.image
-        };
+        this.user = result;
       }
-      this.ngOnInit();
     });
   }
 
@@ -108,31 +90,19 @@ export class UserHome implements OnInit {
     const dialogRef = this.dialog.open(CreateOrgDialog, {
       width: '600px',
       height: '600px',
-      data: {
-        organisationTitle: this.organisation.title,
-        organisationDescription: this.organisation.description,
-        email: this.organisation.email,
-        phone: this.organisation.phone
-      }
+      data: { ...this.organisation }
     });
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.organisation = {
-          title: result.organisationTitle,
-          description: result.organisationDescription,
-          email: result.email,
-          phone: result.phone
-        };
-
-        this.ngOnInit();
+        this.organisation = result;
+        this.loadOrganisations(); // 🔄 refresh list
       }
     });
   }
 
   goToOrganisation(orgId?: number) {
     if (!orgId) return;
-
     this.router.navigate(['/org', orgId]);
   }
 }

@@ -21,15 +21,15 @@
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
 
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Email or Phone</mat-label>
-          <input matInput formControlName="username" />
+          <mat-label>Email</mat-label>
+          <input matInput formControlName="email" />
 
-          <mat-error *ngIf="username?.invalid && username?.touched">
-            <span *ngIf="username?.hasError('required')">
-              Username is required
+          <mat-error *ngIf="email?.invalid && email?.touched">
+            <span *ngIf="email?.hasError('required')">
+              Email is required
             </span>
-            <span *ngIf="username?.hasError('invalidUsername')">
-              Enter valid email or phone
+            <span *ngIf="email?.hasError('invalidEmail')">
+              Enter valid email
             </span>
           </mat-error>
         </mat-form-field>

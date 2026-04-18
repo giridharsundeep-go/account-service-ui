@@ -1,15 +1,154 @@
 <main class="profile-page">
 
-  <!-- TOP BAR -->
+  <!-- HEADER -->
   <mat-toolbar class="toolbar">
     <span class="brand">greatley poshley</span>
-
     <span class="spacer"></span>
-
     <button mat-icon-button>
       <mat-icon>settings</mat-icon>
     </button>
   </mat-toolbar>
 
+  <section class="main-layout">
+
+    <div class="left-rail">
+      <div class="vertical-line"></div>
+    </div>
+
+    <div class="content-area">
+
+      <!-- HERO -->
+      <section class="org-hero">
+
+        <div class="org-left">
+          <div class="org-avatar">
+            {{ organisation.title?.charAt(0) }}
+          </div>
+
+          <div>
+            <h2 class="org-title-lg">{{ organisation.title }}</h2>
+            <p class="org-desc-lg">{{ organisation.description }}</p>
+          </div>
+        </div>
+
+        <div class="org-actions">
+          <button mat-raised-button color="primary" (click)="createUser()" style="margin-right: 20px;">+ Create User</button>
+          <button mat-stroked-button (click)="createTeam()">+ Create Team</button>
+        </div>
+
+      </section>
+
+      <section class="org-layout">
+
+        <!-- SIDEBAR -->
+        <div class="org-side-nav">
+          <div class="nav-item" [class.active]="activeTab==='overview'" (click)="setTab('overview')">
+            <mat-icon>insights</mat-icon> Overview
+          </div>
+
+          <div class="nav-item" [class.active]="activeTab==='teams'" (click)="setTab('teams')">
+            <mat-icon>groups</mat-icon> Teams
+          </div>
+
+          <div class="nav-item" [class.active]="activeTab==='users'" (click)="setTab('users')">
+            <mat-icon>person</mat-icon> Users
+          </div>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="org-content">
+
+          <!-- OVERVIEW -->
+          <div *ngIf="activeTab==='overview'" class="section-box">
+            <h1 class="section-heading">Overview</h1>
+
+            <div class="insight-grid">
+              <div class="insight-card">
+                <h4>Total Users</h4>
+                <h2>{{ users.length }}</h2>
+              </div>
+
+              <div class="insight-card">
+                <h4>Total Teams</h4>
+                <h2>{{ teams.length }}</h2>
+              </div>
+            </div>
+          </div>
+
+          <!-- TEAMS -->
+          <div *ngIf="activeTab==='teams'" class="section-box">
+            <h1 class="section-heading">Teams</h1>
+
+            <div class="team-grid">
+              <div class="team-card"
+                   *ngFor="let team of teams"
+                   (click)="openTeam(team)">
+                <div class="team-icon">{{ team.name.charAt(0) }}</div>
+                <h4>{{ team.name }}</h4>
+                <p class="team-meta">Click to view users</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- USERS -->
+          <div *ngIf="activeTab==='users'" class="section-box">
+
+            <h1 class="section-heading">Users</h1>
+
+            <!-- SEARCH -->
+            <div class="gmail-search">
+              <mat-icon>search</mat-icon>
+              <input [(ngModel)]="searchText" placeholder="Search users..." />
+            </div>
+
+            <!-- TEAM FILTER -->
+            <div *ngIf="selectedTeam" class="team-filter">
+              <span>Team: {{ selectedTeam.name }}</span>
+              <button mat-button (click)="clearTeamFilter()">Clear</button>
+            </div>
+
+            <!-- HEADER -->
+            <div class="user-header">
+              <span>Name</span>
+              <span>Email</span>
+              <span></span>
+            </div>
+
+            <!-- ROW -->
+            <div class="user-row"
+                 *ngFor="let user of paginatedUsers"
+                 (click)="openUser(user)">
+
+              <div class="user-left">
+                <div class="user-avatar">{{ user.name.charAt(0) }}</div>
+                <span class="user-name">{{ user.name }}</span>
+              </div>
+
+              <div class="user-email">{{ user.email }}</div>
+
+              <div class="user-action">
+                <button mat-icon-button (click)="openUser(user); $event.stopPropagation()">
+                  <mat-icon>open_in_new</mat-icon>
+                </button>
+              </div>
+
+            </div>
+
+            <!-- PAGINATION -->
+            <div class="pagination" *ngIf="filteredUsers.length > pageSize">
+              <button mat-button (click)="prevPage()" [disabled]="currentPage===1">Prev</button>
+              <span>{{ currentPage }} / {{ totalPages }}</span>
+              <button mat-button (click)="nextPage()" [disabled]="currentPage===totalPages">Next</button>
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+    </div>
+
+  </section>
 
 </main>

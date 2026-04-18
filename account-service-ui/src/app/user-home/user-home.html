@@ -1,153 +1,131 @@
 <main class="profile-page">
 
-    <!-- TOP BAR -->
-    <mat-toolbar class="toolbar">
-        <span class="brand">greatley poshley</span>
+  <!-- TOP BAR -->
+  <mat-toolbar class="toolbar">
+    <span class="brand">greatley poshley</span>
+    <span class="spacer"></span>
 
-        <span class="spacer"></span>
+    <button mat-icon-button>
+      <mat-icon>settings</mat-icon>
+    </button>
+  </mat-toolbar>
 
-        <button mat-icon-button>
-            <mat-icon>settings</mat-icon>
-        </button>
-    </mat-toolbar>
+  <section class="main-layout">
 
-    <section class="main-layout">
+    <!-- LEFT RAIL -->
+    <div class="left-rail">
+      <div class="vertical-line"></div>
+    </div>
 
-        <!-- LEFT RAIL -->
-        <div class="left-rail">
-            <div class="vertical-line"></div>
+    <!-- CONTENT -->
+    <div class="content-area">
+
+      <!-- PROFILE -->
+      <section class="profile-card">
+
+        <div class="card-header">
+          <h3>User Information</h3>
+          <button mat-icon-button (click)="openEditDialog()">
+            <mat-icon>edit</mat-icon>
+          </button>
         </div>
 
-        <!-- CONTENT -->
-        <div class="content-area">
+        <div class="profile-content">
 
-            <!-- PROFILE CARD -->
-            <section class="profile-card">
+          <div class="avatar-wrapper">
+            <img *ngIf="user.image; else emptyAvatar" [src]="user.image" class="avatar-img" />
+            <ng-template #emptyAvatar>
+              <div class="avatar">
+                <mat-icon>person</mat-icon>
+              </div>
+            </ng-template>
+          </div>
 
-                <div class="card-header">
-                    <h3>User Information</h3>
+          <div class="right-section">
+            <h2 class="name">{{ user.name }}</h2>
+            <p>✉️ {{ user.email }}</p>
+            <p>📞 {{ user.phone }}</p>
+          </div>
 
-                    <button mat-icon-button (click)="openEditDialog()">
-                        <mat-icon>edit</mat-icon>
-                    </button>
-                </div>
-
-                <div class="profile-content">
-
-                    <!-- AVATAR -->
-                    <div class="avatar-wrapper">
-                        <img *ngIf="user.image; else emptyAvatar" [src]="user.image" class="avatar-img" />
-
-                        <ng-template #emptyAvatar>
-                            <div class="avatar">
-                                <mat-icon>person</mat-icon>
-                            </div>
-                        </ng-template>
-                    </div>
-
-                    <!-- DETAILS -->
-                    <div class="right-section">
-                        <h2 class="name">{{ user.name }}</h2>
-                        <p>✉️ {{ user.email }}</p>
-                        <p>📞 {{ user.phone }}</p>
-                    </div>
-
-                </div>
-
-            </section>
-
-            <!-- APPLICATIONS -->
-            <section class="apps-section">
-
-                <h3 class="section-title">Applications</h3>
-
-                <div class="apps-grid">
-
-                    <mat-card class="app-card" (click)="openOrgCreateDialog()">
-
-                        <div class="app-header">
-                            <div class="app-icon">O</div>
-
-                        </div>
-
-                        <h4 class="app-name">Create Organisation</h4>
-
-                        <p class="app-desc">
-                            Add users, Teams and manager your Organisation
-                        </p>
-
-                    </mat-card>
-
-                </div>
-
-            </section>
-
-           <section class="org-section">
-
-  <h3 class="section-title">Your Organisations</h3>
-
-  <!-- HEADER (like table header) -->
-  <div class="org-header-row">
-    <span class="col-name">Organisation</span>
-    <span class="col-desc">Description</span>
-    <span class="col-email">Email</span>
-    <span class="col-phone">Phone</span>
-    <span class="col-action"></span>
-  </div>
-
-  <!-- LIST -->
-  <div class="org-list">
-
-    <div class="org-row"
-         *ngFor="let org of organisations"
-         (click)="goToOrganisation(org.id)">
-
-      <!-- NAME -->
-      <div class="col-name org-name">
-        <div class="org-icon">
-          {{ org.title?.charAt(0) || 'O' }}
         </div>
-        <span>{{ org.title }}</span>
-      </div>
 
-      <!-- DESCRIPTION -->
-      <div class="col-desc">
-        {{ org.description || '-' }}
-      </div>
+      </section>
 
-      <!-- EMAIL -->
-      <div class="col-email">
-        {{ org.email || '-' }}
-      </div>
+      <!-- APPLICATIONS -->
+      <section class="apps-section">
+        <h3 class="section-title">Applications</h3>
 
-      <!-- PHONE -->
-      <div class="col-phone">
-        {{ org.phone || '-' }}
-      </div>
+        <div class="apps-grid">
+          <mat-card class="app-card" (click)="openOrgCreateDialog()">
+            <div class="app-header">
+              <div class="app-icon">O</div>
+            </div>
 
-      <!-- ACTION -->
-      <div class="col-action">
-        <button mat-icon-button
-                (click)="goToOrganisation(org.id); $event.stopPropagation()">
-          <mat-icon>arrow_forward</mat-icon>
-        </button>
-      </div>
+            <h4 class="app-name">Create Organisation</h4>
+
+            <p class="app-desc">
+              Add users, teams and manage your organisation
+            </p>
+          </mat-card>
+        </div>
+      </section>
+
+      <!-- ORGANISATIONS -->
+      <section class="org-section">
+
+        <h3 class="section-title">Your Organisations</h3>
+
+        <div class="org-header-row">
+          <span class="col-name">Organisation</span>
+          <span class="col-desc">Description</span>
+          <span class="col-email">Email</span>
+          <span class="col-phone">Phone</span>
+          <span class="col-action"></span>
+        </div>
+
+        <!-- 🔥 Reactive block -->
+        <ng-container *ngIf="organisations$ | async as organisations">
+
+          <div class="org-list">
+
+            <div class="org-row"
+                 *ngFor="let org of organisations"
+                 (click)="goToOrganisation(org.id)">
+
+              <div class="col-name org-name">
+                <div class="org-icon">
+                  {{ org.title?.charAt(0) || 'O' }}
+                </div>
+                <span>{{ org.title }}</span>
+              </div>
+
+              <div class="col-desc">{{ org.description || '-' }}</div>
+              <div class="col-email">{{ org.email || '-' }}</div>
+              <div class="col-phone">{{ org.phone || '-' }}</div>
+
+              <div class="col-action">
+                <button mat-icon-button
+                        (click)="goToOrganisation(org.id); $event.stopPropagation()">
+                  <mat-icon>arrow_forward</mat-icon>
+                </button>
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- EMPTY STATE -->
+          <div *ngIf="!organisations.length" class="empty-state">
+            <mat-icon>business</mat-icon>
+            <p>No organisations found</p>
+          </div>
+
+        </ng-container>
+
+      </section>
 
     </div>
 
-  </div>
-
-  <!-- EMPTY -->
-  <div *ngIf="!organisations?.length" class="empty-state">
-    <mat-icon>business</mat-icon>
-    <p>No organisations found</p>
-  </div>
-
-</section>
-
-        </div>
-
-    </section>
-
+  </section>
 
 </main>

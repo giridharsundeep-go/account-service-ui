@@ -17,6 +17,11 @@ export const routes: Routes = [
       import('./user-home/user-home').then(m => m.UserHome)
   },
   {
+    path: 'create-account',
+    loadComponent: () =>
+      import('./create-account/create-account').then(m => m.CreateAccount)
+  },
+  {
     path: 'org/:id',
     loadComponent: () =>
       import('./organisation/organisation').then(m => m.Organisation)

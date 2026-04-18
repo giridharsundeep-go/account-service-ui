@@ -9,7 +9,7 @@
 /* LEFT SIDE (HERO) */
 .left-side {
   flex: 1;
-  background: linear-gradient(135deg, #1c1e8c, #3b82f6, #6366f1);
+  background: linear-gradient(135deg, #002b51, #002b51, #002b51);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -24,7 +24,7 @@
 .brand {
   font-size: 48px;
   font-weight: 700;
-  margin-bottom: 20px;
+  margin-bottom: 20px;color: white;
 }
 
 .tagline {

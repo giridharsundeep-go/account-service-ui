@@ -27,7 +27,7 @@ function emailOrPhoneValidator(control: AbstractControl): ValidationErrors | nul
 
   return (emailRegex.test(value) || phoneRegex.test(value))
     ? null
-    : { invalidUsername: true };
+    : { invalidEmail: true };
 }
 
 @Component({
@@ -58,13 +58,13 @@ export class Login {
     private authService: AuthService
   ) {
     this.loginForm = this.fb.group({
-      username: ['', [Validators.required, emailOrPhoneValidator]],
+      email: ['', [Validators.required, emailOrPhoneValidator]],
       password: ['', [Validators.required]]
     });
   }
 
-  get username() {
-    return this.loginForm.get('username');
+  get email() {
+    return this.loginForm.get('email');
   }
 
   get password() {
@@ -91,17 +91,16 @@ export class Login {
 
             sessionStorage.setItem('user', JSON.stringify(res.data.user.id));
 
-            //this.router.navigate(['/user-home']);
             setTimeout(() => {
               this.router.navigate(['/user-home']);
             }, 1000);
 
           } else {
-            this.errorMessage = 'Username or password does not match';
+            this.errorMessage = 'Email or password does not match';
           }
         },
         error: () => {
-          this.errorMessage = 'Invalid username or password';
+          this.errorMessage = 'Invalid email or password';
         }
       });
   }

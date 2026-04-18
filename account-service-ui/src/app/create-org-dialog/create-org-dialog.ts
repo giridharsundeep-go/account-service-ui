@@ -61,7 +61,7 @@ export class CreateOrgDialog {
       user_id : localStorage.getItem('user')
     };
 
-    this.http.post('http://127.0.0.1:5000/api/organisation', payload, {
+    this.http.post('http://127.0.0.1:5000/api/organisation/create', payload, {
       headers: this.auth.getAuthHeaders()
     }).subscribe({
       next: (res: any) => {
