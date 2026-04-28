@@ -3,8 +3,15 @@ import { Component, OnInit } from '@angular/core';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { AuthService } from '../auth.service';
+import { environment } from '../../environment';
+import { EditProfileDialog } from '../edit-profile-dialog/edit-profile-dialog';
+import { MatDialog } from '@angular/material/dialog';
+import { Observable, map } from 'rxjs';
+import { CreateOrgDialog } from '../create-org-dialog/create-org-dialog';
 
 @Component({
   selector: 'app-organisation',
@@ -14,123 +21,96 @@ import { FormsModule } from '@angular/forms';
     MatToolbarModule,
     MatIconModule,
     MatButtonModule,
-    FormsModule
+    FormsModule,
+    HttpClientModule
   ],
   templateUrl: './organisation.html',
   styleUrl: './organisation.css'
 })
 export class Organisation implements OnInit {
 
-  constructor(private route: ActivatedRoute) { }
+  baseUrl = environment.apiBaseUrl;
 
-  orgId!: number;
 
-  activeTab: 'overview' | 'teams' | 'users' = 'overview';
+  constructor(
+    private dialog: MatDialog,
+    private router: Router,
+    private http: HttpClient,
+    private auth: AuthService
+  ) {}
+
+  organisations$!: Observable<any[]>;
+
+  ngOnInit() {
+    this.loadOrganisations();
+  }
+
+  loadOrganisations() {
+    const userId = sessionStorage.getItem('user');
+    if (!userId) return;
+
+    this.organisations$ = this.http.get<any>(
+      `${this.baseUrl}/organisations/get`,
+      {
+        headers: this.auth.getAuthHeaders()
+      }
+    ).pipe(
+      map(res => res.data || [])
+    );
+  }
+
+activeMenu = 'create';
+
+setActive(menu: string) {
+  this.activeMenu = menu;
+}
+
+  // 👤 User Info
+  user = {
+    name: 'Giridhar Sundeep',
+    email: 'giridharsundeep.pro@gmail.com',
+    phone: '7799165659',
+    image: null as string | ArrayBuffer | null
+  };
 
   organisation = {
     title: '',
-    description: ''
+    description: '',
+    email: '',
+    phone: ''
   };
 
-  users: any[] = [];
-  teams: any[] = [];
+  openEditDialog() {
+    const dialogRef = this.dialog.open(EditProfileDialog, {
+      width: '600px',
+      height: '600px',
+      data: { ...this.user }
+    });
 
-  searchText = '';
-
-  pageSize = 5;
-  currentPage = 1;
-
-  selectedTeam: any = null;
-
-  teamUsersMap: any = {
-    1: [1, 3],
-    2: [2],
-    3: [1, 2, 3]
-  };
-
-  ngOnInit() {
-    this.orgId = Number(this.route.snapshot.paramMap.get('id'));
-    this.loadOrganisation();
-    this.loadUsers();
-    this.loadTeams();
+    dialogRef.afterClosed().subscribe((result: { name: string; email: string; phone: string; image: string | ArrayBuffer | null; }) => {
+      if (result) {
+        this.user = result;
+      }
+    });
   }
 
-  loadOrganisation() {
-    this.organisation = {
-      title: 'Greatley Poshley',
-      description: 'Building scalable SaaS platforms'
-    };
+  openOrgCreateDialog() {
+    const dialogRef = this.dialog.open(CreateOrgDialog, {
+      width: '600px',
+      height: '600px',
+      data: { ...this.organisation }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.organisation = result;
+        this.loadOrganisations(); // 🔄 refresh list
+      }
+    });
   }
 
-  loadUsers() {
-    this.users = [
-      { id: 1, name: 'John Doe', email: 'john@test.com' },
-      { id: 2, name: 'Jane Smith', email: 'jane@test.com' },
-      { id: 3, name: 'Sundeep', email: 'sundeep@test.com' }
-    ];
-  }
-
-  loadTeams() {
-    this.teams = [
-      { id: 1, name: 'Engineering' },
-      { id: 2, name: 'Marketing' },
-      { id: 3, name: 'Product' }
-    ];
-  }
-
-  setTab(tab: 'overview' | 'teams' | 'users') {
-    this.activeTab = tab;
-    this.currentPage = 1;
-  }
-
-  get filteredUsers() {
-    let list = this.users;
-
-    if (this.selectedTeam) {
-      const ids = this.teamUsersMap[this.selectedTeam.id] || [];
-      list = list.filter(u => ids.includes(u.id));
-    }
-
-    if (this.searchText) {
-      const s = this.searchText.toLowerCase();
-      list = list.filter(u =>
-        u.name.toLowerCase().includes(s) ||
-        u.email.toLowerCase().includes(s)
-      );
-    }
-
-    return list;
-  }
-
-  get paginatedUsers() {
-    const start = (this.currentPage - 1) * this.pageSize;
-    return this.filteredUsers.slice(start, start + this.pageSize);
-  }
-
-  get totalPages() {
-    return Math.ceil(this.filteredUsers.length / this.pageSize);
-  }
-
-  nextPage() {
-    if (this.currentPage < this.totalPages) this.currentPage++;
-  }
-
-  prevPage() {
-    if (this.currentPage > 1) this.currentPage--;
-  }
-
-  openTeam(team: any) {
-    this.selectedTeam = team;
-    this.activeTab = 'users';
-  }
-
-  clearTeamFilter() {
-    this.selectedTeam = null;
-  }
-
-  createUser() { }
-  createTeam() { }
-  openUser(user: any) {
-    console.log(user);
+  goToOrganisation(orgId?: number) {
+    if (!orgId) return;
+    this.router.navigate(['/org', orgId]);
   }
 }

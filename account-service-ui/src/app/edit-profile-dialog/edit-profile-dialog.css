@@ -1,0 +1,18 @@
+.gp-button {
+  width: 100px;
+  height: 52px;
+  border-radius: 30px;
+  background-color: #001c51;
+  color: white;
+  font-size: 16px;
+}
+
+/* SECONDARY BUTTON */
+.gp-button-light {
+  width: 100px;
+  height: 52px;
+  border-radius: 30px;
+  background-color: #2678bf;
+  color: white;
+  font-size: 16px;
+}

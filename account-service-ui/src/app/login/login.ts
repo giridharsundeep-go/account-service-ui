@@ -15,6 +15,7 @@ import {
 import { Router } from '@angular/router';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { AuthService } from '../auth.service';
+import { environment } from '../../environment';
 
 /* ===== VALIDATOR ===== */
 function emailOrPhoneValidator(control: AbstractControl): ValidationErrors | null {
@@ -50,6 +51,7 @@ export class Login {
   loginForm: FormGroup;
   hidePassword = true;
   errorMessage = '';
+  baseUrl = environment.apiBaseUrl;
 
   constructor(
     private fb: FormBuilder,
@@ -79,7 +81,7 @@ export class Login {
 
     const payload = this.loginForm.value;
 
-    this.http.post<any>('http://127.0.0.1:5000/api/auth/login', payload)
+    this.http.post<any>(`${this.baseUrl}/auth/login`, payload)
       .subscribe({
         next: (res) => {
           if (res?.success) {

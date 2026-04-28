@@ -1,127 +1,114 @@
-/* FULL SCREEN BASE */
+/* 🌐 MAIN */
 .main {
   height: 100vh;
-  width: 100%;
-  display: flex;
-  font-family: 'Inter', Roboto, sans-serif;
-}
-
-/* LEFT SIDE (HERO) */
-.left-side {
-  flex: 1;
-  background: linear-gradient(135deg, #002b51, #002b51, #002b51);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: white;
-  padding: 60px;
-}
-
-.brand-container {
-  max-width: 400px;
-}
-
-.brand {
-  font-size: 48px;
-  font-weight: 700;
-  margin-bottom: 20px;color: white;
-}
-
-.tagline {
-  font-size: 18px;
-  opacity: 0.9;
-  line-height: 1.5;
-}
-
-/* RIGHT SIDE */
-.right-side {
-  flex: 1;
   background: #ffffff;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  font-family: 'Inter', sans-serif;
 }
 
-/* LOGIN CARD */
+/* CENTER CONTAINER */
+.container {
+  width: 100%;
+  max-width: 420px;
+  padding: 20px;
+border: 1px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;   /* ✅ center horizontally */
+  justify-content: center; /* ✅ center vertically inside */
+  text-align: center;
+}
+
+/* 🔥 LOGO */
+.logo h1 {
+  font-size: 42px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #111;
+}
+
+/* 🧾 LOGIN CARD */
 .login-card {
-  width: 400px;
-  padding: 40px;
+  width: 100%;                 /* ✅ responsive */
+  padding: 28px;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 255);
-
+  background: #ffffff;
+  border: 1px 1px 1px;
+  text-align: left;            /* form alignment */
 }
 
-/* TITLES */
+/* Titles */
 .login-title {
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 600;
-  margin-bottom: 5px;
 }
 
 .subtitle {
-  color: #666;
-  margin-bottom: 25px;
+  font-size: 13px;
+  color: #777;
+  margin-bottom: 20px;
 }
 
-/* INPUT */
+/* FORM */
 .full-width {
   width: 100%;
-  margin-bottom: 15px;
+  margin-bottom: 16px;
 }
 
-/* BUTTONS */
-.login-btn {
-  width: 100%;
-  height: 48px;
-  font-size: 16px;
-  font-weight: 600;
-  margin-top: 10px;
-  border-radius: 10px;
-}
-
-.create-btn {
-  width: 100%;
-  height: 48px;
-  border-radius: 10px;
+/* Forgot */
+.forgot-container {
+  text-align: right;
+  margin-bottom: 10px;
 }
 
 /* ERROR */
 .error {
-  color: #e11d48;
-  text-align: center;
+  color: red;
+  font-size: 12px;
   margin-bottom: 10px;
 }
 
-/* FORGOT */
-.forgot-container {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 10px;
+/* 🔥 PRIMARY BUTTON */
+.gp-button {
+  width: 100%;
+  height: 52px;
+  border-radius: 30px;
+  background-color: #001c51;
+  color: white;
+  font-size: 16px;
 }
 
-/* DIVIDER */
+/* SECONDARY BUTTON */
+.gp-button-light {
+  width: 100%;
+  height: 52px;
+  border-radius: 30px;
+  background-color: #2678bf;
+  color: white;
+  font-size: 16px;
+}
+
+/* Divider */
 .divider-text {
   text-align: center;
-  margin: 20px 0;
-  color: #999;
+  font-size: 13px;
+  color: #777;
+  margin: 18px 0;
 }
 
-/* RESPONSIVE */
-@media (max-width: 900px) {
-  .main {
-    flex-direction: column;
+/* 📱 RESPONSIVE */
+@media (max-width: 480px) {
+  .logo h1 {
+    font-size: 32px;
   }
 
-  .left-side {
-    height: 30%;
-    text-align: center;
-  }
-
-  .right-side {
-    height: 70%;
+  .container {
+    padding: 16px;
   }
 
   .login-card {
-    width: 90%;
+    padding: 20px;
   }
 }

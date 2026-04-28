@@ -1,131 +1,97 @@
 <main class="profile-page">
 
-  <!-- TOP BAR -->
-  <mat-toolbar class="toolbar">
-    <span class="brand">greatley poshley</span>
-    <span class="spacer"></span>
+    <!-- 🔝 TOP BAR -->
+    <mat-toolbar class="toolbar">
+        <span style="color: black;font-weight: bold;font-size: 20px;">Greatley Poshley</span>
+        <span class="spacer"></span>
 
-    <button mat-icon-button>
-      <mat-icon>settings</mat-icon>
-    </button>
-  </mat-toolbar>
+        <button mat-icon-button>
+            <mat-icon>settings</mat-icon>
+        </button>
+    </mat-toolbar>
 
-  <section class="main-layout">
+    <section class="main-layout">
 
-    <!-- LEFT RAIL -->
-    <div class="left-rail">
-      <div class="vertical-line"></div>
-    </div>
+        <!-- 🔥 STYLISH SIDE PANEL -->
+        <aside class="side-panel" style="padding-top: 40px;">
 
-    <!-- CONTENT -->
-    <div class="content-area">
-
-      <!-- PROFILE -->
-      <section class="profile-card">
-
-        <div class="card-header">
-          <h3>User Information</h3>
-          <button mat-icon-button (click)="openEditDialog()">
-            <mat-icon>edit</mat-icon>
-          </button>
-        </div>
-
-        <div class="profile-content">
-
-          <div class="avatar-wrapper">
-            <img *ngIf="user.image; else emptyAvatar" [src]="user.image" class="avatar-img" />
-            <ng-template #emptyAvatar>
-              <div class="avatar">
-                <mat-icon>person</mat-icon>
-              </div>
-            </ng-template>
-          </div>
-
-          <div class="right-section">
-            <h2 class="name">{{ user.name }}</h2>
-            <p>✉️ {{ user.email }}</p>
-            <p>📞 {{ user.phone }}</p>
-          </div>
-
-        </div>
-
-      </section>
-
-      <!-- APPLICATIONS -->
-      <section class="apps-section">
-        <h3 class="section-title">Applications</h3>
-
-        <div class="apps-grid">
-          <mat-card class="app-card" (click)="openOrgCreateDialog()">
-            <div class="app-header">
-              <div class="app-icon">O</div>
-            </div>
-
-            <h4 class="app-name">Create Organisation</h4>
-
-            <p class="app-desc">
-              Add users, teams and manage your organisation
-            </p>
-          </mat-card>
-        </div>
-      </section>
-
-      <!-- ORGANISATIONS -->
-      <section class="org-section">
-
-        <h3 class="section-title">Your Organisations</h3>
-
-        <div class="org-header-row">
-          <span class="col-name">Organisation</span>
-          <span class="col-desc">Description</span>
-          <span class="col-email">Email</span>
-          <span class="col-phone">Phone</span>
-          <span class="col-action"></span>
-        </div>
-
-        <!-- 🔥 Reactive block -->
-        <ng-container *ngIf="organisations$ | async as organisations">
-
-          <div class="org-list">
-
-            <div class="org-row"
-                 *ngFor="let org of organisations"
-                 (click)="goToOrganisation(org.id)">
-
-              <div class="col-name org-name">
-                <div class="org-icon">
-                  {{ org.title?.charAt(0) || 'O' }}
+            <!-- USER MINI -->
+            <div class="side-user">
+                <div class="mini-avatar">
+                    {{ user.name?.charAt(0) }}
                 </div>
-                <span>{{ org.title }}</span>
-              </div>
-
-              <div class="col-desc">{{ org.description || '-' }}</div>
-              <div class="col-email">{{ org.email || '-' }}</div>
-              <div class="col-phone">{{ org.phone || '-' }}</div>
-
-              <div class="col-action">
-                <button mat-icon-button
-                        (click)="goToOrganisation(org.id); $event.stopPropagation()">
-                  <mat-icon>arrow_forward</mat-icon>
-                </button>
-              </div>
-
+                <div>
+                    <div class="mini-name">{{ user.name }}</div>
+                    <div class="mini-email">{{ user.email }}</div>
+                </div>
             </div>
 
-          </div>
+            <!-- APPLICATIONS -->
+            <div class="side-section">
+                <p class="side-title">Applications</p>
 
-          <!-- EMPTY STATE -->
-          <div *ngIf="!organisations.length" class="empty-state">
-            <mat-icon>business</mat-icon>
-            <p>No organisations found</p>
-          </div>
+               <div class="side-item"
+     [class.active]="activeMenu==='create'"
+     (click)="setActive('create')">
+  <mat-icon>add_business</mat-icon>
+  <span>Create Org</span>
+</div>
 
-        </ng-container>
+<div class="side-item"
+     [class.active]="activeMenu==='dashboard'"
+     (click)="setActive('dashboard')">
+  <mat-icon>dashboard</mat-icon>
+  <span>Dashboard</span>
+</div>
 
-      </section>
+<div class="side-item"
+     [class.active]="activeMenu==='roles'"
+     (click)="setActive('roles')">
+  <mat-icon>badge</mat-icon>
+  <span>Roles</span>
+</div>
 
-    </div>
+<div class="side-item"
+     [class.active]="activeMenu==='users'"
+     (click)="setActive('users')">
+  <mat-icon>person</mat-icon>
+  <span>Users</span>
+</div>
 
-  </section>
+<div class="side-item"
+     [class.active]="activeMenu==='teams'"
+     (click)="setActive('teams')">
+  <mat-icon>groups</mat-icon>
+  <span>Teams</span>
+</div>
+
+<div class="side-item"
+     [class.active]="activeMenu==='projects'"
+     (click)="setActive('projects')">
+  <mat-icon>folder</mat-icon>
+  <span>Projects</span>
+</div>
+            </div>
+
+        </aside>
+
+        <!-- ✅ MAIN CONTENT -->
+        <div class="content-area">
+
+           <div class="content-area">
+
+  <!-- CREATE ORG -->
+  <app-organisation *ngIf="activeMenu === 'create'"></app-organisation>
+  <app-dashboard *ngIf="activeMenu === 'dashboard'"></app-dashboard>
+  <app-roles *ngIf="activeMenu === 'roles'"></app-roles>
+  <app-users *ngIf="activeMenu === 'users'"></app-users>
+  <app-teams *ngIf="activeMenu === 'teams'"></app-teams>
+  <app-projects *ngIf="activeMenu === 'projects'"></app-projects>
+
+</div>
+
+        </div>
+
+    </section>
 
 </main>

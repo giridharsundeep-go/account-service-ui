@@ -49,9 +49,6 @@
     line-height: 100%;
     letter-spacing: -0.125rem;
     margin: 0;
-    font-family: "Inter Tight", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-      Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
-      "Segoe UI Symbol";
   }
 
 .brand {
@@ -66,4 +63,23 @@
   background: linear-gradient(180deg, #ff4d4d, #ff66cc, #7c3aed);
   margin: 20px 0;
   border-radius: 2px;
+}
+
+.gp-button {
+  width: 100%;
+  height: 48px;
+  border-radius: 20px;
+  background-color: #001c51;
+  color: white;
+  font-size: 16px;
+}
+
+.gp-button-light {
+  width: 100%;
+  height: 48px;
+  border-radius: 20px;
+  border: 1px;
+  background-color: #2678bf;
+  color: black;
+  font-size: 16px;
 }

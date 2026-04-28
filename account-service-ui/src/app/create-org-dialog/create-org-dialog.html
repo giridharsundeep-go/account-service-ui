@@ -1,11 +1,11 @@
-<h2 mat-dialog-title>Create Organisation</h2>
+<h2 mat-dialog-title style="font-weight: bold;">Create Organisation</h2>
 
-<mat-dialog-content>
+<mat-dialog-content style="padding: 20px;">
 
   <!-- ERROR -->
   <p *ngIf="errorMessage" style="color:red">{{ errorMessage }}</p>
 
-  <mat-form-field appearance="outline" style="width:100%">
+  <mat-form-field appearance="outline" style="width:100%;color: black;">
     <mat-label>Organisation Title</mat-label>
     <input matInput [(ngModel)]="organisationTitle" required>
   </mat-form-field>
@@ -29,9 +29,9 @@
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <button mat-button (click)="cancel()" [disabled]="loading">Cancel</button>
+  <button mat-button (click)="cancel()" style="color: white;width: 100px;" class="gp-button-light" [disabled]="loading">Cancel</button>
 
-  <button mat-raised-button color="primary" type="submit"
+  <button mat-raised-button color="primary" type="submit" style="color: white;" class="gp-button"
           [disabled]="!organisationTitle || loading"
           (click)="save()">
 

@@ -13,6 +13,13 @@ import { map } from 'rxjs/operators';
 import { EditProfileDialog } from '../edit-profile-dialog/edit-profile-dialog';
 import { CreateOrgDialog } from '../create-org-dialog/create-org-dialog';
 import { AuthService } from '../auth.service';
+import { environment } from '../../environment';
+import { Organisation } from "../organisation/organisation";
+import { Dashboard } from "../dashboard/dashboard";
+import { Roles } from "../roles/roles";
+import { Users } from "../users/users";
+import { Teams } from "../teams/teams";
+import { Projects } from "../projects/projects";
 
 @Component({
   selector: 'app-user-home',
@@ -23,19 +30,26 @@ import { AuthService } from '../auth.service';
     MatIconModule,
     MatButtonModule,
     MatCardModule,
-    MatDialogModule
+    MatDialogModule,
+    Organisation,
+    Dashboard,
+    Roles,
+    Users,
+    Teams,
+    Projects
   ],
   templateUrl: './user-home.html',
   styleUrls: ['./user-home.css']
 })
 export class UserHome implements OnInit {
+  baseUrl = environment.apiBaseUrl;
 
   constructor(
     private dialog: MatDialog,
     private router: Router,
     private http: HttpClient,
     private auth: AuthService
-  ) {}
+  ) { }
 
   organisations$!: Observable<any[]>;
 
@@ -48,13 +62,19 @@ export class UserHome implements OnInit {
     if (!userId) return;
 
     this.organisations$ = this.http.get<any>(
-      `http://127.0.0.1:5000/api/organisations/get`,
+      `${this.baseUrl}/organisations/get`,
       {
         headers: this.auth.getAuthHeaders()
       }
     ).pipe(
       map(res => res.data || [])
     );
+  }
+
+  activeMenu = 'create';
+
+  setActive(menu: string) {
+    this.activeMenu = menu;
   }
 
   // 👤 User Info

@@ -1,18 +1,13 @@
 <main class="main">
 
-  <!-- LEFT HERO -->
-  <div class="left-side">
-    <div class="brand-container">
-      <h1 class="brand">greatley poshley</h1>
-      <p class="tagline">
-        Build. Connect. Grow your professional presence.
-      </p>
+  <div class="container">
+
+    <!-- 🔥 LOGO -->
+    <div class="logo">
+      <h1>Greatley <span>Poshley</span></h1>
     </div>
-  </div>
 
-  <!-- RIGHT LOGIN -->
-  <div class="right-side">
-
+    <!-- 🧾 LOGIN CARD -->
     <div class="login-card">
 
       <h2 class="login-title">Welcome</h2>
@@ -20,17 +15,14 @@
 
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
 
+        <!-- EMAIL -->
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Email</mat-label>
           <input matInput formControlName="email" />
 
           <mat-error *ngIf="email?.invalid && email?.touched">
-            <span *ngIf="email?.hasError('required')">
-              Email is required
-            </span>
-            <span *ngIf="email?.hasError('invalidEmail')">
-              Enter valid email
-            </span>
+            <span *ngIf="email?.hasError('required')">Email is required</span>
+            <span *ngIf="email?.hasError('invalidEmail')">Enter valid email</span>
           </mat-error>
         </mat-form-field>
 
@@ -38,12 +30,9 @@
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Password</mat-label>
 
-          <input matInput
-                 [type]="hidePassword ? 'password' : 'text'"
-                 formControlName="password" />
+          <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password" />
 
-          <button mat-icon-button matSuffix type="button"
-                  (click)="hidePassword = !hidePassword">
+          <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword">
             <mat-icon>
               {{ hidePassword ? 'visibility' : 'visibility_off' }}
             </mat-icon>
@@ -67,16 +56,16 @@
         </div>
 
         <!-- LOGIN -->
-        <button mat-raised-button color="primary" class="login-btn" type="submit">
+        <button mat-stroked-button class="gp-button" style="color: white;" type="submit">
           Continue
         </button>
 
       </form>
 
-      <div class="divider-text">OR</div>
+      <div class="divider-text">Don't have an account?</div>
 
       <!-- CREATE -->
-      <button mat-stroked-button class="create-btn" (click)="goToCreateAccount()">
+      <button mat-stroked-button class="gp-button-light" style="color: white;" (click)="goToCreateAccount()">
         Create an Account
       </button>
 

@@ -1,154 +1,77 @@
-<main class="profile-page">
+ <!-- PROFILE -->
+            <section class="profile-card">
 
-  <!-- HEADER -->
-  <mat-toolbar class="toolbar">
-    <span class="brand">greatley poshley</span>
-    <span class="spacer"></span>
-    <button mat-icon-button>
-      <mat-icon>settings</mat-icon>
-    </button>
-  </mat-toolbar>
+                <div class="card-header">
+                    <div>
+                        <h2>User Information</h2>
+                        <p class="sub">Manage your details</p>
+                    </div>
 
-  <section class="main-layout">
+                    <button mat-stroked-button color="primary" style="color: white;" class="gp-button"
+                        (click)="openEditDialog()">
+                        <mat-icon>edit</mat-icon>
+                        Edit
+                    </button>
+                </div>
 
-    <div class="left-rail">
-      <div class="vertical-line"></div>
-    </div>
+                <div class="profile-content">
 
-    <div class="content-area">
+                    <div class="avatar-wrapper">
+                        <img *ngIf="user.image; else emptyAvatar" [src]="user.image" class="avatar-img" />
+                        <ng-template #emptyAvatar>
+                            <div class="avatar">
+                                <mat-icon>person</mat-icon>
+                            </div>
+                        </ng-template>
+                    </div>
 
-      <!-- HERO -->
-      <section class="org-hero">
+                    <div>
+                        <h3>{{ user.name }}</h3>
+                        <p>{{ user.email }}</p>
+                        <p>{{ user.phone }}</p>
+                    </div>
 
-        <div class="org-left">
-          <div class="org-avatar">
-            {{ organisation.title?.charAt(0) }}
-          </div>
+                </div>
 
-          <div>
-            <h2 class="org-title-lg">{{ organisation.title }}</h2>
-            <p class="org-desc-lg">{{ organisation.description }}</p>
-          </div>
-        </div>
+            </section>
 
-        <div class="org-actions">
-          <button mat-raised-button color="primary" (click)="createUser()" style="margin-right: 20px;">+ Create User</button>
-          <button mat-stroked-button (click)="createTeam()">+ Create Team</button>
-        </div>
+            <!-- ORGS -->
+            <section class="org-section">
 
-      </section>
+                <h2>Your Organisations</h2>
 
-      <section class="org-layout">
+                <div class="org-table">
 
-        <!-- SIDEBAR -->
-        <div class="org-side-nav">
-          <div class="nav-item" [class.active]="activeTab==='overview'" (click)="setTab('overview')">
-            <mat-icon>insights</mat-icon> Overview
-          </div>
+                    <div class="org-header">
+                        <span>Name</span>
+                        <span>Description</span>
+                        <span>Contact</span>
+                        <span></span>
+                    </div>
 
-          <div class="nav-item" [class.active]="activeTab==='teams'" (click)="setTab('teams')">
-            <mat-icon>groups</mat-icon> Teams
-          </div>
+                    <div class="org-row" *ngFor="let org of (organisations$ | async)"
+                        (click)="goToOrganisation(org.id)">
 
-          <div class="nav-item" [class.active]="activeTab==='users'" (click)="setTab('users')">
-            <mat-icon>person</mat-icon> Users
-          </div>
-        </div>
+                        <div class="org-name">
+                            <div class="org-icon">
+                                {{ org.title?.charAt(0) }}
+                            </div>
+                            {{ org.title }}
+                        </div>
 
-        <!-- CONTENT -->
-        <div class="org-content">
+                        <div>{{ org.description || '-' }}</div>
 
-          <!-- OVERVIEW -->
-          <div *ngIf="activeTab==='overview'" class="section-box">
-            <h1 class="section-heading">Overview</h1>
+                        <div class="org-contact">
+                            <div>{{ org.email }}</div>
+                            <div>{{ org.phone }}</div>
+                        </div>
 
-            <div class="insight-grid">
-              <div class="insight-card">
-                <h4>Total Users</h4>
-                <h2>{{ users.length }}</h2>
-              </div>
+                        <button mat-icon-button (click)="goToOrganisation(org.id); $event.stopPropagation()">
+                            <mat-icon>arrow_forward</mat-icon>
+                        </button>
 
-              <div class="insight-card">
-                <h4>Total Teams</h4>
-                <h2>{{ teams.length }}</h2>
-              </div>
-            </div>
-          </div>
+                    </div>
 
-          <!-- TEAMS -->
-          <div *ngIf="activeTab==='teams'" class="section-box">
-            <h1 class="section-heading">Teams</h1>
+                </div>
 
-            <div class="team-grid">
-              <div class="team-card"
-                   *ngFor="let team of teams"
-                   (click)="openTeam(team)">
-                <div class="team-icon">{{ team.name.charAt(0) }}</div>
-                <h4>{{ team.name }}</h4>
-                <p class="team-meta">Click to view users</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- USERS -->
-          <div *ngIf="activeTab==='users'" class="section-box">
-
-            <h1 class="section-heading">Users</h1>
-
-            <!-- SEARCH -->
-            <div class="gmail-search">
-              <mat-icon>search</mat-icon>
-              <input [(ngModel)]="searchText" placeholder="Search users..." />
-            </div>
-
-            <!-- TEAM FILTER -->
-            <div *ngIf="selectedTeam" class="team-filter">
-              <span>Team: {{ selectedTeam.name }}</span>
-              <button mat-button (click)="clearTeamFilter()">Clear</button>
-            </div>
-
-            <!-- HEADER -->
-            <div class="user-header">
-              <span>Name</span>
-              <span>Email</span>
-              <span></span>
-            </div>
-
-            <!-- ROW -->
-            <div class="user-row"
-                 *ngFor="let user of paginatedUsers"
-                 (click)="openUser(user)">
-
-              <div class="user-left">
-                <div class="user-avatar">{{ user.name.charAt(0) }}</div>
-                <span class="user-name">{{ user.name }}</span>
-              </div>
-
-              <div class="user-email">{{ user.email }}</div>
-
-              <div class="user-action">
-                <button mat-icon-button (click)="openUser(user); $event.stopPropagation()">
-                  <mat-icon>open_in_new</mat-icon>
-                </button>
-              </div>
-
-            </div>
-
-            <!-- PAGINATION -->
-            <div class="pagination" *ngIf="filteredUsers.length > pageSize">
-              <button mat-button (click)="prevPage()" [disabled]="currentPage===1">Prev</button>
-              <span>{{ currentPage }} / {{ totalPages }}</span>
-              <button mat-button (click)="nextPage()" [disabled]="currentPage===totalPages">Next</button>
-            </div>
-
-          </div>
-
-        </div>
-
-      </section>
-
-    </div>
-
-  </section>
-
-</main>
+            </section>
