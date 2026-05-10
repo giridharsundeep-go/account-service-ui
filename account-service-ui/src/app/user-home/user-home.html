@@ -30,47 +30,35 @@
             <div class="side-section">
                 <p class="side-title">Applications</p>
 
-               <div class="side-item"
-     [class.active]="activeMenu==='create'"
-     (click)="setActive('create')">
-  <mat-icon>add_business</mat-icon>
-  <span>Create Org</span>
-</div>
+                <div class="side-item" [class.active]="activeMenu==='create'" (click)="setActive('create')">
+                    <mat-icon>add_business</mat-icon>
+                    <span>Organisations</span>
+                </div>
 
-<div class="side-item"
-     [class.active]="activeMenu==='dashboard'"
-     (click)="setActive('dashboard')">
-  <mat-icon>dashboard</mat-icon>
-  <span>Dashboard</span>
-</div>
+                <div class="side-item" [class.active]="activeMenu==='dashboard'" (click)="setActive('dashboard')">
+                    <mat-icon>dashboard</mat-icon>
+                    <span>Dashboard</span>
+                </div>
 
-<div class="side-item"
-     [class.active]="activeMenu==='roles'"
-     (click)="setActive('roles')">
-  <mat-icon>badge</mat-icon>
-  <span>Roles</span>
-</div>
+                <div class="side-item" [class.active]="activeMenu==='roles'" (click)="setActive('roles')">
+                    <mat-icon>badge</mat-icon>
+                    <span>Roles</span>
+                </div>
 
-<div class="side-item"
-     [class.active]="activeMenu==='users'"
-     (click)="setActive('users')">
-  <mat-icon>person</mat-icon>
-  <span>Users</span>
-</div>
+                <div class="side-item" [class.active]="activeMenu==='users'" (click)="setActive('users')">
+                    <mat-icon>person</mat-icon>
+                    <span>Users</span>
+                </div>
 
-<div class="side-item"
-     [class.active]="activeMenu==='teams'"
-     (click)="setActive('teams')">
-  <mat-icon>groups</mat-icon>
-  <span>Teams</span>
-</div>
+                <div class="side-item" [class.active]="activeMenu==='teams'" (click)="setActive('teams')">
+                    <mat-icon>groups</mat-icon>
+                    <span>Teams</span>
+                </div>
 
-<div class="side-item"
-     [class.active]="activeMenu==='projects'"
-     (click)="setActive('projects')">
-  <mat-icon>folder</mat-icon>
-  <span>Projects</span>
-</div>
+                <div class="side-item" [class.active]="activeMenu==='projects'" (click)="setActive('projects')">
+                    <mat-icon>folder</mat-icon>
+                    <span>Projects</span>
+                </div>
             </div>
 
         </aside>
@@ -78,17 +66,17 @@
         <!-- ✅ MAIN CONTENT -->
         <div class="content-area">
 
-           <div class="content-area">
+            <div class="content-area">
 
-  <!-- CREATE ORG -->
-  <app-organisation *ngIf="activeMenu === 'create'"></app-organisation>
-  <app-dashboard *ngIf="activeMenu === 'dashboard'"></app-dashboard>
-  <app-roles *ngIf="activeMenu === 'roles'"></app-roles>
-  <app-users *ngIf="activeMenu === 'users'"></app-users>
-  <app-teams *ngIf="activeMenu === 'teams'"></app-teams>
-  <app-projects *ngIf="activeMenu === 'projects'"></app-projects>
+                <!-- CREATE ORG -->
+                <app-organisation *ngIf="activeMenu === 'create'"></app-organisation>
+                <app-dashboard *ngIf="activeMenu === 'dashboard'"></app-dashboard>
+                <app-roles *ngIf="activeMenu === 'roles'"></app-roles>
+                <app-users *ngIf="activeMenu === 'users'"></app-users>
+                <app-teams *ngIf="activeMenu === 'teams'"></app-teams>
+                <app-projects *ngIf="activeMenu === 'projects'"></app-projects>
 
-</div>
+            </div>
 
         </div>
 

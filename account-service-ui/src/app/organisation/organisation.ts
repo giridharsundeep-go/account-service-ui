@@ -50,7 +50,7 @@ export class Organisation implements OnInit {
     if (!userId) return;
 
     this.organisations$ = this.http.get<any>(
-      `${this.baseUrl}/organisations/get`,
+      `${this.baseUrl}/organisation/get`,
       {
         headers: this.auth.getAuthHeaders()
       }

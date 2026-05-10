@@ -28,6 +28,7 @@ export class CreateOrgDialog {
   email: string = '';
   phone: string = '';
   organisationDescription: string = '';
+  address: string = '';
 
   loading = false;
   errorMessage = '';
@@ -43,6 +44,7 @@ export class CreateOrgDialog {
       this.email = data.email || '';
       this.phone = data.phone || '';
       this.organisationDescription = data.organisationDescription || '';
+      this.address = data.address;
     }
   }
 
@@ -58,6 +60,7 @@ export class CreateOrgDialog {
       description: this.organisationDescription,
       email: this.email,
       phone: this.phone,
+      address: this.address,
       user_id : localStorage.getItem('user')
     };
 

@@ -1,77 +1,93 @@
- <!-- PROFILE -->
-            <section class="profile-card">
+<!-- PROFILE -->
+<section class="profile-card">
 
-                <div class="card-header">
-                    <div>
-                        <h2>User Information</h2>
-                        <p class="sub">Manage your details</p>
-                    </div>
+    <div class="card-header">
+        <div>
+            <h2>User Information</h2>
+            <p class="sub">Manage your details</p>
+        </div>
 
-                    <button mat-stroked-button color="primary" style="color: white;" class="gp-button"
-                        (click)="openEditDialog()">
-                        <mat-icon>edit</mat-icon>
-                        Edit
-                    </button>
+        <button mat-stroked-button color="primary" style="color: white;" class="gp-button" (click)="openEditDialog()">
+            <mat-icon>edit</mat-icon>
+            Edit
+        </button>
+    </div>
+
+    <div class="profile-content">
+
+        <div class="avatar-wrapper">
+            <img *ngIf="user.image; else emptyAvatar" [src]="user.image" class="avatar-img" />
+            <ng-template #emptyAvatar>
+                <div class="avatar">
+                    <mat-icon>person</mat-icon>
+                </div>
+            </ng-template>
+        </div>
+
+        <div>
+            <h3>{{ user.name }}</h3>
+            <p>{{ user.email }}</p>
+            <p>{{ user.phone }}</p>
+        </div>
+
+    </div>
+
+</section>
+
+<section class="org-section">
+
+    <h2>Your Organisations</h2>
+
+    <div class="org-grid">
+
+        <div class="org-card" *ngFor="let org of (organisations$ | async)" (click)="openOrgCreateDialog()">
+
+            <!-- HEADER -->
+            <div class="org-card-header">
+
+                <div class="org-logo">
+                    <img *ngIf="org.logo; else fallbackLogo" [src]="org.logo" />
+                    <ng-template #fallbackLogo>
+                        {{ org.title?.charAt(0) }}
+                    </ng-template>
                 </div>
 
-                <div class="profile-content">
+                <button mat-icon-button (click)="openOrgCreateDialog(); $event.stopPropagation()">
+                    <mat-icon>arrow_forward</mat-icon>
+                </button>
 
-                    <div class="avatar-wrapper">
-                        <img *ngIf="user.image; else emptyAvatar" [src]="user.image" class="avatar-img" />
-                        <ng-template #emptyAvatar>
-                            <div class="avatar">
-                                <mat-icon>person</mat-icon>
-                            </div>
-                        </ng-template>
-                    </div>
+            </div>
 
-                    <div>
-                        <h3>{{ user.name }}</h3>
-                        <p>{{ user.email }}</p>
-                        <p>{{ user.phone }}</p>
-                    </div>
+            <!-- BODY -->
+            <div class="org-card-body">
 
+                <h3 class="org-title">{{ org.title }}</h3>
+                <p class="org-desc">{{ org.description || 'No description' }}</p>
+
+                <div class="org-meta">
+                    <div>📧 {{ org.email || '-' }}</div>
+                    <div>📞 {{ org.phone || '-' }}</div>
                 </div>
 
-            </section>
-
-            <!-- ORGS -->
-            <section class="org-section">
-
-                <h2>Your Organisations</h2>
-
-                <div class="org-table">
-
-                    <div class="org-header">
-                        <span>Name</span>
-                        <span>Description</span>
-                        <span>Contact</span>
-                        <span></span>
-                    </div>
-
-                    <div class="org-row" *ngFor="let org of (organisations$ | async)"
-                        (click)="goToOrganisation(org.id)">
-
-                        <div class="org-name">
-                            <div class="org-icon">
-                                {{ org.title?.charAt(0) }}
-                            </div>
-                            {{ org.title }}
-                        </div>
-
-                        <div>{{ org.description || '-' }}</div>
-
-                        <div class="org-contact">
-                            <div>{{ org.email }}</div>
-                            <div>{{ org.phone }}</div>
-                        </div>
-
-                        <button mat-icon-button (click)="goToOrganisation(org.id); $event.stopPropagation()">
-                            <mat-icon>arrow_forward</mat-icon>
-                        </button>
-
-                    </div>
-
+                <div class="org-address">
+                    📍 {{ org.address || 'Headquarters not set' }}
                 </div>
 
-            </section>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- EMPTY -->
+    <div *ngIf="!(organisations$ | async)?.length" class="empty-state">
+        <mat-icon>business</mat-icon>
+        <p>No organisations found</p>
+        <button mat-stroked-button color="primary" style="color: white;" class="gp-button"
+            (click)="openOrgCreateDialog()">
+            <mat-icon>create</mat-icon>
+            create
+        </button>
+    </div>
+
+</section>

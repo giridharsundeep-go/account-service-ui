@@ -1,1 +1,109 @@
-<p>users works!</p>
+<!-- 🔍 TOP BAR -->
+<section class="top-bar">
+  <h2>Users</h2>
+
+  <div class="right-actions">
+    <input
+      type="text"
+      [(ngModel)]="searchTerm"
+      placeholder="Search users..."
+    />
+
+    <button mat-raised-button color="primary"
+            (click)="resetForm(); editingUserId = 0">
+      + Add User
+    </button>
+  </div>
+</section>
+
+
+<!-- ➕ CREATE / EDIT PANEL -->
+<mat-accordion>
+
+  <mat-expansion-panel
+    [expanded]="editingUserId !== null"
+    class="user-panel">
+
+    <mat-expansion-panel-header>
+      <mat-panel-title>
+        {{ editingUserId ? 'Edit User' : 'Create New User' }}
+      </mat-panel-title>
+    </mat-expansion-panel-header>
+
+    <!-- ✅ ALWAYS VISIBLE FORM -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Name</mat-label>
+      <input matInput [(ngModel)]="name" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Email</mat-label>
+      <input matInput [(ngModel)]="email" />
+    </mat-form-field>
+
+    <div class="form-actions">
+      <button mat-raised-button color="primary"
+              (click)="saveUser()"
+              [disabled]="loading || !name.trim() || !email.trim()">
+        {{ editingUserId ? 'Update User' : 'Create User' }}
+      </button>
+
+      <button mat-button
+              *ngIf="editingUserId !== null"
+              (click)="resetForm()">
+        Cancel
+      </button>
+    </div>
+
+  </mat-expansion-panel>
+
+</mat-accordion>
+
+
+<!-- 📋 TABLE -->
+<section class="table-container">
+
+  <table class="users-table">
+
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th style="width: 180px;">Actions</th>
+      </tr>
+    </thead>
+
+    <tbody *ngIf="users$ | async as users">
+
+      <!-- EMPTY -->
+      <tr *ngIf="filterUsers(users).length === 0">
+        <td colspan="3" class="empty">No users found</td>
+      </tr>
+
+      <!-- DATA -->
+      <tr *ngFor="let user of filterUsers(users)">
+
+        <td>{{ user.name }}</td>
+        <td>{{ user.email }}</td>
+
+        <td class="actions">
+
+          <button mat-button color="primary"
+                  (click)="editUser(user)">
+            Edit
+          </button>
+
+          <button mat-button color="warn"
+                  (click)="deleteUser(user.id)">
+            Delete
+          </button>
+
+        </td>
+
+      </tr>
+
+    </tbody>
+
+  </table>
+
+</section>

@@ -478,3 +478,100 @@ html, body {
   font-size: 13px;
   color: #666;
 }
+
+/* GRID */
+.org-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+/* CARD */
+.org-card {
+  background: white;
+  border-radius: 16px;
+  padding: 18px;
+
+  cursor: pointer;
+  transition: 0.25s;
+  width: 100%;
+  border: 1px solid #f1f1f1;
+}
+
+.org-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+}
+
+/* HEADER */
+.org-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* LOGO */
+.org-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+
+  background: linear-gradient(135deg, #2c0995, #00c6ff);
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-weight: bold;
+  font-size: 18px;
+
+  overflow: hidden;
+}
+
+.org-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* BODY */
+.org-card-body {
+  margin-top: 15px;
+}
+
+.org-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 5px 0;
+}
+
+.org-desc {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+/* META */
+.org-meta {
+  font-size: 13px;
+  color: #444;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ADDRESS */
+.org-address {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #777;
+}
+
+/* EMPTY */
+.empty-state {
+  text-align: center;
+  margin-top: 30px;
+  color: gray;
+}

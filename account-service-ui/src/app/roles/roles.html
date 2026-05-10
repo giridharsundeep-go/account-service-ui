@@ -1,1 +1,76 @@
-<p>roles works!</p>
+<section class="profile-card">
+  <h2>Roles</h2>
+
+  <!-- FORM -->
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>Role Name</mat-label>
+    <input matInput [(ngModel)]="roleName" />
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>Description</mat-label>
+    <textarea matInput rows="3" [(ngModel)]="roleDesc"></textarea>
+  </mat-form-field>
+
+  <div class="form-actions">
+    <button mat-raised-button color="primary"
+            (click)="saveRole()"
+            [disabled]="loading">
+      {{ editingRoleId ? 'Update' : 'Create' }}
+    </button>
+
+    <button mat-button *ngIf="editingRoleId" (click)="resetForm()">
+      Cancel
+    </button>
+  </div>
+</section>
+
+
+<!-- TABLE -->
+<section class="table-container">
+
+  <!-- 🔍 SEARCH BAR -->
+  <div class="search-box">
+    <input
+      type="text"
+      [(ngModel)]="searchTerm"
+      placeholder="Search roles..."
+    />
+  </div>
+
+
+  <table class="roles-table">
+
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+
+    <tbody *ngIf="roles$ | async as roles">
+
+      <!-- EMPTY -->
+      <tr *ngIf="filterRoles(roles).length === 0">
+        <td colspan="3" class="empty">No roles found</td>
+      </tr>
+
+      <!-- DATA -->
+      <tr *ngFor="let role of filterRoles(roles)">
+
+        <td>{{ role.name }}</td>
+        <td>{{ role.description }}</td>
+
+        <td>
+          <button mat-button color="primary" (click)="editRole(role)">Edit</button>
+          <button mat-button color="warn" (click)="deleteRole(role.id)">Delete</button>
+        </td>
+
+      </tr>
+
+    </tbody>
+
+  </table>
+
+</section>

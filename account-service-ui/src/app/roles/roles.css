@@ -1,0 +1,248 @@
+/* FULL WIDTH FORM */
+.full-width {
+  width: 100%;
+}
+
+/* 🔥 PRIMARY BUTTON */
+.gp-button {
+  width: 100px;
+  height: 52px;
+  border-radius: 30px;
+  background-color: #001c51;
+  color: white;
+  font-size: 16px;
+}
+
+/* SECONDARY BUTTON */
+.gp-button-light {
+  width: 100%;
+  height: 52px;
+  border-radius: 30px;
+  background-color: #2678bf;
+  color: white;
+  font-size: 16px;
+}
+
+/* 👤 PROFILE CARD */
+.profile-card {
+  background: white;
+  border-radius: 16px;
+  padding-top: 20px;
+  margin-bottom: 25px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* FORM */
+.role-form {
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* ACTIONS */
+.form-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* TABLE ACTIONS */
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* EMPTY */
+.empty-state {
+  text-align: center;
+  padding: 20px;
+  color: gray;
+}
+
+/* 🏢 ORG TABLE */
+.org-table {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  padding-top: 20px;
+
+  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+}
+
+.org-header,
+.org-row {
+  display: grid;
+  grid-template-columns: 2fr 3fr 2fr 60px;
+  padding: 14px 18px;
+}
+
+.org-header {
+  font-weight: 600;
+  background: #ffffff;
+}
+
+.org-row {
+  border-top: 1px solid #f1f1f1;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.org-row:hover {
+  background: #2678bf;
+  color: white;
+}
+
+/* NAME */
+.org-name {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.org-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+
+  background: linear-gradient(135deg, #2c0995, #00c6ff);
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* CONTACT */
+.org-contact {
+  font-size: 13px;
+  color: #666;
+}
+
+.table-container {
+  margin-top: 20px;
+}
+
+.roles-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.roles-table th,
+.roles-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.roles-table th {
+  background: #f5f5f5;
+  font-weight: 600;
+}
+
+.roles-table tr:hover {
+  background: #fafafa;
+}
+
+.actions button {
+  margin-right: 8px;
+}
+
+.empty {
+  text-align: center;
+  padding: 20px;
+  color: #888;
+}
+
+.profile-card {
+  margin-bottom: 20px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.profile-card {
+  margin-bottom: 20px;
+}
+
+.full-width {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.form-actions {
+  margin-top: 10px;
+}
+
+.table-container {
+  margin-top: 20px;
+}
+
+.roles-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.roles-table th,
+.roles-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.roles-table th {
+  background: #f5f5f5;
+  font-weight: 600;
+}
+
+.roles-table tr:hover {
+  background: #fafafa;
+}
+
+.actions button {
+  margin-right: 8px;
+}
+
+.empty {
+  text-align: center;
+  padding: 20px;
+  color: #888;
+}
+
+.search-box {
+  margin-bottom: 15px;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.gp-button {
+  width: 100px;
+  height: 52px;
+  border-radius: 30px;
+  background-color: #001c51;
+  color: white;
+  font-size: 16px;
+}
+
+/* SECONDARY BUTTON */
+.gp-button-light {
+  width: 100%;
+  height: 52px;
+  border-radius: 30px;
+  background-color: #2678bf;
+  color: white;
+  font-size: 16px;
+}
