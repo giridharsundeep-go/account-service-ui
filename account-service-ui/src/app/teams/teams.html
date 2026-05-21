@@ -1,1 +1,188 @@
-<p>teams works!</p>
+<!-- SAAS DASHBOARD CONTAINER -->
+<div class="saas-container">
+  
+  <!-- PREMIUM TOP HEADER BAR -->
+  <header class="saas-header">
+    <div class="header-title-block">
+      <h2>Teams Management</h2>
+      <p class="header-subtitle">Create distinct workspace teams, manage permissions, and assign cross-functional members.</p>
+    </div>
+
+    <div class="header-actions">
+      <div class="search-box-wrapper">
+        <span class="search-icon"></span>
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          placeholder="Filter workspace teams..."
+        />
+      </div>
+
+      <button
+        mat-stroked-button
+        class="gp-button" style="color: white;width: 300px;"
+        (click)="resetForm(); editingTeamId = 0">
+        <span class="btn-icon">+</span> Create New Team
+      </button>
+    </div>
+  </header>
+
+  <!-- COLLAPSIBLE CREATE / EDIT DRAWER PANEL -->
+  <div class="form-drawer-wrapper" [class.open]="editingTeamId !== null">
+    <div class="drawer-card">
+      <div class="drawer-header">
+        <h3>{{ editingTeamId ? 'Modify Workspace Team' : 'Configure New Team Profile' }}</h3>
+        <p>Define teams populate initial core members.</p>
+      </div>
+
+      <div class="drawer-body">
+        <!-- TEAM NAME -->
+        <mat-form-field appearance="outline" class="saas-form-field">
+          <mat-label>Team Name</mat-label>
+          <input matInput [(ngModel)]="name" placeholder="e.g., Senior Engineering Squad" />
+        </mat-form-field>
+
+        <!-- DESCRIPTION -->
+        <mat-form-field appearance="outline" class="saas-form-field">
+          <mat-label>Team Purpose / Description</mat-label>
+          <textarea matInput rows="3" [(ngModel)]="description" placeholder="Describe scope responsibilities..."></textarea>
+        </mat-form-field>
+
+        <!-- MEMBERS SELECTION (POPUP MODAL + CHIPS) -->
+        <div class="saas-members-section">
+          <div class="section-flex-header">
+            <div>
+              <h4>Assigned members</h4>
+              <p class="meta-desc">Users provisioned to this functional team</p>
+            </div>
+            <button 
+              type="button" 
+              mat-stroked-button 
+              class="btn-stroked-saas"
+              (click)="openUserSelectModal()">
+              Add Members
+            </button>
+          </div>
+
+          <!-- CHIPS ATTACHMENT BOX -->
+          <div class="saas-chips-box">
+            <span *ngIf="selectedUsers.length === 0" class="blank-info-text">
+              No active workspace members assigned yet.
+            </span>
+            
+            <mat-chip-set>
+              <mat-chip-row 
+                *ngFor="let user of getSelectedUserObjects()" 
+                (removed)="removeUserChip(user.id)"
+                class="saas-custom-chip">
+                {{ user.name }}
+                <button matChipRemove class="chip-remove-x">&times;</button>
+              </mat-chip-row>
+            </mat-chip-set>
+          </div>
+        </div>
+      </div>
+
+      <div class="drawer-footer">
+        <button
+          mat-raised-button
+          class="btn-primary-saas"
+          (click)="saveTeam()"
+          [disabled]="loading || !name.trim() || selectedUsers.length === 0">
+          {{ loading ? 'Saving Changes...' : (editingTeamId ? 'Update Configurations' : 'Finalize & Build Team') }}
+        </button>
+
+        <button mat-button class="btn-flat-saas" (click)="resetForm()">
+          Discard
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODERN SAAS GRID PLATFORM (REPLACES OUTDATED TABLE) -->
+  <main class="dashboard-workspace">
+    <div class="grid-layout-header">
+      <h3> Active Teams</h3>
+    </div>
+
+   <!-- UPDATED COHESIVE EMPTY LOOK STATE -->
+    <ng-container *ngIf="teams$ | async as resolvedTeams">
+      <div class="saas-empty-state" *ngIf="filterTeams(resolvedTeams).length === 0">
+        <div class="empty-vector">👥</div>
+        <h4>No active groups discovered</h4>
+        <p>Refine your lookup criteria or begin assembling a new operations cluster.</p>
+      </div>
+    </ng-container>
+    <!-- CARDS GENERATION GRID -->
+    <div class="saas-team-grid" *ngIf="teams$ | async as teams">
+      <article class="team-saas-card" *ngFor="let team of filterTeams(teams)">
+        
+        <div class="card-main-details">
+          <div class="card-upper-row">
+            <div class="badge-title-group">
+              <span class="team-avatar-icon">📦</span>
+              <div class="title-meta">
+                <h4>{{ team.name }}</h4>
+                
+              </div>
+            </div>
+            
+            <!-- SYSTEM MASTER CRUD ACTIONS -->
+            <div class="card-action-menu">
+              <button mat-button class="action-btn edit" (click)="editTeam(team)">Edit</button>
+              <button mat-button class="action-btn delete" (click)="deleteTeam(team.id)">Delete</button>
+            </div>
+          </div>
+
+          <p class="team-body-description">
+            {{ team.description || 'No descriptive contextual scope documentation configured for this workspace team.' }}
+          </p>
+        </div>
+
+        <!-- MANAGED MEMBERS ROSTER COMPONENT (INLINE INDEPENDENT CRUD) -->
+        <section class="card-roster-management">
+          <div class="roster-inner-header">
+            <h5>Active Members ({{ team.members?.length || 0 }})</h5>
+            
+            <!-- FAST INLINE CREATE ACTION -->
+            <div class="fast-add-member-dropdown">
+              <!--select #userSelector (change)="addMemberToTeamInline(team.id, +userSelector.value); userSelector.value = ''">
+                <option value="">+ Provision Member</option>
+                <option *ngFor="let user of allUsers" [value]="user.id">
+                  {{ user.name }} ({{ user.role_name || 'Staff' }})
+                </option>
+              </select-->
+            </div>
+          </div>
+
+          <!-- LISTING ROSTER ITERATIONS (INLINE READ & DELETE) -->
+          <div class="roster-scroller-viewport">
+            <p class="no-seats-hint" *ngIf="!team.members || team.members.length === 0">
+              No staff attached to this workspace team.
+            </p>
+
+            <ul class="roster-interactive-list">
+              <li *ngFor="let member of team.members" class="roster-member-item">
+                <div class="member-identity-block">
+                  <div class="mini-avatar">{{ member.name?.charAt(0) || 'U' }}</div>
+                  <div class="identity-text">
+                    <span class="m-name">{{ member.name }}</span>
+                    <span class="m-role">{{ member.role_name || 'Workspace Staff' }}</span>
+                  </div>
+                </div>
+                <!-- INLINE DELETE MEMBER SEAT -->
+                <button 
+                  class="btn-remove-member-inline" 
+                  title="Revoke Member Workspace Seats"
+                  (click)="removeMemberFromTeamInline(team.id, member.id)">
+                  
+                </button>
+              </li>
+            </ul>
+          </div>
+        </section>
+
+      </article>
+    </div>
+  </main>
+</div>
