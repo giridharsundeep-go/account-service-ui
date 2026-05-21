@@ -9,14 +9,7 @@
     </div>
 
     <div class="header-actions">
-      <div class="search-box-wrapper">
-        <span class="search-icon"></span>
-        <input
-          type="text"
-          [(ngModel)]="searchTerm"
-          placeholder="Filter workspace teams..."
-        />
-      </div>
+      
 
       <button
         mat-stroked-button
@@ -85,14 +78,14 @@
 
       <div class="drawer-footer">
         <button
-          mat-raised-button
-          class="btn-primary-saas"
+          mat-stroked-button
+          class="gp-button-light" style="color: white;"
           (click)="saveTeam()"
           [disabled]="loading || !name.trim() || selectedUsers.length === 0">
           {{ loading ? 'Saving Changes...' : (editingTeamId ? 'Update Configurations' : 'Finalize & Build Team') }}
         </button>
 
-        <button mat-button class="btn-flat-saas" (click)="resetForm()">
+        <button mat-stroked-button class="gp-button-plain" style="color: black;" (click)="resetForm()">
           Discard
         </button>
       </div>
@@ -104,6 +97,15 @@
     <div class="grid-layout-header">
       <h3> Active Teams</h3>
     </div>
+
+    <div class="search-box-wrapper">
+        <span class="search-icon"></span>
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          placeholder="Filter workspace teams..."
+        />
+      </div>
 
    <!-- UPDATED COHESIVE EMPTY LOOK STATE -->
     <ng-container *ngIf="teams$ | async as resolvedTeams">
@@ -129,8 +131,8 @@
             
             <!-- SYSTEM MASTER CRUD ACTIONS -->
             <div class="card-action-menu">
-              <button mat-button class="action-btn edit" (click)="editTeam(team)">Edit</button>
-              <button mat-button class="action-btn delete" (click)="deleteTeam(team.id)">Delete</button>
+              <button mat-stroked-button class="gp-button-light" style="color: white;width: 100px;height: 40px;"  (click)="editTeam(team)">Edit</button>
+              <button mat-stroked-button class="gp-button-plain" style="color: black;width: 100px;height: 40px;" (click)="deleteTeam(team.id)">Delete</button>
             </div>
           </div>
 

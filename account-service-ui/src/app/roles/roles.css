@@ -1,11 +1,46 @@
-/* FULL WIDTH FORM */
-.full-width {
-  width: 100%;
+/* ==========================================================================
+   GLOBAL DESIGN VARIABLES & RESET DEFAULTS
+   ========================================================================== */
+:root {
+  --saas-primary: #4f46e5;
+  --saas-primary-hover: #4338ca;
+  --saas-bg: #f8fafc;
+  --saas-surface: #ffffff;
+  --saas-border: #e2e8f0;
+  --saas-text-main: #0f172a;
+  --saas-text-muted: #64748b;
+  --saas-danger: #ef4444;
+  --saas-danger-light: #fef2f2;
+  --saas-radius: 12px;
+  --saas-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+}
+
+.saas-container {
+  background-color: var(--saas-bg);
+  min-height: 100vh;
+  padding-top: 40px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: var(--saas-text-main);
+  box-sizing: border-box;
+}
+
+/* ==========================================================================
+   HEADER SECTION LAYOUT
+   ========================================================================== */
+.saas-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin-bottom: 32px;
+  border-bottom: 1px solid var(--saas-border);
+  padding-bottom: 24px;
 }
 
 /* 🔥 PRIMARY BUTTON */
 .gp-button {
-  width: 100px;
+  width: 100%;
   height: 52px;
   border-radius: 30px;
   background-color: #001c51;
@@ -15,7 +50,7 @@
 
 /* SECONDARY BUTTON */
 .gp-button-light {
-  width: 100%;
+  width: 300px;
   height: 52px;
   border-radius: 30px;
   background-color: #2678bf;
@@ -23,226 +58,311 @@
   font-size: 16px;
 }
 
-/* 👤 PROFILE CARD */
-.profile-card {
-  background: white;
-  border-radius: 16px;
-  padding-top: 20px;
-  margin-bottom: 25px;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-/* FORM */
-.role-form {
-  margin-top: 15px;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-/* ACTIONS */
-.form-actions {
-  display: flex;
-  gap: 10px;
-}
-
-/* TABLE ACTIONS */
-.actions {
-  display: flex;
-  gap: 10px;
-}
-
-/* EMPTY */
-.empty-state {
-  text-align: center;
-  padding: 20px;
-  color: gray;
-}
-
-/* 🏢 ORG TABLE */
-.org-table {
-  background: white;
-  border-radius: 16px;
-  overflow: hidden;
-  padding-top: 20px;
-
-  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
-}
-
-.org-header,
-.org-row {
-  display: grid;
-  grid-template-columns: 2fr 3fr 2fr 60px;
-  padding: 14px 18px;
-}
-
-.org-header {
-  font-weight: 600;
-  background: #ffffff;
-}
-
-.org-row {
-  border-top: 1px solid #f1f1f1;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.org-row:hover {
-  background: #2678bf;
+.gp-button-plain {
+  width: 300px;
+  height: 52px;
+  border-radius: 30px;
+  border: 1px solid rgb(189, 189, 189);
+  background-color: #ffffff;
   color: white;
+  font-size: 16px;
 }
 
-/* NAME */
-.org-name {
+.header-title-block h2 {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 4px 0;
+  color: var(--saas-text-main);
+}
+
+.header-title-block .header-subtitle {
+  font-size: 14px;
+  color: var(--saas-text-muted);
+  margin: 0;
+  padding-top: 10px;
+}
+
+.header-actions {
   display: flex;
-  gap: 10px;
   align-items: center;
+  gap: 16px;
 }
 
-.org-icon {
-  width: 30px;
-  height: 30px;
+.search-box-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border: 1px solid rgb(189, 188, 188);
+  border-radius: 20px;
+}
+
+.search-box-wrapper input {
+  width: 280px;
+  padding: 10px 14px 10px 38px;
+  background-color: var(--saas-surface);
+  border: 1px solid var(--saas-border);
   border-radius: 8px;
-
-  background: linear-gradient(135deg, #2c0995, #00c6ff);
-  color: white;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+  color: var(--saas-text-main);
 }
 
-/* CONTACT */
-.org-contact {
-  font-size: 13px;
-  color: #666;
+.search-box-wrapper input:focus {
+  border-color: var(--saas-primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
-.table-container {
-  margin-top: 20px;
-}
-
-.roles-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: #fff;
-}
-
-.roles-table th,
-.roles-table td {
-  padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid #ddd;
-}
-
-.roles-table th {
-  background: #f5f5f5;
-  font-weight: 600;
-}
-
-.roles-table tr:hover {
-  background: #fafafa;
-}
-
-.actions button {
-  margin-right: 8px;
-}
-
-.empty {
-  text-align: center;
-  padding: 20px;
-  color: #888;
-}
-
-.profile-card {
-  margin-bottom: 20px;
-}
-
-.full-width {
-  width: 100%;
-}
-
-.profile-card {
-  margin-bottom: 20px;
-}
-
-.full-width {
-  width: 100%;
-  margin-bottom: 12px;
-}
-
-.form-actions {
-  margin-top: 10px;
-}
-
-.table-container {
-  margin-top: 20px;
-}
-
-.roles-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: #fff;
-}
-
-.roles-table th,
-.roles-table td {
-  padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid #ddd;
-}
-
-.roles-table th {
-  background: #f5f5f5;
-  font-weight: 600;
-}
-
-.roles-table tr:hover {
-  background: #fafafa;
-}
-
-.actions button {
-  margin-right: 8px;
-}
-
-.empty {
-  text-align: center;
-  padding: 20px;
-  color: #888;
-}
-
-.search-box {
-  margin-bottom: 15px;
-}
-
-.search-box input {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+.search-box-wrapper .search-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--saas-text-muted);
   font-size: 14px;
 }
 
-.gp-button {
-  width: 100px;
-  height: 52px;
-  border-radius: 30px;
-  background-color: #001c51;
-  color: white;
-  font-size: 16px;
+/* ==========================================================================
+   SAAS UI COMPONENTS BUTTON SYSTEM
+   ========================================================================== */
+.btn-primary-saas {
+  background-color: var(--saas-primary) !important;
+  color: #ffffff !important;
+  border-radius: 8px !important;
+  padding: 0 20px !important;
+  font-weight: 500 !important;
+  font-size: 14px !important;
+  height: 42px !important;
+  border: none;
+  cursor: pointer;
 }
 
-/* SECONDARY BUTTON */
-.gp-button-light {
+.btn-primary-saas:hover {
+  background-color: var(--saas-primary-hover) !important;
+}
+
+.btn-flat-saas {
+  color: var(--saas-text-muted) !important;
+  font-weight: 500 !important;
+}
+
+/* ==========================================================================
+   CREATION MODAL PANEL FORMS
+   ========================================================================== */
+.form-drawer-wrapper {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-bottom: 0;
+}
+
+.form-drawer-wrapper.open {
+  max-height: 400px;
+  margin-bottom: 32px;
+}
+
+.drawer-card {
+  background-color: var(--saas-surface);
+  border: 1px solid var(--saas-border);
+  border-radius: var(--saas-radius);
+  box-shadow: var(--saas-shadow);
+  padding: 24px;
+}
+
+.drawer-header {
+  margin-bottom: 24px;
+}
+
+.drawer-header h3 {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.drawer-header p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--saas-text-muted);
+}
+
+.form-grid-two-col {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .form-grid-two-col {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
+
+.saas-form-field {
   width: 100%;
-  height: 52px;
-  border-radius: 30px;
-  background-color: #2678bf;
-  color: white;
+  margin-bottom: 6px;
+}
+
+.drawer-footer {
+  display: flex;
+  gap: 12px;
+  border-top: 1px solid var(--saas-border);
+  padding-top: 20px;
+  margin-top: 12px;
+}
+
+/* ==========================================================================
+   STREAMLINED SAAS ROW LIST ARCHITECTURE
+   ========================================================================== */
+.list-layout-header {
+  margin-bottom: 16px;
+}
+
+.list-layout-header h3 {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--saas-text-muted);
+  margin: 0;
+}
+
+.saas-role-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 20px;
+}
+
+.role-list-row {
+  background-color: var(--saas-surface);
+  border: 1px solid var(--saas-border);
+  border-radius: 8px;
+  padding: 16px 24px;
+  display: grid;
+  /* 3 Column Layout Balance: Role Badge | Long Description | Action Buttons */
+  grid-template-columns: 1.5fr 4.5fr 1.5fr;
+  align-items: center;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.role-list-row:hover {
+  background-color: #fafafa;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.list-col {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* Role Custom Badges */
+.saas-role-badge {
+  display: inline-block;
+  font-size: 18px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  background-color: #1a5691;
+  color: #ffffff;
+  
+  /* Force Single Line */
+  white-space: nowrap;       /* Prevents text from breaking onto a new line */
+  overflow: hidden;          /* Hides any overflow text if container gets too tight */
+  text-overflow: ellipsis;   /* Adds '...' if the text is too long for the badge */
+}
+
+.saas-role-badge[data-role="Admin"],
+.saas-role-badge[data-role="Manager"] {
+  background-color: #ecfdf5;
+  color: #065f46;
+}
+
+/* Description Text Ellipsis Protection */
+.description-text {
+  font-size: 15px;
+  color: var(--saas-text-muted);
+  white-space: wrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 40px;
+  padding-left: 200px;
+}
+
+/* Actions Column Alignment */
+.actions-col {
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.action-btn {
+  min-width: unset !important;
+  padding: 4px 12px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  height: 32px !important;
+  border-radius: 6px !important;
+}
+
+.action-btn.edit {
+  color: var(--saas-primary) !important;
+}
+.action-btn.edit:hover {
+  background-color: rgba(79, 70, 229, 0.05) !important;
+}
+
+.action-btn.delete {
+  color: var(--saas-text-muted) !important;
+}
+.action-btn.delete:hover {
+  color: var(--saas-danger) !important;
+  background-color: var(--saas-danger-light) !important;
+}
+
+/* Responsive Structural Collapse */
+@media (max-width: 768px) {
+  .role-list-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 16px;
+  }
+  .description-text {
+    white-space: normal;
+    text-overflow: unset;
+  }
+  .actions-col {
+    justify-content: flex-start;
+    border-top: 1px solid var(--saas-border);
+    padding-top: 10px;
+    margin-top: 4px;
+  }
+}
+
+/* ==========================================================================
+   EMPTY STATE LAYOUT
+   ========================================================================== */
+.saas-empty-state {
+  text-align: center;
+  padding: 60px 24px;
+  background-color: var(--saas-surface);
+  border: 2px dashed var(--saas-border);
+  border-radius: var(--saas-radius);
+  margin-top: 12px;
+}
+
+.empty-vector {
+  font-size: 42px;
+  margin-bottom: 16px;
+}
+
+.saas-empty-state h4 {
+  margin: 0 0 6px 0;
   font-size: 16px;
+  font-weight: 600;
+}
+
+.saas-empty-state p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--saas-text-muted);
 }

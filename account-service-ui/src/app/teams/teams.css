@@ -16,7 +16,7 @@
 
 /* 🔥 PRIMARY BUTTON */
 .gp-button {
-  width: 100px;
+  width: 100%;
   height: 52px;
   border-radius: 30px;
   background-color: #001c51;
@@ -26,10 +26,20 @@
 
 /* SECONDARY BUTTON */
 .gp-button-light {
-  width: 100%;
+  width: 300px;
   height: 52px;
   border-radius: 30px;
   background-color: #2678bf;
+  color: white;
+  font-size: 16px;
+}
+
+.gp-button-plain {
+  width: 300px;
+  height: 52px;
+  border-radius: 30px;
+  border: 1px solid rgb(189, 189, 189);
+  background-color: #ffffff;
   color: white;
   font-size: 16px;
 }
@@ -408,12 +418,13 @@ button[matChipRemove] {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
   gap: 24px;
+  padding-top: 20px;
 }
 
 .team-saas-card {
   background-color: var(--saas-surface);
-  border: 1px solid var(--saas-border);
-  border-radius: var(--saas-radius);
+  border: 1px solid black;
+  border-radius: 20px;
   box-shadow: var(--saas-shadow);
   display: flex;
   flex-direction: column;

@@ -91,10 +91,9 @@ import { MatInputModule } from '@angular/material/input';
   styles: [`
     /* Fixed Page Constraints */
     .dialog-container {
-      display: flex;
-      flex-direction: column;
-      width: 480px;
-      max-width: 100%;
+    
+      width: 100%;
+      height: 100%;
       box-sizing: border-box;
     }
 
@@ -131,8 +130,8 @@ import { MatInputModule } from '@angular/material/input';
     .dialog-content {
       margin: 0 !important;
       padding: 0 24px !important;
-      height: 340px;
-      max-height: 340px;
+      height: 100%;
+      width: 100%;
       overflow-y: auto;
       border-top: 1px solid #f0f0f0;
       border-bottom: 1px solid #f0f0f0;

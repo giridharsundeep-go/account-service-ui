@@ -90,7 +90,7 @@
 .saas-container {
   background-color: var(--saas-bg);
   min-height: 100vh;
-  padding: 32px;
+  padding-top: 40px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   color: var(--saas-text-main);
   box-sizing: border-box;
@@ -122,6 +122,8 @@
   font-size: 14px;
   color: var(--saas-text-muted);
   margin: 0;
+padding-top: 10px;
+
 }
 
 .header-actions {
@@ -134,6 +136,10 @@
   position: relative;
   display: flex;
   align-items: center;
+  width: 100%;
+  border: 1px solid rgb(197, 197, 197);
+  border-radius: 20px;
+  padding-bottom: 0px;
 }
 
 .search-box-wrapper input {
@@ -146,7 +152,38 @@
   outline: none;
   transition: all 0.2s ease;
   color: var(--saas-text-main);
+  width: 100%;
 }
+
+.gp-button {
+  width: 100%;
+  height: 52px;
+  border-radius: 30px;
+  background-color: #001c51;
+  color: white;
+  font-size: 16px;
+}
+
+/* SECONDARY BUTTON */
+.gp-button-light {
+  width: 300px;
+  height: 52px;
+  border-radius: 30px;
+  background-color: #2678bf;
+  color: white;
+  font-size: 16px;
+}
+
+.gp-button-plain {
+  width: 300px;
+  height: 52px;
+  border-radius: 30px;
+  border: 1px solid rgb(189, 189, 189);
+  background-color: #ffffff;
+  color: white;
+  font-size: 16px;
+}
+
 
 .search-box-wrapper input:focus {
   border-color: var(--saas-primary);
@@ -498,6 +535,7 @@
 .saas-user-list {
   display: flex;
   flex-direction: column;
+  padding-top: 20px;
   gap: 10px; /* Separates the rows slightly for distinct breathing room */
 }
 
@@ -507,6 +545,7 @@
   border-radius: 8px;
   padding: 14px 24px;
   display: grid;
+  font-size: 15px;
   /* 4 Column Layout: Identity | Role | Management Hierarchy | Quick Actions */
   grid-template-columns: 2.5fr 1.2fr 2fr 1.2fr;
   align-items: center;
@@ -534,12 +573,12 @@
 }
 
 .user-avatar-initials {
-  width: 38px;
-  height: 38px;
+  width: 45px;
+  height: 45px;
   border-radius: 50%;
   background-color: #e0e7ff;
   color: #4f46e5;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -555,25 +594,30 @@
 
 .identity-meta h4 {
   margin: 0 0 2px 0;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--saas-text-main);
 }
 
 .user-email-text {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--saas-text-muted);
 }
 
 /* Role Badges Adjustment */
 .saas-role-badge {
   display: inline-block;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   padding: 3px 10px;
   border-radius: 9999px;
-  background-color: #f1f5f9;
-  color: #475569;
+  background-color: #4d759d;
+  color: #ffffff;
+  
+  /* Text Wrap Protections */
+  white-space: normal;       /* Allows text to break onto multiple lines */
+  word-break: break-word;    /* Breaks unusually long words if necessary */
+  overflow-wrap: anywhere;   /* Core fallback to prevent container blowout */
 }
 
 .saas-role-badge[data-role="Admin"],
@@ -586,18 +630,19 @@
 .manager-hierarchy-chip {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
   background-color: #f8fafc;
   border: 1px solid var(--saas-border);
   border-radius: 6px;
   padding: 4px 10px;
-  font-size: 12px;
+  font-size: 15px;
 }
 
 .individual-contributor-text {
   font-size: 12px;
   color: var(--saas-text-muted);
   font-style: italic;
+  padding-left: 40px;
 }
 
 /* Actions Column Alignment */

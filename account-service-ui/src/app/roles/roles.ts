@@ -3,11 +3,13 @@ import { Component, OnInit } from '@angular/core';
 import { environment } from '../../environment';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { AuthService } from '../auth.service';
+import { map, Observable } from 'rxjs';
+
+// Angular Material Layout Module System
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { AuthService } from '../auth.service';
-import { map, Observable } from 'rxjs';
 
 @Component({
   selector: 'app-roles',
@@ -23,7 +25,6 @@ import { map, Observable } from 'rxjs';
   styleUrls: ['./roles.css']
 })
 export class Roles implements OnInit {
-
   baseUrl = environment.apiBaseUrl;
 
   roles$: Observable<any[]> | undefined;
@@ -41,7 +42,7 @@ export class Roles implements OnInit {
     this.loadRoles();
   }
 
-  // ✅ LOAD ROLES
+  // ✅ LOAD ROLES (Reactive stream fetcher)
   loadRoles() {
     this.roles$ = this.http.get<any>(`${this.baseUrl}/roles`, {
       headers: this.auth.getAuthHeaders()
@@ -62,17 +63,14 @@ export class Roles implements OnInit {
     this.loading = true;
 
     const request = this.editingRoleId
-      ? this.http.put(`${this.baseUrl}/roles/${this.editingRoleId}`, payload, {
-          headers: this.auth.getAuthHeaders()
-        })
-      : this.http.post(`${this.baseUrl}/roles/create`, payload, {
-          headers: this.auth.getAuthHeaders()
-        });
+      ? this.http.put(`${this.baseUrl}/roles/${this.editingRoleId}`, payload, { headers: this.auth.getAuthHeaders() })
+      : this.http.post(`${this.baseUrl}/roles/create`, payload, { headers: this.auth.getAuthHeaders() });
 
     request.subscribe({
       next: () => {
         this.resetForm();
-        this.reloadPage(); // 🔥 full reload
+        this.loadRoles(); // Smooth state update without resetting browser view context
+        this.loading = false;
       },
       error: () => this.loading = false
     });
@@ -80,11 +78,13 @@ export class Roles implements OnInit {
 
   // ✅ DELETE
   deleteRole(id: number) {
-    if (!confirm('Delete role?')) return;
+    if (!confirm('Are you sure you want to permanently delete this system access role?')) return;
 
     this.http.delete(`${this.baseUrl}/roles/${id}`, {
       headers: this.auth.getAuthHeaders()
-    }).subscribe(() => this.reloadPage());
+    }).subscribe({
+      next: () => this.loadRoles() // Pure refresh loop
+    });
   }
 
   // ✅ EDIT
@@ -94,25 +94,21 @@ export class Roles implements OnInit {
     this.editingRoleId = role.id;
   }
 
-  // ✅ RESET
+  // ✅ RESET FORM BOUNDARIES
   resetForm() {
     this.roleName = '';
     this.roleDesc = '';
     this.editingRoleId = null;
   }
 
-  // 🔥 FULL PAGE RELOAD
-  reloadPage() {
-    window.location.reload();
-  }
-
-  // ✅ SEARCH FILTER
+  // ✅ LOCAL SEARCH FILTER
   filterRoles(roles: any[]) {
     if (!this.searchTerm.trim()) return roles;
+    const cleanSearch = this.searchTerm.toLowerCase();
 
     return roles.filter(r =>
-      r.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-      (r.description || '').toLowerCase().includes(this.searchTerm.toLowerCase())
+      (r.name || '').toLowerCase().includes(cleanSearch) ||
+      (r.description || '').toLowerCase().includes(cleanSearch)
     );
   }
 }

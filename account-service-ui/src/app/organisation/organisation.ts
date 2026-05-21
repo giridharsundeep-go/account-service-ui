@@ -37,7 +37,7 @@ export class Organisation implements OnInit {
     private router: Router,
     private http: HttpClient,
     private auth: AuthService
-  ) {}
+  ) { }
 
   organisations$!: Observable<any[]>;
 
@@ -59,11 +59,11 @@ export class Organisation implements OnInit {
     );
   }
 
-activeMenu = 'create';
+  activeMenu = 'create';
 
-setActive(menu: string) {
-  this.activeMenu = menu;
-}
+  setActive(menu: string) {
+    this.activeMenu = menu;
+  }
 
   // 👤 User Info
   user = {

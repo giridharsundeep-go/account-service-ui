@@ -1,76 +1,114 @@
-<section class="profile-card">
-  <h2>Roles</h2>
+<!-- SAAS DASHBOARD CONTAINER -->
+<div class="saas-container">
+  
+  <!-- PREMIUM TOP HEADER BAR -->
+  <header class="saas-header">
+    <div class="header-title-block">
+      <h2>Roles & Permissions</h2>
+      <p class="header-subtitle">Define system privilege structures, manage access control badges, and provision resource authorizations.</p>
+    </div>
 
-  <!-- FORM -->
-  <mat-form-field appearance="outline" class="full-width">
-    <mat-label>Role Name</mat-label>
-    <input matInput [(ngModel)]="roleName" />
-  </mat-form-field>
+    <div class="header-actions">
+     
 
-  <mat-form-field appearance="outline" class="full-width">
-    <mat-label>Description</mat-label>
-    <textarea matInput rows="3" [(ngModel)]="roleDesc"></textarea>
-  </mat-form-field>
+      <button
+        mat-stroked-button
+        class="gp-button" style="color: white;"
+        (click)="resetForm(); editingRoleId = 0">
+        <span class="btn-icon">+</span> Add New Role
+      </button>
+    </div>
+  </header>
 
-  <div class="form-actions">
-    <button mat-raised-button color="primary"
-            (click)="saveRole()"
-            [disabled]="loading">
-      {{ editingRoleId ? 'Update' : 'Create' }}
-    </button>
+  <!-- COLLAPSIBLE CREATE / EDIT DRAWER PANEL -->
+  <div class="form-drawer-wrapper" [class.open]="editingRoleId !== null">
+    <div class="drawer-card">
+      <div class="drawer-header">
+        <h3>{{ editingRoleId ? 'Modify Security Role' : 'Establish New System Role' }}</h3>
+        <p>Set clear naming conventions and specify descriptions for accountability boundaries.</p>
+      </div>
 
-    <button mat-button *ngIf="editingRoleId" (click)="resetForm()">
-      Cancel
-    </button>
+      <div class="drawer-body">
+        <div class="form-grid-two-col">
+          <!-- ROLE NAME -->
+          <mat-form-field appearance="outline" class="saas-form-field">
+            <mat-label>Role Title / Name</mat-label>
+            <input matInput [(ngModel)]="roleName" placeholder="e.g., Security Auditor" />
+          </mat-form-field>
+
+          <!-- DESCRIPTION -->
+          <mat-form-field appearance="outline" class="saas-form-field">
+            <mat-label>Functional Description</mat-label>
+            <textarea matInput rows="1" [(ngModel)]="roleDesc" placeholder="Summarize role capabilities..."></textarea>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="drawer-footer">
+        <button
+          mat-stroked-button
+          class="gp-button-light" style="color: white;"
+          (click)="saveRole()"
+          [disabled]="loading || !roleName.trim()">
+          {{ loading ? 'Processing...' : (editingRoleId ? 'Save Access Parameters' : 'Create System Role') }}
+        </button>
+
+        <button mat-stroked-button class="gp-button-plain" (click)="resetForm()">
+          Cancel
+        </button>
+      </div>
+    </div>
   </div>
-</section>
 
+  <!-- MODERN SAAS MANAGEMENT LIST WORKSPACE -->
+  <main class="dashboard-workspace">
+    <div class="list-layout-header">
+      <h3>Active System Registries</h3>
+    </div>
 
-<!-- TABLE -->
-<section class="table-container">
+     <div class="search-box-wrapper">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          placeholder="Filter access roles..."
+        />
+      </div>
 
-  <!-- 🔍 SEARCH BAR -->
-  <div class="search-box">
-    <input
-      type="text"
-      [(ngModel)]="searchTerm"
-      placeholder="Search roles..."
-    />
-  </div>
+    <!-- COMPILER-SAFE EMPTY LOOK STATE -->
+    <ng-container *ngIf="roles$ | async as resolvedRoles">
+      <div class="saas-empty-state" *ngIf="filterRoles(resolvedRoles).length === 0">
+        <div class="empty-vector">🔑</div>
+        <h4>No security categories discovered</h4>
+        <p>Refine your lookup criteria or instantiate a brand-new workspace scope.</p>
+      </div>
+    </ng-container>
 
+    <!-- CORE ROLE DATA ROW LIST -->
+    <div class="saas-role-list" *ngIf="roles$ | async as roles">
+      <article class="role-list-row" *ngFor="let role of filterRoles(roles)">
+        
+        <!-- COL 1: ROLE IDENTITY (BADGE AND TITLE) -->
+        <div class="list-col identity-col">
+          <span class="saas-role-badge" [attr.data-role]="role.name">
+            {{ role.name }}
+          </span>
+        </div>
 
-  <table class="roles-table">
+        <!-- COL 2: FUNCTIONAL PURPOSE / DESCRIPTION -->
+        <div class="list-col description-col">
+          <span class="description-text" [title]="role.description || ''">
+            {{ role.description || '— No systemic operational definitions provided.' }}
+          </span>
+        </div>
 
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Description</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
+        <!-- COL 3: ROW CRUD INTERACTIONS -->
+        <div class="list-col actions-col">
+          <button mat-stroked-button class="gp-button-plain edit" style="color: black;" (click)="editRole(role)">Edit</button>
+          <button mat-button class="action-btn delete" (click)="deleteRole(role.id)">Delete</button>
+        </div>
 
-    <tbody *ngIf="roles$ | async as roles">
-
-      <!-- EMPTY -->
-      <tr *ngIf="filterRoles(roles).length === 0">
-        <td colspan="3" class="empty">No roles found</td>
-      </tr>
-
-      <!-- DATA -->
-      <tr *ngFor="let role of filterRoles(roles)">
-
-        <td>{{ role.name }}</td>
-        <td>{{ role.description }}</td>
-
-        <td>
-          <button mat-button color="primary" (click)="editRole(role)">Edit</button>
-          <button mat-button color="warn" (click)="deleteRole(role.id)">Delete</button>
-        </td>
-
-      </tr>
-
-    </tbody>
-
-  </table>
-
-</section>
+      </article>
+    </div>
+  </main>
+</div>

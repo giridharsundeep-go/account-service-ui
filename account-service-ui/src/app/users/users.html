@@ -9,18 +9,11 @@
     </div>
 
     <div class="header-actions">
-      <div class="search-box-wrapper">
-        <span class="search-icon">&🔍;</span>
-        <input
-          type="text"
-          [(ngModel)]="searchTerm"
-          placeholder="Filter workspace users..."
-        />
-      </div>
+      
 
       <button
-        mat-raised-button
-        class="btn-primary-saas"
+        mat-stroked-button 
+        class="gp-button" style="color: white;"
         (click)="resetForm(); editingUserId = 0">
         <span class="btn-icon">+</span> Add New User
       </button>
@@ -99,14 +92,14 @@
 
       <div class="drawer-footer">
         <button
-          mat-raised-button
-          class="btn-primary-saas"
+          mat-stroked-button
+          class="gp-button-light" style="color: white;"
           (click)="saveUser()"
           [disabled]="loading || !name.trim() || !email.trim() || !roleId">
           {{ loading ? 'Processing...' : (editingUserId ? 'Save Account Profiles' : 'Finalize & Provision User') }}
         </button>
 
-        <button mat-button class="btn-flat-saas" (click)="resetForm()">
+        <button mat-stroked-button class="gp-button-plain" style="color: black;" (click)="resetForm()">
           Cancel
         </button>
       </div>
@@ -118,7 +111,15 @@
     <div class="list-layout-header">
       <h3>Active Directory Workspace</h3>
     </div>
-
+    <div class="search-box-wrapper">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          placeholder="Filter workspace users..."
+        />
+      </div>
+      
     <!-- COMPILER-SAFE EMPTY LOOK STATE -->
     <ng-container *ngIf="users$ | async as resolvedUsers">
       <div class="saas-empty-state" *ngIf="filterUsers(resolvedUsers).length === 0">
@@ -163,7 +164,7 @@
 
         <!-- COL 4: ROW CRUD INTERACTIONS -->
         <div class="list-col actions-col">
-          <button mat-button class="action-btn edit" (click)="editUser(user)">Edit</button>
+          <button mat-stroked-button class="gp-button-plain edit" style="color: black;" (click)="editUser(user)">Edit</button>
           <button mat-button class="action-btn delete" (click)="deleteUser(user.id)">Delete</button>
         </div>
 
