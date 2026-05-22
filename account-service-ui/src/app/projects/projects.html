@@ -1,1 +1,336 @@
-<p>projects works!</p>
+<!-- PREMIUM UNDERLYING SAAS PROJECTS CONTAINER -->
+<div class="saas-container">
+  
+  <!-- PREMIUM TOP HEADER BAR -->
+  <header class="saas-header">
+    <div class="header-title-block">
+      <h2>Project Architecture Studio</h2>
+      <p class="header-subtitle">Provision governance methodologies, bind cross-functional teams, and deploy automated iteration frameworks.</p>
+    </div>
+
+    <div class="header-actions">
+      <button
+        mat-stroked-button
+        class="gp-button gp-primary header-wide-btn"
+        (click)="initiateNewProject()">
+        <span class="btn-indicator-pulse"></span> Initialize Strategic Blueprint
+      </button>
+    </div>
+  </header>
+
+  <!-- COMPLEX DRAWER MODULE: MULTI-METHODOLOGY PROFILE COMPOSER -->
+  <div class="form-drawer-wrapper" [class.open]="isComposerOpen">
+    <div class="drawer-card">
+      <div class="drawer-header">
+        <h3>{{ editingProjectId ? 'Refine Project Directives' : 'Architect Strategic Initiative Blueprint' }}</h3>
+        <p>Define governance rules, allocate multi-team clusters, and dictate development lifecycles.</p>
+      </div>
+
+      <div class="drawer-body">
+        <!-- GRID SECTION 1: MASTER META DATA -->
+        <div class="form-grid-three-col">
+          <mat-form-field appearance="outline" class="saas-form-field">
+            <mat-label>Project Code & Name</mat-label>
+            <input matInput [(ngModel)]="projectForm.name" placeholder="e.g., PRJ-90 // Cloud Core Engine" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="saas-form-field">
+            <mat-label>Methodology Framework Architecture</mat-label>
+            <mat-select [(ngModel)]="projectForm.methodology" (selectionChange)="onMethodologyShift()">
+              <mat-option value="AGILE_SCRUM">Agile Framework (Scrum / Sprints)</mat-option>
+              <mat-option value="WATERFALL_GANTT">Waterfall Architecture (Phased Milestones)</mat-option>
+              <mat-option value="HYBRID_SHAPEUP">Hybrid Core (Shape Up / Six-Week Cycles)</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="saas-form-field">
+            <mat-label>Strategic Priority Weight</mat-label>
+            <mat-select [(ngModel)]="projectForm.priority">
+              <mat-option value="CRITICAL">Tier 1 — Mission Critical</mat-option>
+              <mat-option value="HIGH">Tier 2 — High Velocity</mat-option>
+              <mat-option value="MEDIUM">Tier 3 — Baseline Operations</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="form-lone-row">
+          <mat-form-field appearance="outline" class="saas-form-field">
+            <mat-label>Core Project Objective & Contextual Bounds</mat-label>
+            <textarea matInput rows="2" [(ngModel)]="projectForm.description" placeholder="Specify tactical deliverables, target outcomes, and delivery constraints..."></textarea>
+          </mat-form-field>
+        </div>
+
+        <!-- TWO-COLUMN WORKSPACE BINDINGS TRACK -->
+        <div class="composer-split-configurations">
+          
+          <!-- LEFT SIDE: CROSS-FUNCTIONAL TEAMS ATTACHMENT HUB -->
+          <div class="config-panel-card">
+            <div class="panel-header-inline">
+              <div class="panel-titles">
+                <h4>Cross-Functional Operational Clusters</h4>
+                <p>Attach multiple active workspace teams to execute this initiative concurrently.</p>
+              </div>
+              <button type="button" class="gp-compact-trigger" (click)="triggerTeamAllocationModal()">
+                + Bind Teams
+              </button>
+            </div>
+
+            <div class="allocated-clusters-viewport">
+              <span *ngIf="projectForm.associatedTeamIds.length === 0" class="blank-info-text">
+                No human resource clusters attached to this initiative blueprint yet.
+              </span>
+
+              <div class="cluster-pill-grid" *ngIf="projectForm.associatedTeamIds.length > 0">
+                <div *ngFor="let team of getBoundTeamObjects()" class="cluster-bound-pill">
+                  <span class="cluster-color-dot"></span>
+                  <div class="cluster-meta">
+                    <span class="c-name">{{ team.name }}</span>
+                    <span class="c-count">{{ team.memberCount || 0 }} Engineers Assigned</span>
+                  </div>
+                  <button class="cluster-revoke-btn" (click)="revokeTeamBinding(team.id)">&times;</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT SIDE: DYNAMIC METRIC GENERATOR (METHODOLOGY-DRIVEN) -->
+          <div class="config-panel-card methodology-injected-panel">
+            
+            <!-- CONDITION A: AGILE DYNAMIC FORM MATRIX -->
+            <ng-container *ngIf="projectForm.methodology === 'AGILE_SCRUM'">
+              <div class="panel-header-inline accent-agile">
+                <div class="panel-titles">
+                  <h4>Agile Scrum Engine Parameters</h4>
+                  <p>Configure lifecycle tracking, velocity bounds, and timeboxed intervals.</p>
+                </div>
+              </div>
+              <div class="methodology-fields-grid">
+                <mat-form-field appearance="outline" class="saas-form-field compact-input">
+                  <mat-label>Sprint Cadence Cycle</mat-label>
+                  <mat-select [(ngModel)]="projectForm.agileConfig.sprintDurationWeeks">
+                    <mat-option [value]="1">1 Week Sprint Interval</mat-option>
+                    <mat-option [value]="2">2 Weeks Sprint Interval</mat-option>
+                    <mat-option [value]="3">3 Weeks Sprint Interval</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="saas-form-field compact-input">
+                  <mat-label>Target Sprint Velocity</mat-label>
+                  <input matInput type="number" [(ngModel)]="projectForm.agileConfig.targetVelocity" placeholder="e.g., 85 Story Points" />
+                </mat-form-field>
+
+                <div class="checkbox-setting-block">
+                  <mat-checkbox [(ngModel)]="projectForm.agileConfig.autoRolloverBacklog">
+                    Automate Spillover Backlog Rollover
+                  </mat-checkbox>
+                </div>
+              </div>
+            </ng-container>
+
+            <!-- CONDITION B: WATERFALL PHASED TARGET MATRIX -->
+            <ng-container *ngIf="projectForm.methodology === 'WATERFALL_GANTT'">
+              <div class="panel-header-inline accent-waterfall">
+                <div class="panel-titles">
+                  <h4>Sequential Gated Phases (Waterfall)</h4>
+                  <p>Establish hard gates, sequence tracking dependencies, and baseline dates.</p>
+                </div>
+              </div>
+              <div class="methodology-fields-grid">
+                <mat-form-field appearance="outline" class="saas-form-field compact-input">
+                  <mat-label>Strategic Sign-off Gatekeeper</mat-label>
+                  <input matInput [(ngModel)]="projectForm.waterfallConfig.gatekeeperRole" placeholder="e.g., Chief Technology Officer" />
+                </mat-form-field>
+                
+                <mat-form-field appearance="outline" class="saas-form-field compact-input">
+                  <mat-label>Contingency Buffer Margin</mat-label>
+                  <mat-select [(ngModel)]="projectForm.waterfallConfig.bufferPercentage">
+                    <mat-option [value]="5">5% Hard Timeline Buffer</mat-option>
+                    <mat-option [value]="10">10% Moderate Risk Buffer</mat-option>
+                    <mat-option [value]="20">20% High Unknowns Buffer</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </ng-container>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="drawer-footer">
+        <button
+          mat-stroked-button
+          class="gp-button gp-action"
+          (click)="commitProjectToSystem()"
+          [disabled]="isSaving || !projectForm.name.trim() || projectForm.associatedTeamIds.length === 0">
+          {{ isSaving ? 'Compiling Blueprint Data...' : (editingProjectId ? 'Deploy Modification Rollout' : 'Instantiate System Architecture') }}
+        </button>
+        <button mat-stroked-button class="gp-button gp-cancel" (click)="closeComposerDrawer()">
+          Discard Configuration
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN OPERATIONAL VIEWPORT -->
+  <main class="dashboard-workspace">
+    
+    <div class="workspace-filter-header">
+      <div class="workspace-badge-legend">
+        <span class="legend-indicator live"></span> Strategic Initiative Matrices Active
+      </div>
+      <div class="workspace-search-input-frame">
+        <span class="search-lens">⚡</span>
+        <input
+          type="text"
+          [(ngModel)]="projectLookupFilter"
+          placeholder="Lookup project codes, teams, or parameters..."
+        />
+      </div>
+    </div>
+
+    <!-- CARDS CORE LAYERING PIPELINE -->
+    <div class="saas-project-grid-layout" *ngIf="projects$ | async as projects">
+      <ng-container *ngIf="filterStrategicInitiatives(projects).length > 0; else emptyBlueprintFallback">
+        
+        <article class="project-saas-card" *ngFor="let initiative of filterStrategicInitiatives(projects)">
+          
+          <!-- TOP TRACK BLOCK: IDENTIFIERS & METRICS -->
+          <div class="card-main-details">
+            <div class="card-upper-row">
+              <div class="badge-title-group">
+                <div class="methodology-avatar-frame" [class.agile-badge]="initiative.methodology === 'AGILE_SCRUM'">
+                  {{ initiative.methodology === 'AGILE_SCRUM' ? '🔄' : '🌊' }}
+                </div>
+                <div class="title-meta">
+                  <div class="row-flex-badges">
+                    <h4>{{ initiative.name }}</h4>
+                    <span class="methodology-pill-label" [class.agile-pill]="initiative.methodology === 'AGILE_SCRUM'">
+                      {{ initiative.methodology === 'AGILE_SCRUM' ? 'Agile Scrum Engine' : 'Sequential Waterfall' }}
+                    </span>
+                  </div>
+                  <span class="badge-count-pill">
+                    Priority Tier: <strong>{{ initiative.priority }}</strong>
+                  </span>
+                </div>
+              </div>
+
+              <div class="card-action-menu">
+                <button mat-stroked-button class="gp-action-trigger edit-trigger" (click)="loadProjectToComposer(initiative)">Modify Configuration</button>
+                <button mat-stroked-button class="gp-action-trigger delete-trigger" (click)="decommissionProject(initiative.id)">Decommission</button>
+              </div>
+            </div>
+
+            <p class="project-body-description">
+              {{ initiative.description || 'No primary operational context documentation loaded into this strategic initiative profile.' }}
+            </p>
+          </div>
+
+          <!-- CONNECTED OPERATIONAL TEAMS ASSIGNMENT MODULE -->
+          <section class="card-team-matrix-attachment">
+            <div class="matrix-inner-header">
+              <h5>Connected Operational Cross-Functional Grid</h5>
+              <span class="badge-counter">{{ initiative.teamsWorkingOn?.length || 0 }} Clusters Bound</span>
+            </div>
+
+            <div class="card-teams-scroller-viewport">
+              <p class="no-seats-hint" *ngIf="!initiative.teamsWorkingOn || initiative.teamsWorkingOn.length === 0">
+                Critical Alert: Zero active operational teams assigned to run execution pipelines.
+              </p>
+
+              <div class="matrix-teams-flex-list" *ngIf="initiative.teamsWorkingOn && initiative.teamsWorkingOn.length > 0">
+                <div *ngFor="let connectedTeam of initiative.teamsWorkingOn" class="matrix-team-card-unit">
+                  <div class="team-left-group">
+                    <span class="team-indicator-icon">🛡️</span>
+                    <div class="team-meta-strings">
+                      <span class="t-name">{{ $any(connectedTeam).name }}</span>
+                      <span class="t-allocation">Full Lifecycle Allocation</span>
+                    </div>
+                  </div>
+                  <span class="team-member-micro-chip">{{ $any(connectedTeam).membersCount || 4 }} Seats</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- DEEP METHODOLOGY METRIC TRACKER SUBSECTION -->
+          <footer class="card-methodology-footer-telemetry">
+            
+            <!-- BLOCK A: IF TRACKED VIA AGILE INTERFACES -->
+            <div class="telemetry-wrapper agile-theme" *ngIf="initiative.methodology === 'AGILE_SCRUM'">
+              <div class="telemetry-header">
+                <h6>Active Delivery Iteration Cadence</h6>
+                <span class="live-pulse-glow"></span>
+              </div>
+              
+              <div class="agile-metric-dashboard-strip">
+                <div class="telemetry-metric-box">
+                  <span class="val">{{ initiative.agileConfig?.sprintDurationWeeks || 2 }}w</span>
+                  <span class="lbl">Sprint Track</span>
+                </div>
+                <div class="telemetry-metric-box">
+                  <span class="val">{{ initiative.agileConfig?.targetVelocity || 80 }} SP</span>
+                  <span class="lbl">Target Vol</span>
+                </div>
+                <div class="telemetry-metric-box long-text">
+                  <span class="val status-green">Enabled</span>
+                  <span class="lbl">Backlog Rollover</span>
+                </div>
+              </div>
+
+              <!-- Real-time Sprint Progression Simulation Visualization Line -->
+              <div class="sprint-progress-bar-container">
+                <div class="progress-bar-labels-track">
+                  <span>Current Sprint Iteration Progression</span>
+                  <span>68% Velocity Compounded</span>
+                </div>
+                <div class="progress-track-rail">
+                  <div class="progress-fill-bar agile-bar" style="width: 68%"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- BLOCK B: IF TRACKED VIA WATERFALL SEQUENCES -->
+            <div class="telemetry-wrapper waterfall-theme" *ngIf="initiative.methodology === 'WATERFALL_GANTT'">
+              <div class="telemetry-header">
+                <h6>Gated Sequential Pipeline Phases</h6>
+              </div>
+
+              <div class="waterfall-phases-progression-track">
+                <div class="phase-node complete">
+                  <span class="node-dot"></span>
+                  <span class="node-label">Requirements Gate</span>
+                </div>
+                <div class="phase-node executing">
+                  <span class="node-dot"></span>
+                  <span class="node-label">Architecture Sign-off</span>
+                </div>
+                <div class="phase-node locked">
+                  <span class="node-dot"></span>
+                  <span class="node-label">Deployment Verification</span>
+                </div>
+              </div>
+
+              <div class="waterfall-meta-footer-strip">
+                <span>Gatekeeper Authority: <strong>{{ initiative.waterfallConfig?.gatekeeperRole || 'Director of Product' }}</strong></span>
+                <span>Buffer Target: <strong>+{{ initiative.waterfallConfig?.bufferPercentage || 10 }}% Contingency</strong></span>
+              </div>
+            </div>
+
+          </footer>
+
+        </article>
+
+      </ng-container>
+
+      <!-- EMPTY STATE ARCHITECTURE FALLBACK -->
+      <ng-template #emptyBlueprintFallback>
+        <div class="saas-empty-state">
+          <div class="empty-vector">📐</div>
+          <h4>No Strategic Blueprint Configurations Discovered</h4>
+          <p>Refine your lookup criteria parameters or begin creating a novel methodology tracking cluster.</p>
+        </div>
+      </ng-template>
+    </div>
+
+  </main>
+</div>

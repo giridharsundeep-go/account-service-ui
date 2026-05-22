@@ -1,174 +1,238 @@
-<!-- SAAS DASHBOARD CONTAINER -->
+<!-- SYSTEM CONTAINER -->
 <div class="saas-container">
   
-  <!-- PREMIUM TOP HEADER BAR -->
+  <!-- PREMIUM MANAGEMENT CONTROLS HEADER -->
   <header class="saas-header">
     <div class="header-title-block">
-      <h2>Users Management</h2>
-      <p class="header-subtitle">Provision workforce accounts, update corporate roles, and configure organization reporting hierarchies.</p>
+      <h2>Active Directory Node</h2>
+      <p class="header-subtitle">Provision access matrix configurations, map global physical facilities, and balance organizational workspace dependencies.</p>
     </div>
 
     <div class="header-actions">
-      
-
-      <button
-        mat-stroked-button 
-        class="gp-button" style="color: white;"
-        (click)="resetForm(); editingUserId = 0">
-        <span class="btn-icon">+</span> Add New User
+      <!-- CLEAN INLINE EMBEDDED BUTTON STRUCTURE -->
+      <button class="gp-button gp-primary" (click)="resetForm(); editingUserId = 0">
+        <span class="btn-indicator-pulse"></span> Register Teammate
       </button>
     </div>
   </header>
 
-  <!-- COLLAPSIBLE CREATE / EDIT DRAWER PANEL -->
+  <!-- COLLAPSIBLE MANAGEMENT PANEL -->
   <div class="form-drawer-wrapper" [class.open]="editingUserId !== null">
     <div class="drawer-card">
       <div class="drawer-header">
-        <h3>{{ editingUserId ? 'Modify User Profile' : 'Provision New User Account' }}</h3>
-        <p>Set basic identity details, assign access roles, and link reporting managers.</p>
+        <h3>{{ editingUserId ? 'Modify System Target Profile' : 'Configure New System Node Entry' }}</h3>
+        <p>Set basic identity variables, select security clearance protocols, and map reporting lines.</p>
       </div>
 
       <div class="drawer-body">
+        
+        <!-- SECTION 1 -->
+        <div class="drawer-section-divider">Identity Protocols</div>
         <div class="form-grid-two-col">
-          <!-- NAME -->
           <mat-form-field appearance="outline" class="saas-form-field">
-            <mat-label>Full Name</mat-label>
-            <input matInput [(ngModel)]="name" placeholder="e.g., Alex Rivera" />
+            <mat-label>Legal Full Name</mat-label>
+            <input matInput [(ngModel)]="name" placeholder="Alex Rivera" />
           </mat-form-field>
-
-          <!-- EMAIL -->
           <mat-form-field appearance="outline" class="saas-form-field">
-            <mat-label>Email Address</mat-label>
-            <input matInput type="email" [(ngModel)]="email" placeholder="e.g., alex.rivera@company.com" />
+            <mat-label>System Email Matrix</mat-label>
+            <input matInput type="email" [(ngModel)]="email" placeholder="alex.rivera@enterprise.io" />
+          </mat-form-field>
+        </div>
+
+        <!-- SECTION 2 -->
+        <div class="form-grid-three-col">
+          <mat-form-field appearance="outline" class="saas-form-field">
+            <mat-label>ID Designation Prefix</mat-label>
+            <mat-select [(ngModel)]="employeeIdPrefix">
+              <mat-option value="EMP">EMP (Internal)</mat-option>
+              <mat-option value="CON">CON (Contractor)</mat-option>
+              <mat-option value="EXC">EXC (Executive)</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="saas-form-field">
+            <mat-label>Node ID Sequence</mat-label>
+            <input matInput type="text" [(ngModel)]="employeeIdNumber" placeholder="88421" />
+          </mat-form-field>
+          <div class="read-only-meta-chip">
+            <span class="chip-label">Computed Value</span>
+            <span class="chip-value">{{ employeeIdPrefix || '???' }}-{{ employeeIdNumber || '00000' }}</span>
+          </div>
+        </div>
+
+        <div class="form-grid-two-col">
+          <mat-form-field appearance="outline" class="saas-form-field">
+            <mat-label>System Access Clearance</mat-label>
+            <mat-select [(ngModel)]="roleId">
+              <mat-option *ngFor="let role of (roles$ | async)" [value]="role.id">{{ role.name }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="saas-form-field">
+            <mat-label>Reporting Core Node</mat-label>
+            <input type="text" placeholder="Search operational head..." matInput [(ngModel)]="managerSearchText" [matAutocomplete]="auto" (input)="filterManagerAutocomplete()" />
+            <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayManagerName.bind(this)" (optionSelected)="onManagerSelected($event)">
+              <mat-option *ngFor="let manager of filteredManagers" [value]="manager.id">{{ manager.name }}</mat-option>
+            </mat-autocomplete>
+          </mat-form-field>
+        </div>
+
+        <!-- SECTION 3 -->
+        <div class="drawer-section-divider">Geographic Operations Workspace</div>
+        <div class="form-grid-three-col">
+          <mat-form-field appearance="outline" class="saas-form-field">
+            <mat-label>Country Domain</mat-label>
+            <mat-select [(ngModel)]="locationCountry">
+              <mat-option value="US">United States</mat-option>
+              <mat-option value="IN">India</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="saas-form-field">
+            <mat-label>State Anchor</mat-label>
+            <input matInput [(ngModel)]="locationState" placeholder="California" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="saas-form-field">
+            <mat-label>Target City Center</mat-label>
+            <input matInput [(ngModel)]="locationCity" placeholder="San Francisco" />
           </mat-form-field>
         </div>
 
         <div class="form-grid-two-col">
-          <!-- ROLE -->
           <mat-form-field appearance="outline" class="saas-form-field">
-            <mat-label>Access Role</mat-label>
-            <mat-select [(ngModel)]="roleId">
-              <mat-option [value]="null">Select System Role</mat-option>
-              <mat-option *ngFor="let role of (roles$ | async)" [value]="role.id">
-                {{ role.name }}
-              </mat-option>
+            <mat-label>Deployment Working Blueprint</mat-label>
+            <mat-select [(ngModel)]="locationWorkModel">
+              <mat-option value="HQ">Corporate On-site HQ</mat-option>
+              <mat-option value="REMOTE">Fully Distributed Network</mat-option>
+              <mat-option value="HYBRID">Fluid Hybrid Accord</mat-option>
             </mat-select>
           </mat-form-field>
-
-          <!-- MANAGER (WITH AUTOCOMPLETE) -->
           <mat-form-field appearance="outline" class="saas-form-field">
-            <mat-label>Reporting Manager</mat-label>
-            <input
-              type="text"
-              placeholder="Type to search manager..."
-              matInput
-              [(ngModel)]="managerSearchText"
-              [matAutocomplete]="auto"
-              (input)="filterManagerAutocomplete()"
-            />
-            <mat-autocomplete 
-              #auto="matAutocomplete" 
-              [displayWith]="displayManagerName.bind(this)"
-              (optionSelected)="onManagerSelected($event)">
-              <mat-option *ngFor="let manager of filteredManagers" [value]="manager.id">
-                <div class="autocomplete-option">
-                  <span class="opt-name">{{ manager.name }}</span>
-                  <span class="opt-role">{{ manager.role_name || 'Staff' }}</span>
-                </div>
-              </mat-option>
-            </mat-autocomplete>
-            <button 
-              *ngIf="managerId" 
-              matSuffix 
-              mat-icon-button 
-              aria-label="Clear" 
-              (click)="clearManagerSelection(); $event.stopPropagation()" 
-              class="field-clear-btn">
-              &times;
-            </button>
+            <mat-label>Allocated Station Desk Address</mat-label>
+            <input matInput [(ngModel)]="locationDeskCode" placeholder="Floor 4-Desk 99" [disabled]="locationWorkModel === 'REMOTE'" />
           </mat-form-field>
         </div>
       </div>
 
       <div class="drawer-footer">
-        <button
-          mat-stroked-button
-          class="gp-button-light" style="color: white;"
-          (click)="saveUser()"
-          [disabled]="loading || !name.trim() || !email.trim() || !roleId">
-          {{ loading ? 'Processing...' : (editingUserId ? 'Save Account Profiles' : 'Finalize & Provision User') }}
+        <button class="gp-button gp-action" (click)="saveUser()" [disabled]="loading || !name.trim() || !email.trim() || !roleId">
+          {{ loading ? 'Synchronizing...' : 'Commit Operational State' }}
         </button>
-
-        <button mat-stroked-button class="gp-button-plain" style="color: black;" (click)="resetForm()">
-          Cancel
-        </button>
+        <button class="gp-button gp-cancel" (click)="resetForm()">Abort</button>
       </div>
     </div>
   </div>
 
-  <!-- MODERN SAAS MANAGEMENT LIST WORKSPACE -->
-  <main class="dashboard-workspace">
-    <div class="list-layout-header">
-      <h3>Active Directory Workspace</h3>
+  <!-- INNOVATIVE INNOVATIVE TABULAR WORKSPACE DISPLAY CONTAINER -->
+  <main class="matrix-table-workspace">
+    
+    <div class="matrix-filter-header">
+      <div class="matrix-badge-legend">
+        <span class="legend-indicator"></span> Operational Active Registry
+      </div>
+      <div class="matrix-search-input-frame">
+        <span class="search-lens">⚡</span>
+        <input type="text" [(ngModel)]="searchTerm" placeholder="Query active directory index matrix..." />
+      </div>
     </div>
-    <div class="search-box-wrapper">
-        <span class="search-icon">🔍</span>
-        <input
-          type="text"
-          [(ngModel)]="searchTerm"
-          placeholder="Filter workspace users..."
-        />
-      </div>
+
+    <!-- MAIN DATA MATRIX FRAME TABLE -->
+    <div class="matrix-data-frame" *ngIf="users$ | async as users">
       
-    <!-- COMPILER-SAFE EMPTY LOOK STATE -->
-    <ng-container *ngIf="users$ | async as resolvedUsers">
-      <div class="saas-empty-state" *ngIf="filterUsers(resolvedUsers).length === 0">
-        <div class="empty-vector">👤</div>
-        <h4>No active accounts discovered</h4>
-        <p>Refine your search parameters or register a brand-new workspace teammate.</p>
+      <!-- HEADER CAPTION TRACK -->
+      <div class="matrix-row matrix-header-row">
+        <div class="cell">Teammate Cluster Identifier</div>
+        <div class="cell">System Clearances</div>
+        <div class="cell">Operations Location Matrix</div>
+        <div class="cell">Reporting Framework Nodes</div>
+        <div class="cell text-right">System Interventions</div>
       </div>
-    </ng-container>
 
-    <!-- CORE USER DATA ROW LIST -->
-    <div class="saas-user-list" *ngIf="users$ | async as users">
-      <article class="user-list-row" *ngFor="let user of filterUsers(users)">
-        
-        <!-- COL 1: IDENTITY METADATA -->
-        <div class="list-col identity-col">
-          <div class="user-avatar-initials">
-            {{ getAvatarInitials(user.name) }}
+      <!-- STREAM DATA LAYER ROWS -->
+      <div class="matrix-row-scroller" *ngIf="filterUsers(users).length > 0; else noDataFallback">
+        <article class="matrix-row data-row" *ngFor="let user of filterUsers(users)">
+          
+          <!-- CELL 1: VISUALLY COMPLEX MULTI-LAYER USER BADGE -->
+          <div class="cell primary-identity-cell">
+            <div class="matrix-identity-avatar" [attr.data-initials]="getAvatarInitials(user.name)">
+              <div class="status-indicator online"></div>
+            </div>
+            <div class="matrix-identity-details">
+              <div class="identity-top-row">
+                <h4>{{ user.name }}</h4>
+                <code class="matrix-tag-id" *ngIf="user.employee_id_prefix">
+                  {{ user.employee_id_prefix }}//{{ user.employee_id_number }}
+                </code>
+              </div>
+              <span class="identity-sub-email">{{ user.email }}</span>
+            </div>
           </div>
-          <div class="identity-meta">
-            <h4>{{ user.name }}</h4>
-            <span class="user-email-text">{{ user.email }}</span>
+
+          <!-- CELL 2: CONTRASTED CLEARANCE LEVEL ROLES -->
+          <div class="cell">
+            <span class="clearance-pill" [attr.data-clearance-level]="user.role_name">
+              {{ user.role_name || 'Level 0' }}
+            </span>
           </div>
-        </div>
 
-        <!-- COL 2: ACCESS CONTROL ROLE -->
-        <div class="list-col role-col">
-          <span class="saas-role-badge" [attr.data-role]="user.role_name">
-            {{ user.role_name || 'No Role' }}
-          </span>
-        </div>
-
-        <!-- COL 3: REPORTING MANAGEMENT HIERARCHY -->
-        <div class="list-col hierarchy-col">
-          <div class="manager-hierarchy-chip" *ngIf="user.manager_name; else noManager">
-            <span class="hierarchy-icon">👔</span>
-            <span class="m-title">Reports to {{ user.manager_name }}</span>
+          <!-- CELL 3: DUAL-METRIC METROPOLITAN MATRIX DATA -->
+          <div class="cell location-matrix-cell">
+            <div class="loc-matrix-cluster" *ngIf="user.location_city; else blankLoc">
+              <div class="loc-primary">
+                <span class="geo-pin-icon"></span> {{ user.location_city }}
+                <span class="country-sub-tag">{{ user.location_country }}</span>
+              </div>
+              <div class="loc-secondary">
+                <span class="model-badge" [attr.data-model]="user.location_work_model">{{ user.location_work_model }}</span>
+                <span class="desk-coordinate">{{ user.location_desk_code || 'Fluid Allocation' }}</span>
+              </div>
+            </div>
+            <ng-template #blankLoc>
+              <span class="empty-cell-text">Unmapped Geographic Domain</span>
+            </ng-template>
           </div>
-          <ng-template #noManager>
-            <span class="individual-contributor-text">— Individual Contributor</span>
-          </ng-template>
-        </div>
 
-        <!-- COL 4: ROW CRUD INTERACTIONS -->
-        <div class="list-col actions-col">
-          <button mat-stroked-button class="gp-button-plain edit" style="color: black;" (click)="editUser(user)">Edit</button>
-          <button mat-button class="action-btn delete" (click)="deleteUser(user.id)">Delete</button>
-        </div>
+          <!-- CELL 4: VISUAL GRAPHIC MANAGEMENT INTERACTION TRACKS -->
+          <div class="cell management-hierarchy-cell">
+            <div class="hierarchy-tree-node" *ngIf="user.manager_name; else icNode">
+              <div class="hierarchy-connector-branch"></div>
+              <div class="manager-profile-stub">
+                <span class="stub-icon"></span>
+                <div class="stub-meta">
+                  <span class="stub-label">Reporting Line</span>
+                  <span class="stub-value">{{ user.manager_name }}</span>
+                </div>
+              </div>
+            </div>
+            <ng-template #icNode>
+              <div class="hierarchy-tree-node independent">
+                <div class="manager-profile-stub">
+                  <span class="stub-icon autonomous"></span>
+                  <span class="stub-value standalone">Autonomous Terminal Node</span>
+                </div>
+              </div>
+            </ng-template>
+          </div>
 
-      </article>
+          <!-- CELL 5: INTERACTION RUNTIME TRIGGERS -->
+          <div class="cell action-runtime-cell text-right">
+            <button class="gp-action-trigger edit-trigger" (click)="editUser(user)">
+              <span class="trigger-label">Modify</span>
+            </button>
+            <button class="gp-action-trigger delete-trigger" (click)="deleteUser(user.id)">
+              <span class="trigger-label">Purge</span>
+            </button>
+          </div>
+
+        </article>
+      </div>
+
+      <!-- NO RECORDS DISCOVERED FALLBACK -->
+      <ng-template #noDataFallback>
+        <div class="matrix-empty-viewport">
+          <div class="empty-icon-radar"></div>
+          <h4>Zero operational clusters identified</h4>
+          <p>The layout criteria requested could not index any verified active matching datasets.</p>
+        </div>
+      </ng-template>
+
     </div>
   </main>
 

@@ -9,13 +9,12 @@
     </div>
 
     <div class="header-actions">
-     
-
+      <!-- CLEAN INLINE EMBEDDED BUTTON STRUCTURE -->
       <button
         mat-stroked-button
-        class="gp-button" style="color: white;"
+        class="gp-button gp-primary"
         (click)="resetForm(); editingRoleId = 0">
-        <span class="btn-icon">+</span> Add New Role
+        <span class="btn-indicator-pulse"></span> Add New Role
       </button>
     </div>
   </header>
@@ -47,68 +46,89 @@
       <div class="drawer-footer">
         <button
           mat-stroked-button
-          class="gp-button-light" style="color: white;"
+          class="gp-button gp-action"
           (click)="saveRole()"
           [disabled]="loading || !roleName.trim()">
-          {{ loading ? 'Processing...' : (editingRoleId ? 'Save Access Parameters' : 'Create System Role') }}
+          {{ loading ? 'Processing...' : (editingRoleId ? 'Save System Role' : 'Create System Role') }}
         </button>
 
-        <button mat-stroked-button class="gp-button-plain" (click)="resetForm()">
+        <button mat-stroked-button class="gp-button gp-cancel" (click)="resetForm()">
           Cancel
         </button>
       </div>
     </div>
   </div>
 
-  <!-- MODERN SAAS MANAGEMENT LIST WORKSPACE -->
-  <main class="dashboard-workspace">
-    <div class="list-layout-header">
-      <h3>Active System Registries</h3>
-    </div>
-
-     <div class="search-box-wrapper">
-        <span class="search-icon">🔍</span>
+  <!-- INNOVATIVE TABULAR WORKSPACE DISPLAY CONTAINER -->
+  <main class="matrix-table-workspace">
+    
+    <div class="matrix-filter-header">
+      <div class="matrix-badge-legend">
+        <span class="legend-indicator"></span> Active Privilege registries
+      </div>
+      <div class="matrix-search-input-frame">
+        <span class="search-lens">⚡</span>
         <input
           type="text"
           [(ngModel)]="searchTerm"
           placeholder="Filter access roles..."
         />
       </div>
+    </div>
 
-    <!-- COMPILER-SAFE EMPTY LOOK STATE -->
-    <ng-container *ngIf="roles$ | async as resolvedRoles">
-      <div class="saas-empty-state" *ngIf="filterRoles(resolvedRoles).length === 0">
-        <div class="empty-vector">🔑</div>
-        <h4>No security categories discovered</h4>
-        <p>Refine your lookup criteria or instantiate a brand-new workspace scope.</p>
+    <!-- MAIN DATA MATRIX FRAME TABLE -->
+    <div class="matrix-data-frame" *ngIf="roles$ | async as roles">
+      
+      <!-- HEADER CAPTION TRACK -->
+      <div class="matrix-row matrix-header-row">
+        <div class="cell">Security Clearance Badge</div>
+        <div class="cell">Functional Operational Definition</div>
+        <div class="cell text-right">System Interventions</div>
       </div>
-    </ng-container>
 
-    <!-- CORE ROLE DATA ROW LIST -->
-    <div class="saas-role-list" *ngIf="roles$ | async as roles">
-      <article class="role-list-row" *ngFor="let role of filterRoles(roles)">
-        
-        <!-- COL 1: ROLE IDENTITY (BADGE AND TITLE) -->
-        <div class="list-col identity-col">
-          <span class="saas-role-badge" [attr.data-role]="role.name">
-            {{ role.name }}
-          </span>
+      <!-- STREAM DATA LAYER ROWS -->
+      <div class="matrix-row-scroller" *ngIf="filterRoles(roles).length > 0; else noDataFallback">
+        <article class="matrix-row data-row" *ngFor="let role of filterRoles(roles)">
+          
+          <!-- COL 1: ROLE IDENTITY (BADGE AND DESIGN DESIGNATION) -->
+          <div class="cell primary-identity-cell">
+            <div class="privilege-icon-shield"></div>
+            <div class="matrix-identity-details">
+              <span class="saas-role-badge" [attr.data-role]="role.name">
+                {{ role.name }}
+              </span>
+            </div>
+          </div>
+
+          <!-- COL 2: FUNCTIONAL PURPOSE / DESCRIPTION -->
+          <div class="cell description-matrix-cell">
+            <span class="description-text" [title]="role.description || ''">
+              {{ role.description || '— No systemic operational definitions provided.' }}
+            </span>
+          </div>
+
+          <!-- COL 3: INTERACTION RUNTIME TRIGGERS -->
+          <div class="cell action-runtime-cell text-right">
+            <button mat-stroked-button class="gp-action-trigger edit-trigger" (click)="editRole(role)">
+              <span class="trigger-label">Modify</span>
+            </button>
+            <button mat-button class="gp-action-trigger delete-trigger" (click)="deleteRole(role.id)">
+              <span class="trigger-label">Purge</span>
+            </button>
+          </div>
+
+        </article>
+      </div>
+
+      <!-- COMPILER-SAFE EMPTY LOOK STATE -->
+      <ng-template #noDataFallback>
+        <div class="matrix-empty-viewport">
+          <div class="empty-icon-radar">🔑</div>
+          <h4>No security categories discovered</h4>
+          <p>Refine your lookup criteria or instantiate a brand-new workspace scope.</p>
         </div>
+      </ng-template>
 
-        <!-- COL 2: FUNCTIONAL PURPOSE / DESCRIPTION -->
-        <div class="list-col description-col">
-          <span class="description-text" [title]="role.description || ''">
-            {{ role.description || '— No systemic operational definitions provided.' }}
-          </span>
-        </div>
-
-        <!-- COL 3: ROW CRUD INTERACTIONS -->
-        <div class="list-col actions-col">
-          <button mat-stroked-button class="gp-button-plain edit" style="color: black;" (click)="editRole(role)">Edit</button>
-          <button mat-button class="action-btn delete" (click)="deleteRole(role.id)">Delete</button>
-        </div>
-
-      </article>
     </div>
   </main>
 </div>

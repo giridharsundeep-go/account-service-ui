@@ -44,6 +44,17 @@ export class Users implements OnInit {
   managerId: number | null = null;
   managerSearchText = ''; // Model boundary connected to autocomplete text
 
+  // Employee Identity Fields
+  employeeIdPrefix = '';
+  employeeIdNumber = '';
+
+  // Location Fields
+  locationCountry = '';
+  locationState = '';
+  locationCity = '';
+  locationWorkModel = ''; // e.g., 'REMOTE' | 'HYBRID' | 'ONSITE'
+  locationDeskCode = '';
+
   editingUserId: number | null = null;
   searchTerm = '';
   loading = false;
@@ -118,7 +129,14 @@ export class Users implements OnInit {
       name: this.name,
       email: this.email,
       role_id: this.roleId,
-      manager_id: this.managerId // Attaches hierarchical corporate relation mapping
+      manager_id: this.managerId, // Attaches hierarchical corporate relation mapping
+      employee_id_prefix: this.employeeIdPrefix,
+      employee_id_number: this.employeeIdNumber,
+      locationCountry: this.locationCountry,
+      locationState: this.locationState,
+      locationCity: this.locationCity,
+      locationWorkModel: this.locationWorkModel,
+      locationDeskCode: this.locationDeskCode
     };
 
     const request = this.editingUserId
@@ -142,6 +160,17 @@ export class Users implements OnInit {
     this.editingUserId = user.id;
     this.managerId = user.manager_id || null;
 
+    // Populating employee identity back into the edit states
+    this.employeeIdPrefix = user.employee_id_prefix || '';
+    this.employeeIdNumber = user.employee_id_number || '';
+
+    // Populating location data back into the edit states
+    this.locationCountry = user.locationCountry || '';
+    this.locationState = user.locationState || '';
+    this.locationCity = user.locationCity || '';
+    this.locationWorkModel = user.locationWorkModel || '';
+    this.locationDeskCode = user.locationDeskCode || '';
+
     // Safe execution with type-matching guaranteed
     this.managerSearchText = this.managerId ? this.displayManagerName(this.managerId) : '';
     this.filterManagerAutocomplete();
@@ -160,6 +189,18 @@ export class Users implements OnInit {
     this.roleId = null;
     this.managerId = null;
     this.managerSearchText = '';
+    
+    // Clear identity variables cleanly
+    this.employeeIdPrefix = '';
+    this.employeeIdNumber = '';
+
+    // Clear location variables cleanly
+    this.locationCountry = '';
+    this.locationState = '';
+    this.locationCity = '';
+    this.locationWorkModel = '';
+    this.locationDeskCode = '';
+
     this.editingUserId = null;
     this.filterManagerAutocomplete();
   }

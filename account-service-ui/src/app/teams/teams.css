@@ -1,678 +1,292 @@
-/* =========================
-   TOP BAR
-========================= */
-.top-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.right-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-/* 🔥 PRIMARY BUTTON */
-.gp-button {
-  width: 100%;
-  height: 52px;
-  border-radius: 30px;
-  background-color: #001c51;
-  color: white;
-  font-size: 16px;
-}
-
-/* SECONDARY BUTTON */
-.gp-button-light {
-  width: 300px;
-  height: 52px;
-  border-radius: 30px;
-  background-color: #2678bf;
-  color: white;
-  font-size: 16px;
-}
-
-.gp-button-plain {
-  width: 300px;
-  height: 52px;
-  border-radius: 30px;
-  border: 1px solid rgb(189, 189, 189);
-  background-color: #ffffff;
-  color: white;
-  font-size: 16px;
-}
-
-.right-actions input {
-  width: 260px;
-  padding: 10px 12px;
-  border: 1px solid #d0d0d0;
-  border-radius: 8px;
-  outline: none;
-}
-
-/* =========================
-   PANEL
-========================= */
-.team-panel {
-  margin-bottom: 24px;
-}
-
-.full-width {
-  width: 100%;
-  margin-bottom: 14px;
-}
-
-/* =========================
-   MODAL & CHIP SECTION LAYOUT
-========================= */
-.members-chip-section {
-  margin: 20px 0;
-  padding: 16px;
-  background-color: #fcfcfc;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-}
-
-.members-chip-section .section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 14px;
-}
-
-.members-chip-section h3 {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.chips-wrapper {
-  padding: 8px 0;
-}
-
-.no-members-text {
-  font-size: 13px;
-  color: #757575;
-  font-style: italic;
-}
-
-/* Fix custom clear icon button positioning inside chips */
-button[matChipRemove] {
-  border: none;
-  background: transparent;
-  font-size: 16px;
-  cursor: pointer;
-  line-height: 1;
-  padding: 0 4px;
-  margin-left: 4px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* =========================
-   ACTIONS
-========================= */
-.form-actions {
-  margin-top: 20px;
-  display: flex;
-  gap: 10px;
-}
-
-/* =========================
-   TABLE
-========================= */
-.table-container {
-  margin-top: 24px;
-}
-
-.teams-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-}
-
-.teams-table th,
-.teams-table td {
-  padding: 14px;
-  border-bottom: 1px solid #e5e5e5;
-  text-align: left;
-}
-
-.teams-table th {
-  background: #f5f5f5;
-  font-weight: 600;
-}
-
-.teams-table tr:hover {
-  background: #fafafa;
-}
-
-.actions button {
-  margin-right: 8px;
-}
-
-.empty {
-  text-align: center;
-  padding: 24px;
-  color: #888;
-}
-
 /* ==========================================================================
-   GLOBAL DESIGN VARIABLES & RESET DEFAULTS
+   ADVANCED TOKENS & SAAS GRID BASE
    ========================================================================== */
 :root {
-  --saas-primary: #4f46e5;
-  --saas-primary-hover: #4338ca;
-  --saas-bg: #f8fafc;
-  --saas-surface: #ffffff;
-  --saas-border: #e2e8f0;
-  --saas-text-main: #0f172a;
-  --saas-text-muted: #64748b;
-  --saas-danger: #ef4444;
-  --saas-danger-light: #fef2f2;
-  --saas-radius: 12px;
-  --saas-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --matrix-brand: #0f172a;
+  --matrix-accent: #2563eb;
+  --matrix-bg-base: #f1f5f9;
+  --matrix-bg-surface: #ffffff;
+  --matrix-border-light: #e2e8f0;
+  --matrix-border-heavy: #cbd5e1;
+  --matrix-text-primary: #1e293b;
+  --matrix-text-secondary: #475569;
+  --matrix-text-ghost: #94a3b8;
 }
 
 .saas-container {
-  background-color: var(--saas-bg);
+  background-color: var(--matrix-bg-base);
   min-height: 100vh;
   padding-top: 40px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  color: var(--saas-text-main);
+  font-family: system-ui, -apple-system, sans-serif;
+  color: var(--matrix-text-primary);
   box-sizing: border-box;
 }
 
 /* ==========================================================================
-   HEADER SECTION LAYOUT
+   ISOLATED CUSTOM BUTTON ARCHETYPE FRAMEWORK (.gp-buttons)
+   ========================================================================== */
+.gp-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 28px;
+  height: 48px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  letter-spacing: -0.01em;
+  position: relative;
+  overflow: hidden;
+}
+
+.gp-button.gp-primary {
+  background-color: #001c51;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(0, 28, 81, 0.15);
+}
+.gp-button.gp-primary:hover {
+  background-color: #002b7a;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 28, 81, 0.25);
+}
+
+.gp-button.gp-action {
+  background-color: #2678bf;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(38, 120, 191, 0.15);
+}
+.gp-button.gp-action:hover {
+  background-color: #318ecc;
+  transform: translateY(-1px);
+}
+
+.gp-button.gp-cancel {
+  background-color: transparent;
+  color: var(--matrix-text-secondary);
+  border: 1px solid var(--matrix-border-heavy);
+}
+.gp-button.gp-cancel:hover {
+  background-color: rgba(15, 23, 42, 0.04);
+  color: var(--matrix-text-primary);
+}
+
+.header-wide-btn { width: 300px; }
+
+.btn-indicator-pulse {
+  width: 6px; height: 6px; background-color: #34d399; border-radius: 50%; position: relative;
+}
+.btn-indicator-pulse::after {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 50%; background-color: #34d399; animation: radarPulse 1.8s infinite ease-out;
+}
+@keyframes radarPulse {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(3.5); opacity: 0; }
+}
+
+/* ==========================================================================
+   DRAWER INTERFACES & CHIP SUBSECTION COMPONENT MODULES
    ========================================================================== */
 .saas-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 24px;
-  margin-bottom: 32px;
-  border-bottom: 1px solid var(--saas-border);
-  padding-bottom: 24px;
+  margin-bottom: 40px;
 }
-
 .header-title-block h2 {
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  margin: 0 0 4px 0;
-  color: var(--saas-text-main);
+  font-size: 28px; font-weight: 800; letter-spacing: -0.03em; margin: 0 0 6px 0;
+}
+.header-title-block .header-subtitle {
+  color: var(--matrix-text-secondary); margin: 0; font-size: 14px; line-height: 1.5; max-width: 700px;
 }
 
-.header-title-block class.header-subtitle {
-  font-size: 14px;
-  color: var(--saas-text-muted);
-  margin: 0;
-}
+.form-drawer-wrapper { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+.form-drawer-wrapper.open { max-height: 800px; margin-bottom: 40px; }
+.drawer-card { background: var(--matrix-bg-surface); border: 1px solid var(--matrix-border-light); padding: 32px; border-radius: 16px; }
+.form-grid-two-col { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+.drawer-footer { display: flex; gap: 12px; border-top: 1px solid var(--matrix-border-light); padding-top: 24px; margin-top: 32px; }
 
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-/* SAAS SEARCH INPUT WRAPPER */
-.search-box-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  border: 1px solid rgb(189, 188, 188);
-  border-radius: 20px;
-}
-
-.search-box-wrapper input {
-  width: 280px;
-  padding: 10px 14px 10px 38px;
-  background-color: var(--saas-surface);
-  border: 1px solid var(--saas-border);
-  border-radius: 8px;
-  font-size: 14px;
-  outline: none;
-  transition: all 0.2s ease;
-  color: var(--saas-text-main);
-}
-
-.search-box-wrapper input:focus {
-  border-color: var(--saas-primary);
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-}
-
-.search-box-wrapper .search-icon {
-  position: absolute;
-  left: 14px;
-  color: var(--saas-text-muted);
-  font-size: 16px;
-}
-
-/* ==========================================================================
-   SAAS BUTTON SYSTEM
-   ========================================================================== */
-.btn-primary-saas {
-  background-color: var(--saas-primary) !important;
-  color: #ffffff !important;
-  border-radius: 8px !important;
-  padding: 0 20px !important;
-  font-weight: 500 !important;
-  font-size: 14px !important;
-  height: 42px !important;
-  border: none;
-  cursor: pointer;
-}
-
-.btn-primary-saas:hover {
-  background-color: var(--saas-primary-hover) !important;
-}
-
-.btn-stroked-saas {
-  border: 1px solid var(--saas-border) !important;
-  background-color: var(--saas-surface) !important;
-  color: var(--saas-text-main) !important;
-  border-radius: 8px !important;
-  font-weight: 500 !important;
-  height: 38px !important;
-}
-
-.btn-stroked-saas:hover {
-  background-color: #f8fafc !important;
-  border-color: #cbd5e1 !important;
-}
-
-.btn-flat-saas {
-  color: var(--saas-text-muted) !important;
-  font-weight: 500 !important;
-}
-
-/* ==========================================================================
-   DRAWER/EXPANSION DRAWER FORM CREATION MODAL
-   ========================================================================== */
-.form-drawer-wrapper {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  margin-bottom: 0;
-}
-
-.form-drawer-wrapper.open {
-  max-height: 800px;
-  margin-bottom: 32px;
-}
-
-.drawer-card {
-  background-color: var(--saas-surface);
-  border: 1px solid var(--saas-border);
-  border-radius: var(--saas-radius);
-  box-shadow: var(--saas-shadow);
-  padding: 24px;
-}
-
-.drawer-header {
-  margin-bottom: 20px;
-}
-
-.drawer-header h3 {
-  margin: 0 0 4px 0;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.drawer-header p {
-  margin: 0;
-  font-size: 13px;
-  color: var(--saas-text-muted);
-}
-
-.saas-form-field {
-  width: 100%;
-  margin-bottom: 4px;
-}
-
-/* CHIPS SUB CONTAINER SYSTEM */
 .saas-members-section {
-  border: 1px solid var(--saas-border);
-  background-color: #fafbfc;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 20px;
+  margin-top: 24px; border: 1px solid var(--matrix-border-light); border-radius: 12px; padding: 20px; background-color: #fafafa;
 }
+.section-flex-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.section-flex-titles h4 { margin: 0; font-size: 14px; font-weight: 700; }
+.section-flex-titles .meta-desc { margin: 2px 0 0 0; font-size: 11px; color: var(--matrix-text-ghost); }
 
-.section-flex-header {
+.saas-chips-box { background: var(--matrix-bg-surface); border: 1px dashed var(--matrix-border-heavy); border-radius: 8px; padding: 12px; min-height: 64px; box-sizing: border-box; }
+.blank-info-text { font-size: 12px; color: var(--matrix-text-ghost); font-style: italic; }
+
+::v-deep .saas-custom-chip {
+  background-color: #f1f5f9 !important; border: 1px solid var(--matrix-border-light) !important;
+  color: var(--matrix-text-primary) !important; font-size: 12px !important; font-weight: 600 !important;
+}
+.chip-remove-x { border: none; background: none; color: var(--matrix-text-ghost); font-size: 14px; cursor: pointer; margin-left: 4px; }
+.chip-remove-x:hover { color: #ef4444; }
+
+/* ==========================================================================
+   DASHBOARD CARDS FILTER TRACK CONTROLLER
+   ========================================================================== */
+.workspace-filter-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  padding: 16px 24px;
+  background-color: var(--matrix-bg-surface);
+  border: 1px solid var(--matrix-border-light);
+  border-radius: 12px;
+  margin-bottom: 24px;
 }
+.workspace-badge-legend {
+  font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; display: flex; align-items: center; gap: 8px;
+}
+.legend-indicator { width: 8px; height: 8px; background-color: var(--matrix-accent); border-radius: 50%; }
 
-.section-flex-header h4 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 600;
+.workspace-search-input-frame { position: relative; width: 340px; }
+.workspace-search-input-frame input {
+  width: 100%; border: 1px solid var(--matrix-border-heavy); border-radius: 8px; padding: 10px 16px 10px 40px;
+  font-size: 13px; background-color: var(--matrix-bg-surface); outline: none; transition: all 0.2s ease;
 }
-
-.section-flex-header .meta-desc {
-  margin: 2px 0 0 0;
-  font-size: 12px;
-  color: var(--saas-text-muted);
-}
-
-.saas-chips-box {
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-}
-
-.blank-info-text {
-  font-size: 13px;
-  color: var(--saas-text-muted);
-  font-style: italic;
-}
-
-.saas-custom-chip {
-  background-color: #e0e7ff !important;
-  color: #4338ca !important;
-  font-weight: 500 !important;
-}
-
-.chip-remove-x {
-  border: none;
-  background: transparent;
-  font-size: 14px;
-  margin-left: 4px;
-  cursor: pointer;
-  color: #4338ca;
-}
-
-.drawer-footer {
-  display: flex;
-  gap: 12px;
-  border-top: 1px solid var(--saas-border);
-  padding-top: 20px;
-  margin-top: 8px;
-}
+.workspace-search-input-frame input:focus { border-color: var(--matrix-accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+.workspace-search-input-frame .search-lens { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--matrix-text-ghost); }
 
 /* ==========================================================================
-   GRID CARDS SYSTEM WORKSPACE
+   SaaS INTERACTIVE CARDS GRID PLATFORM MODULES
    ========================================================================== */
-.grid-layout-header {
-  margin-bottom: 20px;
-}
-
-.grid-layout-header h3 {
-  font-size: 16px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--saas-text-muted);
-  margin: 0;
-}
-
-.saas-team-grid {
+.saas-team-grid-layout {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
   gap: 24px;
-  padding-top: 20px;
 }
 
 .team-saas-card {
-  background-color: var(--saas-surface);
-  border: 1px solid black;
-  border-radius: 20px;
-  box-shadow: var(--saas-shadow);
+  background-color: var(--matrix-bg-surface);
+  border: 1px solid var(--matrix-border-light);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px -6px rgba(15, 23, 42, 0.03);
   display: flex;
   flex-direction: column;
-  transition: transform 0.2s ease, border-color 0.2s ease;
   overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-
 .team-saas-card:hover {
   transform: translateY(-2px);
-  border-color: #cbd5e1;
+  box-shadow: 0 12px 30px -10px rgba(15, 23, 42, 0.08);
 }
 
+/* CARD UPPER TRACK */
 .card-main-details {
   padding: 24px;
-  border-bottom: 1px solid var(--saas-border);
+  border-bottom: 1px solid var(--matrix-border-light);
   flex-grow: 1;
 }
-
 .card-upper-row {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  margin-bottom: 16px;
   gap: 16px;
-  margin-bottom: 14px;
 }
-
 .badge-title-group {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
-
 .team-avatar-icon {
-  font-size: 24px;
-  background-color: #f1f5f9;
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
+  width: 40px; height: 40px; border-radius: 10px; background-color: #f8fafc;
+  border: 1px solid var(--matrix-border-light); display: flex; align-items: center; justify-content: center; font-size: 16px;
 }
-
 .title-meta h4 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
+  margin: 0 0 4px 0; font-size: 16px; font-weight: 700; color: var(--matrix-text-primary); letter-spacing: -0.01em;
 }
-
-.title-meta .id-tag {
-  margin: 2px 0 0 0;
-  font-size: 11px;
-  color: var(--saas-text-muted);
-  font-family: monospace;
+.badge-count-pill {
+  display: inline-block; font-size: 11px; font-weight: 600; color: var(--matrix-text-secondary);
 }
 
 .card-action-menu {
-  display: flex;
-  gap: 4px;
-}
-
-.action-btn {
-  min-width: unset !important;
-  padding: 4px 8px !important;
-  font-size: 12px !important;
-  font-weight: 500 !important;
-  height: 28px !important;
-  line-height: 28px !important;
-}
-
-.action-btn.edit {
-  color: var(--saas-primary) !important;
-}
-
-.action-btn.delete {
-  color: var(--saas-text-muted) !important;
-}
-
-.action-btn.delete:hover {
-  color: var(--saas-danger) !important;
-  background-color: var(--saas-danger-light) !important;
+  display: flex; gap: 4px;
 }
 
 .team-body-description {
-  margin: 0;
-  font-size: 13px;
-  color: var(--saas-text-muted);
-  line-height: 1.5;
+  margin: 0; font-size: 13px; line-height: 1.6; color: var(--matrix-text-secondary);
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
 
-/* ==========================================================================
-   INLINE MEMBER ROSTER ENGINE CRUD MANAGEMENT PANEL
-   ========================================================================== */
+/* CARD ROSTER DISPLAY SUBSYSTEM */
 .card-roster-management {
   background-color: #fcfdfe;
-  padding: 16px 24px;
+  padding: 20px 24px;
 }
-
-.roster-inner-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
 .roster-inner-header h5 {
-  margin: 0;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--saas-text-main);
+  margin: 0 0 12px 0; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--matrix-text-ghost);
 }
 
-/* PROVISION DROP SELECT DESIGN */
-.fast-add-member-dropdown select {
-  font-size: 12px;
-  font-weight: 500;
-  border: 1px solid var(--saas-border);
-  padding: 4px 8px;
-  border-radius: 6px;
-  outline: none;
-  background-color: var(--saas-surface);
-  color: var(--saas-primary);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.fast-add-member-dropdown select:hover {
-  border-color: var(--saas-primary);
-  background-color: #f4f4ff;
-}
-
-/* SCROLLER MEMBER REPOSITORIES */
 .roster-scroller-viewport {
-  max-height: 160px;
-  overflow-y: auto;
-  padding-right: 4px;
+  max-height: 200px; overflow-y: auto; padding-right: 4px;
 }
+/* Custom Mini-Scrollbar Rules */
+.roster-scroller-viewport::-webkit-scrollbar { width: 4px; }
+.roster-scroller-viewport::-webkit-scrollbar-thumb { background-color: var(--matrix-border-light); border-radius: 4px; }
 
 .no-seats-hint {
-  margin: 0;
-  font-size: 12px;
-  color: var(--saas-text-muted);
-  font-style: italic;
-  padding: 8px 0;
+  margin: 0; font-size: 12px; color: var(--matrix-text-ghost); font-style: italic; padding: 4px 0;
 }
 
 .roster-interactive-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px;
 }
-
 .roster-member-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  background-color: var(--saas-surface);
-  border: 1px solid var(--saas-border);
-  border-radius: 8px;
-  transition: background-color 0.15s ease;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 12px; background-color: var(--matrix-bg-surface);
+  border: 1px solid var(--matrix-border-light); border-radius: 8px; transition: border-color 0.15s ease;
 }
-
 .roster-member-item:hover {
-  background-color: #f8fafc;
+  border-color: var(--matrix-border-heavy);
 }
 
-.member-identity-block {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
+.member-identity-block { display: flex; align-items: center; gap: 10px; }
 .mini-avatar {
-  width: 26px;
-  height: 26px;
-  background-color: #e2e8f0;
-  color: var(--saas-text-main);
-  font-size: 11px;
-  font-weight: 600;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-transform: uppercase;
+  width: 24px; height: 24px; border-radius: 50%; background-color: var(--matrix-brand);
+  color: #ffffff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+}
+.identity-text { display: flex; flex-direction: column; }
+.m-name { font-size: 12px; font-weight: 600; color: var(--matrix-text-primary); }
+.m-role { font-size: 10px; color: var(--matrix-text-ghost); }
+
+/* Quick Inline Revoke Triggers inside Cards */
+.roster-member-item .btn-remove-member-inline {
+  width: 20px; height: 20px; border: none; background: transparent;
+  color: var(--matrix-text-ghost); font-size: 16px; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s ease;
+}
+.roster-member-item:hover .btn-remove-member-inline {
+  color: var(--matrix-text-secondary);
+}
+.roster-member-item .btn-remove-member-inline:hover {
+  background-color: #fef2f2; color: #ef4444;
 }
 
-.identity-text {
-  display: flex;
-  flex-direction: column;
+/* RUNTIME ACTION CONTROLLER CLASSES */
+.gp-action-trigger {
+  height: 32px; border-radius: 6px; padding: 0 12px; font-size: 12px; font-weight: 600; cursor: pointer; background-color: transparent; border: 1px solid transparent; transition: all 0.15s ease;
 }
+.gp-action-trigger.edit-trigger { color: var(--matrix-accent); }
+.gp-action-trigger.edit-trigger:hover { background-color: #eff6ff; border-color: #bfdbfe; }
+.gp-action-trigger.delete-trigger { color: var(--matrix-text-ghost); }
+.gp-action-trigger.delete-trigger:hover { color: #ef4444; background-color: #fef2f2; }
 
-.identity-text .m-name {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--saas-text-main);
-}
-
-.identity-text .m-role {
-  font-size: 10px;
-  color: var(--saas-text-muted);
-}
-
-/* DELETION INTERFACE CONTROL */
-.btn-remove-member-inline {
-  border: none;
-  background: transparent;
-  color: var(--saas-text-muted);
-  font-size: 16px;
-  cursor: pointer;
-  padding: 0 4px;
-  line-height: 1;
-  border-radius: 4px;
-}
-
-.btn-remove-member-inline:hover {
-  color: var(--saas-danger);
-  background-color: var(--saas-danger-light);
-}
+.saas-empty-state { grid-column: 1 / -1; padding: 80px 32px; text-align: center; color: var(--matrix-text-ghost); }
+.empty-vector { font-size: 36px; margin-bottom: 16px; }
 
 /* ==========================================================================
-   EMPTY VIEWS WRAPPER
+   BREAKPOINTS RESPONSIVE GRID CONFIGURATIONS
    ========================================================================== */
-.saas-empty-state {
-  text-align: center;
-  padding: 60px 24px;
-  background-color: var(--saas-surface);
-  border: 2px dashed var(--saas-border);
-  border-radius: var(--saas-radius);
-  margin-top: 12px;
-}
-
-.empty-vector {
-  font-size: 42px;
-  margin-bottom: 16px;
-}
-
-.saas-empty-state h4 {
-  margin: 0 0 6px 0;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.saas-empty-state p {
-  margin: 0;
-  font-size: 13px;
-  color: var(--saas-text-muted);
+@media(max-width: 500px) {
+  .saas-team-grid-layout { grid-template-columns: 1fr; }
+  .card-upper-row { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .card-action-menu { width: 100%; justify-content: flex-start; border-top: 1px dashed var(--matrix-border-light); padding-top: 12px; }
 }
