@@ -9,7 +9,6 @@
     </div>
 
     <div class="header-actions">
-      <!-- CLEAN INLINE EMBEDDED BUTTON STRUCTURE -->
       <button class="gp-button gp-primary" (click)="resetForm(); editingUserId = 0">
         <span class="btn-indicator-pulse"></span> Register Teammate
       </button>
@@ -26,9 +25,9 @@
 
       <div class="drawer-body">
         
-        <!-- SECTION 1 -->
-        <div class="drawer-section-divider">Identity Protocols</div>
-        <div class="form-grid-two-col">
+        <!-- SECTION 1: IDENTITY & NODE LIFECYCLE -->
+        <div class="drawer-section-divider">Identity & Node Lifecycle</div>
+        <div class="form-grid-three-col">
           <mat-form-field appearance="outline" class="saas-form-field">
             <mat-label>Legal Full Name</mat-label>
             <input matInput [(ngModel)]="name" placeholder="Alex Rivera" />
@@ -37,9 +36,21 @@
             <mat-label>System Email Matrix</mat-label>
             <input matInput type="email" [(ngModel)]="email" placeholder="alex.rivera@enterprise.io" />
           </mat-form-field>
+          
+          <!-- INLINE OPERATIONAL STATUS SLIDE TOGGLE -->
+          <div class="status-toggle-container">
+            <span class="toggle-label-meta">Node Lifecycle State</span>
+            <label class="matrix-switch">
+              <input type="checkbox" [(ngModel)]="isActive" />
+              <span class="matrix-slider"></span>
+            </label>
+            <span class="toggle-status-value" [class.active-txt]="isActive">
+              {{ isActive ? 'ACTIVE NODE' : 'INACTIVE BLOCKED' }}
+            </span>
+          </div>
         </div>
 
-        <!-- SECTION 2 -->
+        <!-- SECTION 2: ACCESS SPECIFICATIONS -->
         <div class="form-grid-three-col">
           <mat-form-field appearance="outline" class="saas-form-field">
             <mat-label>ID Designation Prefix</mat-label>
@@ -66,16 +77,26 @@
               <mat-option *ngFor="let role of (roles$ | async)" [value]="role.id">{{ role.name }}</mat-option>
             </mat-select>
           </mat-form-field>
+          
+          <!-- 🔧 COMPONENT FIX: Native Autocomplete Text Box Synchronization without [displayWith] friction -->
           <mat-form-field appearance="outline" class="saas-form-field">
             <mat-label>Reporting Core Node</mat-label>
-            <input type="text" placeholder="Search operational head..." matInput [(ngModel)]="managerSearchText" [matAutocomplete]="auto" (input)="filterManagerAutocomplete()" />
-            <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayManagerName.bind(this)" (optionSelected)="onManagerSelected($event)">
-              <mat-option *ngFor="let manager of filteredManagers" [value]="manager.id">{{ manager.name }}</mat-option>
+            <input 
+              type="text" 
+              placeholder="Search operational head..." 
+              matInput 
+              [(ngModel)]="managerSearchText" 
+              [matAutocomplete]="auto" 
+              (input)="filterManagerAutocomplete()" />
+            <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onManagerSelected($event)">
+              <mat-option *ngFor="let manager of filteredManagers" [value]="manager">
+                {{ manager.name }}
+              </mat-option>
             </mat-autocomplete>
           </mat-form-field>
         </div>
 
-        <!-- SECTION 3 -->
+        <!-- SECTION 3: GEOGRAPHIC OPERATIONS -->
         <div class="drawer-section-divider">Geographic Operations Workspace</div>
         <div class="form-grid-three-col">
           <mat-form-field appearance="outline" class="saas-form-field">
@@ -120,17 +141,51 @@
     </div>
   </div>
 
-  <!-- INNOVATIVE INNOVATIVE TABULAR WORKSPACE DISPLAY CONTAINER -->
+  <!-- INNOVATIVE TABULAR WORKSPACE DISPLAY CONTAINER -->
   <main class="matrix-table-workspace">
     
+    <!-- DUAL TAB LAYOUT SELECTOR SWITCHER -->
     <div class="matrix-filter-header">
-      <div class="matrix-badge-legend">
-        <span class="legend-indicator"></span> Operational Active Registry
+      <div class="directory-tabs-frame">
+        <button  mat-stroked-button class="gp-button"
+          class="directory-tab-btn" 
+          [class.active]="currentStatusTab === 'active'" 
+          (click)="currentStatusTab = 'active'">
+          <span class="tab-indicator state-active"></span>
+          ACTIVE DIRECTORY 
+          <span class="tab-counter-badge">{{ getCount(cachedUsersArray, true) }}</span>
+        </button>
+        <button mat-stroked-button class="gp-button" style="padding-left: 20px;"
+          class="directory-tab-btn" 
+          [class.active]="currentStatusTab === 'inactive'" 
+          (click)="currentStatusTab = 'inactive'">
+          <span class="tab-indicator state-inactive"></span>
+          INACTIVE ARCHIVED DIRECTORY 
+          <span class="tab-counter-badge">{{ getCount(cachedUsersArray, false) }}</span>
+        </button>
       </div>
-      <div class="matrix-search-input-frame">
-        <span class="search-lens">⚡</span>
-        <input type="text" [(ngModel)]="searchTerm" placeholder="Query active directory index matrix..." />
-      </div>
+    </div>
+
+    <!-- FILTER ENGINE INTERFACE SEARCH FRAME -->
+    <div class="matrix-search-input-frame">
+      <span class="search-lens">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="icon-svg">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.602 10.602Z" />
+        </svg>
+      </span>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        placeholder="Query {{ currentStatusTab }} directory index matrix..."
+        autocomplete="off"
+      />
+      <button 
+        *ngIf="searchTerm" 
+        class="clear-search-btn" 
+        (click)="searchTerm = ''"
+        aria-label="Clear search">
+        &times;
+      </button>
     </div>
 
     <!-- MAIN DATA MATRIX FRAME TABLE -->
@@ -146,13 +201,16 @@
       </div>
 
       <!-- STREAM DATA LAYER ROWS -->
-      <div class="matrix-row-scroller" *ngIf="filterUsers(users).length > 0; else noDataFallback">
-        <article class="matrix-row data-row" *ngFor="let user of filterUsers(users)">
+      <div class="matrix-row-scroller" *ngIf="filterUsersByStatusAndSearch(users).length > 0; else noDataFallback">
+        <article 
+          class="matrix-row data-row" 
+          *ngFor="let user of filterUsersByStatusAndSearch(users)"
+          [class.node-suspended]="!user.is_active">
           
-          <!-- CELL 1: VISUALLY COMPLEX MULTI-LAYER USER BADGE -->
+          <!-- CELL 1: USER BADGE WITH STATE INDICATOR -->
           <div class="cell primary-identity-cell">
             <div class="matrix-identity-avatar" [attr.data-initials]="getAvatarInitials(user.name)">
-              <div class="status-indicator online"></div>
+              <div class="status-indicator" [class.online]="user.is_active" [class.offline]="!user.is_active"></div>
             </div>
             <div class="matrix-identity-details">
               <div class="identity-top-row">
@@ -165,23 +223,23 @@
             </div>
           </div>
 
-          <!-- CELL 2: CONTRASTED CLEARANCE LEVEL ROLES -->
+          <!-- CELL 2: CLEARANCE LEVEL ROLES -->
           <div class="cell">
             <span class="clearance-pill" [attr.data-clearance-level]="user.role_name">
               {{ user.role_name || 'Level 0' }}
             </span>
           </div>
 
-          <!-- CELL 3: DUAL-METRIC METROPOLITAN MATRIX DATA -->
+          <!-- CELL 3: GEOGRAPHIC OPERATION MATRICES -->
           <div class="cell location-matrix-cell">
-            <div class="loc-matrix-cluster" *ngIf="user.location_city; else blankLoc">
+            <div class="loc-matrix-cluster" *ngIf="user.locationCity; else blankLoc">
               <div class="loc-primary">
-                <span class="geo-pin-icon"></span> {{ user.location_city }}
-                <span class="country-sub-tag">{{ user.location_country }}</span>
+                <span class="geo-pin-icon"></span> {{ user.locationCity }}
+                <span class="country-sub-tag">{{ user.locationCountry }}</span>
               </div>
               <div class="loc-secondary">
-                <span class="model-badge" [attr.data-model]="user.location_work_model">{{ user.location_work_model }}</span>
-                <span class="desk-coordinate">{{ user.location_desk_code || 'Fluid Allocation' }}</span>
+                <span class="model-badge" [attr.data-model]="user.locationWorkModel">{{ user.locationWorkModel }}</span>
+                <span class="desk-coordinate">{{ user.locationDeskCode || 'Fluid Allocation' }}</span>
               </div>
             </div>
             <ng-template #blankLoc>
@@ -189,7 +247,7 @@
             </ng-template>
           </div>
 
-          <!-- CELL 4: VISUAL GRAPHIC MANAGEMENT INTERACTION TRACKS -->
+          <!-- CELL 4: MANAGEMENT FRAMEWORK LINKS -->
           <div class="cell management-hierarchy-cell">
             <div class="hierarchy-tree-node" *ngIf="user.manager_name; else icNode">
               <div class="hierarchy-connector-branch"></div>
@@ -217,7 +275,7 @@
               <span class="trigger-label">Modify</span>
             </button>
             <button class="gp-action-trigger delete-trigger" (click)="deleteUser(user.id)">
-              <span class="trigger-label">Purge</span>
+              <span class="trigger-label">{{ user.is_active ? 'Deactivate' : 'Purge' }}</span>
             </button>
           </div>
 
@@ -229,7 +287,7 @@
         <div class="matrix-empty-viewport">
           <div class="empty-icon-radar"></div>
           <h4>Zero operational clusters identified</h4>
-          <p>The layout criteria requested could not index any verified active matching datasets.</p>
+          <p>No records found inside the {{ currentStatusTab }} directory matching your filter rules.</p>
         </div>
       </ng-template>
 

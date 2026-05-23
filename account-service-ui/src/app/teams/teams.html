@@ -1,190 +1,225 @@
-<!-- SAAS DASHBOARD CONTAINER -->
 <div class="saas-container">
-  
-  <!-- PREMIUM TOP HEADER BAR -->
-  <header class="saas-header">
-    <div class="header-title-block">
-      <h2>Teams Management</h2>
-      <p class="header-subtitle">Create distinct workspace teams, manage permissions, and assign cross-functional members.</p>
-    </div>
 
-    <div class="header-actions">
-      <button
-        mat-stroked-button
-        class="gp-button gp-primary header-wide-btn"
-        (click)="resetForm(); editingTeamId = 0">
-        <span class="btn-indicator-pulse"></span> Create New Team
-      </button>
-    </div>
-  </header>
-
-  <!-- COLLAPSIBLE CREATE / EDIT DRAWER PANEL -->
-  <div class="form-drawer-wrapper" [class.open]="editingTeamId !== null">
-    <div class="drawer-card">
-      <div class="drawer-header">
-        <h3>{{ editingTeamId ? 'Modify Workspace Team' : 'Configure New Team Profile' }}</h3>
-        <p>Define teams and populate initial core members.</p>
-      </div>
-
-      <div class="drawer-body">
-        <div class="form-grid-two-col">
-          <!-- TEAM NAME -->
-          <mat-form-field appearance="outline" class="saas-form-field">
-            <mat-label>Team Name</mat-label>
-            <input matInput [(ngModel)]="name" placeholder="e.g., Senior Engineering Squad" />
-          </mat-form-field>
-
-          <!-- DESCRIPTION -->
-          <mat-form-field appearance="outline" class="saas-form-field">
-            <mat-label>Team Purpose / Description</mat-label>
-            <textarea matInput rows="1" [(ngModel)]="description" placeholder="Describe scope responsibilities..."></textarea>
-          </mat-form-field>
+    <!-- PREMIUM TOP HEADER BAR -->
+    <header class="saas-header">
+        <div class="header-title-block">
+            <h2>Teams Management</h2>
+            <p class="header-subtitle">Create distinct workspace teams, manage permissions, and assign cross-functional members.</p>
         </div>
 
-        <!-- MEMBERS SELECTION (POPUP MODAL + CHIPS) -->
-        <div class="saas-members-section">
-          <div class="section-flex-header">
-            <div class="section-flex-titles">
-              <h4>Assigned Members</h4>
-              <p class="meta-desc">Users provisioned to this functional team</p>
-            </div>
-            <button 
-              type="button" 
-              mat-stroked-button 
-              class="gp-action-trigger edit-trigger"
-              (click)="openUserSelectModal()">
-              + Add Members
+        <div class="header-actions" *ngIf="editingTeamId === null">
+            <button mat-stroked-button class="gp-button gp-primary header-wide-btn"
+                (click)="resetForm(); editingTeamId = 0">
+                <span class="btn-indicator-pulse"></span> Create New Team
             </button>
-          </div>
-
-          <!-- CHIPS ATTACHMENT BOX -->
-          <div class="saas-chips-box">
-            <span *ngIf="selectedUsers.length === 0" class="blank-info-text">
-              No active workspace members assigned yet.
-            </span>
-            
-            <mat-chip-set>
-              <mat-chip-row 
-                *ngFor="let user of getSelectedUserObjects()" 
-                (removed)="removeUserChip(user.id)"
-                class="saas-custom-chip">
-                {{ user.name }}
-                <button matChipRemove class="chip-remove-x">&times;</button>
-              </mat-chip-row>
-            </mat-chip-set>
-          </div>
         </div>
-      </div>
+    </header>
 
-      <div class="drawer-footer">
-        <button
-          mat-stroked-button
-          class="gp-button gp-action"
-          (click)="saveTeam()"
-          [disabled]="loading || !name.trim() || selectedUsers.length === 0">
-          {{ loading ? 'Saving Changes...' : (editingTeamId ? 'Update Configurations' : 'Finalize & Build Team') }}
-        </button>
+    <!-- INLINE CONTEXT FORM BLOCK -->
+    <div class="inline-form-container" *ngIf="editingTeamId !== null">
+        <div class="inline-form-card">
+            <div class="inline-form-header">
+                <h3>{{ editingTeamId ? 'Modify Workspace Team' : 'Configure New Team Profile' }}</h3>
+                <p>Define teams and populate initial core members.</p>
+            </div>
 
-        <button mat-stroked-button class="gp-button gp-cancel" (click)="resetForm()">
-          Discard
-        </button>
-      </div>
-    </div>
-  </div>
+            <div class="inline-form-body">
+                <div class="form-grid-two-col">
+                    <mat-form-field appearance="outline" class="saas-form-field">
+                        <mat-label>Team Name</mat-label>
+                        <input matInput [(ngModel)]="name" placeholder="e.g., Senior Engineering Squad" />
+                    </mat-form-field>
 
-  <!-- MODERN SAAS GRID WORKSPACE CONTAINER -->
-  <main class="dashboard-workspace">
-    
-    <div class="workspace-filter-header">
-      <div class="workspace-badge-legend">
-        <span class="legend-indicator"></span> Active Operational Clusters
-      </div>
-      <div class="workspace-search-input-frame">
-        <span class="search-lens">⚡</span>
-        <input
-          type="text"
-          [(ngModel)]="searchTerm"
-          placeholder="Filter workspace teams..."
-        />
-      </div>
-    </div>
-
-    <!-- CARDS GENERATION SYSTEM GRID LAYER -->
-    <div class="saas-team-grid-layout" *ngIf="teams$ | async as teams">
-      <ng-container *ngIf="filterTeams(teams).length > 0; else emptyCardsFallback">
-        
-        <article class="team-saas-card" *ngFor="let team of filterTeams(teams)">
-          
-          <!-- CARD BLOCK 1: MASTER IDENTIFIERS -->
-          <div class="card-main-details">
-            <div class="card-upper-row">
-              <div class="badge-title-group">
-                <div class="team-avatar-icon">📦</div>
-                <div class="title-meta">
-                  <h4>{{ team.name }}</h4>
-                  <span class="badge-count-pill">{{ team.members?.length || 0 }} Positions Stationed</span>
+                    <mat-form-field appearance="outline" class="saas-form-field">
+                        <mat-label>Team Purpose / Description</mat-label>
+                        <textarea matInput rows="1" [(ngModel)]="description"
+                            placeholder="Describe scope responsibilities..."></textarea>
+                    </mat-form-field>
                 </div>
-              </div>
-              
-              <!-- SYSTEM CRUD INTERVENTION MENU -->
-              <div class="card-action-menu">
-                <button mat-stroked-button class="gp-action-trigger edit-trigger" (click)="editTeam(team)">Modify</button>
-                <button mat-stroked-button class="gp-action-trigger delete-trigger" (click)="deleteTeam(team.id)">Purge</button>
-              </div>
-            </div>
 
-            <p class="team-body-description">
-              {{ team.description || 'No descriptive contextual scope documentation configured for this workspace team.' }}
-            </p>
-          </div>
-
-          <!-- CARD BLOCK 2: MANAGED MEMBERS INLINE ROSTER -->
-          <section class="card-roster-management">
-            <div class="roster-inner-header">
-              <h5>Stationed Personnel Allocation</h5>
-            </div>
-
-            <!-- ROSTER VIEWS LAYER -->
-            <div class="roster-scroller-viewport">
-              <p class="no-seats-hint" *ngIf="!team.members || team.members.length === 0">
-                No active workspace personnel attached to this operations pool.
-              </p>
-
-              <ul class="roster-interactive-list" *ngIf="team.members && team.members.length > 0">
-                <li *ngFor="let memberRef of team.members" class="roster-member-item">
-                  <div class="member-identity-block">
-                    <div class="mini-avatar">{{ $any(memberRef).name?.charAt(0) || 'U' }}</div>
-                    <div class="identity-text">
-                      <span class="m-name">{{ $any(memberRef).name }}</span>
-                      <span class="m-role">{{ $any(memberRef).role_name || 'Workspace Staff' }}</span>
+                <!-- MEMBERS SELECTION -->
+                <div class="saas-members-section">
+                    <div class="section-flex-header">
+                        <div class="section-flex-titles">
+                            <h4>Assigned Members</h4>
+                            <p class="meta-desc">Users provisioned to this functional team</p>
+                        </div>
+                        <button type="button" mat-stroked-button
+                            class="gp-button gp-primary add-members-btn form-action-fixed-btn"
+                            (click)="openUserSelectModal()">
+                            + Add Members
+                        </button>
                     </div>
-                  </div>
-                  
-                  <!-- QUICK-REVOKE SEAT INTERVENTION CONTROLLER -->
-                  <button 
-                    class="btn-remove-member-inline" 
-                    title="Revoke Member Workspace Seats"
-                    (click)="removeMemberFromTeamInline(team.id, $any(memberRef).id)">
-                    &times;
-                  </button>
-                </li>
-              </ul>
+
+                    <div class="saas-chips-box">
+                        <span *ngIf="chipUserObjects.length === 0" class="blank-info-text">
+                            No active workspace members assigned yet.
+                        </span>
+                        <mat-chip-set>
+                            <mat-chip-row *ngFor="let user of chipUserObjects" (removed)="removeUserChip(user.id)"
+                                class="saas-custom-chip">
+                                {{ user.name }}
+                                <button matChipRemove class="chip-remove-x">&times;</button>
+                            </mat-chip-row>
+                        </mat-chip-set>
+                    </div>
+                </div>
             </div>
-          </section>
 
-        </article>
+            <div class="inline-form-footer">
+                <button mat-stroked-button class="gp-button gp-action form-action-fixed-btn" (click)="saveTeam()"
+                    [disabled]="loading || !name.trim()">
+                    <ng-container *ngIf="loading">Saving Changes...</ng-container>
+                    <ng-container *ngIf="!loading">
+                        {{ editingTeamId ? 'Update Configurations' : 'Finalize & Build Team' }}
+                    </ng-container>
+                </button>
 
-      </ng-container>
-
-      <!-- COHESIVE EMPTY LOOK STATE -->
-      <ng-template #emptyCardsFallback>
-        <div class="saas-empty-state">
-          <div class="empty-vector">👥</div>
-          <h4>No active groups discovered</h4>
-          <p>Refine your lookup criteria or begin assembling a new operations cluster.</p>
+                <button mat-stroked-button class="gp-button gp-cancel form-action-fixed-btn" (click)="resetForm()">
+                    Discard
+                </button>
+            </div>
         </div>
-      </ng-template>
     </div>
 
-  </main>
+    <!-- MODERN SAAS GRID WORKSPACE CONTAINER -->
+    <main class="dashboard-workspace">
+
+        <div class="workspace-filter-header">
+            <div class="workspace-badge-legend">
+                <span class="legend-indicator"></span> Active Operational Clusters
+            </div>
+            <div class="workspace-search-input-frame">
+                <span class="search-lens"></span>
+                <input type="text" [(ngModel)]="searchTerm" placeholder="Filter workspace teams..." />
+            </div>
+        </div>
+
+        <!-- CARDS SYSTEM ROW LAYER (BASIC INFO ONLY) -->
+        <div class="saas-team-grid-layout" *ngIf="teams$ | async as teams">
+            <ng-container *ngIf="filterTeams(teams).length > 0; else emptyCardsFallback">
+
+                <article class="team-saas-card" 
+                         *ngFor="let team of filterTeams(teams)" 
+                         (click)="openTeamDetails(team)"
+                         [class.is-selected]="selectedTeam?.id === team.id">
+
+                    <div class="card-main-details" *ngIf="{ list: team.members || team.users || team.team_members || [] } as roster">
+                        <div class="card-upper-row">
+                            <div class="badge-title-group">
+                                <div class="title-meta">
+                                    <h4>{{ team.name }}</h4>
+                                    <div class="badge-row-container">
+                                        <span class="badge-count-pill">{{ roster.list.length }} Stationed Personnel</span>
+                                        <span class="badge-status-pill active" *ngIf="roster.list.length > 0">Operational</span>
+                                        <span class="badge-status-pill idle" *ngIf="roster.list.length === 0">Vacant</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card-action-menu">
+                                <button class="gp-action-trigger edit-trigger" (click)="$event.stopPropagation(); editTeam(team)">Modify</button>
+                                <button class="gp-action-trigger delete-trigger" (click)="$event.stopPropagation(); deleteTeam(team.id)">Purge</button>
+                            </div>
+                        </div>
+
+                        <p class="team-body-description">
+                            {{ team.description || 'No descriptive contextual scope documentation configured for this workspace team.' }}
+                        </p>
+                    </div>
+                </article>
+
+            </ng-container>
+
+            <ng-template #emptyCardsFallback>
+                <div class="saas-empty-state">
+                    <div class="empty-vector">🔎</div>
+                    <h4>No active groups discovered</h4>
+                    <p>Refine your lookup criteria or begin assembling a new operations cluster.</p>
+                </div>
+            </ng-template>
+        </div>
+    </main>
+
+    <!-- SLIDEOUT SIDE INFOPANEL DRAWER CONTAINER (ALL DETAILED TEAM INFO) -->
+    <div class="side-panel-overlay" *ngIf="selectedTeam" (click)="closeTeamDetails()"></div>
+    
+    <aside class="side-info-panel" [class.panel-open]="selectedTeam" *ngIf="selectedTeam">
+        <ng-container *ngIf="{ list: selectedTeam.members || selectedTeam.users || selectedTeam.team_members || [] } as panelRoster">
+            
+            <div class="panel-header">
+                <div class="panel-header-title">
+                    <h3>{{ selectedTeam.name }}</h3>
+                    <p>Complete structural architecture data metrics</p>
+                </div>
+                <button class="panel-close-btn" (click)="closeTeamDetails()">&times;</button>
+            </div>
+
+            <div class="panel-scroll-content">
+                <!-- METRIC GRID INTEL -->
+                <div class="panel-section-title">Operational Summary</div>
+                <div class="team-intel-grid">
+                    <div class="intel-stat-block">
+                        <span class="intel-label">Primary Allocation</span>
+                        <span class="intel-val">{{ getDominantRole(panelRoster.list) }}</span>
+                    </div>
+                    <div class="intel-stat-block">
+                        <span class="intel-label">Diversity Distribution</span>
+                        <span class="intel-val">{{ getUniqueRolesCount(panelRoster.list) }} Unique Track(s)</span>
+                    </div>
+                </div>
+
+                <!-- SCOPE DESCRIPTION -->
+                <div class="panel-section-title">Contextual Scope</div>
+                <p class="panel-description-text">
+                    {{ selectedTeam.description || 'No descriptive contextual scope documentation configured for this workspace team.' }}
+                </p>
+
+                <!-- STATIONED PERSONNEL SELECTION -->
+                <div class="panel-section-title">
+                    Stationed Personnel Allocation ({{ panelRoster.list.length }})
+                </div>
+
+                <p class="no-seats-hint" *ngIf="panelRoster.list.length === 0">
+                    No active workspace personnel attached to this operations pool.
+                </p>
+
+                <!-- INTERACTIVE ROSTER MAP -->
+                <ul class="roster-interactive-list" *ngIf="panelRoster.list.length > 0">
+                    <li *ngFor="let memberRef of panelRoster.list" class="roster-member-item">
+                        <div class="member-identity-block">
+                            <div class="mini-avatar">
+                                {{ ($any(memberRef).name || $any(memberRef).user?.name || $any(memberRef).username || 'U').charAt(0) }}
+                            </div>
+                            <div class="identity-text">
+                                <span class="m-name">
+                                    {{ $any(memberRef).name || $any(memberRef).user?.name || $any(memberRef).username || 'Unknown User' }}
+                                </span>
+                                <span class="m-role">
+                                    {{ $any(memberRef).role_name || $any(memberRef).user?.role_name || 'Workspace Staff' }}
+                                </span>
+                            </div>
+                        </div>
+                        <button class="btn-remove-member-inline" title="Revoke Member Workspace Seats"
+                            (click)="removeMemberFromTeamInline(selectedTeam.id, $any(memberRef).id || $any(memberRef).user_id || $any(memberRef).user?.id)">
+                            &times;
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- FAST INLINE COUPLING ACCELERATOR -->
+            <div class="panel-fixed-footer">
+                <select #quickUserSelect class="saas-mini-dropdown"
+                    (change)="addMemberToTeamInline(selectedTeam.id, +quickUserSelect.value); quickUserSelect.value = ''">
+                    <option value="" disabled selected>Fast Deploy Member...</option>
+                    <option *ngFor="let candidate of getUnassignedCandidates(panelRoster.list)"
+                        [value]="candidate.id || candidate.user_id">
+                        + {{ candidate.name || candidate.username }}
+                    </option>
+                </select>
+            </div>
+
+        </ng-container>
+    </aside>
 </div>

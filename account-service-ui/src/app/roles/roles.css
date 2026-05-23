@@ -149,7 +149,7 @@
   align-items: center;
   padding: 24px 32px;
   border-bottom: 1px solid var(--matrix-border-light);
-  background-color: #ffffff;color: rgb(0, 0, 0);
+  background-color:#e4e4e4;;color: rgb(0, 0, 0);
 }
 .matrix-badge-legend {
   font-size: 15px;
@@ -163,31 +163,72 @@
 .legend-indicator { width: 8px; height: 8px; background-color: var(--matrix-accent); border-radius: 50%; }
 
 .matrix-search-input-frame {
-  position: relative;
-  width: 340px;
+  position: relative;        /* CRITICAL: Anchors absolute positioning of the icons */
+  width: 100%;               /* Spans to full size of parent block. Set a fixed width (e.g., 400px) here if desired */
+  max-width: 100%;
+  display: flex;
+  align-items: center;
 }
+
 .matrix-search-input-frame input {
-  width: 100%;
-  border: 1px solid var(--matrix-border-heavy);
+  width: 100%;height: 70px;               /* Forces input to map perfectly to the parent frame container width */
+  box-sizing: border-box;    /* Prevents left/right padding from stretching input beyond the container bounds */
+  border: 1px solid var(--saas-matrix-border, #e2e8f0); /* Clean sleek default border */
   border-radius: 8px;
-  padding: 10px 16px 10px 40px;
-  font-size: 13px;
-  background-color: var(--matrix-bg-surface);
+  padding: 10px 40px 10px 42px; /* Precision padding to account for the left and right icons */
+  font-size: 14px;
+  background-color: var(--saas-matrix-card, #ffffff);
+  color: var(--saas-matrix-txt-main, #1e293b);
   outline: none;
-  transition: all 0.2s ease;
-  border: 1px solid rgb(158, 158, 158);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* Focused Highlight Ring layout mapping your tokens */
 .matrix-search-input-frame input:focus {
-  border-color: var(--matrix-accent);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  border-color: var(--saas-matrix-blue, #2563eb);
+  box-shadow: 0 0 0 3px var(--saas-matrix-blue-alpha, rgba(37, 99, 235, 0.12));
 }
+
+/* Precision Centered Vector Lens Icon */
 .matrix-search-input-frame .search-lens {
   position: absolute;
-  left: 14px;
+  left: 15px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 13px;
-  color: black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;       /* Allows clicks to pass directly through to the input element below */
+}
+
+/* Vector control sizes */
+.matrix-search-input-frame .icon-svg {
+  width: 15px;
+  height: 15px;
+  color: var(--saas-matrix-txt-ghost, #94a3b8);
+}
+
+/* Interactive clear tracking icon */
+.matrix-search-input-frame .clear-search-btn {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--saas-matrix-txt-ghost, #94a3b8);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.matrix-search-input-frame .clear-search-btn:hover {
+  color: var(--saas-matrix-txt-main, #1e293b);
 }
 
 /* Essential Matrix Structural Layout Definition Grid (3-Column Layout Custom Tailored for Roles) */

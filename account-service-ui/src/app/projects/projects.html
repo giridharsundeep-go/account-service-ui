@@ -178,15 +178,31 @@
       <div class="workspace-badge-legend">
         <span class="legend-indicator live"></span> Strategic Initiative Matrices Active
       </div>
-      <div class="workspace-search-input-frame">
-        <span class="search-lens">⚡</span>
-        <input
-          type="text"
-          [(ngModel)]="projectLookupFilter"
-          placeholder="Lookup project codes, teams, or parameters..."
-        />
-      </div>
+      
     </div>
+
+    <div class="workspace-search-input-frame">
+  <!-- Replaced string character with a modern, clean search icon layout -->
+  <span class="search-lens">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="icon-svg">
+      <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.602 10.602Z" />
+    </svg>
+  </span>
+  <input
+    type="text"
+    [(ngModel)]="projectLookupFilter"
+    placeholder="Lookup project codes, teams, or parameters..."
+    autocomplete="off"
+  />
+  <!-- Optional: Interactive clear button if there is text in the input -->
+  <button 
+    *ngIf="projectLookupFilter" 
+    class="clear-search-btn" 
+    (click)="projectLookupFilter = ''"
+    aria-label="Clear search">
+    &times;
+  </button>
+</div>
 
     <!-- CARDS CORE LAYERING PIPELINE -->
     <div class="saas-project-grid-layout" *ngIf="projects$ | async as projects">

@@ -104,19 +104,81 @@
    FILTER REGULATION TRACK SYSTEM
    ========================================================================== */
 .workspace-filter-header {
-  display: flex; justify-content: space-between; align-items: center; padding: 16px 24px;
-  background-color: var(--saas-matrix-card); border: 1px solid var(--saas-matrix-border); border-radius: 12px; margin-bottom: 24px;
+  display: flex; justify-content: space-between; align-items: center; padding: 16px 24px;height: 50px;
+  background-color: #e4e4e4; border: 1px solid var(--saas-matrix-border); border-radius: 12px; margin-bottom: 24px;
 }
-.workspace-badge-legend { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; display: flex; align-items: center; gap: 8px; }
+.workspace-badge-legend { font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; display: flex; align-items: center; gap: 8px; }
 .legend-indicator.live { width: 8px; height: 8px; background-color: var(--saas-matrix-emerald); border-radius: 50%; }
-.workspace-search-input-frame { position: relative; width: 360px; }
-.workspace-search-input-frame input {
-  width: 100%; border: 1px solid var(--saas-matrix-border-heavy); border-radius: 8px; padding: 10px 16px 10px 40px;
-  font-size: 13px; background-color: var(--saas-matrix-card); outline: none; transition: all 0.2s ease;
+.workspace-search-input-frame {
+  position: relative;        /* CRITICAL: Anchor alignment base for inner absolute items */
+  width: 100%;
+  height: 70px;
+  max-width: 100%;           /* Safety constraint for smaller viewport layouts */
+  display: flex;
+  align-items: center;
 }
-.workspace-search-input-frame input:focus { border-color: var(--saas-matrix-blue); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
-.workspace-search-input-frame .search-lens { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--saas-matrix-txt-ghost); }
 
+.workspace-search-input-frame input {
+  width: 100%;               /* Forces the input field to match the 500px footprint */
+  box-sizing: border-box;    /* Includes the padding inside the 100% width dimension calculation */
+  border: 1px solid var(--saas-matrix-border, #e2e8f0); /* Swapped harsh black border for a sleek neutral default */
+  border-radius: 8px;
+  padding: 10px 40px 10px 42px; /* Balanced interior room layout (left side leaves space for lens) */
+  font-size: 14px;
+  background-color: var(--saas-matrix-card, #ffffff);
+  color: var(--saas-matrix-txt-main, #1e293b);
+  outline: none;  height: 70px;
+
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Premium Focus ring architecture mapping your token values */
+.workspace-search-input-frame input:focus {
+  border-color: var(--saas-matrix-blue, #2563eb);
+  box-shadow: 0 0 0 3px var(--saas-matrix-blue-alpha, rgba(37, 99, 235, 0.12));
+}
+
+/* Precision Centered Vector Search Lens Icon */
+.workspace-search-input-frame .search-lens {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;       /* Allows users to click directly through the icon onto the input area */
+}
+
+/* Icon layout controls */
+.workspace-search-input-frame .icon-svg {
+  width: 16px;
+  height: 16px;
+  color: var(--saas-matrix-txt-ghost, #94a3b8);
+}
+
+/* Optional Clear Action Button Layout positioning */
+.workspace-search-input-frame .clear-search-btn {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--saas-matrix-txt-ghost, #94a3b8);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.workspace-search-input-frame .clear-search-btn:hover {
+  color: var(--saas-matrix-txt-main, #1e293b);
+}
 /* ==========================================================================
    AGILE / WATERFALL PROJECT CARD INTERFACES SYSTEMS
    ========================================================================== */

@@ -6,7 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { map, Observable } from 'rxjs';
 import { AuthService } from '../auth.service';
 
-// Angular Material Module Core Imports
+// Angular Material Core Imports
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -34,25 +34,29 @@ export class Users implements OnInit {
   users$: Observable<any[]> | undefined;
   roles$: Observable<any[]> | undefined;
 
-  // Local cache repositories to match configurations smoothly
+  // Local caching arrays for synchronization
   cachedUsersArray: any[] = [];
   filteredManagers: any[] = [];
+
+  // System Configuration Tracking Params
+  currentStatusTab: 'active' | 'inactive' = 'active'; 
+  isActive = true; 
 
   name = '';
   email = '';
   roleId: number | null = null;
   managerId: number | null = null;
-  managerSearchText = ''; // Model boundary connected to autocomplete text
+  managerSearchText = ''; 
 
-  // Employee Identity Fields
+  // Employee Corporate Identity Fields
   employeeIdPrefix = '';
   employeeIdNumber = '';
 
-  // Location Fields
+  // Geographic Properties (Unified to match camelCase Python engine responses)
   locationCountry = '';
   locationState = '';
   locationCity = '';
-  locationWorkModel = ''; // e.g., 'REMOTE' | 'HYBRID' | 'ONSITE'
+  locationWorkModel = ''; 
   locationDeskCode = '';
 
   editingUserId: number | null = null;
@@ -73,7 +77,7 @@ export class Users implements OnInit {
       map(res => {
         const users = res?.data || [];
         this.cachedUsersArray = users;
-        this.filterManagerAutocomplete(); // Sync and reset filtering repositories
+        this.filterManagerAutocomplete(); 
         return users;
       })
     );
@@ -85,11 +89,11 @@ export class Users implements OnInit {
     }).pipe(map(res => res?.data || []));
   }
 
-  // AUTOCOMPLETE FEATURE: Evaluates match pools across input keystrokes
+  // AUTOCOMPLETE PROCESSING LAYER: Evaluates options dynamically based on text changes
   filterManagerAutocomplete() {
     const query = this.managerSearchText?.toLowerCase() || '';
 
-    // Safety check: Prevent a user from selecting themselves as their own reporting manager
+    // Prevent recursive management reporting lines back to oneself
     let pool = this.cachedUsersArray;
     if (this.editingUserId) {
       pool = pool.filter(u => u.id !== this.editingUserId);
@@ -106,13 +110,10 @@ export class Users implements OnInit {
   }
 
   onManagerSelected(event: MatAutocompleteSelectedEvent) {
-    this.managerId = event.option.value; // Store the chosen database identity key
-  }
-
-  displayManagerName(userId: number | null): string {
-    if (!userId) return '';
-    const matched = this.cachedUsersArray.find(u => u.id === userId);
-    return matched ? matched.name : '';
+    // 🔧 COMPONENT FIX: Destructure the chosen manager entity emitted directly from option selection
+    const selectedManager = event.option.value;
+    this.managerId = selectedManager.id; 
+    this.managerSearchText = selectedManager.name; 
   }
 
   clearManagerSelection() {
@@ -129,14 +130,15 @@ export class Users implements OnInit {
       name: this.name,
       email: this.email,
       role_id: this.roleId,
-      manager_id: this.managerId, // Attaches hierarchical corporate relation mapping
+      manager_id: this.managerId, 
       employee_id_prefix: this.employeeIdPrefix,
       employee_id_number: this.employeeIdNumber,
       locationCountry: this.locationCountry,
       locationState: this.locationState,
       locationCity: this.locationCity,
       locationWorkModel: this.locationWorkModel,
-      locationDeskCode: this.locationDeskCode
+      locationDeskCode: this.locationDeskCode,
+      is_active: this.isActive 
     };
 
     const request = this.editingUserId
@@ -158,29 +160,58 @@ export class Users implements OnInit {
     this.email = user.email;
     this.roleId = user.role_id;
     this.editingUserId = user.id;
-    this.managerId = user.manager_id || null;
 
-    // Populating employee identity back into the edit states
     this.employeeIdPrefix = user.employee_id_prefix || '';
     this.employeeIdNumber = user.employee_id_number || '';
 
-    // Populating location data back into the edit states
+    // camelCase mappings match your SQL column configuration responses perfectly
     this.locationCountry = user.locationCountry || '';
     this.locationState = user.locationState || '';
     this.locationCity = user.locationCity || '';
     this.locationWorkModel = user.locationWorkModel || '';
     this.locationDeskCode = user.locationDeskCode || '';
 
-    // Safe execution with type-matching guaranteed
-    this.managerSearchText = this.managerId ? this.displayManagerName(this.managerId) : '';
+    this.isActive = user.is_active ?? true;
+
+    // 🔧 COMPONENT FIX: Map the matching string name field directly to the form property
+    this.managerId = user.manager_id || null;
+    this.managerSearchText = user.manager_name || '';
+    
+    // Refresh local autocomplete mapping trees
     this.filterManagerAutocomplete();
   }
 
   deleteUser(id: number) {
-    if (!confirm('Permanently revoke user access tokens and delete profile?')) return;
-    this.http.delete(`${this.baseUrl}/user/${id}`, {
-      headers: this.auth.getAuthHeaders()
-    }).subscribe(() => this.loadUsers());
+    const matchedUser = this.cachedUsersArray.find(u => u.id === id);
+    const currentlyActive = matchedUser ? matchedUser.is_active : true;
+
+    if (currentlyActive) {
+      if (!confirm('Downgrade profile lifecycle state and shift to the Inactive Archive directory?')) return;
+      
+      const payload = { 
+        name: matchedUser.name,
+        email: matchedUser.email,
+        role_id: matchedUser.role_id,
+        manager_id: matchedUser.manager_id || null,
+        employee_id_prefix: matchedUser.employee_id_prefix || '',
+        employee_id_number: matchedUser.employee_id_number || '',
+        locationCountry: matchedUser.locationCountry || '',
+        locationState: matchedUser.locationState || '',
+        locationCity: matchedUser.locationCity || '',
+        locationWorkModel: matchedUser.locationWorkModel || '',
+        locationDeskCode: matchedUser.locationDeskCode || '',
+        is_active: false 
+      };
+
+      this.http.put(`${this.baseUrl}/user/${id}`, payload, { headers: this.auth.getAuthHeaders() })
+        .subscribe(() => this.loadUsers());
+    } else {
+      if (!confirm('CRITICAL ACTION: Permanently purge this node footprint completely out of the Active Directory index matrix? This cannot be undone.')) return;
+      
+      this.http.delete(`${this.baseUrl}/user/${id}`, {
+        headers: this.auth.getAuthHeaders()
+      }).subscribe(() => this.loadUsers());
+    }
   }
 
   resetForm() {
@@ -190,17 +221,16 @@ export class Users implements OnInit {
     this.managerId = null;
     this.managerSearchText = '';
     
-    // Clear identity variables cleanly
     this.employeeIdPrefix = '';
     this.employeeIdNumber = '';
 
-    // Clear location variables cleanly
     this.locationCountry = '';
     this.locationState = '';
     this.locationCity = '';
     this.locationWorkModel = '';
     this.locationDeskCode = '';
 
+    this.isActive = true;
     this.editingUserId = null;
     this.filterManagerAutocomplete();
   }
@@ -208,17 +238,33 @@ export class Users implements OnInit {
   getAvatarInitials(name: string): string {
     if (!name) return 'U';
     const parts = name.trim().split(' ');
-    return parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase() : parts[0][0].toUpperCase();
+    return parts.length > 1 && parts[1][0] 
+      ? (parts[0][0] + parts[1][0]).toUpperCase() 
+      : parts[0][0].toUpperCase();
   }
 
-  filterUsers(users: any[]) {
-    if (!this.searchTerm.trim()) return users;
-    const search = this.searchTerm.toLowerCase();
-    return users.filter(u =>
-      u.name?.toLowerCase().includes(search) ||
-      u.email?.toLowerCase().includes(search) ||
-      (u.role_name || '').toLowerCase().includes(search) ||
-      (u.manager_name || '').toLowerCase().includes(search)
-    );
+  getCount(users: any[] | null, getActive: boolean): number {
+    if (!users) return 0;
+    return users.filter(u => !!u.is_active === getActive).length;
+  }
+
+  filterUsersByStatusAndSearch(users: any[]): any[] {
+    if (!users) return [];
+
+    const targetState = this.currentStatusTab === 'active';
+    let filtered = users.filter(u => !!u.is_active === targetState);
+
+    if (this.searchTerm && this.searchTerm.trim() !== '') {
+      const search = this.searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(u =>
+        u.name?.toLowerCase().includes(search) ||
+        u.email?.toLowerCase().includes(search) ||
+        (u.role_name || '').toLowerCase().includes(search) ||
+        (u.manager_name || '').toLowerCase().includes(search) ||
+        (u.locationCity || '').toLowerCase().includes(search)
+      );
+    }
+
+    return filtered;
   }
 }
