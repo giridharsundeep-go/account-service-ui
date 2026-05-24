@@ -1,48 +1,49 @@
-import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { BehaviorSubject, Observable, combineLatest } from 'rxjs';
+import { finalize, switchMap, map } from 'rxjs/operators';
+import { environment } from '../../environment';
+import { AuthService } from '../auth.service';
 
-// Angular Material Core Visual Infrastructure
+// All Required Angular Material Module Imports
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatButtonModule } from '@angular/material/button';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatSliderModule } from '@angular/material/slider';
+import { MatChipsModule } from '@angular/material/chips'; 
+import { MatDialog, MatDialogModule } from '@angular/material/dialog'; 
 
-// RxJS Stream Pipeline Interfaces
-import { Observable, BehaviorSubject } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { UserSelectDialog } from '../user-select-dialog/user-select-dialog';
 
-// Data Interfaces to Protect Strong Typing
-export interface TeamCluster {
-  id: string;
+export interface UserAccountNode {
+  id: number;
   name: string;
-  membersCount: number;
-  memberCount?: number; // Handle template fallback variants
-}
-
-export interface AgileParameters {
-  sprintDurationWeeks: number;
-  targetVelocity: number;
-  autoRolloverBacklog: boolean;
-}
-
-export interface WaterfallParameters {
-  gatekeeperRole: string;
-  bufferPercentage: number;
+  email: string;
+  role?: string;
 }
 
 export interface StrategicInitiative {
-  id: string;
+  id?: number;
+  user_id?: number;
   name: string;
-  methodology: 'AGILE_SCRUM' | 'WATERFALL_GANTT' | 'HYBRID_SHAPEUP';
-  priority: 'CRITICAL' | 'HIGH' | 'MEDIUM';
   description: string;
+  status: 'ACTIVE' | 'ARCHIVED' | 'ON_HOLD';
+  methodology: 'AGILE_SCRUM' | 'WATERFALL_GANTT';
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  total_backlog_points: number;
+  sprint_duration_weeks: number;
+  target_velocity: number;
+  auto_rollover_backlog: boolean;
+  computed_sprint_count: number;
+  computed_total_duration_weeks: number;
   associatedTeamIds: string[];
-  teamsWorkingOn?: TeamCluster[];
-  agileConfig?: AgileParameters;
-  waterfallConfig?: WaterfallParameters;
+  associatedUserIds: number[];
 }
 
 @Component({
@@ -51,223 +52,261 @@ export interface StrategicInitiative {
   templateUrl: './projects.html',
   styleUrl: './projects.css',
   imports: [
-    CommonModule,
-    FormsModule,
-    MatIconModule,
-    MatInputModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    MatCheckboxModule,
-    MatButtonModule
+    CommonModule, 
+    FormsModule, 
+    MatIconModule, 
+    MatInputModule, 
+    MatFormFieldModule, 
+    MatSelectModule, 
+    MatButtonModule, 
+    MatProgressSpinnerModule, 
+    MatSlideToggleModule, 
+    MatSliderModule,
+    MatChipsModule, 
+    MatDialogModule 
   ]
 })
 export class Projects implements OnInit {
+  baseUrl = environment.apiBaseUrl;
+
+  public projectsRefresh$ = new BehaviorSubject<void>(undefined);
+  private usersSubject$ = new BehaviorSubject<UserAccountNode[]>([]);
   
-  // --- STATE CONTROLLERS ---
-  isComposerOpen: boolean = false;
-  isSaving: boolean = false;
-  editingProjectId: string | null = null;
-  projectLookupFilter: string = '';
+  projects$: Observable<StrategicInitiative[]> | undefined;
+  
+  liveActiveTeams: any[] = [];
+  organizationPersonnel: UserAccountNode[] = [];
+  projectLookupFilter = '';
 
-  // --- COMPOSER STRATEGIC DATA STRUCTURES ---
-  projectForm = {
-    name: '',
-    methodology: 'AGILE_SCRUM' as 'AGILE_SCRUM' | 'WATERFALL_GANTT' | 'HYBRID_SHAPEUP',
-    priority: 'HIGH' as 'CRITICAL' | 'HIGH' | 'MEDIUM',
-    description: '',
-    associatedTeamIds: [] as string[],
-    agileConfig: {
-      sprintDurationWeeks: 2,
-      targetVelocity: 80,
-      autoRolloverBacklog: true
-    } as AgileParameters,
-    waterfallConfig: {
-      gatekeeperRole: '',
-      bufferPercentage: 10
-    } as WaterfallParameters
-  };
+  isComposerOpen = false;
+  isSaving = false;
+  isLoadingResources = false;
+  activeBuilderStep = 1;
 
-  // --- WORKSPACE SOURCE MATRICES ---
-  private mockTeams$ = new BehaviorSubject<TeamCluster[]>([
-    { id: 't-1', name: 'Alpha Core Infrastructure', membersCount: 8, memberCount: 8 },
-    { id: 't-2', name: 'Nexus Experience UI Devs', membersCount: 5, memberCount: 5 },
-    { id: 't-3', name: 'Data Pipeline Optimization Team', membersCount: 6, memberCount: 6 },
-    { id: 't-4', name: 'Security & Auth Services Cluster', membersCount: 4, memberCount: 4 }
-  ]);
+  agileTuning = { focusFactor: 0.80, scopeBufferPercent: 15 };
+  
+  selectedUsers: number[] = [];
+  chipUserObjects: any[] = [];
+  selectedTeamIds: string[] = [];
 
-  private projectsSubject = new BehaviorSubject<StrategicInitiative[]>([
-    {
-      id: 'p-101',
-      name: 'PRJ-101 Cloud Matrix Core Engine',
-      methodology: 'AGILE_SCRUM',
-      priority: 'CRITICAL',
-      description: 'Engineering the next-generation microservice cluster runtime environment. Optimizing core data pipeline streaming telemetry velocities.',
-      associatedTeamIds: ['t-1', 't-3'],
-      teamsWorkingOn: [],
-      agileConfig: { sprintDurationWeeks: 2, targetVelocity: 85, autoRolloverBacklog: true }
-    },
-    {
-      id: 'p-202',
-      name: 'PRJ-202 Corporate Portal Overhaul',
-      methodology: 'WATERFALL_GANTT',
-      priority: 'MEDIUM',
-      description: 'Legacy web matrix deprecation sequence, transitioning corporate framework footprints into scalable standalone microfrontends.',
-      associatedTeamIds: ['t-2'],
-      teamsWorkingOn: [],
-      waterfallConfig: { gatekeeperRole: 'Chief Product Officer', bufferPercentage: 15 }
-    }
-  ]);
+  projectForm!: StrategicInitiative;
 
-  // Read-only stream exposing standard projects collection
-  projects$: Observable<StrategicInitiative[]> = this.projectsSubject.asObservable();
+  constructor(
+    private http: HttpClient, 
+    private auth: AuthService,
+    private dialog: MatDialog,
+    private cdr: ChangeDetectorRef
+  ) {
+    this.resetProjectForm();
+  }
 
   ngOnInit(): void {
-    this.refreshProjectCrossReferences();
-  }
+    this.loadUsersBackground();
+    this.loadTeamsBackground();
 
-  // --- ACTIONS & OPERATIONAL CONTROLLER METHODS ---
-
-  initiateNewProject(): void {
-    this.resetFormState();
-    this.editingProjectId = null;
-    this.isComposerOpen = true;
-  }
-
-  onMethodologyShift(): void {
-    // Dynamic component action hook if parameters need configuration clearing on shifts
-  }
-
-  closeComposerDrawer(): void {
-    this.isComposerOpen = false;
-    this.resetFormState();
-  }
-
-  triggerTeamAllocationModal(): void {
-    // Interactive allocation loop: Auto-binds next unassigned team cluster to speed up UX
-    const currentBound = this.projectForm.associatedTeamIds;
-    const available = this.mockTeams$.value.find(t => !currentBound.includes(t.id));
-    
-    if (available) {
-      this.projectForm.associatedTeamIds = [...currentBound, available.id];
-    }
-  }
-
-  getBoundTeamObjects(): TeamCluster[] {
-    return this.mockTeams$.value.filter(team => 
-      this.projectForm.associatedTeamIds.includes(team.id)
+    this.projects$ = combineLatest([
+      this.projectsRefresh$,
+      this.usersSubject$
+    ]).pipe(
+      switchMap(() => {
+        return this.http.get<any>(`${this.baseUrl}/projects`, { headers: this.auth.getAuthHeaders() });
+      }),
+      map((res: any) => {
+        const rawProjectsArray = res?.data || res || [];
+        return rawProjectsArray.map((project: any) => {
+          project.associatedUserIds = project.associatedUserIds || [];
+          project.associatedTeamIds = project.associatedTeamIds || [];
+          return project as StrategicInitiative;
+        });
+      })
     );
   }
 
-  revokeTeamBinding(teamId: string): void {
-    this.projectForm.associatedTeamIds = this.projectForm.associatedTeamIds.filter(id => id !== teamId);
+  private loadUsersBackground(): void {
+    this.isLoadingResources = true;
+    this.http.get<any>(`${this.baseUrl}/user`, { headers: this.auth.getAuthHeaders() }).subscribe({
+      next: (res) => {
+        const users = res?.data || [];
+        this.organizationPersonnel = users;
+        this.usersSubject$.next(users);
+        
+        if (this.selectedUsers.length > 0) {
+          this.rebuildChipsFromSelectedUsers();
+        }
+        this.isLoadingResources = false;
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Failed to sync master user rosters:', err);
+        this.isLoadingResources = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  private loadTeamsBackground(): void {
+    this.http.get<any>(`${this.baseUrl}/teams`, { headers: this.auth.getAuthHeaders() }).subscribe({
+      next: (res) => {
+        this.liveActiveTeams = res?.data || [];
+        this.cdr.markForCheck();
+      },
+      error: (err) => console.error('Failed to load functional teams list:', err)
+    });
+  }
+
+  openUserSelectionDialog(): void {
+    const dialogRef = this.dialog.open(UserSelectDialog, {
+      width: '1000px', 
+      data: {
+        users: this.organizationPersonnel, 
+        currentSelection: this.selectedUsers
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((result: number[] | undefined) => {
+      if (result !== undefined) {
+        this.selectedUsers = result.map((id: number | string) => Number(id));
+        this.projectForm.associatedUserIds = [...this.selectedUsers];
+        this.rebuildChipsFromSelectedUsers();
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  private rebuildChipsFromSelectedUsers(): void {
+    this.chipUserObjects = this.selectedUsers.map((id: number) => {
+      const match = this.organizationPersonnel.find(u => Number(u.id) === Number(id));
+      return {
+        id: id,
+        name: match ? (match.name || match.email || `User ${id}`) : `User ID: ${id}`
+      };
+    });
+    this.cdr.markForCheck();
+  }
+
+  removeUserChip(userId: number): void {
+    this.selectedUsers = this.selectedUsers.filter(id => Number(id) !== Number(userId));
+    this.projectForm.associatedUserIds = [...this.selectedUsers];
+    this.chipUserObjects = this.chipUserObjects.filter(obj => Number(obj.id) !== Number(userId));
+    this.cdr.markForCheck();
+  }
+
+  isTeamSelected(teamId: string | undefined): boolean {
+    if (!teamId) return false;
+    return this.selectedTeamIds.includes(teamId.toString());
+  }
+
+  toggleTeamSelection(teamId: string | undefined): void {
+    if (!teamId) return;
+    const cleanId = teamId.toString();
+    const index = this.selectedTeamIds.indexOf(cleanId);
+    if (index > -1) {
+      this.selectedTeamIds.splice(index, 1);
+    } else {
+      this.selectedTeamIds.push(cleanId);
+    }
+    this.projectForm.associatedTeamIds = [...this.selectedTeamIds];
+    this.cdr.markForCheck();
+  }
+
+  getLiveManpowerHeadcount(): number {
+    const teamHeadsCount = this.liveActiveTeams
+      .filter(team => team?.id && this.selectedTeamIds.includes(team.id.toString()))
+      .reduce((acc, current) => acc + (current.membersCount || current.members?.length || 0), 0);
+
+    return teamHeadsCount + this.selectedUsers.length;
+  }
+
+  getSelectedTeamsCount(): number {
+    return this.selectedTeamIds.length;
+  }
+
+  calculateAgileMetrics(): void {
+    const rawPoints = this.projectForm.total_backlog_points || 0;
+    const velocity = this.projectForm.target_velocity || 1; 
+    const durationWeeks = this.projectForm.sprint_duration_weeks || 2;
+
+    const bufferedPoints = rawPoints * (1 + (this.agileTuning.scopeBufferPercent / 100));
+    const effectiveVelocity = velocity * this.agileTuning.focusFactor;
+
+    const calculatedSprints = Math.ceil(bufferedPoints / (effectiveVelocity || 1));
+    
+    this.projectForm.computed_sprint_count = calculatedSprints;
+    this.projectForm.computed_total_duration_weeks = calculatedSprints * durationWeeks;
+  }
+
+  loadProjectToComposer(project: StrategicInitiative): void {
+    this.projectForm = JSON.parse(JSON.stringify(project));
+    
+    this.selectedUsers = project.associatedUserIds ? project.associatedUserIds.map((id: any) => Number(id)) : [];
+    this.selectedTeamIds = project.associatedTeamIds ? project.associatedTeamIds.map((id: any) => id.toString()) : [];
+    
+    this.rebuildChipsFromSelectedUsers();
+    this.activeBuilderStep = 1;
+    this.isComposerOpen = true;
+    this.calculateAgileMetrics();
+    this.cdr.markForCheck();
   }
 
   commitProjectToSystem(): void {
-    if (!this.projectForm.name.trim() || this.projectForm.associatedTeamIds.length === 0) return;
-
+    if (!this.projectForm.name.trim()) return;
+    this.calculateAgileMetrics();
     this.isSaving = true;
+    this.cdr.markForCheck();
 
-    // Mimic API thread latency framework
-    setTimeout(() => {
-      const currentProjects = this.projectsSubject.value;
+    this.projectForm.associatedUserIds = [...this.selectedUsers];
+    this.projectForm.associatedTeamIds = [...this.selectedTeamIds];
 
-      if (this.editingProjectId) {
-        // Run Modification Rollout Update
-        const updated = currentProjects.map(proj => {
-          if (proj.id === this.editingProjectId) {
-            return {
-              ...proj,
-              name: this.projectForm.name,
-              methodology: this.projectForm.methodology,
-              priority: this.projectForm.priority,
-              description: this.projectForm.description,
-              associatedTeamIds: this.projectForm.associatedTeamIds,
-              agileConfig: this.projectForm.methodology === 'AGILE_SCRUM' ? { ...this.projectForm.agileConfig } : undefined,
-              waterfallConfig: this.projectForm.methodology === 'WATERFALL_GANTT' ? { ...this.projectForm.waterfallConfig } : undefined
-            };
-          }
-          return proj;
+    if (this.projectForm.id && this.projectForm.id > 0) {
+      this.http.put(`${this.baseUrl}/projects/${this.projectForm.id}`, this.projectForm, { headers: this.auth.getAuthHeaders() })
+        .pipe(finalize(() => { this.isSaving = false; this.cdr.markForCheck(); }))
+        .subscribe({
+          next: () => this.completeSaveWorkflow(),
+          error: (err) => console.error('Failed to update project entity:', err)
         });
-        this.projectsSubject.next(updated);
-      } else {
-        // Instantiate Brand New System Architecture
-        const newProject: StrategicInitiative = {
-          id: `p-${Date.now()}`,
-          name: this.projectForm.name,
-          methodology: this.projectForm.methodology,
-          priority: this.projectForm.priority,
-          description: this.projectForm.description,
-          associatedTeamIds: this.projectForm.associatedTeamIds,
-          agileConfig: this.projectForm.methodology === 'AGILE_SCRUM' ? { ...this.projectForm.agileConfig } : undefined,
-          waterfallConfig: this.projectForm.methodology === 'WATERFALL_GANTT' ? { ...this.projectForm.waterfallConfig } : undefined
-        };
-        this.projectsSubject.next([...currentProjects, newProject]);
-      }
-
-      this.refreshProjectCrossReferences();
-      this.isSaving = false;
-      this.isComposerOpen = false;
-      this.resetFormState();
-    }, 700);
-  }
-
-  loadProjectToComposer(initiative: StrategicInitiative): void {
-    this.editingProjectId = initiative.id;
-    this.projectForm.name = initiative.name;
-    this.projectForm.methodology = initiative.methodology;
-    this.projectForm.priority = initiative.priority;
-    this.projectForm.description = initiative.description;
-    this.projectForm.associatedTeamIds = [...initiative.associatedTeamIds];
-    
-    if (initiative.agileConfig) {
-      this.projectForm.agileConfig = { ...initiative.agileConfig };
+    } else {
+      this.http.post(`${this.baseUrl}/projects/create`, this.projectForm, { headers: this.auth.getAuthHeaders() })
+        .pipe(finalize(() => { this.isSaving = false; this.cdr.markForCheck(); }))
+        .subscribe({
+          next: () => this.completeSaveWorkflow(),
+          error: (err) => console.error('Failed to create project:', err)
+        });
     }
-    if (initiative.waterfallConfig) {
-      this.projectForm.waterfallConfig = { ...initiative.waterfallConfig };
-    }
-
-    this.isComposerOpen = true;
   }
 
-  decommissionProject(id: string): void {
-    const retained = this.projectsSubject.value.filter(proj => proj.id !== id);
-    this.projectsSubject.next(retained);
+  private completeSaveWorkflow(): void {
+    this.isComposerOpen = false;
+    this.resetProjectForm();
+    this.refreshProjectList();
   }
 
-  filterStrategicInitiatives(projects: StrategicInitiative[]): StrategicInitiative[] {
-    if (!this.projectLookupFilter || !this.projectLookupFilter.trim()) {
-      return projects;
-    }
-    const query = this.projectLookupFilter.toLowerCase().trim();
-    return projects.filter(p => 
-      p.name.toLowerCase().includes(query) || 
-      p.description.toLowerCase().includes(query) ||
-      p.methodology.toLowerCase().includes(query)
-    );
+  refreshProjectList(): void {
+    this.projectsRefresh$.next();
   }
 
-  // --- INTERNAL ENGINE UTILITIES ---
-  private refreshProjectCrossReferences(): void {
-    const currentProjects = this.projectsSubject.value;
-    const currentTeams = this.mockTeams$.value;
-
-    currentProjects.forEach(project => {
-      project.teamsWorkingOn = currentTeams.filter(t => project.associatedTeamIds.includes(t.id));
+  decommissionProject(projectId: number | undefined): void {
+    if (projectId === undefined || !confirm('Permanently decommission this strategic architecture record?')) return;
+    this.http.delete(`${this.baseUrl}/projects/${projectId}`, { headers: this.auth.getAuthHeaders() }).subscribe({
+      next: () => this.refreshProjectList(),
+      error: (err) => console.error("Failed to remove record context", err)
     });
-
-    this.projectsSubject.next([...currentProjects]);
   }
 
-  private resetFormState(): void {
+  setBuilderStep(step: number): void { if (step >= 1 && step <= 3) this.activeBuilderStep = step; }
+  nextBuilderStep(): void { if (this.activeBuilderStep < 3) this.activeBuilderStep++; }
+  previousBuilderStep(): void { if (this.activeBuilderStep > 1) this.activeBuilderStep--; }
+  closeComposerDrawer(): void { this.isComposerOpen = false; this.resetProjectForm(); }
+  initiateNewProject(): void { this.resetProjectForm(); this.activeBuilderStep = 1; this.isComposerOpen = true; }
+
+  private resetProjectForm(): void {
     this.projectForm = {
-      name: '',
-      methodology: 'AGILE_SCRUM',
-      priority: 'HIGH',
-      description: '',
-      associatedTeamIds: [],
-      agileConfig: { sprintDurationWeeks: 2, targetVelocity: 80, autoRolloverBacklog: true },
-      waterfallConfig: { gatekeeperRole: '', bufferPercentage: 10 }
+      name: '', description: '', status: 'ACTIVE', methodology: 'AGILE_SCRUM', priority: 'MEDIUM',
+      total_backlog_points: 120, sprint_duration_weeks: 2, target_velocity: 30, auto_rollover_backlog: true,
+      computed_sprint_count: 0, computed_total_duration_weeks: 0, associatedTeamIds: [], associatedUserIds: []
     };
-    this.editingProjectId = null;
+    this.selectedUsers = [];
+    this.selectedTeamIds = [];
+    this.chipUserObjects = [];
+    this.calculateAgileMetrics();
   }
 }

@@ -1,290 +1,236 @@
 /* ==========================================================================
-   ADVANCED METRIC GRID TOKENS & OVERLAYS
+   THEME STYLING FRAMEWORK AND COLOR METRICS
    ========================================================================== */
 :root {
-  --saas-matrix-dark: #0f172a;
-  --saas-matrix-blue: #2563eb;
-  --saas-matrix-emerald: #10b981;
-  --saas-matrix-amber: #f59e0b;
   --saas-matrix-bg: #f8fafc;
   --saas-matrix-card: #ffffff;
   --saas-matrix-border: #e2e8f0;
   --saas-matrix-border-heavy: #cbd5e1;
-  --saas-matrix-txt-1: #1e293b;
+  --saas-matrix-txt-1: #0f172a;
   --saas-matrix-txt-2: #475569;
   --saas-matrix-txt-ghost: #94a3b8;
+  --saas-matrix-blue: #2563eb;
+  --saas-matrix-emerald: #10b981;
 }
 
 .saas-container {
   background-color: var(--saas-matrix-bg);
   min-height: 100vh;
-  padding-top: 40px;
+  padding: 40px;
   font-family: system-ui, -apple-system, sans-serif;
   color: var(--saas-matrix-txt-1);
   box-sizing: border-box;
 }
 
-/* ==========================================================================
-   CUSTOM COMPONENT TRIGGER ACTIONS (.gp-buttons framework)
-   ========================================================================== */
+/* GLOBAL SYSTEM BUTTON REGULATION */
 .gp-button {
   display: inline-flex; align-items: center; justify-content: center; gap: 10px;
-  padding: 0 28px; height: 48px; font-size: 14px; font-weight: 600; border-radius: 8px;
-  cursor: pointer; box-sizing: border-box; transition: all 0.2s ease; border: none; letter-spacing: -0.01em;
+  padding: 0 24px; height: 46px; font-size: 14px; font-weight: 600; border-radius: 8px;
+  cursor: pointer; transition: all 0.2s ease; border: none; box-sizing: border-box;
 }
-.gp-button.gp-primary {
-  background-color: #001c51; color: #ffffff !important; box-shadow: 0 4px 12px rgba(0, 28, 81, 0.15);
-}
-.gp-button.gp-primary:hover {
-  background-color: #002b7a; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0, 28, 81, 0.25);
-}
-.gp-button.gp-action {
-  background-color: #2678bf; color: #ffffff !important; box-shadow: 0 4px 12px rgba(38, 120, 191, 0.15);
-}
-.gp-button.gp-action:hover { background-color: #318ecc; transform: translateY(-1px); }
-.gp-button.gp-cancel { background-color: transparent; color: var(--saas-matrix-txt-2); border: 1px solid var(--saas-matrix-border-heavy); }
-.gp-button.gp-cancel:hover { background-color: rgba(15, 23, 42, 0.04); color: var(--saas-matrix-txt-1); }
+.gp-button.gp-primary { background-color: #001c51; color: #ffffff !important; box-shadow: 0 4px 12px rgba(0,28,81,0.15); }
+.gp-button.gp-primary:hover { background-color: #002b7a; transform: translateY(-1px); }
 
-.header-wide-btn { width: 320px; }
-.btn-indicator-pulse {
-  width: 6px; height: 6px; background-color: #34d399; border-radius: 50%; position: relative;
-}
-.btn-indicator-pulse::after {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-  border-radius: 50%; background-color: #34d399; animation: pulse 1.8s infinite ease-out;
-}
-@keyframes pulse { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(3.5); opacity: 0; } }
+.header-wide-btn { width: 300px; }
+.btn-indicator-pulse { width: 6px; height: 6px; background-color: #34d399; border-radius: 50%; display: inline-block; position: relative; }
 
 /* ==========================================================================
-   MASTER INITIATIVE HEADER LAYOUTS
+   STEPPER INTERFACE NAVIGATION AND STRUCTURAL TRACKS
    ========================================================================== */
-.saas-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
-.header-title-block h2 { font-size: 28px; font-weight: 800; letter-spacing: -0.03em; margin: 0 0 6px 0; }
-.header-title-block .header-subtitle { color: var(--saas-matrix-txt-2); margin: 0; font-size: 14px; line-height: 1.5; }
+.stepper-nav-bar {
+  display: flex; align-items: center; justify-content: space-between; 
+  background-color: #f8fafc; border: 1px solid var(--saas-matrix-border);
+  padding: 16px 32px; border-radius: 12px; margin-bottom: 32px;
+}
+.step-nav-item { display: flex; align-items: center; gap: 12px; cursor: pointer; opacity: 0.5; transition: opacity 0.2s ease; }
+.step-nav-item.active { opacity: 1; }
+.step-nav-item.completed { opacity: 0.9; }
 
-/* COMPOSER ENGINE DRAWER MODULE */
+.step-digit {
+  width: 32px; height: 32px; border-radius: 50%; background: var(--saas-matrix-border-heavy);
+  color: var(--saas-matrix-txt-1); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px;
+}
+.step-nav-item.active .step-digit { background: var(--saas-matrix-blue); color: #ffffff; }
+.step-nav-item.completed .step-digit { background: var(--saas-matrix-emerald); color: #ffffff; }
+
+.step-meta h5 { margin: 0; font-size: 14px; font-weight: 700; }
+.step-meta p { margin: 2px 0 0 0; font-size: 11px; color: var(--saas-matrix-txt-ghost); }
+
+.stepper-connector-line { flex: 1; height: 2px; background: var(--saas-matrix-border); margin: 0 20px; transition: background 0.2s ease; }
+.stepper-connector-line.filled { background: var(--saas-matrix-emerald); }
+
+/* STEPPER BODY COMPOSER DRAWER VIEWPORTS */
 .form-drawer-wrapper { max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-.form-drawer-wrapper.open { max-height: 1200px; margin-bottom: 40px; }
-.drawer-card { background: var(--saas-matrix-card); border: 1px solid var(--saas-matrix-border); padding: 32px; border-radius: 16px; }
-.form-grid-three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px; }
-.form-lone-row { margin-bottom: 24px; }
+.form-drawer-wrapper.open { max-height: 1400px; margin-bottom: 40px; }
+.drawer-card { background: var(--saas-matrix-card); border: 1px solid var(--saas-matrix-border); padding: 32px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); }
+.drawer-body-viewport { min-height: 240px; margin-bottom: 24px; }
+
+.form-vertical-stack { display: flex; flex-direction: column; gap: 10px; }
+.form-grid-three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 10px; }
 .saas-form-field { width: 100%; }
 
-.composer-split-configurations { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; }
-.config-panel-card { border: 1px solid var(--saas-matrix-border); border-radius: 12px; padding: 24px; background-color: #fafafa; }
-.panel-header-inline { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
-.panel-titles h4 { margin: 0; font-size: 14px; font-weight: 700; color: var(--saas-matrix-txt-1); }
-.panel-titles p { margin: 2px 0 0 0; font-size: 11px; color: var(--saas-matrix-txt-ghost); line-height: 1.4; }
+/* ==========================================================================
+   HUMAN ENGINEERING DUAL ALLOCATION MATRIX
+   ========================================================================== */
+.step-instruction-heading { margin-bottom: 24px; }
+.step-instruction-heading h4 { margin: 0 0 4px 0; font-size: 16px; font-weight: 700; }
+.step-instruction-heading p { margin: 0; font-size: 13px; color: var(--saas-matrix-txt-2); }
 
-/* CROSS-FUNCTIONAL ALLOCATION HOOKS */
-.gp-compact-trigger {
-  background-color: #ffffff; border: 1px solid var(--saas-matrix-border-heavy); border-radius: 6px;
-  padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s;
-}
-.gp-compact-trigger:hover { background-color: var(--saas-matrix-bg); border-color: var(--saas-matrix-txt-2); }
+.api-loading-overlay { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 0; gap: 12px; }
+.api-loading-overlay p { font-size: 13px; color: var(--saas-matrix-txt-2); }
 
-.allocated-clusters-viewport { background: #ffffff; border: 1px dashed var(--saas-matrix-border-heavy); border-radius: 8px; padding: 16px; min-height: 115px; box-sizing: border-box; }
-.cluster-pill-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
-.cluster-bound-pill {
-  display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--saas-matrix-bg); border: 1px solid var(--saas-matrix-border); border-radius: 6px; position: relative;
-}
-.cluster-color-dot { width: 6px; height: 6px; background-color: var(--saas-matrix-blue); border-radius: 50%; }
-.cluster-meta { display: flex; flex-direction: column; flex-grow: 1; }
-.cluster-meta .c-name { font-size: 12px; font-weight: 600; color: var(--saas-matrix-txt-1); }
-.cluster-meta .c-count { font-size: 10px; color: var(--saas-matrix-txt-ghost); }
-.cluster-revoke-btn { border: none; background: transparent; font-size: 16px; color: var(--saas-matrix-txt-ghost); cursor: pointer; }
-.cluster-revoke-btn:hover { color: #ef4444; }
+.dual-allocation-matrix { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+.allocation-column-block { display: flex; flex-direction: column; }
+.resource-group-lbl { display: flex; align-items: center; gap: 8px; margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: var(--saas-matrix-txt-2); }
+.resource-group-lbl mat-icon { font-size: 18px; width: 18px; height: 18px; color: var(--saas-matrix-txt-ghost); }
 
-/* DYNAMIC METHODOLOGY FORM MATRIX CORES */
-.methodology-fields-grid { display: flex; flex-direction: column; gap: 12px; }
-.checkbox-setting-block { margin-top: 8px; font-size: 13px; color: var(--saas-matrix-txt-2); }
-.drawer-footer { display: flex; gap: 12px; border-top: 1px solid var(--saas-matrix-border); padding-top: 24px; margin-top: 32px; }
+.resource-scroll-deck { border: 1px solid var(--saas-matrix-border); border-radius: 10px; padding: 12px; height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #fafafa; }
+.team-selectable-card { display: flex; align-items: center; gap: 16px; border: 1px solid var(--saas-matrix-border); border-radius: 8px; padding: 14px; cursor: pointer; transition: all 0.2s ease; background-color: #ffffff; }
+.team-selectable-card:hover { border-color: var(--saas-matrix-border-heavy); background-color: #f8fafc; }
+.team-selectable-card.selected { border-color: var(--saas-matrix-blue); background-color: #eff6ff; }
+
+.card-selection-checkbox { width: 18px; height: 18px; border: 2px solid var(--saas-matrix-border-heavy); border-radius: 4px; display: flex; align-items: center; justify-content: center; background: #ffffff; position: relative; transition: all 0.15s ease; }
+.team-selectable-card.selected .card-selection-checkbox { border-color: var(--saas-matrix-blue); background: var(--saas-matrix-blue); }
+
+.selectable-team-details { display: flex; flex-direction: column; }
+.team-title-txt { font-size: 13.5px; font-weight: 600; color: var(--saas-matrix-txt-1); }
+.team-headcount-badge { font-size: 11.5px; color: var(--saas-matrix-txt-ghost); margin-top: 2px; }
+.engineering-role-lbl { color: var(--saas-matrix-blue); font-family: monospace; }
+
+.allocation-summary-bar { display: flex; align-items: center; gap: 12px; background-color: #f8fafc; border: 1px solid var(--saas-matrix-border); padding: 14px 20px; border-radius: 8px; font-size: 13px; color: var(--saas-matrix-txt-2); }
+.summary-divider { color: var(--saas-matrix-border-heavy); }
+.highlighting-metric { font-weight: 600; color: var(--saas-matrix-txt-1); }
+.spacer { flex: 1; }
 
 /* ==========================================================================
-   FILTER REGULATION TRACK SYSTEM
+   ENGINE CALIBRATION SLIDER/KNOB STRUCTURAL MATRIX
    ========================================================================== */
-.workspace-filter-header {
-  display: flex; justify-content: space-between; align-items: center; padding: 16px 24px;height: 50px;
-  background-color: #e4e4e4; border: 1px solid var(--saas-matrix-border); border-radius: 12px; margin-bottom: 24px;
+.calibrator-layout-split { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 32px; }
+.engine-indicator { font-size: 15px; font-weight: 700; margin: 0 0 20px 0; padding-bottom: 10px; border-bottom: 1px solid var(--saas-matrix-border); }
+.engine-indicator.agile-accent { color: var(--saas-matrix-blue); border-color: #dbeafe; }
+
+.agile-advanced-knobs { display: flex; flex-direction: column; gap: 20px; margin-top: 10px; }
+.knob-row { display: flex; flex-direction: column; gap: 4px; }
+.knob-row label { font-size: 13px; font-weight: 600; color: var(--saas-matrix-txt-1); }
+.knob-hint { font-size: 11.5px; color: var(--saas-matrix-txt-ghost); }
+.knob-row input[type="range"] { width: 100%; margin-top: 6px; }
+.toggle-control-rack { margin-top: 8px; }
+
+.calibrator-live-projections-card { background-color: #ffffff; border: 1px solid #e2e8f0; border-left: 4px solid var(--saas-matrix-emerald); border-radius: 12px; padding: 24px; height: fit-content; }
+.calibrator-live-projections-card h5 { margin: 0 0 4px 0; font-size: 14px; font-weight: 700; }
+.matrix-calculated-hint { font-size: 12px; color: var(--saas-matrix-txt-ghost); margin: 0 0 20px 0; }
+
+.live-metrics-display-rack { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.live-metric-card-node { background: #f8fafc; border: 1px solid var(--saas-matrix-border); padding: 16px; border-radius: 8px; text-align: center; }
+.live-metric-card-node.pop-emerald { background-color: #f0fdf4; border-color: #bbf7d0; }
+.live-metric-card-node.pop-blue { background-color: #eff6ff; border-color: #bfdbfe; }
+.node-big-value { display: block; font-size: 24px; font-weight: 800; color: var(--saas-matrix-txt-1); }
+.node-meta-lbl { font-size: 11px; color: var(--saas-matrix-txt-2); font-weight: 500; margin-top: 4px; display: block; }
+.waterfall-empty-state { text-align: center; padding: 40px 20px; color: var(--saas-matrix-txt-ghost); }
+.waterfall-empty-state mat-icon { font-size: 36px; width: 36px; height: 36px; margin-bottom: 8px; }
+
+.drawer-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; border-top: 1px solid var(--saas-matrix-border); padding-top: 20px; }
+
+/* ==========================================================================
+   WORKSPACE FILTERS, HEADERS, AND PORTFOLIO CARDS MESH LAYOUT
+   ========================================================================== */
+.saas-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+.header-title-block h2 { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 6px 0; }
+.header-title-block .header-subtitle { color: var(--saas-matrix-txt-2); margin: 0; font-size: 13.5px; }
+
+.dashboard-workspace { display: flex; flex-direction: column; padding: 12px 0; }
+.workspace-section-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+.section-title-group { display: flex; align-items: center; gap: 12px; }
+.section-main-heading { font-size: 18px; font-weight: 600; color: #0f172a; margin: 0; letter-spacing: -0.3px; }
+
+.portfolio-count-badge { background: #ffffff; color: var(--saas-matrix-txt-2); font-size: 11.5px; font-weight: 500; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--saas-matrix-border); }
+.section-divider-line { border: 0; height: 1px; background: var(--saas-matrix-border); margin: 16px 0 24px 0; }
+
+.workspace-control-bar { display: flex; align-items: center; }
+.search-input-wrapper { display: flex; align-items: center; background: #ffffff; border: 1px solid var(--saas-matrix-border); border-radius: 8px; padding: 6px 14px; width: 280px; }
+.search-input-wrapper mat-icon { color: var(--saas-matrix-txt-ghost); margin-right: 8px; font-size: 20px; width: 20px; height: 20px; }
+.search-input-wrapper input { border: none; outline: none; width: 100%; font-size: 13.5px; color: var(--saas-matrix-txt-1); background: transparent; }
+
+/* PRODUCTION CARD DECK LAYOUT */
+.saas-project-grid-layout { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
+.project-saas-card { background: var(--saas-matrix-card); border: 1px solid var(--saas-matrix-border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; min-height: 250px; transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease; cursor: pointer; box-sizing: border-box; }
+.project-saas-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px -10px rgba(148, 163, 184, 0.3); border-color: var(--saas-matrix-border-heavy); }
+
+.card-header-badge-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.priority-pill { font-size: 10.5px; font-weight: 700; text-transform: uppercase; padding: 3px 9px; border-radius: 20px; letter-spacing: 0.5px; }
+.priority-pill[data-priority="LOW"] { background: #f1f5f9; color: #475569; }
+.priority-pill[data-priority="MEDIUM"] { background: #eff6ff; color: #2563eb; }
+.priority-pill[data-priority="HIGH"] { background: #fff7ed; color: #ea580c; }
+.priority-pill[data-priority="CRITICAL"] { background: #fef2f2; color: #dc2626; }
+
+.methodology-tag { font-size: 11.5px; color: var(--saas-matrix-txt-ghost); font-weight: 500; }
+
+.interactive-chip-board {
+  border: 1px solid var(--saas-matrix-border);
+  border-radius: 10px;
+  padding: 20px;
+  min-height: 260px;
+  background: #fafafa;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-sizing: border-box;
 }
-.workspace-badge-legend { font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; display: flex; align-items: center; gap: 8px; }
-.legend-indicator.live { width: 8px; height: 8px; background-color: var(--saas-matrix-emerald); border-radius: 50%; }
-.workspace-search-input-frame {
-  position: relative;        /* CRITICAL: Anchor alignment base for inner absolute items */
+
+.launch-select-btn {
   width: 100%;
-  height: 70px;
-  max-width: 100%;           /* Safety constraint for smaller viewport layouts */
-  display: flex;
-  align-items: center;
+  height: 44px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.2px;
 }
 
-.workspace-search-input-frame input {
-  width: 100%;               /* Forces the input field to match the 500px footprint */
-  box-sizing: border-box;    /* Includes the padding inside the 100% width dimension calculation */
-  border: 1px solid var(--saas-matrix-border, #e2e8f0); /* Swapped harsh black border for a sleek neutral default */
+.empty-chips-fallback {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 20px;
+  border: 2px dashed var(--saas-matrix-border);
   border-radius: 8px;
-  padding: 10px 40px 10px 42px; /* Balanced interior room layout (left side leaves space for lens) */
-  font-size: 14px;
-  background-color: var(--saas-matrix-card, #ffffff);
-  color: var(--saas-matrix-txt-main, #1e293b);
-  outline: none;  height: 70px;
-
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #ffffff;
 }
 
-/* Premium Focus ring architecture mapping your token values */
-.workspace-search-input-frame input:focus {
-  border-color: var(--saas-matrix-blue, #2563eb);
-  box-shadow: 0 0 0 3px var(--saas-matrix-blue-alpha, rgba(37, 99, 235, 0.12));
+.empty-chips-fallback p {
+  font-size: 12.5px;
+  color: var(--saas-matrix-txt-ghost);
+  line-height: 1.5;
+  margin: 0;
 }
 
-/* Precision Centered Vector Search Lens Icon */
-.workspace-search-input-frame .search-lens {
-  position: absolute;
-  left: 15px;
-  top: 50%;
-  transform: translateY(-50%);
+.allocated-chips-grid {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;       /* Allows users to click directly through the icon onto the input area */
+  flex-wrap: wrap;
+  gap: 8px;
+  background: #ffffff;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--saas-matrix-border);
+  flex: 1;
+  overflow-y: auto;
+  max-height: 160px;
 }
 
-/* Icon layout controls */
-.workspace-search-input-frame .icon-svg {
-  width: 16px;
-  height: 16px;
-  color: var(--saas-matrix-txt-ghost, #94a3b8);
+/* Material Chip overrides for high-density SaaS alignment */
+::ng-deep mat-chip-row {
+  background-color: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  color: #334155 !important;
 }
 
-/* Optional Clear Action Button Layout positioning */
-.workspace-search-input-frame .clear-search-btn {
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: transparent;
-  border: none;
-  font-size: 18px;
-  line-height: 1;
-  color: var(--saas-matrix-txt-ghost, #94a3b8);
-  cursor: pointer;
-  padding: 2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.15s ease;
+/* Form layout structure fixes for Step 1 layout gaps */
+.form-grid-three-col mat-form-field {
+  width: 100%;
 }
 
-.workspace-search-input-frame .clear-search-btn:hover {
-  color: var(--saas-matrix-txt-main, #1e293b);
-}
-/* ==========================================================================
-   AGILE / WATERFALL PROJECT CARD INTERFACES SYSTEMS
-   ========================================================================== */
-.saas-project-grid-layout { display: grid; grid-template-columns: repeat(auto-fill, minmax(460px, 1fr)); gap: 28px; }
-.project-saas-card {
-  background-color: var(--saas-matrix-card); border: 1px solid var(--saas-matrix-border); border-radius: 16px;
-  box-shadow: 0 4px 20px -6px rgba(15, 23, 42, 0.03); display: flex; flex-direction: column; overflow: hidden; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.project-saas-card:hover { transform: translateY(-3px); box-shadow: 0 16px 36px -12px rgba(15, 23, 42, 0.09); }
-
-/* UPPER METRICS PLATFORM */
-.card-main-details { padding: 28px; border-bottom: 1px solid var(--saas-matrix-border); flex-grow: 1; }
-.card-upper-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; gap: 16px; }
-.methodology-avatar-frame {
-  width: 44px; height: 44px; border-radius: 12px; background-color: #f0fdf4; border: 1px solid #bbf7d0; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;
-}
-.methodology-avatar-frame.agile-badge { background-color: #eff6ff; border-color: #bfdbfe; }
-.row-flex-badges { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.row-flex-badges h4 { margin: 0; font-size: 16px; font-weight: 700; color: var(--saas-matrix-dark); letter-spacing: -0.01em; }
-
-.methodology-pill-label {
-  display: inline-block; padding: 2px 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; background-color: #f59e0b; color: #ffffff; border-radius: 4px; letter-spacing: 0.02em;
-}
-.methodology-pill-label.agile-pill { background-color: var(--saas-matrix-blue); }
-.badge-count-pill { display: block; font-size: 11px; color: var(--saas-matrix-txt-2); margin-top: 4px; }
-.card-action-menu { display: flex; gap: 6px; }
-.project-body-description { margin: 0; font-size: 13px; line-height: 1.6; color: var(--saas-matrix-txt-2); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-
-/* CARD RESOURCE MATRIX COMPONENT SECTION */
-.card-team-matrix-attachment { background-color: #fafbfd; padding: 20px 28px; border-bottom: 1px solid var(--saas-matrix-border); }
-.matrix-inner-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-.matrix-inner-header h5 { margin: 0; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--saas-matrix-txt-ghost); }
-.matrix-inner-header .badge-counter { background: #e2e8f0; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 10px; color: var(--saas-matrix-txt-1); }
-
-.card-teams-scroller-viewport { max-height: 155px; overflow-y: auto; padding-right: 4px; }
-.card-teams-scroller-viewport::-webkit-scrollbar { width: 4px; }
-.card-teams-scroller-viewport::-webkit-scrollbar-thumb { background-color: var(--saas-matrix-border); border-radius: 4px; }
-
-.matrix-teams-flex-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.matrix-team-card-unit {
-  display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #ffffff; border: 1px solid var(--saas-matrix-border); border-radius: 8px;
-}
-.team-left-group { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.team-indicator-icon { font-size: 14px; }
-.team-meta-strings { display: flex; flex-direction: column; min-width: 0; }
-.team-meta-strings .t-name { font-size: 12px; font-weight: 600; color: var(--saas-matrix-txt-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.team-meta-strings .t-allocation { font-size: 9px; color: var(--saas-matrix-txt-ghost); }
-.team-member-micro-chip { font-size: 10px; font-weight: 700; background-color: var(--saas-matrix-bg); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--saas-matrix-border); color: var(--saas-matrix-txt-2); white-space: nowrap; }
-
-/* ==========================================================================
-   DYNAMIC TELEMETRY FOOTER INJECTIONS MODULE
-   ========================================================================== */
-.card-methodology-footer-telemetry { padding: 24px 28px; background-color: #ffffff; }
-.telemetry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-.telemetry-header h6 { margin: 0; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--saas-matrix-txt-2); }
-.live-pulse-glow { width: 6px; height: 6px; background: var(--saas-matrix-emerald); border-radius: 50%; box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2); }
-
-/* AGILE DISPLAY METRIC ELEMENTS */
-.agile-metric-dashboard-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
-.telemetry-metric-box { background: var(--saas-matrix-bg); border: 1px solid var(--saas-matrix-border); border-radius: 8px; padding: 10px; text-align: center; }
-.telemetry-metric-box .val { display: block; font-size: 15px; font-weight: 700; color: var(--saas-matrix-dark); }
-.telemetry-metric-box .val.status-green { color: var(--saas-matrix-emerald); font-size: 12px; text-transform: uppercase; margin-top: 2px; }
-.telemetry-metric-box .lbl { font-size: 9px; font-weight: 600; text-transform: uppercase; color: var(--saas-matrix-txt-ghost); margin-top: 2px; display: block; }
-
-.sprint-progress-bar-container { display: flex; flex-direction: column; gap: 6px; }
-.progress-bar-labels-track { display: flex; justify-content: space-between; font-size: 10px; font-weight: 600; color: var(--saas-matrix-txt-2); }
-.progress-track-rail { width: 100%; height: 6px; background-color: var(--saas-matrix-border); border-radius: 3px; overflow: hidden; }
-.progress-fill-bar.agile-bar { height: 100%; background: linear-gradient(90deg, #3b82f6, #2563eb); border-radius: 3px; }
-
-/* WATERFALL PHASES TIMELINE TRACK */
-.waterfall-phases-progression-track { display: flex; justify-content: space-between; position: relative; margin: 12px 0 20px 0; }
-.waterfall-phases-progression-track::before {
-  content: ''; position: absolute; top: 5px; left: 0; right: 0; height: 2px; background-color: var(--saas-matrix-border); z-index: 1;
-}
-.phase-node { display: flex; flex-direction: column; align-items: center; position: relative; z-index: 2; width: 33.33%; text-align: center; }
-.phase-node .node-dot { width: 12px; height: 12px; border-radius: 50%; background-color: #ffffff; border: 2px solid var(--saas-matrix-border-heavy); transition: all 0.2s; }
-.phase-node .node-label { font-size: 9px; font-weight: 700; color: var(--saas-matrix-txt-ghost); margin-top: 6px; display: block; text-transform: uppercase; padding: 0 4px; }
-
-.phase-node.complete .node-dot { background-color: var(--saas-matrix-emerald); border-color: var(--saas-matrix-emerald); }
-.phase-node.complete .node-label { color: var(--saas-matrix-txt-1); }
-.phase-node.executing .node-dot { background-color: #ffffff; border-color: var(--saas-matrix-amber); box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15); }
-.phase-node.executing .node-label { color: var(--saas-matrix-amber); }
-
-.waterfall-meta-footer-strip {
-  display: flex; justify-content: space-between; border-top: 1px dashed var(--saas-matrix-border); padding-top: 12px; font-size: 11px; color: var(--saas-matrix-txt-2);
-}
-
-/* BASE RULES EXTRAS */
-.gp-action-trigger { height: 32px; border-radius: 6px; padding: 0 12px; font-size: 12px; font-weight: 600; cursor: pointer; background: transparent; border: 1px solid transparent; transition: all 0.15s; }
-.gp-action-trigger.edit-trigger { color: var(--saas-matrix-blue); }
-.gp-action-trigger.edit-trigger:hover { background-color: #eff6ff; border-color: #bfdbfe; }
-.gp-action-trigger.delete-trigger { color: var(--saas-matrix-txt-ghost); }
-.gp-action-trigger.delete-trigger:hover { color: #ef4444; background-color: #fef2f2; }
-.saas-empty-state { grid-column: 1 / -1; padding: 80px 32px; text-align: center; color: var(--saas-matrix-txt-ghost); }
-.empty-vector { font-size: 36px; margin-bottom: 16px; }
-
-/* ==========================================================================
-   BREAKPOINTS RESPONSIVE RULES GRID CONFIGS
-   ========================================================================== */
-@media(max-width: 950px) {
-  .matrix-teams-flex-list { grid-template-columns: 1fr; }
-  .composer-split-configurations { grid-template-columns: 1fr; }
-}
-@media(max-width: 550px) {
-  .saas-project-grid-layout { grid-template-columns: 1fr; }
-  .card-upper-row { flex-direction: column; }
-  .card-action-menu { margin-top: 12px; width: 100%; border-top: 1px dashed var(--saas-matrix-border); padding-top: 12px; }
-  .form-grid-three-col { grid-template-columns: 1fr; gap: 12px; }
+/* Global Material Design field override constraints */
+.saas-form-field {
+  margin-bottom: 8px;
 }
