@@ -108,25 +108,36 @@
           </div>
 
           <div class="dual-allocation-matrix" *ngIf="!isLoadingResources">
-            <div class="allocation-column-block">
-              <h5 class="resource-group-lbl"><mat-icon>groups</mat-icon> Functional Engineering Teams</h5>
-              <div class="resource-scroll-deck">
-                <div *ngFor="let team of liveActiveTeams" 
-                     class="team-selectable-card"
-                     [class.selected]="isTeamSelected(team?.id)" 
-                     (click)="toggleTeamSelection(team?.id)">
-                  <div class="card-selection-checkbox">
-                    <mat-icon *ngIf="isTeamSelected(team?.id)">check</mat-icon>
-                  </div>
-                  <div class="selectable-team-details">
-                    <span class="team-title-txt">{{ team?.name }}</span>
-                    <span class="team-headcount-badge">
-                      {{ team?.membersCount || team?.members?.length || 0 }} Active Engineers
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+           <!-- Inside step-content-pane *ngIf="activeBuilderStep === 2" -->
+<div class="allocation-column-block">
+  <h5 class="resource-group-lbl"><mat-icon>person_add</mat-icon> Assigned Engineers & Specialists</h5>
+  <div class="interactive-chip-board">
+    <button mat-flat-button color="primary" type="button" class="launch-select-btn" (click)="openUserSelectionDialog()">
+      <mat-icon>launch</mat-icon> Add Independent Specialist
+    </button>
+
+    <div class="empty-chips-fallback" *ngIf="chipUserObjects.length === 0">
+      <p>No functional team engineering resources or individual specialists are currently linked to this architecture configuration framework.</p>
+    </div>
+
+    <mat-chip-set class="allocated-chips-grid" *ngIf="chipUserObjects.length > 0">
+      <mat-chip-row *ngFor="let userObj of chipUserObjects" 
+                    [class.team-driven-chip]="userObj.isFromTeam"
+                    (removed)="removeUserChip(userObj)">
+        <mat-icon matChipAvatar>account_circle</mat-icon>
+        <span class="chip-main-text">{{ userObj.name }}</span>
+        
+        <!-- Context Label showing where the resource comes from -->
+        <span class="chip-source-tag" *ngIf="userObj.isFromTeam">{{ userObj.teamName }}</span>
+        
+        <!-- Only show remove cross buttons for single manually added entities -->
+        <button matChipRemove *ngIf="!userObj.isFromTeam" aria-label="Remove resource assignment selection">
+          <mat-icon>cancel</mat-icon>
+        </button>
+      </mat-chip-row>
+    </mat-chip-set>
+  </div>
+</div>
 
             <div class="allocation-column-block">
               <h5 class="resource-group-lbl"><mat-icon>person_add</mat-icon> Independent Specialists / Contractors</h5>

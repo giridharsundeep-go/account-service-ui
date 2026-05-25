@@ -7,7 +7,7 @@ import { finalize, switchMap, map } from 'rxjs/operators';
 import { environment } from '../../environment';
 import { AuthService } from '../auth.service';
 
-// All Required Angular Material Module Imports
+// Required Angular Material Module Imports
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -26,6 +26,13 @@ export interface UserAccountNode {
   name: string;
   email: string;
   role?: string;
+}
+
+export interface FunctionalTeamNode {
+  id: number | string;
+  name: string;
+  membersCount?: number;
+  members?: UserAccountNode[]; // Contains team members profiles
 }
 
 export interface StrategicInitiative {
@@ -74,7 +81,7 @@ export class Projects implements OnInit {
   
   projects$: Observable<StrategicInitiative[]> | undefined;
   
-  liveActiveTeams: any[] = [];
+  liveActiveTeams: FunctionalTeamNode[] = [];
   organizationPersonnel: UserAccountNode[] = [];
   projectLookupFilter = '';
 
@@ -86,7 +93,7 @@ export class Projects implements OnInit {
   agileTuning = { focusFactor: 0.80, scopeBufferPercent: 15 };
   
   selectedUsers: number[] = [];
-  chipUserObjects: any[] = [];
+  chipUserObjects: Array<{id: number, name: string, isFromTeam?: boolean, teamName?: string}> = [];
   selectedTeamIds: string[] = [];
 
   projectForm!: StrategicInitiative;
@@ -130,9 +137,7 @@ export class Projects implements OnInit {
         this.organizationPersonnel = users;
         this.usersSubject$.next(users);
         
-        if (this.selectedUsers.length > 0) {
-          this.rebuildChipsFromSelectedUsers();
-        }
+        this.rebuildChipsMatrix();
         this.isLoadingResources = false;
         this.cdr.markForCheck();
       },
@@ -148,6 +153,7 @@ export class Projects implements OnInit {
     this.http.get<any>(`${this.baseUrl}/teams`, { headers: this.auth.getAuthHeaders() }).subscribe({
       next: (res) => {
         this.liveActiveTeams = res?.data || [];
+        this.rebuildChipsMatrix();
         this.cdr.markForCheck();
       },
       error: (err) => console.error('Failed to load functional teams list:', err)
@@ -167,54 +173,106 @@ export class Projects implements OnInit {
       if (result !== undefined) {
         this.selectedUsers = result.map((id: number | string) => Number(id));
         this.projectForm.associatedUserIds = [...this.selectedUsers];
-        this.rebuildChipsFromSelectedUsers();
+        this.rebuildChipsMatrix();
         this.cdr.markForCheck();
       }
     });
   }
 
-  private rebuildChipsFromSelectedUsers(): void {
-    this.chipUserObjects = this.selectedUsers.map((id: number) => {
-      const match = this.organizationPersonnel.find(u => Number(u.id) === Number(id));
-      return {
-        id: id,
-        name: match ? (match.name || match.email || `User ${id}`) : `User ID: ${id}`
-      };
+  /**
+   * Compiles both explicit independent specialists and all members belonging
+   * to active selected functional teams into a single flat display array for the chip deck.
+   */
+  private rebuildChipsMatrix(): void {
+    const temporaryChipsMap = new Map<number, {id: number, name: string, isFromTeam: boolean, teamName?: string}>();
+
+    // 1. Process team personnel based on active team selection configurations
+    this.liveActiveTeams.forEach(team => {
+      if (team?.id && this.selectedTeamIds.includes(team.id.toString()) && team.members) {
+        team.members.forEach((member: UserAccountNode) => {
+          const cleanId = Number(member.id);
+          temporaryChipsMap.set(cleanId, {
+            id: cleanId,
+            name: member.name || member.email || `User ${cleanId}`,
+            isFromTeam: true,
+            teamName: team.name
+          });
+        });
+      }
     });
+
+    // 2. Process independent contractors (if overlapping, team status tag takes design precedence)
+    this.selectedUsers.forEach((id: number) => {
+      const cleanId = Number(id);
+      if (!temporaryChipsMap.has(cleanId)) {
+        const match = this.organizationPersonnel.find(u => Number(u.id) === cleanId);
+        temporaryChipsMap.set(cleanId, {
+          id: cleanId,
+          name: match ? (match.name || match.email || `User ${cleanId}`) : `User ID: ${cleanId}`,
+          isFromTeam: false
+        });
+      }
+    });
+
+    this.chipUserObjects = Array.from(temporaryChipsMap.values());
     this.cdr.markForCheck();
   }
 
-  removeUserChip(userId: number): void {
-    this.selectedUsers = this.selectedUsers.filter(id => Number(id) !== Number(userId));
+  /**
+   * Safe chip-deck removal function
+   */
+  removeUserChip(chip: {id: number, isFromTeam?: boolean}): void {
+    if (chip.isFromTeam) {
+      // If user belongs to an active team, notify them they must remove the whole team block
+      alert('This resource is allocated via an assigned Team. To remove this engineer, deselect their corresponding functional team cohort.');
+      return;
+    }
+    
+    this.selectedUsers = this.selectedUsers.filter(id => Number(id) !== Number(chip.id));
     this.projectForm.associatedUserIds = [...this.selectedUsers];
-    this.chipUserObjects = this.chipUserObjects.filter(obj => Number(obj.id) !== Number(userId));
+    this.rebuildChipsMatrix();
     this.cdr.markForCheck();
   }
 
-  isTeamSelected(teamId: string | undefined): boolean {
+  isTeamSelected(teamId: string | undefined | number): boolean {
     if (!teamId) return false;
     return this.selectedTeamIds.includes(teamId.toString());
   }
 
-  toggleTeamSelection(teamId: string | undefined): void {
+  toggleTeamSelection(teamId: string | undefined | number): void {
     if (!teamId) return;
     const cleanId = teamId.toString();
     const index = this.selectedTeamIds.indexOf(cleanId);
+    
     if (index > -1) {
       this.selectedTeamIds.splice(index, 1);
     } else {
       this.selectedTeamIds.push(cleanId);
     }
+    
     this.projectForm.associatedTeamIds = [...this.selectedTeamIds];
+    this.rebuildChipsMatrix();
     this.cdr.markForCheck();
   }
 
   getLiveManpowerHeadcount(): number {
-    const teamHeadsCount = this.liveActiveTeams
+    // Collect unique user ids to calculate clean workspace statistics
+    const uniqueIds = new Set<number>();
+    
+    this.liveActiveTeams
       .filter(team => team?.id && this.selectedTeamIds.includes(team.id.toString()))
-      .reduce((acc, current) => acc + (current.membersCount || current.members?.length || 0), 0);
+      .forEach(team => {
+        if (team.members) {
+          team.members.forEach(m => uniqueIds.add(Number(m.id)));
+        } else {
+          // Fallback context if backend gives length count but no array data structural blocks
+          const count = team.membersCount || 0;
+          for(let i=0; i < count; i++) { uniqueIds.add(Math.random()); }
+        }
+      });
 
-    return teamHeadsCount + this.selectedUsers.length;
+    this.selectedUsers.forEach(id => uniqueIds.add(Number(id)));
+    return uniqueIds.size;
   }
 
   getSelectedTeamsCount(): number {
@@ -241,7 +299,7 @@ export class Projects implements OnInit {
     this.selectedUsers = project.associatedUserIds ? project.associatedUserIds.map((id: any) => Number(id)) : [];
     this.selectedTeamIds = project.associatedTeamIds ? project.associatedTeamIds.map((id: any) => id.toString()) : [];
     
-    this.rebuildChipsFromSelectedUsers();
+    this.rebuildChipsMatrix();
     this.activeBuilderStep = 1;
     this.isComposerOpen = true;
     this.calculateAgileMetrics();

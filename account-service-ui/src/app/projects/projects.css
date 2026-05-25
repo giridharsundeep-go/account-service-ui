@@ -234,3 +234,42 @@
 .saas-form-field {
   margin-bottom: 8px;
 }
+
+/* Custom chips configuration styling matrices */
+.chip-main-text {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.chip-source-tag {
+  font-size: 9px;
+  background: var(--saas-matrix-blue);
+  color: #ffffff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+/* Visually separate team-driven chips from independent ones */
+::ng-deep mat-chip-row.team-driven-chip {
+  background-color: #f0fdf4 !important;
+  border: 1px solid #bbf7d0 !important;
+  color: #166534 !important;
+}
+
+::ng-deep mat-chip-row.team-driven-chip .chip-source-tag {
+  background-color: #16a34a !important;
+}
+
+/* Ensure consistent layout spacing inside chip rows */
+::ng-deep .mat-mdc-chip-row-layout {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
