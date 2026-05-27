@@ -1,9 +1,10 @@
 <div class="saas-container">
-  
+
   <div class="saas-header">
     <div class="header-title-block">
       <h2>Strategic Architecture Initiatives</h2>
-      <p class="header-subtitle">Configure, estimate, and dispatch enterprise projects and resource allocation matrices.</p>
+      <p class="header-subtitle">Configure, estimate, and dispatch enterprise projects and resource allocation matrices.
+      </p>
     </div>
     <div class="workspace-control-bar" style="display: flex; gap: 16px;">
       <div class="search-input-wrapper">
@@ -19,9 +20,10 @@
 
   <div class="form-drawer-wrapper" [class.open]="isComposerOpen">
     <div class="drawer-card">
-      
+
       <div class="stepper-nav-bar">
-        <div class="step-nav-item" [class.active]="activeBuilderStep === 1" [class.completed]="activeBuilderStep > 1" (click)="setBuilderStep(1)">
+        <div class="step-nav-item" [class.active]="activeBuilderStep === 1" [class.completed]="activeBuilderStep > 1"
+          (click)="setBuilderStep(1)">
           <div class="step-digit">1</div>
           <div class="step-meta">
             <h5>Governance</h5>
@@ -29,7 +31,8 @@
           </div>
         </div>
         <div class="stepper-connector-line" [class.filled]="activeBuilderStep > 1"></div>
-        <div class="step-nav-item" [class.active]="activeBuilderStep === 2" [class.completed]="activeBuilderStep > 2" (click)="setBuilderStep(2)">
+        <div class="step-nav-item" [class.active]="activeBuilderStep === 2" [class.completed]="activeBuilderStep > 2"
+          (click)="setBuilderStep(2)">
           <div class="step-digit">2</div>
           <div class="step-meta">
             <h5>Allocation</h5>
@@ -47,23 +50,38 @@
       </div>
 
       <div class="drawer-body-viewport">
-        
+
         <div class="step-content-pane" *ngIf="activeBuilderStep === 1">
           <div class="step-instruction-heading">
             <h4>General Registry & Governance</h4>
-            <p>Define initiative scope naming metrics, operational status flags, and foundational engineering methodology models.</p>
+            <p>Define initiative scope naming metrics, operational status flags, and foundational engineering
+              methodology models.</p>
           </div>
 
           <div class="form-vertical-stack">
             <mat-form-field appearance="outline" class="saas-form-field">
               <mat-label>Project Name</mat-label>
-              <input matInput [(ngModel)]="projectForm.name" name="projectName" required placeholder="e.g., Enterprise Core Data Warehouse">
+              <input matInput [(ngModel)]="projectForm.name" name="projectName" required
+                placeholder="e.g., Enterprise Core Data Warehouse">
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="saas-form-field">
               <mat-label>Project Description / Operational Scope</mat-label>
-              <textarea matInput [(ngModel)]="projectForm.description" name="projectDesc" rows="4" placeholder="Detail high-level target architectural maps..."></textarea>
+              <textarea matInput [(ngModel)]="projectForm.description" name="projectDesc" rows="4"
+                placeholder="Detail high-level target architectural maps..."></textarea>
             </mat-form-field>
+
+            <div class="form-row-full width-offset-margin">
+              <mat-form-field appearance="outline" class="saas-form-field">
+                <mat-label>Parent Product Association Link</mat-label>
+                <mat-select [(ngModel)]="projectForm.product_id" name="product_id" required>
+                  <mat-option [value]="null" disabled>Select parent enterprise core product asset...</mat-option>
+                  <mat-option *ngFor="let product of systemProducts" [value]="product.id">
+                    📦 {{ product.name }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
 
             <div class="form-grid-three-col">
               <mat-form-field appearance="outline" class="saas-form-field">
@@ -77,7 +95,8 @@
 
               <mat-form-field appearance="outline" class="saas-form-field">
                 <mat-label>Methodology Framework</mat-label>
-                <mat-select [(ngModel)]="projectForm.methodology" name="projectMethodology" (selectionChange)="calculateAgileMetrics()">
+                <mat-select [(ngModel)]="projectForm.methodology" name="projectMethodology"
+                  (selectionChange)="calculateAgileMetrics()">
                   <mat-option value="AGILE_SCRUM">AGILE SCRUM</mat-option>
                   <mat-option value="WATERFALL_GANTT">WATERFALL GANTT</mat-option>
                 </mat-select>
@@ -96,87 +115,69 @@
           </div>
         </div>
 
-        <div class="step-content-pane" *ngIf="activeBuilderStep === 2">
-          <div class="step-instruction-heading">
-            <h4>Allocate Organizational Core Resources</h4>
-            <p>Link team cohorts from our functional roster database or select individual specialist assets via interactive modal fields.</p>
-          </div>
+       <div class="step-content-pane" *ngIf="activeBuilderStep === 2">
+  <div class="step-instruction-heading">
+    <h4>Allocate Organizational Core Resources</h4>
+    <p>Link team cohorts from our functional roster database or select individual specialist assets via interactive modal fields.</p>
+  </div>
 
-          <div class="api-loading-overlay" *ngIf="isLoadingResources">
-            <mat-spinner diameter="40"></mat-spinner>
-            <p>Synchronizing resource metadata grids...</p>
-          </div>
+  <div class="api-loading-overlay" *ngIf="isLoadingResources">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Synchronizing resource metadata grids...</p>
+  </div>
 
-          <div class="dual-allocation-matrix" *ngIf="!isLoadingResources">
-           <!-- Inside step-content-pane *ngIf="activeBuilderStep === 2" -->
-<div class="allocation-column-block">
-  <h5 class="resource-group-lbl"><mat-icon>person_add</mat-icon> Assigned Engineers & Specialists</h5>
-  <div class="interactive-chip-board">
-    <button mat-flat-button color="primary" type="button" class="launch-select-btn" (click)="openUserSelectionDialog()">
-      <mat-icon>launch</mat-icon> Add Independent Specialist
-    </button>
+  <div class="dual-allocation-matrix" *ngIf="!isLoadingResources">
 
-    <div class="empty-chips-fallback" *ngIf="chipUserObjects.length === 0">
-      <p>No functional team engineering resources or individual specialists are currently linked to this architecture configuration framework.</p>
+    <div class="allocation-column-block">
+      <h5 class="resource-group-lbl"><mat-icon>groups</mat-icon> Assigned Engineers & Specialists</h5>
+      <div class="interactive-chip-board">
+        <button mat-flat-button color="primary" type="button" class="launch-select-btn" (click)="openUserSelectionDialog()">
+          <mat-icon>launch</mat-icon> Add Independent Specialist
+        </button>
+
+        <div class="empty-chips-fallback" *ngIf="chipUserObjects.length === 0">
+          <p>No functional team engineering resources or individual specialists are currently linked to this architecture configuration framework.</p>
+        </div>
+
+        <mat-chip-set class="allocated-chips-grid" *ngIf="chipUserObjects.length > 0">
+          <mat-chip-row *ngFor="let userObj of chipUserObjects" [class.team-driven-chip]="userObj.isFromTeam" (removed)="removeUserChip(userObj)">
+            <mat-icon matChipAvatar>account_circle</mat-icon>
+            <span class="chip-main-text">{{ userObj.name }}</span>
+            <span class="chip-source-tag" *ngIf="userObj.isFromTeam">{{ userObj.teamName }}</span>
+            <button matChipRemove *ngIf="!userObj.isFromTeam" aria-label="Remove resource assignment selection">
+              <mat-icon>cancel</mat-icon>
+            </button>
+          </mat-chip-row>
+        </mat-chip-set>
+      </div>
     </div>
 
-    <mat-chip-set class="allocated-chips-grid" *ngIf="chipUserObjects.length > 0">
-      <mat-chip-row *ngFor="let userObj of chipUserObjects" 
-                    [class.team-driven-chip]="userObj.isFromTeam"
-                    (removed)="removeUserChip(userObj)">
-        <mat-icon matChipAvatar>account_circle</mat-icon>
-        <span class="chip-main-text">{{ userObj.name }}</span>
-        
-        <!-- Context Label showing where the resource comes from -->
-        <span class="chip-source-tag" *ngIf="userObj.isFromTeam">{{ userObj.teamName }}</span>
-        
-        <!-- Only show remove cross buttons for single manually added entities -->
-        <button matChipRemove *ngIf="!userObj.isFromTeam" aria-label="Remove resource assignment selection">
-          <mat-icon>cancel</mat-icon>
-        </button>
-      </mat-chip-row>
-    </mat-chip-set>
-  </div>
-</div>
+    <div class="allocation-column-block">
+      <h5 class="resource-group-lbl"><mat-icon>lan</mat-icon> Available Functional Teams</h5>
+      <div class="interactive-chip-board">
+        <div class="empty-chips-fallback" *ngIf="liveActiveTeams.length === 0">
+          <p>No active organizational functional teams found within storage registries.</p>
+        </div>
 
-            <div class="allocation-column-block">
-              <h5 class="resource-group-lbl"><mat-icon>person_add</mat-icon> Independent Specialists / Contractors</h5>
-              <div class="interactive-chip-board">
-                <button mat-flat-button color="primary" type="button" class="launch-select-btn" (click)="openUserSelectionDialog()">
-                  <mat-icon>launch</mat-icon> Open Personnel Dialogue
-                </button>
-
-                <div class="empty-chips-fallback" *ngIf="chipUserObjects.length === 0">
-                  <p>No independent specialists are currently tied to this initiative framework. Use the launcher panel above to filter and insert users.</p>
-                </div>
-
-                <mat-chip-set class="allocated-chips-grid" *ngIf="chipUserObjects.length > 0">
-                  <mat-chip-row *ngFor="let userObj of chipUserObjects" (removed)="removeUserChip(userObj.id)">
-                    <mat-icon matChipAvatar>account_circle</mat-icon>
-                    {{ userObj.name }}
-                    <button matChipRemove aria-label="Remove resource entry allocation">
-                      <mat-icon>cancel</mat-icon>
-                    </button>
-                  </mat-chip-row>
-                </mat-chip-set>
-              </div>
+        <div class="teams-toggle-list" *ngIf="liveActiveTeams.length > 0">
+          <div class="team-toggle-row" *ngFor="let team of liveActiveTeams" [class.selected]="isTeamSelected(team.id)" (click)="toggleTeamSelection(team)">
+            <div class="team-info-side">
+              <mat-icon *ngIf="!team.isLoadingMembers">
+                {{ isTeamSelected(team.id) ? 'check_circle' : 'radio_button_unchecked' }}
+              </mat-icon>
+              <mat-spinner diameter="16" style="margin-right: 8px;" *ngIf="team.isLoadingMembers"></mat-spinner>
+              <span class="team-name-label">{{ team.name }}</span>
             </div>
-          </div>
-
-          <div class="allocation-summary-bar" *ngIf="!isLoadingResources">
-            <div class="summary-metric">
-              Structural Teams: <strong>{{ getSelectedTeamsCount() }}</strong>
-            </div>
-            <div class="summary-divider">|</div>
-            <div class="summary-metric">
-              Assigned Individuals: <strong>{{ selectedUsers.length }}</strong>
-            </div>
-            <div class="spacer"></div>
-            <div class="summary-metric highlighting-metric">
-              Combined Project Workforce: <strong>{{ getLiveManpowerHeadcount() }} Engineers Allocated</strong>
-            </div>
+            <span class="team-count-badge">
+              {{ team.members ? team.members.length : 0 }} Members
+            </span>
           </div>
         </div>
+      </div>
+    </div>
+
+  </div>
+</div>
 
         <div class="step-content-pane" *ngIf="activeBuilderStep === 3">
           <div class="step-instruction-heading">
@@ -187,38 +188,47 @@
           <div class="calibrator-layout-split">
             <div class="agile-advanced-knobs">
               <h5 class="engine-indicator agile-accent">Operational Engine Matrix</h5>
-              
+
               <div class="knob-row">
-                <label>Total Estimated Backlog Points: <strong>{{ projectForm.total_backlog_points }} pts</strong></label>
-                <input type="range" min="10" max="1000" step="5" [(ngModel)]="projectForm.total_backlog_points" name="backlogPoints" (ngModelChange)="calculateAgileMetrics()">
+                <label>Total Estimated Backlog Points: <strong>{{ projectForm.total_backlog_points }}
+                    pts</strong></label>
+                <input type="range" min="10" max="1000" step="5" [(ngModel)]="projectForm.total_backlog_points"
+                  name="backlogPoints" (ngModelChange)="calculateAgileMetrics()">
                 <span class="knob-hint">Gross story unit architectural capacity constraints.</span>
               </div>
 
               <div class="knob-row">
-                <label>Target Team Sprint Velocity: <strong>{{ projectForm.target_velocity }} pts / sprint</strong></label>
-                <input type="range" min="5" max="150" step="5" [(ngModel)]="projectForm.target_velocity" name="targetVelocity" (ngModelChange)="calculateAgileMetrics()">
+                <label>Target Team Sprint Velocity: <strong>{{ projectForm.target_velocity }} pts /
+                    sprint</strong></label>
+                <input type="range" min="5" max="150" step="5" [(ngModel)]="projectForm.target_velocity"
+                  name="targetVelocity" (ngModelChange)="calculateAgileMetrics()">
                 <span class="knob-hint">Computed output velocity bound indices per cycle.</span>
               </div>
 
               <div class="knob-row">
-                <label>Base Sprint Duration Weeks: <strong>{{ projectForm.sprint_duration_weeks }} Weeks</strong></label>
-                <input type="range" min="1" max="4" step="1" [(ngModel)]="projectForm.sprint_duration_weeks" name="sprintDuration" (ngModelChange)="calculateAgileMetrics()">
+                <label>Base Sprint Duration Weeks: <strong>{{ projectForm.sprint_duration_weeks }}
+                    Weeks</strong></label>
+                <input type="range" min="1" max="4" step="1" [(ngModel)]="projectForm.sprint_duration_weeks"
+                  name="sprintDuration" (ngModelChange)="calculateAgileMetrics()">
                 <span class="knob-hint">Baseline milestone sprint durations.</span>
               </div>
 
-              <div class="toggle-control-rack" style="display: flex; align-items: center; justify-content: space-between; padding-top: 10px;">
+              <div class="toggle-control-rack"
+                style="display: flex; align-items: center; justify-content: space-between; padding-top: 10px;">
                 <div class="knob-row">
                   <label>Auto-Rollover Unfinished Backlog</label>
-                  <span class="knob-hint">Transition spilled sprint scope definitions into active active periods automatically.</span>
+                  <span class="knob-hint">Transition spilled sprint scope definitions into active active periods
+                    automatically.</span>
                 </div>
-                <mat-slide-toggle [(ngModel)]="projectForm.auto_rollover_backlog" name="autoRollover"></mat-slide-toggle>
+                <mat-slide-toggle [(ngModel)]="projectForm.auto_rollover_backlog"
+                  name="autoRollover"></mat-slide-toggle>
               </div>
             </div>
 
             <div class="calibrator-live-projections-card">
               <h5>Algorithmic Scope Matrix Projections</h5>
               <p class="matrix-calculated-hint">Realtime modeling engine telemetry.</p>
-              
+
               <div class="live-metrics-display-rack">
                 <div class="live-metric-card-node pop-blue">
                   <span class="node-big-value">{{ projectForm.computed_sprint_count }}</span>
@@ -236,18 +246,22 @@
       </div>
 
       <div class="drawer-footer">
-        <button mat-stroked-button type="button" [disabled]="activeBuilderStep === 1 || isSaving" (click)="previousBuilderStep()">
+        <button mat-stroked-button type="button" [disabled]="activeBuilderStep === 1 || isSaving"
+          (click)="previousBuilderStep()">
           Back
         </button>
         <div style="display: flex; gap: 12px;">
           <button mat-button type="button" [disabled]="isSaving" (click)="closeComposerDrawer()">
             Cancel
           </button>
-          <button mat-flat-button color="primary" type="button" *ngIf="activeBuilderStep < 3" (click)="nextBuilderStep()">
+          <button mat-flat-button color="primary" type="button" *ngIf="activeBuilderStep < 3"
+            (click)="nextBuilderStep()">
             Next Step
           </button>
-          <button mat-flat-button color="accent" type="button" *ngIf="activeBuilderStep === 3" [disabled]="isSaving" (click)="commitProjectToSystem()">
-            <mat-spinner diameter="20" style="display:inline-block; vertical-align:middle; margin-right:8px;" *ngIf="isSaving"></mat-spinner>
+          <button mat-flat-button color="accent" type="button" *ngIf="activeBuilderStep === 3" [disabled]="isSaving"
+            (click)="commitProjectToSystem()">
+            <mat-spinner diameter="20" style="display:inline-block; vertical-align:middle; margin-right:8px;"
+              *ngIf="isSaving"></mat-spinner>
             <span>Commit Initiative</span>
           </button>
         </div>
@@ -265,8 +279,10 @@
     <hr class="section-divider-line">
 
     <div class="saas-project-grid-layout" *ngIf="projects$ | async as projectsList; else loadingDashboard">
-      <div class="empty-chips-fallback" style="grid-column: 1 / -1; min-height: 200px; display: flex;" *ngIf="projectsList.length === 0">
-        <p>No architecture initiatives found matching registry system nodes. Select "New Initiative" above to instantiate records.</p>
+      <div class="empty-chips-fallback" style="grid-column: 1 / -1; min-height: 200px; display: flex;"
+        *ngIf="projectsList.length === 0">
+        <p>No architecture initiatives found matching registry system nodes. Select "New Initiative" above to
+          instantiate records.</p>
       </div>
 
       <div class="project-saas-card" *ngFor="let project of projectsList" (click)="loadProjectToComposer(project)">
@@ -279,19 +295,26 @@
               {{ project.priority }}
             </span>
           </div>
-          
-          <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 700;">{{ project.name }}</h3>
+
+          <h3 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 700;">{{ project.name }}</h3>
+
+          <div class="card-product-relationship-tag">
+            <span class="cube-icon">📦</span> Product Target: <strong>{{ getProductName(project.product_id) }}</strong>
+          </div>
+
           <p style="margin: 0 0 16px 0; font-size: 13px; color: var(--saas-matrix-txt-2); line-height: 1.5;">
             {{ project.description || 'No execution overview documentation provided.' }}
           </p>
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--saas-matrix-border); padding-top: 14px; margin-top: auto;">
+        <div
+          style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--saas-matrix-border); padding-top: 14px; margin-top: auto;">
           <div style="display: flex; gap: 16px; font-size: 12px; color: var(--saas-matrix-txt-2);">
             <span>Scope: <strong>{{ project.total_backlog_points }} pts</strong></span>
             <span>Duration: <strong>{{ project.computed_total_duration_weeks }} wks</strong></span>
           </div>
-          <button mat-icon-button color="warn" type="button" (click)="$event.stopPropagation(); decommissionProject(project.id)">
+          <button mat-icon-button color="warn" type="button"
+            (click)="$event.stopPropagation(); decommissionProject(project.id)">
             <mat-icon style="font-size: 20px;">delete_outline</mat-icon>
           </button>
         </div>

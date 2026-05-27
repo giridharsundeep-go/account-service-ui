@@ -1,0 +1,106 @@
+<div class="saas-container">
+  
+  <!-- 🔝 SAAS SUB-HEADER -->
+  <div class="saas-header">
+    <div class="header-title-block">
+      <h2>Product Portfolios</h2>
+      <p class="header-subtitle">Govern product registries and manage high-level scope definitions.</p>
+    </div>
+    <div class="workspace-control-bar" style="display: flex; gap: 16px;">
+      <button class="gp-button gp-primary header-wide-btn" (click)="initiateNewProduct()">
+        <mat-icon>add_box</mat-icon> Create Product
+      </button>
+    </div>
+  </div>
+
+  <!-- ⚙️ UNIFIED SINGLE FORM PANEL (Create / Update Drawer) -->
+  <div class="form-drawer-wrapper" [class.open]="isComposerOpen">
+    <div class="drawer-card">
+      
+      <div class="drawer-body-viewport">
+        <div class="form-section-block">
+          <div class="step-instruction-heading">
+            <h4>Product Registry Profile</h4>
+            <p>Define the foundational configuration parameters below.</p>
+          </div>
+
+          <div class="form-vertical-stack">
+            <!-- Product Name Input Mapping -->
+            <mat-form-field appearance="outline" class="saas-form-field">
+              <mat-label>Product Name</mat-label>
+              <input matInput [(ngModel)]="productForm.name" name="productName" required placeholder="e.g., Nexus Core Engine">
+            </mat-form-field>
+
+            <!-- Product Description Textarea Mapping -->
+            <mat-form-field appearance="outline" class="saas-form-field">
+              <mat-label>Product Description</mat-label>
+              <textarea matInput [(ngModel)]="productForm.description" name="productDesc" rows="6" placeholder="Detail the core value proposition..."></textarea>
+            </mat-form-field>
+          </div>
+        </div>
+      </div>
+
+      <!-- FOOTER MASTER ACTIONS -->
+      <div class="drawer-footer">
+        <button mat-button type="button" [disabled]="isSaving" (click)="closeComposerDrawer()">
+          Cancel
+        </button>
+        
+        <!-- Post Method Integration for New Records -->
+        <button mat-flat-button color="primary" type="button" *ngIf="!productForm.id" [disabled]="isSaving || !productForm.name" (click)="saveAndInitializeProduct()">
+          <mat-spinner diameter="20" style="display:inline-block; vertical-align:middle; margin-right:8px;" *ngIf="isSaving"></mat-spinner>
+          <mat-icon>add</mat-icon> Save Product
+        </button>
+
+        <!-- Put Method Integration for Existing Records -->
+        <button mat-flat-button color="accent" type="button" *ngIf="productForm.id" [disabled]="isSaving || !productForm.name" (click)="commitPortfolioChanges()">
+          <mat-spinner diameter="20" style="display:inline-block; vertical-align:middle; margin-right:8px;" *ngIf="isSaving"></mat-spinner>
+          <mat-icon>save</mat-icon> Update Product
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 📊 MONITORED PORTFOLIOS CONTAINER -->
+  <div class="dashboard-workspace">
+    <div class="workspace-section-header">
+      <div class="section-title-group">
+        <h3 class="section-main-heading">Active Registries</h3>
+      </div>
+    </div>
+    <hr class="section-divider-line">
+
+    <!-- Iterating over Backend Observable Stream Mapping -->
+    <div class="saas-project-grid-layout" *ngIf="products$ | async as productsList; else loadingDashboard">
+      <div class="empty-chips-fallback" style="grid-column: 1 / -1; min-height: 180px; display: flex; align-items: center; justify-content: center;" *ngIf="productsList.length === 0">
+        <p>No managed products discovered inside your registry profile stack. Click "Create Product" to begin.</p>
+      </div>
+
+      <div class="project-saas-card" *ngFor="let product of productsList" (click)="loadProductToComposer(product)" style="cursor: pointer;">
+        <div>
+          <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 700;">{{ product.name }}</h3>
+          <p style="margin: 0 0 16px 0; font-size: 13px; color: #666; line-height: 1.5;">
+            {{ product.description || 'No descriptive overview details configured for this platform core.' }}
+          </p>
+        </div>
+
+        <!-- System Delete Node Interface Anchor -->
+        <div style="display: flex; justify-content: flex-end; align-items: center; border-top: 1px solid #eee; padding-top: 12px; margin-top: auto;">
+          <button mat-icon-button color="warn" type="button" (click)="$event.stopPropagation(); archiveProductEntity(product.id)">
+            <mat-icon style="font-size: 20px;">delete_forever</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Async Fallback Stream Spinner Component -->
+    <ng-template #loadingDashboard>
+      <div class="api-loading-overlay" style="display: flex; flex-direction: column; align-items: center; padding: 40px 0;">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p style="margin-top: 12px; color: #777;">Streaming data nodes from pipeline infrastructure...</p>
+      </div>
+    </ng-template>
+  </div>
+
+</div>

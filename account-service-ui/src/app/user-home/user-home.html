@@ -1,6 +1,5 @@
 <main class="profile-page">
 
-    <!-- 🔝 TOP BAR -->
     <mat-toolbar class="toolbar">
         <span style="color: black;font-weight: bold;font-size: 20px;">Greatley Poshley</span>
         <span class="spacer"></span>
@@ -12,10 +11,8 @@
 
     <section class="main-layout">
 
-        <!-- 🔥 STYLISH SIDE PANEL -->
         <aside class="side-panel" style="padding-top: 40px;">
 
-            <!-- USER MINI -->
             <div class="side-user">
                 <div class="mini-avatar">
                     {{ user.name?.charAt(0) }}
@@ -26,7 +23,6 @@
                 </div>
             </div>
 
-            <!-- APPLICATIONS -->
             <div class="side-section">
                 <p class="side-title">Applications</p>
 
@@ -55,30 +51,33 @@
                     <span>Teams</span>
                 </div>
 
-                <div class="side-item" [class.active]="activeMenu==='projects'" (click)="setActive('projects')">
-                    <mat-icon>folder</mat-icon>
-                    <span>Projects</span>
+                <div class="side-item" [class.active]="activeMenu==='products'" (click)="setActive('products')">
+                    <mat-icon>inventory_2</mat-icon> 
+                    <span>Products</span>
                 </div>
+                <div class="side-item" [class.active]="activeMenu==='projects'" (click)="setActive('projects')">
+                    <mat-icon>folder</mat-icon> 
+                    <span> Projects</span>
+                </div>
+<div class="side-item" [class.active]="activeMenu==='backlog'" (click)="setActive('backlog')">
+                    <mat-icon>inventory_2</mat-icon> 
+                    <span>Backlogs & Epics </span>
+                </div>
+               
             </div>
 
         </aside>
 
-        <!-- ✅ MAIN CONTENT -->
         <div class="content-area">
-
-            <div class="content-area">
-
-                <!-- CREATE ORG -->
-                <app-organisation *ngIf="activeMenu === 'create'"></app-organisation>
-                <app-dashboard *ngIf="activeMenu === 'dashboard'"></app-dashboard>
-                <app-roles *ngIf="activeMenu === 'roles'"></app-roles>
-                <app-users *ngIf="activeMenu === 'users'"></app-users>
-                <app-teams *ngIf="activeMenu === 'teams'"></app-teams>
-                <app-projects *ngIf="activeMenu === 'projects'"></app-projects>
-
-            </div>
-
-        </div>
+            <app-organisation *ngIf="activeMenu === 'create'"></app-organisation>
+            <app-dashboard *ngIf="activeMenu === 'dashboard'"></app-dashboard>
+            <app-roles *ngIf="activeMenu === 'roles'"></app-roles>
+            <app-users *ngIf="activeMenu === 'users'"></app-users>
+            <app-teams *ngIf="activeMenu === 'teams'"></app-teams>
+            <app-products *ngIf="activeMenu === 'products'"></app-products>
+            <app-projects *ngIf="activeMenu === 'projects'"></app-projects>
+            <app-backlog *ngIf="activeMenu === 'backlog'"> </app-backlog>
+         </div>
 
     </section>
 

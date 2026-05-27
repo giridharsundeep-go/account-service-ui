@@ -1,0 +1,257 @@
+<div class="saas-container">
+
+    <!-- PREMIUM TOP HEADER BAR -->
+    <header class="saas-header">
+        <div class="header-title-block">
+            <h2>Backlogs & Epics Lifecycle</h2>
+            <p class="header-subtitle">Map product roadmap vision down to granular engineering tasks, prioritize cycles, and monitor feature composition hierarchies.</p>
+        </div>
+
+        <div class="header-actions" *ngIf="editingItemId === null">
+            <button mat-stroked-button class="gp-button gp-primary header-wide-btn"
+                (click)="resetForm(); editingItemId = 0">
+                <span class="btn-indicator-pulse"></span> Refine New Backlog Entry
+            </button>
+        </div>
+    </header>
+
+    <!-- INLINE CONTEXT FORM BLOCK -->
+    <div class="inline-form-container" *ngIf="editingItemId !== null">
+        <div class="inline-form-card">
+            <div class="inline-form-header">
+                <h3>{{ editingItemId ? 'Modify Product Backlog Target' : 'Provision Product Context Node' }}</h3>
+                <p>Configure structural engineering attributes and workflow lifecycle metrics.</p>
+            </div>
+
+            <div class="inline-form-body">
+                <div class="form-grid-three-col">
+                    <mat-form-field appearance="outline" class="saas-form-field">
+                        <mat-label>Context Label / Title</mat-label>
+                        <input matInput [(ngModel)]="itemName" placeholder="e.g., GraphQL Federation Gateway Integration" />
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline" class="saas-form-field">
+                        <mat-label>Structural Strategy Level</mat-label>
+                        <mat-select [(ngModel)]="itemType">
+                            <mat-option value="EPIC">Strategic Target Archetype (Epic)</mat-option>
+                            <mat-option value="TASK">Granular Work Unit Item (Task)</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline" class="saas-form-field" *ngIf="itemType === 'TASK'">
+                        <mat-label>Map to Core Parent Epic</mat-label>
+                        <mat-select [(ngModel)]="selectedEpicId">
+                            <mat-option [value]="null">Independent Sandbox Backlog Vector</mat-option>
+                            <mat-option *ngFor="let epic of allEpics" [value]="epic.id">{{ epic.name }}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+                <div class="form-grid-three-col grid-offset-top">
+                    <mat-form-field appearance="outline" class="saas-form-field">
+                        <mat-label>Execution Priority Impact</mat-label>
+                        <mat-select [(ngModel)]="itemPriority">
+                            <mat-option value="LOW">Low Business Impact</mat-option>
+                            <mat-option value="MEDIUM">Standard Cycle Baseline</mat-option>
+                            <mat-option value="HIGH">Elevated Pipeline Acceleration</mat-option>
+                            <mat-option value="CRITICAL">Immediate Deployment Essential</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline" class="saas-form-field">
+                        <mat-label>Lifecycle Execution State</mat-label>
+                        <mat-select [(ngModel)]="itemStatus">
+                            <mat-option value="BACKLOG">Refinement Pipeline (Backlog)</mat-option>
+                            <mat-option value="IN_PROGRESS">Active Delivery Loop</mat-option>
+                            <mat-option value="VALIDATION">Quality Engineering Validation</mat-option>
+                            <mat-option value="DONE">Production Target Closed</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+                <div class="form-textarea-row">
+                    <mat-form-field appearance="outline" class="saas-form-field">
+                        <mat-label>Scope Specification & Technical Mandates</mat-label>
+                        <textarea matInput rows="3" [(ngModel)]="itemDescription"
+                            placeholder="Detail acceptance criteria, structural architecture impacts, and operational boundaries..."></textarea>
+                    </mat-form-field>
+                </div>
+            </div>
+
+            <div class="inline-form-footer">
+                <button mat-stroked-button class="gp-button gp-action form-action-fixed-btn" (click)="saveItem()"
+                    [disabled]="loading || !itemName.trim()">
+                    <ng-container *ngIf="loading">Synchronizing Roadmap Vectors...</ng-container>
+                    <ng-container *ngIf="!loading">
+                        {{ editingItemId ? 'Update Roadmap Parameters' : 'Publish to Target Backlog Index' }}
+                    </ng-container>
+                </button>
+
+                <button mat-stroked-button class="gp-button gp-cancel form-action-fixed-btn" (click)="resetForm()">
+                    Discard
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODERN SAAS GRID WORKSPACE CONTAINER -->
+    <main class="dashboard-workspace">
+
+        <div class="workspace-filter-header">
+            <div class="workspace-badge-legend">
+                <span class="legend-indicator"></span> Product Tree Architectural Matrix
+            </div>
+            <div class="workspace-search-input-frame">
+                <span class="search-lens"></span>
+                <input type="text" [(ngModel)]="searchTerm" placeholder="Filter epics, requirements or sub-tasks..." />
+            </div>
+        </div>
+
+        <!-- EPIC MANAGEMENT HIERARCHICAL STRUCTURE -->
+        <div class="epic-hierarchy-stack" *ngIf="epicsWithTasks$ | async as epics">
+            <ng-container *ngIf="filterEpics(epics).length > 0; else emptyBacklogFallback">
+
+                <section class="epic-cluster-card" 
+                         *ngFor="let epic of filterEpics(epics)"
+                         [class.active-epic]="selectedItem?.id === epic.id">
+                    
+                    <!-- EPIC HEADER ELEMENT -->
+                    <div class="epic-cluster-header" (click)="openItemDetails(epic)">
+                        <div class="epic-info-meta">
+                            <span class="epic-tag-pill">Epic Scope</span>
+                            <div class="epic-title-group">
+                                <h4>{{ epic.name }}</h4>
+                                <span class="epic-child-counter">{{ epic.tasks?.length || 0 }} Child Assignments Linked</span>
+                            </div>
+                        </div>
+
+                        <div class="epic-actions-wrapper">
+                            <span class="priority-indicator-chip" [attr.data-priority]="epic.priority">{{ epic.priority }}</span>
+                            <span class="status-indicator-chip" [attr.data-status]="epic.status">{{ epic.status }}</span>
+                            <button class="node-control-btn edit" (click)="editItem(epic, $event)">Refine</button>
+                            <button class="node-control-btn purge" (click)="deleteItem(epic.id, $event)">&times;</button>
+                        </div>
+                    </div>
+
+                    <!-- EPIC DESCRIPTION BRIEF -->
+                    <p class="epic-summary-prose" *ngIf="epic.description">
+                        {{ epic.description }}
+                    </p>
+
+                    <!-- NESTED BACKLOG TASKS SUB-GRID -->
+                    <div class="nested-tasks-container">
+                        <div class="task-row-item" 
+                             *ngFor="let task of epic.tasks" 
+                             (click)="openItemDetails(task); $event.stopPropagation()"
+                             [class.active-task]="selectedItem?.id === task.id">
+                            
+                            <div class="task-primary-detail">
+                                <span class="task-bullet"></span>
+                                <span class="task-title-text">{{ task.name }}</span>
+                            </div>
+
+                            <div class="task-meta-controls">
+                                <span class="priority-indicator-chip mini" [attr.data-priority]="task.priority">{{ task.priority }}</span>
+                                
+                                <select #statusSelect class="inline-status-dropdown" 
+                                        [value]="task.status"
+                                        (change)="updateTaskStatusInline(task, statusSelect.value); $event.stopPropagation()"
+                                        (click)="$event.stopPropagation()">
+                                    <option value="BACKLOG">BACKLOG</option>
+                                    <option value="IN_PROGRESS">IN PROGRESS</option>
+                                    <option value="VALIDATION">VALIDATION</option>
+                                    <option value="DONE">DONE</option>
+                                </select>
+
+                                <div class="task-util-actions">
+                                    <button class="util-action-btn" (click)="editItem(task, $event)">Modify</button>
+                                    <button class="util-action-btn text-danger" (click)="deleteItem(task.id, $event)">Drop</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="task-empty-scaffold" *ngIf="!epic.tasks || epic.tasks.length === 0">
+                            No discrete execution requirements linked to this functional epic branch container.
+                        </div>
+                    </div>
+                </section>
+
+            </ng-container>
+
+            <ng-template #emptyBacklogFallback>
+                <div class="saas-empty-state">
+                    <div class="empty-vector">🚀</div>
+                    <h4>No roadmap hierarchy tracks deployed</h4>
+                    <p>Adjust system search query parameters or spin up a new high-level epic module baseline above.</p>
+                </div>
+            </ng-template>
+        </div>
+    </main>
+
+    <!-- SLIDEOUT SIDE INFOPANEL DRAWER CONTAINER -->
+    <div class="side-panel-overlay" *ngIf="selectedItem" (click)="closeItemDetails()"></div>
+    
+    <aside class="side-info-panel" [class.panel-open]="selectedItem" *ngIf="selectedItem">
+        <div class="panel-header">
+            <div class="panel-header-title">
+                <span class="panel-meta-badge">{{ selectedItem.type || selectedItem.item_type || 'TASK' }} SPECIFICATION</span>
+                <h3>{{ selectedItem.name }}</h3>
+            </div>
+            <button class="panel-close-btn" (click)="closeItemDetails()">&times;</button>
+        </div>
+
+        <div class="panel-scroll-content">
+            <!-- ARCHITECTURAL METRIC GRID -->
+            <div class="panel-section-title">Operational Context Index</div>
+            <div class="team-intel-grid">
+                <div class="intel-stat-block">
+                    <span class="intel-label">Workflow Execution Lifecycle</span>
+                    <span class="intel-val text-uppercaseHighlight">{{ selectedItem.status }}</span>
+                </div>
+                <div class="intel-stat-block">
+                    <span class="intel-label">Pipeline Delivery Priority</span>
+                    <span class="intel-val text-uppercaseHighlight" [attr.data-priority-text]="selectedItem.priority">
+                        {{ selectedItem.priority }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- COMPREHENSIVE TEXT SPECIFICATION -->
+            <div class="panel-section-title">Functional Specification Matrix</div>
+            <div class="panel-prose-container">
+                <p class="panel-description-text">
+                    {{ selectedItem.description || 'No formal acceptance criteria or structural impact metrics documented for this backlog architecture item.' }}
+                </p>
+            </div>
+
+            <!-- ASSIGNMENT GRAPH STRUCTURAL DETAILS -->
+            <div class="panel-section-title">Roadmap Graph Integrity</div>
+            <ul class="roster-interactive-list">
+                <li class="roster-member-item">
+                    <div class="member-identity-block">
+                        <div class="mini-avatar security-shield-avatar">📌</div>
+                        <div class="identity-text">
+                            <span class="m-name">Structural Type Node</span>
+                            <span class="m-role">{{ selectedItem.type || selectedItem.item_type || 'TASK' }} Layer Assignment</span>
+                        </div>
+                    </div>
+                </li>
+                <li class="roster-member-item" *ngIf="selectedItem.epic_id || selectedItem.parent_id">
+                    <div class="member-identity-block">
+                        <div class="mini-avatar security-shield-avatar">🧬</div>
+                        <div class="identity-text">
+                            <span class="m-name">Parent Core Architecture Epic ID</span>
+                            <span class="m-role">Linked to Epic Cluster Reference Node #{{ selectedItem.epic_id || selectedItem.parent_id }}</span>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <div class="panel-fixed-footer">
+            <button mat-stroked-button class="gp-button gp-cancel" style="width: 100%;" (click)="closeItemDetails()">
+                Close Workspace Inspector
+            </button>
+        </div>
+    </aside>
+</div>

@@ -16,7 +16,7 @@
 .saas-container {
   background-color: var(--matrix-bg-base);
   min-height: 100vh;
-  padding: 40px 24px;
+  padding-top: 40px;
   font-family: system-ui, -apple-system, sans-serif;
   color: var(--matrix-text-primary);
   box-sizing: border-box;
