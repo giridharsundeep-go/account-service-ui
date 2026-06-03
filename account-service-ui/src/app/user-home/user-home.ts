@@ -20,8 +20,8 @@ import { Roles } from "../roles/roles";
 import { Users } from "../users/users";
 import { Teams } from "../teams/teams";
 import { Products } from '../products/products';
-import { Backlog } from "../backlog/backlog";
 import { Projects } from "../projects/projects";
+import { Epics } from '../epics/epics';
 
 @Component({
   selector: 'app-user-home',
@@ -39,7 +39,7 @@ import { Projects } from "../projects/projects";
     Users,
     Teams,
     Products,
-    Backlog,
+    Epics,
     Projects
 ],
   templateUrl: './user-home.html',

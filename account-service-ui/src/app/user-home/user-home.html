@@ -52,18 +52,19 @@
                 </div>
 
                 <div class="side-item" [class.active]="activeMenu==='products'" (click)="setActive('products')">
-                    <mat-icon>inventory_2</mat-icon> 
+                    <mat-icon>inventory_2</mat-icon>
                     <span>Products</span>
                 </div>
                 <div class="side-item" [class.active]="activeMenu==='projects'" (click)="setActive('projects')">
-                    <mat-icon>folder</mat-icon> 
+                    <mat-icon>folder</mat-icon>
                     <span> Projects</span>
                 </div>
-<div class="side-item" [class.active]="activeMenu==='backlog'" (click)="setActive('backlog')">
-                    <mat-icon>inventory_2</mat-icon> 
-                    <span>Backlogs & Epics </span>
+            
+                <div class="side-item" [class.active]="activeMenu==='epics'" (click)="setActive('epics')">
+                    <mat-icon>inventory_2</mat-icon>
+                    <span> Epics & Backlogs </span>
                 </div>
-               
+
             </div>
 
         </aside>
@@ -76,8 +77,8 @@
             <app-teams *ngIf="activeMenu === 'teams'"></app-teams>
             <app-products *ngIf="activeMenu === 'products'"></app-products>
             <app-projects *ngIf="activeMenu === 'projects'"></app-projects>
-            <app-backlog *ngIf="activeMenu === 'backlog'"> </app-backlog>
-         </div>
+            <app-epics *ngIf="activeMenu === 'epics'"> </app-epics>
+        </div>
 
     </section>
 

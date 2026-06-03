@@ -1,0 +1,812 @@
+/* ==========================================================================
+   ADVANCED TOKENS & SAAS ARCHITECTURE EXECUTION BASE
+   ========================================================================== */
+:host {
+  display: block;
+}
+
+:root {
+  --matrix-brand: #0f172a;
+  --matrix-accent: #2563eb;
+  --matrix-bg-base: #f1f5f9;
+  --matrix-bg-surface: #ffffff;
+  --matrix-border-light: #e2e8f0;
+  --matrix-border-heavy: #cbd5e1;
+  --matrix-text-primary: #1e293b;
+  --matrix-text-secondary: #475569;
+  --matrix-text-ghost: #94a3b8;
+  
+  /* Agile Track Lifecycle Tokens Mapping */
+  --clr-backlog-bg: #f1f5f9;
+  --clr-backlog-txt: #475569;
+  --clr-progress-bg: #eff6ff;
+  --clr-progress-txt: #1d4ed8;
+  --clr-blocked-bg: #fef2f2;
+  --clr-blocked-txt: #b91c1c;
+  --clr-complete-bg: #f0fdf4;
+  --clr-complete-txt: #15803d;
+}
+
+.saas-container {
+  background-color: var(--matrix-bg-base, #ffffff);
+  min-height: 100vh;
+  padding: 40px 24px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--matrix-text-primary, #1e293b);
+  box-sizing: border-box;
+}
+
+/* ==========================================================================
+   HEADER BANNER ARCHITECTURE
+   ========================================================================== */
+.saas-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  gap: 20px;
+}
+
+.header-title-block h2 {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0 0 6px 0;
+}
+
+.header-title-block .header-subtitle {
+  color: var(--matrix-text-secondary, #475569);
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 750px;
+}
+
+/* ==========================================================================
+   ISOLATED CUSTOM BUTTON ARCHETYPE FRAMEWORK (.gp-buttons)
+   ========================================================================== */
+.gp-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 24px;
+  height: 44px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  letter-spacing: -0.01em;
+  position: relative;
+  overflow: hidden;
+}
+
+.gp-button.gp-primary {
+  background-color: #001c51;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(0, 28, 81, 0.15);
+}
+
+.gp-button.gp-primary:hover {
+  background-color: #002b7a;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 28, 81, 0.25);
+}
+
+.gp-button.gp-action {
+  background-color: #2678bf;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(38, 120, 191, 0.15);
+}
+
+.gp-button.gp-action:hover {
+  background-color: #318ecc;
+  transform: translateY(-1px);
+}
+
+.gp-button.gp-cancel {
+  background-color: transparent;
+  color: var(--matrix-text-secondary, #475569);
+  border: 1px solid var(--matrix-border-heavy, #cbd5e1);
+}
+
+.gp-button.gp-cancel:hover {
+  background-color: rgba(15, 23, 42, 0.04);
+  color: var(--matrix-text-primary, #1e293b);
+}
+
+.btn-indicator-pulse {
+  width: 6px;
+  height: 6px;
+  background-color: #34d399;
+  border-radius: 50%;
+  position: relative;
+}
+
+.btn-indicator-pulse::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 50%;
+  background-color: #34d399;
+  animation: radarPulse 1.8s infinite ease-out;
+}
+
+@keyframes radarPulse {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(3.5); opacity: 0; }
+}
+
+/* ==========================================================================
+   ISOLATED NAVIGATION TABS STRIP LAYOUT
+   ========================================================================== */
+.saas-perspective-tab-deck {
+  display: flex;
+  background-color: #e2e8f0;
+  padding: 6px 8px 0 8px;
+  border-radius: 12px 12px 0 0;
+  gap: 4px;
+  border: 1px solid var(--matrix-border-light, #e2e8f0);
+  border-bottom: none;
+}
+
+.saas-perspective-tab-deck button {
+  background: transparent;
+  border: none;
+  padding: 14px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--matrix-text-secondary, #475569);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 10px 10px 0 0;
+  transition: all 0.2s ease;
+}
+
+.saas-perspective-tab-deck button:hover {
+  color: var(--matrix-text-primary, #1e293b);
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+.saas-perspective-tab-deck button.active {
+  background-color: var(--matrix-bg-surface, #ffffff);
+  color: var(--matrix-accent, #2563eb);
+  box-shadow: 0 -2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.tab-vector-icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* ==========================================================================
+   FORM DRAWER PANEL SYSTEMS
+   ========================================================================== */
+.form-drawer-wrapper { 
+  max-height: 0; 
+  overflow: hidden; 
+  transition: max-height 0.4s ease-in-out, margin-bottom 0.4s ease-in-out; 
+}
+
+.form-drawer-wrapper.open { 
+  max-height: 800px; 
+  margin-bottom: 32px; 
+}
+
+.drawer-card { 
+  background: var(--matrix-bg-surface, #ffffff); 
+  border: 1px solid var(--matrix-border-light, #e2e8f0); 
+  padding: 28px; 
+  border-radius: 16px; 
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03); 
+}
+
+.drawer-header h3 { 
+  margin: 0 0 4px 0; 
+  font-size: 18px; 
+  font-weight: 700; 
+}
+
+.drawer-header p { 
+  margin: 0 0 20px 0; 
+  font-size: 13px; 
+  color: var(--matrix-text-secondary, #475569); 
+}
+
+.form-grid-three-col { 
+  display: grid; 
+  grid-template-columns: repeat(3, 1fr); 
+  gap: 16px; 
+}
+
+.form-grid-two-col { 
+  display: grid; 
+  grid-template-columns: 2fr 1fr; 
+  gap: 16px; 
+}
+
+.saas-form-field { 
+  width: 100%; 
+}
+
+.inline-clear-project {
+  position: absolute;
+  right: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  color: var(--matrix-text-ghost, #94a3b8);
+  cursor: pointer;
+  z-index: 5;
+}
+
+.drawer-footer { 
+  display: flex; 
+  gap: 12px; 
+  border-top: 1px solid var(--matrix-border-light, #e2e8f0); 
+  padding-top: 20px; 
+  margin-top: 24px; 
+}
+
+/* ==========================================================================
+   DYNAMIC SEARCH CONSOLE STRIP SYSTEM
+   ========================================================================== */
+.matrix-search-input-frame {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--matrix-border-light, #e2e8f0);
+}
+
+.matrix-search-input-frame input {
+  width: 100%;
+  height: 64px;
+  box-sizing: border-box;
+  border: none;
+  padding: 10px 48px 10px 52px;
+  font-size: 14px;
+  background-color: var(--matrix-bg-surface, #ffffff);
+  color: var(--matrix-text-primary, #1e293b);
+  outline: none;
+}
+
+.matrix-search-input-frame .search-lens {
+  position: absolute;
+  left: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+.matrix-search-input-frame .icon-svg {
+  width: 16px;
+  height: 16px;
+  color: var(--matrix-text-ghost, #94a3b8);
+}
+
+.matrix-search-input-frame .clear-search-btn {
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--matrix-text-ghost, #94a3b8);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.matrix-search-input-frame .clear-search-btn:hover { 
+  color: var(--matrix-text-primary, #1e293b); 
+}
+
+/* ==========================================================================
+   DYNAMIC MATRIX STRUCTURAL TABLE SYSTEM
+   ========================================================================== */
+.matrix-table-workspace {
+  background-color: var(--matrix-bg-surface, #ffffff);
+  border: 1px solid var(--matrix-border-light, #e2e8f0);
+  border-radius: 0 0 16px 16px;
+  box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+}
+
+.matrix-filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 32px;
+  border-bottom: 1px solid var(--matrix-border-light, #e2e8f0);
+  background-color: #f8fafc;
+}
+
+.matrix-badge-legend {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--matrix-text-primary, #1e293b);
+}
+
+.legend-indicator { 
+  width: 8px; 
+  height: 8px; 
+  background-color: var(--matrix-accent, #2563eb); 
+  border-radius: 50%; 
+}
+
+.matrix-row {
+  display: grid;
+  column-gap: 24px;
+  align-items: center;
+  padding: 0 32px;
+  box-sizing: border-box;
+}
+
+/* Core Customized Explicit Column Width Boundaries Mapping Grid Modules */
+.four-column-grid { 
+  grid-template-columns: 200px 1fr 340px 180px; 
+}
+
+.five-column-grid { 
+  grid-template-columns: 2.5fr 2fr 1.25fr 1.25fr 1fr; 
+}
+
+.matrix-header-row {
+  background-color: #f8fafc;
+  border-bottom: 1px solid var(--matrix-border-light, #e2e8f0);
+  height: 48px;
+}
+
+.matrix-header-row .cell {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--matrix-text-secondary, #475569);
+}
+
+.matrix-row-scroller { 
+  display: flex; 
+  flex-direction: column; 
+}
+
+.matrix-row.data-row {
+  min-height: 72px;
+  padding-top: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--matrix-border-light, #e2e8f0);
+  box-sizing: border-box;
+  background-color: var(--matrix-bg-surface, #ffffff);
+}
+
+.matrix-row.data-row:last-child { 
+  border-bottom: none; 
+}
+
+.matrix-row.data-row:hover { 
+  background-color: #f8fafc; 
+}
+
+/* ==========================================================================
+   CELL GRAPHICS INTERFACES
+   ========================================================================== */
+.cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14px;
+}
+
+.primary-identity-cell { 
+  display: flex; 
+  flex-direction: column;
+  align-items: flex-start; 
+  gap: 6px; 
+}
+
+.privilege-icon-shield { 
+  width: 4px; 
+  height: 16px; 
+  background: var(--matrix-border-heavy, #cbd5e1); 
+  border-radius: 2px; 
+}
+
+.matrix-row.data-row:hover .privilege-icon-shield { 
+  background: var(--matrix-accent, #2563eb); 
+}
+
+.story-identity-cell { 
+  display: flex; 
+  align-items: center; 
+  gap: 12px; 
+}
+
+.story-indicator-bead { 
+  width: 6px; 
+  height: 6px; 
+  background-color: #a855f7; 
+  border-radius: 50%; 
+}
+
+.task-vector-shield { 
+  font-size: 14px; 
+}
+
+.entity-strong-title { 
+  font-size: 14px; 
+  font-weight: 600; 
+  color: var(--matrix-text-primary, #1e293b); 
+  display: block; 
+}
+
+.project-indicator-tag {
+  font-size: 12px;
+  color: var(--matrix-accent, #2563eb);
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.sub-trace-lbl { 
+  font-size: 12.5px; 
+  color: var(--matrix-text-secondary, #475569); 
+  display: block; 
+  margin-top: 4px; 
+  line-height: 1.4;
+}
+
+.text-italic { 
+  font-style: italic; 
+  font-weight: 400; 
+  color: var(--matrix-text-ghost, #94a3b8); 
+}
+
+.saas-role-badge.primary-badge { 
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background-color: #e0f2fe; 
+  color: #0369a1; 
+  border: 1px solid #bae6fd; 
+  font-family: monospace; 
+}
+
+.epic-badge-link { 
+  font-size: 12px; 
+  color: #4338ca; 
+  font-weight: 600; 
+  background: #e0e7ff; 
+  padding: 4px 8px; 
+  border-radius: 4px; 
+  display: inline-block; 
+}
+
+.story-tag-capsule { 
+  font-size: 12px; 
+  color: #334155; 
+  background: #f1f5f9; 
+  padding: 4px 8px; 
+  border-radius: 4px; 
+  display: inline-block; 
+  max-width: 100%; 
+  overflow: hidden; 
+  text-overflow: ellipsis; 
+  white-space: nowrap; 
+}
+
+.description-matrix-cell { 
+  display: flex;
+  flex-direction: column;
+}
+
+.analytics-cell { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 4px; 
+}
+
+.weight-tag { 
+  font-size: 12px; 
+  font-weight: 700; 
+  color: var(--matrix-text-primary, #1e293b); 
+}
+
+.priority-flag-pill { 
+  font-size: 10px; 
+  font-weight: 800; 
+  text-transform: uppercase; 
+  letter-spacing: 0.02em; 
+}
+
+.priority-flag-pill[data-priority="CRITICAL"] { color: #b91c1c; }
+.priority-flag-pill[data-priority="HIGH"] { color: #ea580c; }
+.priority-flag-pill[data-priority="MEDIUM"] { color: #d97706; }
+.priority-flag-pill[data-priority="LOW"] { color: #64748b; }
+
+/* ==========================================================================
+   👥 STAKEHOLDER PROFILES & AVATARS
+   ========================================================================== */
+.owner-assignment-cell { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 10px; 
+}
+
+.stakeholder-avatar-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.compact-row-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: #cbd5e1;
+  border: 1px solid var(--matrix-border-light, #e2e8f0);
+}
+
+.stakeholder-text-info {
+  display: flex;
+  flex-direction: column;
+  max-width: calc(100% - 46px);
+}
+
+.avatar-label-txt {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--matrix-text-primary, #1e293b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.role-lbl-dim {
+  color: var(--matrix-text-ghost, #94a3b8);
+  font-size: 11px;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.avatar-meta-txt {
+  font-size: 11px;
+  color: var(--matrix-text-secondary, #475569);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.avatar-email-txt {
+  font-size: 11px;
+  color: var(--matrix-text-ghost, #94a3b8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.unassigned-row-marker {
+  font-size: 12px;
+  color: var(--matrix-text-ghost, #94a3b8);
+  font-style: italic;
+  padding: 4px 0;
+}
+
+.meta-avatar-label { 
+  font-size: 12.5px; 
+  font-weight: 500; 
+  color: var(--matrix-text-primary, #1e293b); 
+}
+
+/* --- Status Tracking Badge System --- */
+.status-capsule-badge {
+  display: inline-flex;
+  align-self: flex-start;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 12px;
+  letter-spacing: 0.3px;
+}
+
+.status-capsule-badge[data-status="BACKLOG"], 
+.status-capsule-badge[data-status="TODO"] { 
+  background-color: var(--clr-backlog-bg, #f1f5f9); 
+  color: var(--clr-backlog-txt, #475569); 
+}
+
+.status-capsule-badge[data-status="IN_PROGRESS"] { 
+  background-color: var(--clr-progress-bg, #eff6ff); 
+  color: var(--clr-progress-txt, #1d4ed8); 
+}
+
+.status-capsule-badge[data-status="BLOCKED"],
+.status-capsule-badge[data-status="ON_HOLD"] { 
+  background-color: var(--clr-blocked-bg, #fef2f2); 
+  color: var(--clr-blocked-txt, #b91c1c); 
+}
+
+.status-capsule-badge[data-status="COMPLETED"] { 
+  background-color: var(--clr-complete-bg, #f0fdf4); 
+  color: var(--clr-complete-txt, #15803d); 
+}
+
+/* ==========================================================================
+   🎯 AUTOCOMPLETE DISPATCH OPTION RICH PANELS
+   ========================================================================== */
+.rich-user-card-layout {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  gap: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.rich-user-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--matrix-border-light, #e2e8f0);
+}
+
+.rich-user-meta-stack {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.user-main-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.user-sub-email {
+  font-size: 12px;
+  color: var(--matrix-text-secondary, #475569);
+}
+
+.user-badge-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.meta-inline-badge {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: 500;
+}
+
+.meta-inline-badge.sys-id {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+.meta-inline-badge.sys-role {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   CELL CORE 3: RUNTIME ACTIONS BREAKOUTS
+   ========================================================================== */
+.action-runtime-cell {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.gp-action-trigger {
+  height: 32px;
+  border-radius: 6px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background-color: transparent;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.gp-action-trigger.edit-trigger { 
+  color: var(--matrix-accent, #2563eb); 
+}
+
+.gp-action-trigger.edit-trigger:hover { 
+  background-color: #eff6ff; 
+  border-color: #bfdbfe; 
+}
+
+.gp-action-trigger.delete-trigger { 
+  color: var(--matrix-text-secondary, #475569); 
+}
+
+.gp-action-trigger.delete-trigger:hover { 
+  color: #ef4444; 
+  background-color: #fef2f2; 
+}
+
+/* ==========================================================================
+   UTILITY LAYOUTS & REPOSITORIES EMPTY VIEWS
+   ========================================================================== */
+.text-right { text-align: right; }
+
+.matrix-empty-viewport { 
+  padding: 56px 32px; 
+  text-align: center; 
+  color: var(--matrix-text-secondary, #475569); 
+}
+
+.empty-icon-radar { 
+  font-size: 28px; 
+  margin-bottom: 12px; 
+}
+
+.workspace-scope-deck {
+  background-color: #f8fafc;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--matrix-border-light, #e2e8f0);
+  display: flex;
+  align-items: center;
+}
+
+.scope-select-field {
+  width: 320px;
+  max-width: 100%;
+}
+
+/* Overriding default Material input helpers to avoid spacing jumps */
+.workspace-scope-deck .mat-mdc-form-field-subscript-wrapper {
+  display: none !important;
+}
+
+/* ==========================================================================
+   RESPONSIVE LAYOUT OVERRIDES BREAKPOINTS MAP
+   ========================================================================== */
+@media(max-width: 960px) {
+  .matrix-header-row { 
+    display: none; 
+  }
+  
+  .matrix-row.data-row.four-column-grid,
+  .matrix-row.data-row.five-column-grid {
+    grid-template-columns: 1fr;
+    height: auto;
+    padding: 20px 24px;
+    gap: 12px;
+  }
+  
+  .action-runtime-cell {
+    border-top: 1px dashed var(--matrix-border-light, #e2e8f0);
+    padding-top: 12px;
+    justify-content: flex-start !important;
+  }
+}

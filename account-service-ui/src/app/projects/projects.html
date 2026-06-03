@@ -1,16 +1,43 @@
 <div class="saas-container">
 
+  <!-- Enhanced SaaS Header with Perspective/View Toggles -->
   <div class="saas-header">
     <div class="header-title-block">
       <h2>Strategic Architecture Initiatives</h2>
-      <p class="header-subtitle">Configure, estimate, and dispatch enterprise projects and resource allocation matrices.
-      </p>
+      <p class="header-subtitle">Configure, estimate, and dispatch enterprise projects and resource allocation matrices.</p>
     </div>
-    <div class="workspace-control-bar" style="display: flex; gap: 16px;">
-      <div class="search-input-wrapper">
+    
+    <!-- Unified Control Dashboard Strip -->
+    <div class="workspace-control-bar" style="display: flex; gap: 16px; align-items: center;">
+      
+      <!-- View Toggle Mode Segments -->
+      <div class="view-perspective-toggle-group">
+        <button [class.active]="dashboardViewMode === 'projects'" (click)="setViewMode('projects')">
+          <mat-icon>folder</mat-icon> Initiatives
+        </button>
+        <button [class.active]="dashboardViewMode === 'sprints'" (click)="setViewMode('sprints')">
+          <mat-icon>published_with_changes</mat-icon> Sprints Lifecycle
+        </button>
+      </div>
+
+      <div class="search-input-wrapper" *ngIf="dashboardViewMode === 'projects'">
         <mat-icon>search</mat-icon>
         <input type="text" [(ngModel)]="projectLookupFilter" placeholder="Filter initiatives...">
       </div>
+
+      <!-- Quick-Filter Segment for Sprints Mode -->
+      <div class="sprint-filter-tabs" *ngIf="dashboardViewMode === 'sprints'">
+        <button class="filter-chip" [class.selected]="sprintTimelineFilter === 'ALL'" (click)="setSprintFilter('ALL')">
+          All Iterations
+        </button>
+        <button class="filter-chip" [class.selected]="sprintTimelineFilter === 'CURRENT'" (click)="setSprintFilter('CURRENT')">
+          <span class="pulse-indicator"></span> Running Only
+        </button>
+        <button class="filter-chip" [class.selected]="sprintTimelineFilter === 'FUTURE'" (click)="setSprintFilter('FUTURE')">
+          Planned / Upcoming
+        </button>
+      </div>
+
       <button class="gp-button gp-primary header-wide-btn" (click)="initiateNewProject()">
         <span class="btn-indicator-pulse"></span>
         <mat-icon>add</mat-icon> New Initiative
@@ -18,57 +45,57 @@
     </div>
   </div>
 
+  <!-- Multi-Step Form Drawer Workspace (Kept Intact) -->
   <div class="form-drawer-wrapper" [class.open]="isComposerOpen">
     <div class="drawer-card">
-
       <div class="stepper-nav-bar">
-        <div class="step-nav-item" [class.active]="activeBuilderStep === 1" [class.completed]="activeBuilderStep > 1"
-          (click)="setBuilderStep(1)">
+        <div class="step-nav-item" [class.active]="activeBuilderStep === 1" [class.completed]="activeBuilderStep > 1" (click)="setBuilderStep(1)">
           <div class="step-digit">1</div>
-          <div class="step-meta">
-            <h5>Governance</h5>
-            <p>Scope & Registry</p>
-          </div>
+          <div class="step-meta"><h5>Governance</h5><p>Scope & Registry</p></div>
         </div>
         <div class="stepper-connector-line" [class.filled]="activeBuilderStep > 1"></div>
-        <div class="step-nav-item" [class.active]="activeBuilderStep === 2" [class.completed]="activeBuilderStep > 2"
-          (click)="setBuilderStep(2)">
+        
+        <div class="step-nav-item" [class.active]="activeBuilderStep === 2" [class.completed]="activeBuilderStep > 2" (click)="setBuilderStep(2)">
           <div class="step-digit">2</div>
-          <div class="step-meta">
-            <h5>Allocation</h5>
-            <p>Core Resources</p>
-          </div>
+          <div class="step-meta"><h5>Allocation</h5><p>Core Resources</p></div>
         </div>
         <div class="stepper-connector-line" [class.filled]="activeBuilderStep > 2"></div>
-        <div class="step-nav-item" [class.active]="activeBuilderStep === 3" (click)="setBuilderStep(3)">
+        
+        <div class="step-nav-item" [class.active]="activeBuilderStep === 3" [class.completed]="activeBuilderStep > 3" (click)="setBuilderStep(3)">
           <div class="step-digit">3</div>
-          <div class="step-meta">
-            <h5>Calibration</h5>
-            <p>Velocity Bounds</p>
-          </div>
+          <div class="step-meta"><h5>Calibration</h5><p>Velocity Bounds</p></div>
+        </div>
+        <div class="stepper-connector-line" [class.filled]="activeBuilderStep > 3"></div>
+
+        <div class="step-nav-item" [class.active]="activeBuilderStep === 4" (click)="setBuilderStep(4)">
+          <div class="step-digit">4</div>
+          <div class="step-meta"><h5>Timeline</h5><p>Sprints Preview</p></div>
         </div>
       </div>
 
       <div class="drawer-body-viewport">
-
+        <!-- Step 1: Governance Structure -->
         <div class="step-content-pane" *ngIf="activeBuilderStep === 1">
           <div class="step-instruction-heading">
             <h4>General Registry & Governance</h4>
-            <p>Define initiative scope naming metrics, operational status flags, and foundational engineering
-              methodology models.</p>
+            <p>Define initiative scope naming metrics, operational status flags, and foundational engineering methodology models.</p>
           </div>
 
           <div class="form-vertical-stack">
-            <mat-form-field appearance="outline" class="saas-form-field">
-              <mat-label>Project Name</mat-label>
-              <input matInput [(ngModel)]="projectForm.name" name="projectName" required
-                placeholder="e.g., Enterprise Core Data Warehouse">
-            </mat-form-field>
+            <div style="display: flex; gap: 16px; width: 100%;">
+              <mat-form-field appearance="outline" style="flex: 1 1 30%;">
+                <mat-label>Project Code</mat-label>
+                <input matInput [(ngModel)]="projectForm.project_code" name="projectCode" required placeholder="e.g., ARCH-2026-X">
+              </mat-form-field>
+              <mat-form-field appearance="outline" style="flex: 1 1 70%;">
+                <mat-label>Project Name</mat-label>
+                <input matInput [(ngModel)]="projectForm.name" name="projectName" required placeholder="e.g., Enterprise Core Data Warehouse">
+              </mat-form-field>
+            </div>
 
             <mat-form-field appearance="outline" class="saas-form-field">
               <mat-label>Project Description / Operational Scope</mat-label>
-              <textarea matInput [(ngModel)]="projectForm.description" name="projectDesc" rows="4"
-                placeholder="Detail high-level target architectural maps..."></textarea>
+              <textarea matInput [(ngModel)]="projectForm.description" name="projectDesc" rows="4" placeholder="Detail high-level target architectural maps..."></textarea>
             </mat-form-field>
 
             <div class="form-row-full width-offset-margin">
@@ -95,8 +122,7 @@
 
               <mat-form-field appearance="outline" class="saas-form-field">
                 <mat-label>Methodology Framework</mat-label>
-                <mat-select [(ngModel)]="projectForm.methodology" name="projectMethodology"
-                  (selectionChange)="calculateAgileMetrics()">
+                <mat-select [(ngModel)]="projectForm.methodology" name="projectMethodology" (selectionChange)="calculateAgileMetrics(); generateSprintPreview()">
                   <mat-option value="AGILE_SCRUM">AGILE SCRUM</mat-option>
                   <mat-option value="WATERFALL_GANTT">WATERFALL GANTT</mat-option>
                 </mat-select>
@@ -115,120 +141,99 @@
           </div>
         </div>
 
-       <div class="step-content-pane" *ngIf="activeBuilderStep === 2">
-  <div class="step-instruction-heading">
-    <h4>Allocate Organizational Core Resources</h4>
-    <p>Link team cohorts from our functional roster database or select individual specialist assets via interactive modal fields.</p>
-  </div>
-
-  <div class="api-loading-overlay" *ngIf="isLoadingResources">
-    <mat-spinner diameter="40"></mat-spinner>
-    <p>Synchronizing resource metadata grids...</p>
-  </div>
-
-  <div class="dual-allocation-matrix" *ngIf="!isLoadingResources">
-
-    <div class="allocation-column-block">
-      <h5 class="resource-group-lbl"><mat-icon>groups</mat-icon> Assigned Engineers & Specialists</h5>
-      <div class="interactive-chip-board">
-        <button mat-flat-button color="primary" type="button" class="launch-select-btn" (click)="openUserSelectionDialog()">
-          <mat-icon>launch</mat-icon> Add Independent Specialist
-        </button>
-
-        <div class="empty-chips-fallback" *ngIf="chipUserObjects.length === 0">
-          <p>No functional team engineering resources or individual specialists are currently linked to this architecture configuration framework.</p>
-        </div>
-
-        <mat-chip-set class="allocated-chips-grid" *ngIf="chipUserObjects.length > 0">
-          <mat-chip-row *ngFor="let userObj of chipUserObjects" [class.team-driven-chip]="userObj.isFromTeam" (removed)="removeUserChip(userObj)">
-            <mat-icon matChipAvatar>account_circle</mat-icon>
-            <span class="chip-main-text">{{ userObj.name }}</span>
-            <span class="chip-source-tag" *ngIf="userObj.isFromTeam">{{ userObj.teamName }}</span>
-            <button matChipRemove *ngIf="!userObj.isFromTeam" aria-label="Remove resource assignment selection">
-              <mat-icon>cancel</mat-icon>
-            </button>
-          </mat-chip-row>
-        </mat-chip-set>
-      </div>
-    </div>
-
-    <div class="allocation-column-block">
-      <h5 class="resource-group-lbl"><mat-icon>lan</mat-icon> Available Functional Teams</h5>
-      <div class="interactive-chip-board">
-        <div class="empty-chips-fallback" *ngIf="liveActiveTeams.length === 0">
-          <p>No active organizational functional teams found within storage registries.</p>
-        </div>
-
-        <div class="teams-toggle-list" *ngIf="liveActiveTeams.length > 0">
-          <div class="team-toggle-row" *ngFor="let team of liveActiveTeams" [class.selected]="isTeamSelected(team.id)" (click)="toggleTeamSelection(team)">
-            <div class="team-info-side">
-              <mat-icon *ngIf="!team.isLoadingMembers">
-                {{ isTeamSelected(team.id) ? 'check_circle' : 'radio_button_unchecked' }}
-              </mat-icon>
-              <mat-spinner diameter="16" style="margin-right: 8px;" *ngIf="team.isLoadingMembers"></mat-spinner>
-              <span class="team-name-label">{{ team.name }}</span>
+        <!-- Step 2: Allocation Matrix -->
+        <div class="step-content-pane" *ngIf="activeBuilderStep === 2">
+          <div class="step-instruction-heading">
+            <h4>Allocate Organizational Core Resources</h4>
+            <p>Link team cohorts from our functional roster database or select individual specialist assets via interactive modal fields.</p>
+          </div>
+          <div class="api-loading-overlay" *ngIf="isLoadingResources">
+            <mat-spinner diameter="40"></mat-spinner>
+            <p>Synchronizing resource metadata grids...</p>
+          </div>
+          <div class="dual-allocation-matrix" *ngIf="!isLoadingResources">
+            <div class="allocation-column-block">
+              <h5 class="resource-group-lbl"><mat-icon>groups</mat-icon> Assigned Engineers & Specialists</h5>
+              <div class="interactive-chip-board">
+                <button mat-flat-button color="primary" type="button" class="launch-select-btn" (click)="openUserSelectionDialog()">
+                  <mat-icon>launch</mat-icon> Add Independent Specialist
+                </button>
+                <div class="empty-chips-fallback" *ngIf="!chipUserObjects || chipUserObjects.length === 0">
+                  <p>No functional team engineering resources or individual specialists are currently linked to this architecture configuration framework.</p>
+                </div>
+                <mat-chip-set class="allocated-chips-grid" *ngIf="chipUserObjects && chipUserObjects.length > 0">
+                  <mat-chip-row *ngFor="let userObj of chipUserObjects" [class.team-driven-chip]="userObj.isFromTeam">
+                    <mat-icon matChipAvatar>account_circle</mat-icon>
+                    <span class="chip-main-text">{{ userObj.name }}</span>
+                    <span class="chip-source-tag" *ngIf="userObj.isFromTeam">{{ userObj.teamName }}</span>
+                    <button type="button" matChipRemove *ngIf="!userObj.isFromTeam" (click)="$event.stopPropagation(); removeUserChip(userObj)">
+                      <mat-icon>cancel</mat-icon>
+                    </button>
+                  </mat-chip-row>
+                </mat-chip-set>
+              </div>
             </div>
-            <span class="team-count-badge">
-              {{ team.members ? team.members.length : 0 }} Members
-            </span>
+
+            <div class="allocation-column-block">
+              <h5 class="resource-group-lbl"><mat-icon>lan</mat-icon> Available Functional Teams</h5>
+              <div class="interactive-chip-board" style="padding: 0;">
+                <div class="empty-chips-fallback" style="padding: 16px;" *ngIf="liveActiveTeams.length === 0">
+                  <p>No active organizational functional teams found within storage registries.</p>
+                </div>
+                <mat-selection-list *ngIf="liveActiveTeams.length > 0" (selectionChange)="onTeamSelectionChange(teamsList.selectedOptions.selected)" #teamsList style="max-height: 320px; overflow-y: auto; background: transparent;">
+                  <mat-list-option *ngFor="let team of liveActiveTeams" [value]="team.id" [selected]="isTeamSelected(team.id)" style="border-bottom: 1px solid #e2e8f0; height: auto; padding: 8px 0;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; font-size: 13px;">
+                      <div style="display: flex; align-items: center; gap: 8px;">
+                        <mat-icon style="color: #4a5568;" *ngIf="!team.isLoadingMembers">group</mat-icon>
+                        <mat-spinner diameter="16" *ngIf="team.isLoadingMembers"></mat-spinner>
+                        <span style="font-weight: 600; color: inherit;">{{ team.name }}</span>
+                      </div>
+                      <span class="team-count-badge" style="background: rgba(0,0,0,0.05); padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700;">
+                        {{ team.members ? team.members.length : 0 }} Members
+                      </span>
+                    </div>
+                  </mat-list-option>
+                </mat-selection-list>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
 
-  </div>
-</div>
-
+        <!-- Step 3: Velocity Modeling Bounds -->
         <div class="step-content-pane" *ngIf="activeBuilderStep === 3">
           <div class="step-instruction-heading">
             <h4>Agile Velocity Modeling & Velocity Bounds</h4>
             <p>Set technical story estimation parameters to compute sprint duration requirements automatically.</p>
           </div>
-
           <div class="calibrator-layout-split">
             <div class="agile-advanced-knobs">
               <h5 class="engine-indicator agile-accent">Operational Engine Matrix</h5>
-
               <div class="knob-row">
-                <label>Total Estimated Backlog Points: <strong>{{ projectForm.total_backlog_points }}
-                    pts</strong></label>
-                <input type="range" min="10" max="1000" step="5" [(ngModel)]="projectForm.total_backlog_points"
-                  name="backlogPoints" (ngModelChange)="calculateAgileMetrics()">
-                <span class="knob-hint">Gross story unit architectural capacity constraints.</span>
+                <label>Total Estimated Backlog Points: <strong>{{ projectForm.total_backlog_points }} pts</strong></label>
+                <input type="range" min="10" max="1000" step="5" [(ngModel)]="projectForm.total_backlog_points" name="backlogPoints" (ngModelChange)="calculateAgileMetrics(); generateSprintPreview()">
+                <span class="knob-hint">Gross story unit capacity.</span>
               </div>
-
               <div class="knob-row">
-                <label>Target Team Sprint Velocity: <strong>{{ projectForm.target_velocity }} pts /
-                    sprint</strong></label>
-                <input type="range" min="5" max="150" step="5" [(ngModel)]="projectForm.target_velocity"
-                  name="targetVelocity" (ngModelChange)="calculateAgileMetrics()">
-                <span class="knob-hint">Computed output velocity bound indices per cycle.</span>
+                <label>Target Team Sprint Velocity: <strong>{{ projectForm.target_velocity }} pts / sprint</strong></label>
+                <input type="range" min="5" max="150" step="5" [(ngModel)]="projectForm.target_velocity" name="targetVelocity" (ngModelChange)="calculateAgileMetrics(); generateSprintPreview()">
+                <span class="knob-hint">Computed output velocity bounds indices per cycle.</span>
               </div>
-
               <div class="knob-row">
-                <label>Base Sprint Duration Weeks: <strong>{{ projectForm.sprint_duration_weeks }}
-                    Weeks</strong></label>
-                <input type="range" min="1" max="4" step="1" [(ngModel)]="projectForm.sprint_duration_weeks"
-                  name="sprintDuration" (ngModelChange)="calculateAgileMetrics()">
+                <label>Base Sprint Duration Weeks: <strong>{{ projectForm.sprint_duration_weeks }} Weeks</strong></label>
+                <input type="range" min="1" max="4" step="1" [(ngModel)]="projectForm.sprint_duration_weeks" name="sprintDuration" (ngModelChange)="calculateAgileMetrics(); generateSprintPreview()">
                 <span class="knob-hint">Baseline milestone sprint durations.</span>
               </div>
-
-              <div class="toggle-control-rack"
-                style="display: flex; align-items: center; justify-content: space-between; padding-top: 10px;">
+              <div class="toggle-control-rack" style="display: flex; align-items: center; justify-content: space-between; padding-top: 10px;">
                 <div class="knob-row">
                   <label>Auto-Rollover Unfinished Backlog</label>
-                  <span class="knob-hint">Transition spilled sprint scope definitions into active active periods
-                    automatically.</span>
+                  <span class="knob-hint">Transition spilled sprint scope definitions into active periods automatically.</span>
                 </div>
-                <mat-slide-toggle [(ngModel)]="projectForm.auto_rollover_backlog"
-                  name="autoRollover"></mat-slide-toggle>
+                <mat-slide-toggle [(ngModel)]="projectForm.auto_rollover_backlog" name="autoRollover"></mat-slide-toggle>
               </div>
             </div>
-
             <div class="calibrator-live-projections-card">
               <h5>Algorithmic Scope Matrix Projections</h5>
               <p class="matrix-calculated-hint">Realtime modeling engine telemetry.</p>
-
               <div class="live-metrics-display-rack">
                 <div class="live-metric-card-node pop-blue">
                   <span class="node-big-value">{{ projectForm.computed_sprint_count }}</span>
@@ -243,90 +248,178 @@
           </div>
         </div>
 
-      </div>
-
-      <div class="drawer-footer">
-        <button mat-stroked-button type="button" [disabled]="activeBuilderStep === 1 || isSaving"
-          (click)="previousBuilderStep()">
-          Back
-        </button>
-        <div style="display: flex; gap: 12px;">
-          <button mat-button type="button" [disabled]="isSaving" (click)="closeComposerDrawer()">
-            Cancel
-          </button>
-          <button mat-flat-button color="primary" type="button" *ngIf="activeBuilderStep < 3"
-            (click)="nextBuilderStep()">
-            Next Step
-          </button>
-          <button mat-flat-button color="accent" type="button" *ngIf="activeBuilderStep === 3" [disabled]="isSaving"
-            (click)="commitProjectToSystem()">
-            <mat-spinner diameter="20" style="display:inline-block; vertical-align:middle; margin-right:8px;"
-              *ngIf="isSaving"></mat-spinner>
-            <span>Commit Initiative</span>
-          </button>
+        <!-- Step 4: Sprint Generation Schedule -->
+        <div class="step-content-pane" *ngIf="activeBuilderStep === 4">
+          <div class="step-instruction-heading">
+            <h4>Generated Sprint Schedule Blueprint</h4>
+            <p>Review your auto-calculated milestones and launch constraints prior to committing resources to the database layer.</p>
+          </div>
+          <div class="api-loading-overlay" *ngIf="isLoadingPreview">
+            <mat-spinner diameter="40"></mat-spinner>
+            <p>Calibrating delivery bounds matrices...</p>
+          </div>
+          <div class="preview-workspace-wrapper" *ngIf="!isLoadingPreview">
+            <div class="preview-config-strip" style="display: flex; gap: 16px; background: #f8fafc; padding: 16px; border-radius: 8px; margin-bottom: 16px; align-items: center;">
+              <mat-form-field appearance="outline" style="margin-bottom: 0; flex: 1;">
+                <mat-label>Target Sequence Launch Date</mat-label>
+                <input matInput type="date" [(ngModel)]="previewStartDate" (change)="generateSprintPreview()">
+              </mat-form-field>
+              <mat-form-field appearance="outline" style="margin-bottom: 0; flex: 1;">
+                <mat-label>Scheduler Core Activation Mode</mat-label>
+                <mat-select [(ngModel)]="previewActivationType" (selectionChange)="generateSprintPreview()">
+                  <mat-option value="AUTOMATIC">⚡ AUTOMATIC RUNTIME CRON</mat-option>
+                  <mat-option value="MANUAL">🖐️ MANUAL STAGE LOCK</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+            <div class="preview-scroll-table-container" style="max-height: 380px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px;">
+              <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+                <thead style="background: #f1f5f9; position: sticky; top: 0; z-index: 10; font-weight: 700; color: #334155;">
+                  <tr>
+                    <th style="padding: 12px 16px;">Iteration Sequence</th>
+                    <th style="padding: 12px 16px;">Sprint Label Identifier</th>
+                    <th style="padding: 12px 16px;">Scheduled Window</th>
+                    <th style="padding: 12px 16px; text-align: right;">Target Capacity</th>
+                    <th style="padding: 12px 16px; text-align: center;">Activation Type</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let s of calculatedSprintsPreview" style="border-bottom: 1px solid #edf2f7; background: #fff;">
+                    <td style="padding: 12px 16px; font-weight: 700; color: #475569;">#{{ s.sprint_number }}</td>
+                    <td style="padding: 12px 16px; font-weight: 600; color: #0f172a;">{{ s.name }}</td>
+                    <td style="padding: 12px 16px; color: #64748b;">
+                      <span class="date-capsule" style="background: #f0fdf4; color: #166534; padding: 2px 6px; border-radius: 4px; font-size: 11px;">{{ s.scheduled_start_date }}</span>
+                      至
+                      <span class="date-capsule" style="background: #fef2f2; color: #991b1b; padding: 2px 6px; border-radius: 4px; font-size: 11px;">{{ s.scheduled_end_date }}</span>
+                    </td>
+                    <td style="padding: 12px 16px; text-align: right; font-weight: 600;">{{ s.target_velocity }} pts</td>
+                    <td style="padding: 12px 16px; text-align: center;">
+                      <span class="status-badge-saas" [style.background]="s.activation_type === 'AUTOMATIC' ? '#e0f2fe' : '#f3f4f6'" [style.color]="s.activation_type === 'AUTOMATIC' ? '#0369a1' : '#374151'" style="padding: 4px 8px; border-radius: 20px; font-size: 10px; font-weight: 700;">
+                        {{ s.activation_type }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
 
+      <div class="drawer-action-footer-rack">
+        <button class="gp-button gp-secondary" (click)="closeComposerDrawer()" [disabled]="isSaving">Cancel</button>
+        <div style="display: flex; gap: 8px;">
+          <button class="gp-button gp-secondary" *ngIf="activeBuilderStep > 1" (click)="previousBuilderStep()" [disabled]="isSaving">Back</button>
+          <button class="gp-button gp-primary" *ngIf="activeBuilderStep < 4" (click)="nextBuilderStep()">Continue</button>
+          <button class="gp-button gp-success" *ngIf="activeBuilderStep === 4" (click)="commitProjectToSystem()" [disabled]="isSaving || calculatedSprintsPreview.length === 0">
+            <mat-spinner diameter="18" *ngIf="isSaving"></mat-spinner>
+            <mat-icon *ngIf="!isSaving">cloud_upload</mat-icon> {{ projectForm.id ? 'Save & Sync Timeline' : 'Dispatch Architecture Initiative' }}
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="dashboard-workspace">
-    <div class="workspace-section-header">
-      <div class="section-title-group">
-        <h3 class="section-main-heading">Active Portfolios Mapped</h3>
-      </div>
+  <!-- PERSPECTIVE A: Projects Grid Board Layout View -->
+  <div class="initiatives-dashboard-view" *ngIf="dashboardViewMode === 'projects'">
+    <div class="empty-state-card" *ngIf="(projects$ | async)?.length === 0">
+      <mat-icon class="huge-icon">folder_open</mat-icon>
+      <h4>No Active Architectural Tracks</h4>
+      <p>Click on "New Initiative" above to launch estimation matrix tracking sequences.</p>
     </div>
-    <hr class="section-divider-line">
 
-    <div class="saas-project-grid-layout" *ngIf="projects$ | async as projectsList; else loadingDashboard">
-      <div class="empty-chips-fallback" style="grid-column: 1 / -1; min-height: 200px; display: flex;"
-        *ngIf="projectsList.length === 0">
-        <p>No architecture initiatives found matching registry system nodes. Select "New Initiative" above to
-          instantiate records.</p>
-      </div>
-
-      <div class="project-saas-card" *ngFor="let project of projectsList" (click)="loadProjectToComposer(project)">
-        <div>
-          <div class="card-header-badge-row">
-            <span class="methodology-tag">
-              {{ project.methodology === 'AGILE_SCRUM' ? 'Agile Scrum Engine' : 'Waterfall Gantt Model' }}
-            </span>
-            <span class="priority-pill" [attr.data-priority]="project.priority">
-              {{ project.priority }}
-            </span>
-          </div>
-
-          <h3 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 700;">{{ project.name }}</h3>
-
-          <div class="card-product-relationship-tag">
-            <span class="cube-icon">📦</span> Product Target: <strong>{{ getProductName(project.product_id) }}</strong>
-          </div>
-
-          <p style="margin: 0 0 16px 0; font-size: 13px; color: var(--saas-matrix-txt-2); line-height: 1.5;">
-            {{ project.description || 'No execution overview documentation provided.' }}
-          </p>
+    <div class="projects-matrix-grid" *ngIf="(projects$ | async) as systems">
+      <div class="project-matrix-item-card" *ngFor="let p of systems">
+        <div class="card-status-accent-bar" [style.background]="p.status === 'ACTIVE' ? '#10b981' : '#f59e0b'"></div>
+        <div class="card-governance-meta">
+          <span class="code-badge">{{ p.project_code || 'SANDBOX' }}</span>
+          <span class="priority-flag" [class]="p.priority.toLowerCase()">{{ p.priority }}</span>
+        </div>
+        <h3 class="initiative-card-title">{{ p.name }}</h3>
+        <p class="initiative-card-desc">{{ p.description || 'No descriptive technical mapping provided.' }}</p>
+        
+        <div class="card-stats-row">
+          <div class="stat-node"><h5>{{ p.computed_sprint_count }}</h5><p>Sprints</p></div>
+          <div class="stat-node"><h5>{{ p.total_backlog_points }}</h5><p>Backlog Pts</p></div>
+          <div class="stat-node"><h5>{{ p.target_velocity }}</h5><p>Velocity</p></div>
         </div>
 
-        <div
-          style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--saas-matrix-border); padding-top: 14px; margin-top: auto;">
-          <div style="display: flex; gap: 16px; font-size: 12px; color: var(--saas-matrix-txt-2);">
-            <span>Scope: <strong>{{ project.total_backlog_points }} pts</strong></span>
-            <span>Duration: <strong>{{ project.computed_total_duration_weeks }} wks</strong></span>
-          </div>
-          <button mat-icon-button color="warn" type="button"
-            (click)="$event.stopPropagation(); decommissionProject(project.id)">
-            <mat-icon style="font-size: 20px;">delete_outline</mat-icon>
+        <div class="card-actions-wrapper-footer">
+          <button mat-button class="action-btn-flat text-blue" (click)="loadProjectToComposer(p)">
+            <mat-icon>edit</mat-icon> Configure Map
+          </button>
+          <!-- Contextual Sprints Navigation shortcut -->
+          <button mat-button class="action-btn-flat text-purple" (click)="switchToSprintsForProject(p.project_code)">
+            <mat-icon>restore_page</mat-icon> View Sprints
+          </button>
+          <button mat-button class="action-btn-flat text-red" (click)="decommissionProject(p.id)">
+            <mat-icon>delete_forever</mat-icon> Decommission
           </button>
         </div>
       </div>
     </div>
+  </div>
 
-    <ng-template #loadingDashboard>
-      <div class="api-loading-overlay">
-        <mat-spinner diameter="40"></mat-spinner>
-        <p>Streaming core pipeline data registers...</p>
+  <!-- PERSPECTIVE B: Cross-Project Sprints Lifecycle Management Mode -->
+  <div class="initiatives-dashboard-view" *ngIf="dashboardViewMode === 'sprints'">
+    <div class="empty-state-card" *ngIf="getFilteredSprintsCount() === 0">
+      <mat-icon class="huge-icon">published_with_changes</mat-icon>
+      <h4>No Sprints Found Matching Criteria</h4>
+      <p>There are no active generated timelines matching your selected filter context.</p>
+    </div>
+
+    <div class="sprints-portfolio-master-container" *ngIf="getFilteredSprintsCount() > 0">
+      <div class="sprints-matrix-horizontal-axis">
+        
+        <!-- Cross-Project Sprint Row Card Frame -->
+        <ng-container *ngFor="let sprint of globalSprintsCollection">
+          <!-- Conditional client-side template visibility mapping for active filter state rules -->
+          <div class="sprint-lifecycle-group-card" *ngIf="shouldDisplaySprintRow(sprint)">
+            <div class="sprint-card-inner-hull">
+              <div class="sprint-identity-ribbon">
+                <div class="badge-row">
+                  <span class="project-origin-tag">🏷️ {{ sprint.projectCode }}</span>
+                  <span class="sprint-status-pill" [class]="sprint.status.toLowerCase()">{{ sprint.status }}</span>
+                </div>
+                <h4>{{ sprint.name }}</h4>
+              </div>
+
+              <div class="sprint-timeline-span">
+                <div class="span-node">
+                  <span class="lbl">Starts</span>
+                  <span class="val start-date">{{ sprint.scheduled_start_date }}</span>
+                </div>
+                <div class="span-node">
+                  <span class="lbl">Ends</span>
+                  <span class="val end-date">{{ sprint.scheduled_end_date }}</span>
+                </div>
+              </div>
+
+              <div class="sprint-allocation-summary">
+                <div class="summary-metric">
+                  <span class="metric-val">{{ sprint.target_velocity }}</span>
+                  <span class="metric-lbl">Target Pts</span>
+                </div>
+                <div class="summary-metric">
+                  <span class="metric-val">{{ sprint.duration_weeks }}w</span>
+                  <span class="metric-lbl">Duration</span>
+                </div>
+              </div>
+
+              <div class="sprint-card-actions-dock">
+                <button mat-flat-button color="accent" class="dock-action-btn-sm" (click)="executeSprintAction(sprint, 'ACTIVATE')" *ngIf="sprint.status === 'PLANNED'">
+                  Activate Cycle
+                </button>
+                <button mat-stroked-button class="dock-action-btn-sm text-dim" (click)="executeSprintAction(sprint, 'VIEW_BOARD')">
+                  Go to Kanban Board →
+                </button>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+
       </div>
-    </ng-template>
+    </div>
   </div>
 
 </div>
