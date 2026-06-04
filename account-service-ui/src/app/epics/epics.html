@@ -1,387 +1,597 @@
-<div class="saas-container">
+<div class="saas-container" style="max-width: 1400px; margin: 0 auto; padding: 24px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif; background: #ffffff; color: #0f172a;">
   
-  <header class="saas-header">
+  <!-- 🚀 WORKSPACE HERO HEADER -->
+  <header class="saas-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid #f1f5f9;">
     <div class="header-title-block">
-      <h2>Project Workspace Engine</h2>
-      <p class="header-subtitle">
-        Manage explicit high-level deliverable epics and link task-driven User Stories to your active pipeline database nodes.
-      </p>
+      <h2 style="margin: 0 0 4px 0; font-size: 22px; font-weight: 600; letter-spacing: -0.02em; color: #0f172a;">Agile Delivery Workspace</h2>
+      <p class="header-subtitle" style="margin: 0; font-size: 14px; color: #64748b; font-weight: 400;">Deconstruct high-level initiatives down into implementable product backlogs.</p>
     </div>
     
     <div class="header-action-panel">
-      <button *ngIf="activeViewTab === 'EPICS'" class="gp-button gp-primary" (click)="initiateEpicCreate()">
-        <span>Create Epic Blueprint</span>
-        <div class="btn-indicator-pulse"></div>
-      </button>
-
-      <button *ngIf="activeViewTab === 'STORIES'" class="gp-button gp-action" (click)="initiateStoryCreate()">
-        <span>Provision User Story</span>
-        <div class="btn-indicator-pulse"></div>
-      </button>
+      <button *ngIf="activeViewTab === 'EPICS'" style="background: #2563eb; color: #ffffff; border: none; padding: 10px 16px; border-radius: 6px; font-weight: 500; font-size: 14px; cursor: pointer; transition: background 0.15s ease;" (click)="initiateEpicCreate()">+ New Epic</button>
+      <button *ngIf="activeViewTab === 'STORIES'" style="background: #16a34a; color: #ffffff; border: none; padding: 10px 16px; border-radius: 6px; font-weight: 500; font-size: 14px; cursor: pointer; transition: background 0.15s ease;" (click)="initiateStoryCreate()">+ Refine Story</button>
+      <button *ngIf="activeViewTab === 'TASKS'" style="background: #0284c7; color: #ffffff; border: none; padding: 10px 16px; border-radius: 6px; font-weight: 500; font-size: 14px; cursor: pointer; transition: background 0.15s ease;" (click)="initiateTaskCreate()">+ Add Task</button>
     </div>
   </header>
 
-  <div class="saas-perspective-tab-deck">
-    <button [class.active]="activeViewTab === 'EPICS'" (click)="togglePerspectiveTab('EPICS')">
-      <svg class="tab-vector-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-      </svg>
-      <span>Epic Blueprints</span>
+  <!-- 🧭 PERSPECTIVE NAVIGATION TABS -->
+  <div class="saas-perspective-tab-deck" style="display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 2px solid #f1f5f9; padding-bottom: 2px;">
+    <button [style.border-bottom]="activeViewTab === 'EPICS' ? '2px solid #2563eb' : '2px solid transparent'"
+            [style.color]="activeViewTab === 'EPICS' ? '#2563eb' : '#64748b'"
+            style="background: transparent; border: none; padding: 8px 16px; font-size: 14px; font-weight: 500; cursor: pointer; transition: color 0.15s ease;"
+            (click)="togglePerspectiveTab('EPICS')">
+      Epics Roadmap
     </button>
-    
-    <button [class.active]="activeViewTab === 'STORIES'" (click)="togglePerspectiveTab('STORIES')">
-      <svg class="tab-vector-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/>
-        <line x1="16" y1="13" x2="8" y2="13"/>
-        <line x1="16" y1="17" x2="8" y2="17"/>
-      </svg>
-      <span>Granular User Stories</span>
+    <button [style.border-bottom]="activeViewTab === 'STORIES' ? '2px solid #2563eb' : '2px solid transparent'"
+            [style.color]="activeViewTab === 'STORIES' ? '#2563eb' : '#64748b'"
+            style="background: transparent; border: none; padding: 8px 16px; font-size: 14px; font-weight: 500; cursor: pointer; transition: color 0.15s ease;"
+            (click)="togglePerspectiveTab('STORIES')">
+      User Stories Backlog
+    </button>
+    <button [style.border-bottom]="activeViewTab === 'TASKS' ? '2px solid #2563eb' : '2px solid transparent'"
+            [style.color]="activeViewTab === 'TASKS' ? '#2563eb' : '#64748b'"
+            style="background: transparent; border: none; padding: 8px 16px; font-size: 14px; font-weight: 500; cursor: pointer; transition: color 0.15s ease;"
+            (click)="togglePerspectiveTab('TASKS')">
+      Engineering Tasks
     </button>
   </div>
 
   <div class="matrix-table-workspace">
     
-    <div class="workspace-scope-deck" style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 20px;">
-      <mat-form-field appearance="outline" class="scope-select-field">
-        <mat-label>Target Operational Project Domain</mat-label>
+    <!-- 🎛️ CONTROL DECK -->
+    <div class="workspace-scope-deck" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; align-items: center; margin-bottom: 24px; background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
+      
+      <!-- PROJECT DROPDOWN (MAPPED TO YOUR DATA SCHEME) -->
+      <mat-form-field appearance="outline" style="width: 100%;" class="scope-select-field">
+        <mat-label>Active Project Domain</mat-label>
         <mat-select [ngModel]="selectedPipelineProjectId" (ngModelChange)="onFormProjectContextChange($event)">
           <mat-option *ngFor="let proj of projectsCollection" [value]="proj.id">
-            {{ proj.name }}
+            <div class="dropdown-rich-option">
+              <div class="dropdown-text-cluster">
+                <span class="dropdown-primary-label">{{ proj.name }}</span>
+                <span class="dropdown-secondary-meta">Code: {{ proj.project_code }} • Total Scope: {{ proj.total_backlog_points }} pts</span>
+              </div>
+              <span class="dropdown-badge-pill project-badge">{{ proj.methodology }}</span>
+            </div>
           </mat-option>
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field *ngIf="activeViewTab === 'STORIES'" appearance="outline" class="scope-select-field">
-        <mat-label>Isolate Registry Grid by Epic</mat-label>
+      <!-- EPIC STREAM FILTER -->
+      <mat-form-field *ngIf="activeViewTab === 'STORIES'" appearance="outline" style="width: 100%;" class="scope-select-field">
+        <mat-label>Epic Stream Filter</mat-label>
         <mat-select [ngModel]="selectedFilterEpicId" (ngModelChange)="onFilterEpicChange($event)">
-          <mat-option [value]="null">-- All Project Modules & Epics --</mat-option>
+          <mat-option [value]="null">
+            <div class="dropdown-rich-option">
+              <span class="dropdown-primary-label" style="font-weight: 600; color: #2563eb;">All System Epics</span>
+            </div>
+          </mat-option>
           <mat-option *ngFor="let ep of epicsCachedCollection" [value]="ep.id">
-            [{{ ep.epic_code }}] {{ ep.name }}
+            <div class="dropdown-rich-option">
+              <div class="dropdown-text-cluster">
+                <span class="dropdown-primary-label">
+                  <strong style="color: #475569; margin-right: 4px;">[{{ ep.epic_code }}]</strong> {{ ep.name }}
+                </span>
+                <span class="dropdown-secondary-meta">{{ ep.description || 'No overview text provided.' }}</span>
+              </div>
+              <span class="dropdown-badge-pill status-badge" [attr.data-status]="ep.status">{{ ep.status }}</span>
+            </div>
           </mat-option>
         </mat-select>
       </mat-form-field>
+
+      <!-- USER STORY FILTER DROPDOWN -->
+      <mat-form-field *ngIf="activeViewTab === 'TASKS'" appearance="outline" style="width: 100%;" class="scope-select-field">
+        <mat-label>Parent User Story Filter</mat-label>
+        <mat-select [ngModel]="selectedFilterStoryId" (ngModelChange)="onFilterStoryChange($event)">
+          <mat-option [value]="null">
+            <div class="dropdown-rich-option">
+              <span class="dropdown-primary-label" style="font-weight: 600; color: #16a34a;">All Active User Stories</span>
+            </div>
+          </mat-option>
+          <mat-option *ngFor="let st of storiesCachedCollection" [value]="st.id">
+            <div class="dropdown-rich-option">
+              <div class="dropdown-text-cluster">
+                <span class="dropdown-primary-label">{{ st.title }}</span>
+                <span class="dropdown-secondary-meta">Priority Allocation: {{ st.priority }}</span>
+              </div>
+              <span class="dropdown-badge-pill weight-badge">{{ st.story_points || 0 }} SP</span>
+            </div>
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <div style="width: 100%;">
+        <input type="text" [(ngModel)]="searchTerm" 
+               style="width: 100%; padding: 10px 14px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 14px; background: #ffffff; box-sizing: border-box;" 
+               placeholder="Filter view text metrics..." />
+      </div>
     </div>
 
-    <div class="form-drawer-wrapper" [class.open]="editingEpicId !== null && activeViewTab === 'EPICS'">
-      <div class="drawer-card" *ngIf="activeViewTab === 'EPICS'">
-        <div class="drawer-header">
-          <h3>{{ editingEpicId === 0 ? 'Map New High-Level Epic Workspace' : 'Modify Existing Core Epic Properties' }}</h3>
-          <p>Updates functional properties bound directly to the global database project index tables.</p>
-        </div>
 
-        <div class="form-grid-three-col" style="margin-bottom: 16px;">
-          <mat-form-field appearance="outline" class="saas-form-field">
-            <mat-label>Epic Reference Code</mat-label>
-            <input matInput [(ngModel)]="epicForm.epic_code" placeholder="e.g. AUTH-2026" required maxLength="50" />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="saas-form-field">
-            <mat-label>Epic Summary Label</mat-label>
-            <input matInput [(ngModel)]="epicForm.name" placeholder="Name of high level objective" required />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="saas-form-field">
-            <mat-label>Initial Step Lifecycle Status</mat-label>
-            <mat-select [(ngModel)]="epicForm.status">
-              <mat-option value="BACKLOG">BACKLOG</mat-option>
-              <mat-option value="TODO">TODO</mat-option>
-              <mat-option value="IN_PROGRESS">IN PROGRESS</mat-option>
-              <mat-option value="BLOCKED">BLOCKED</mat-option>
-              <mat-option value="COMPLETED">COMPLETED</mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-
-        <div class="form-grid-two-col" style="margin-bottom: 16px;">
-          <mat-form-field appearance="outline" class="saas-form-field">
-            <mat-label>Creator Profile (Required)</mat-label>
-            <input matInput [matAutocomplete]="epicCreatorAuto" [(ngModel)]="creatorSearchInput" (input)="filterCreatorAutocomplete()" placeholder="Search creator name..." />
-            <mat-autocomplete #epicCreatorAuto="matAutocomplete">
-              <mat-option *ngFor="let user of filteredCreators" [value]="user.name" (onSelectionChange)="selectCreatorUser(user)">
-                <div class="rich-user-card-layout">
-                  <img [src]="getUserAvatarUrl(user)" class="rich-user-avatar" alt="Avatar" />
-                  <div class="rich-user-meta-stack">
-                    <span class="user-main-title">{{ user.name }}</span>
-                    <span class="user-sub-email">{{ user.email || 'No email saved' }}</span>
-                  </div>
+    <!-- ========================================== -->
+    <!-- 🗂️ WORKSPACE INPUT DRAWERS                  -->
+    <!-- ========================================== -->
+    
+    <!-- EPICS FORM WITH AUTOCOMPLETE PANELS (MAPPED TO YOUR USER DATA) -->
+    <div *ngIf="editingEpicId !== null && activeViewTab === 'EPICS'" style="background: #ffffff; border: 1px solid #e2e8f0; padding: 24px; border-radius: 8px; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+      <h3 style="margin: 0 0 20px 0; font-size: 16px; font-weight: 600; color: #0f172a;">{{ editingEpicId === 0 ? 'Create New Epic Strategy Blueprint' : 'Update Epic Properties' }}</h3>
+      <div style="display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <mat-form-field appearance="outline"><mat-label>Epic Identifier Key</mat-label><input matInput [(ngModel)]="epicForm.epic_code" placeholder="e.g. DATA-2026" required /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Epic Initiative Name</mat-label><input matInput [(ngModel)]="epicForm.name" required /></mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Workflow Track</mat-label>
+          <mat-select [(ngModel)]="epicForm.status">
+            <mat-option value="BACKLOG">BACKLOG</mat-option><mat-option value="TODO">TO DO</mat-option><mat-option value="IN_PROGRESS">IN PROGRESS</mat-option><mat-option value="BLOCKED">BLOCKED</mat-option><mat-option value="COMPLETED">COMPLETED</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <!-- PRODUCT MANAGER AUTOCOMPLETE -->
+        <mat-form-field appearance="outline">
+          <mat-label>Product Manager</mat-label>
+          <input matInput [matAutocomplete]="epicCreatorAuto" [(ngModel)]="creatorSearchInput" (input)="filterCreatorAutocomplete()" />
+          <mat-autocomplete #epicCreatorAuto="matAutocomplete">
+            <mat-option *ngFor="let user of filteredCreators" [value]="user.name" (onSelectionChange)="selectCreatorUser(user)">
+              <div class="autocomplete-rich-user-panel">
+                <div class="mini-avatar-circle pm-color">{{ user.name.slice(0, 2).toUpperCase() }}</div>
+                <div class="user-meta-column">
+                  <span class="user-main-name">{{ user.name }}</span>
+                  <span class="user-sub-id">
+                    {{ user.employee_id_prefix }}-{{ user.employee_id_number }} • {{ user.role_name }} • ({{ user.locationCity | titlecase }}, {{ user.locationWorkModel }})
+                  </span>
                 </div>
-              </mat-option>
-            </mat-autocomplete>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="saas-form-field" style="position: relative;">
-            <mat-label>Assigned Pipeline Owner</mat-label>
-            <input matInput [matAutocomplete]="epicAssigneeAuto" [(ngModel)]="assigneeSearchInput" (input)="filterAssigneeAutocomplete()" placeholder="Search operational owner..." />
-            <button *ngIf="epicForm.assignee_user_id" type="button" class="inline-clear-project" (click)="clearAssigneeSelection()">&times;</button>
-            <mat-autocomplete #epicAssigneeAuto="matAutocomplete">
-              <mat-option *ngFor="let user of filteredAssignees" [value]="user.name" (onSelectionChange)="selectAssigneeUser(user)">
-                <div class="rich-user-card-layout">
-                  <img [src]="getUserAvatarUrl(user)" class="rich-user-avatar" alt="Avatar" />
-                  <div class="rich-user-meta-stack">
-                    <span class="user-main-title">{{ user.name }}</span>
-                    <span class="user-sub-email">{{ user.email }}</span>
-                  </div>
-                </div>
-              </mat-option>
-            </mat-autocomplete>
-          </mat-form-field>
-        </div>
-
-        <mat-form-field appearance="outline" class="saas-form-field">
-          <mat-label>Strategic Blueprint Scope Definition</mat-label>
-          <textarea matInput [(ngModel)]="epicForm.description" rows="3" placeholder="Context details..."></textarea>
+              </div>
+            </mat-option>
+          </mat-autocomplete>
         </mat-form-field>
 
-        <div class="drawer-footer">
-          <button class="gp-button gp-primary" (click)="saveEpic()">Save Epic Blueprint</button>
-          <button class="gp-button gp-cancel" (click)="closeAllDrawers()">Cancel Transaction</button>
-        </div>
+        <!-- FEATURE OWNER AUTOCOMPLETE -->
+        <mat-form-field appearance="outline">
+          <mat-label>Feature Owner</mat-label>
+          <input matInput [matAutocomplete]="epicAssigneeAuto" [(ngModel)]="assigneeSearchInput" (input)="filterAssigneeAutocomplete()" />
+          <mat-autocomplete #epicAssigneeAuto="matAutocomplete">
+            <mat-option *ngFor="let user of filteredAssignees" [value]="user.name" (onSelectionChange)="selectAssigneeUser(user)">
+              <div class="autocomplete-rich-user-panel">
+                <div class="mini-avatar-circle po-color">{{ user.name.slice(0, 2).toUpperCase() }}</div>
+                <div class="user-meta-column">
+                  <span class="user-main-name">{{ user.name }}</span>
+                  <span class="user-sub-id">
+                    {{ user.employee_id_prefix }}-{{ user.employee_id_number }} • {{ user.role_name }} • ({{ user.locationCity | titlecase }})
+                  </span>
+                </div>
+              </div>
+            </mat-option>
+          </mat-autocomplete>
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline" style="width: 100%; margin-bottom: 20px;"><mat-label>Strategic Value Summary</mat-label><textarea matInput [(ngModel)]="epicForm.description" rows="3"></textarea></mat-form-field>
+      <div style="display: flex; gap: 12px; justify-content: flex-end;">
+        <button style="background: transparent; color: #475569; border: 1px solid #e2e8f0; padding: 8px 14px; border-radius: 6px; font-weight: 500; cursor: pointer;" (click)="closeAllDrawers()">Cancel</button>
+        <button style="background: #2563eb; color: #ffffff; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 500; cursor: pointer;" (click)="saveEpic()">Save Strategy Block</button>
       </div>
     </div>
 
-    <div class="form-drawer-wrapper" [class.open]="editingStoryId !== null && activeViewTab === 'STORIES'">
-      <div class="drawer-card" *ngIf="activeViewTab === 'STORIES'">
-        <div class="drawer-header">
-          <h3>{{ editingStoryId === 0 ? 'Provision New Execution User Story' : 'Modify Core Target User Story Model' }}</h3>
-          <p>Wires granular criteria and constraints directly to the relational users table database schema keys.</p>
-        </div>
-
-        <div class="form-grid-two-col" style="margin-bottom: 16px;">
-          <mat-form-field appearance="outline" class="saas-form-field">
-            <mat-label>User Story Title Summary</mat-label>
-            <input matInput [(ngModel)]="storyForm.title" placeholder="Identify specific task parameters cleanly..." required maxLength="255" />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="saas-form-field">
-            <mat-label>Story Point Sizing Weight</mat-label>
-            <input matInput type="number" [(ngModel)]="storyForm.story_points" min="0" />
-          </mat-form-field>
-        </div>
-
-        <div class="form-grid-three-col" style="margin-bottom: 16px;">
-          <mat-form-field appearance="outline" class="saas-form-field">
-            <mat-label>Assign Parent Epic Mapping Link</mat-label>
-            <mat-select [(ngModel)]="storyForm.epic_id">
-              <mat-option [value]="null">-- Unlinked Standalone Module --</mat-option>
-              <mat-option *ngFor="let ep of epicsCachedCollection" [value]="ep.id">[{{ ep.epic_code }}] {{ ep.name }}</mat-option>
-            </mat-select>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="saas-form-field">
-            <mat-label>Sprint Allocation Context</mat-label>
-            <mat-select [(ngModel)]="storyForm.sprint_id">
-              <mat-option [value]="null">-- Unscheduled Execution Backlog --</mat-option>
-              <mat-option *ngFor="let sp of sprintsCollection" [value]="sp.id">{{ sp.name }}</mat-option>
-            </mat-select>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="saas-form-field">
-            <mat-label>Task Severity Execution Priority</mat-label>
-            <mat-select [(ngModel)]="storyForm.priority">
-              <mat-option value="LOW">LOW</mat-option>
-              <mat-option value="MEDIUM">MEDIUM</mat-option>
-              <mat-option value="HIGH">HIGH</mat-option>
-              <mat-option value="CRITICAL">CRITICAL</mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-
-        <div class="form-grid-two-col" style="margin-bottom: 16px;">
-          <mat-form-field appearance="outline" class="saas-form-field">
-            <mat-label>Creator User (References Users Table)</mat-label>
-            <input matInput [matAutocomplete]="storyCreatorAuto" [(ngModel)]="creatorSearchInput" (input)="filterCreatorAutocomplete()" placeholder="Search creator user account..." />
-            <mat-autocomplete #storyCreatorAuto="matAutocomplete">
-              <mat-option *ngFor="let user of filteredCreators" [value]="user.name" (onSelectionChange)="selectCreatorUser(user)">
-                <div class="rich-user-card-layout">
-                  <img [src]="getUserAvatarUrl(user)" class="rich-user-avatar" alt="Avatar" />
-                  <div class="rich-user-meta-stack">
-                    <span class="user-main-title">{{ user.name }}</span>
-                    <span class="user-sub-email">{{ user.email }}</span>
-                  </div>
-                </div>
-              </mat-option>
-            </mat-autocomplete>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="saas-form-field" style="position: relative;">
-            <mat-label>Assignee User (References Users Table)</mat-label>
-            <input matInput [matAutocomplete]="storyAssigneeAuto" [(ngModel)]="assigneeSearchInput" (input)="filterAssigneeAutocomplete()" placeholder="Search assignee engine..." />
-            <button *ngIf="storyForm.assignee_user_id" type="button" class="inline-clear-project" (click)="clearAssigneeSelection()">&times;</button>
-            <mat-autocomplete #storyAssigneeAuto="matAutocomplete">
-              <mat-option *ngFor="let user of filteredAssignees" [value]="user.name" (onSelectionChange)="selectAssigneeUser(user)">
-                <div class="rich-user-card-layout">
-                  <img [src]="getUserAvatarUrl(user)" class="rich-user-avatar" alt="Avatar" />
-                  <div class="rich-user-meta-stack">
-                    <span class="user-main-title">{{ user.name }}</span>
-                    <span class="user-sub-email">{{ user.email }}</span>
-                  </div>
-                </div>
-              </mat-option>
-            </mat-autocomplete>
-          </mat-form-field>
-        </div>
-
-        <div class="form-grid-two-col" style="margin-bottom: 16px;">
-          <mat-form-field appearance="outline" class="saas-form-field">
-            <mat-label>Lifecycle Tracker Status</mat-label>
-            <mat-select [(ngModel)]="storyForm.status">
-              <mat-option value="BACKLOG">BACKLOG</mat-option>
-              <mat-option value="TODO">TODO</mat-option>
-              <mat-option value="IN_PROGRESS">IN PROGRESS</mat-option>
-              <mat-option value="BLOCKED">BLOCKED</mat-option>
-              <mat-option value="COMPLETED">COMPLETED</mat-option>
-            </mat-select>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="saas-form-field">
-            <mat-label>Project Account Scope Owner ID</mat-label>
-            <input matInput type="number" [(ngModel)]="storyForm.user_id" placeholder="user_account tracking key" />
-          </mat-form-field>
-        </div>
-
-        <mat-form-field appearance="outline" class="saas-form-field">
-          <mat-label>Granular Execution Acceptance Requirements Details</mat-label>
-          <textarea matInput [(ngModel)]="storyForm.description" rows="3" placeholder="Input expected behavior parameters definitions..."></textarea>
+    <!-- USER STORIES FORM -->
+    <div *ngIf="editingStoryId !== null && activeViewTab === 'STORIES'" style="background: #ffffff; border: 1px solid #e2e8f0; padding: 24px; border-radius: 8px; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+      <h3 style="margin: 0 0 20px 0; font-size: 16px; font-weight: 600; color: #0f172a;">{{ editingStoryId === 0 ? 'Map Product User Narrative' : 'Update User Story Properties' }}</h3>
+      <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <mat-form-field appearance="outline"><mat-label>User Story Scope Description</mat-label><input matInput [(ngModel)]="storyForm.title" required /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Story Points</mat-label><input matInput type="number" [(ngModel)]="storyForm.story_points" /></mat-form-field>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        
+        <mat-form-field appearance="outline">
+          <mat-label>Linked Epic Parent</mat-label>
+          <mat-select [(ngModel)]="storyForm.epic_id">
+            <mat-option [value]="null">Unlinked Standalone Backlog</mat-option>
+            <mat-option *ngFor="let ep of epicsCachedCollection" [value]="ep.id">
+              <div class="dropdown-rich-option">
+                <span class="dropdown-primary-label"><strong>[{{ ep.epic_code }}]</strong> {{ ep.name }}</span>
+                <span class="dropdown-badge-pill status-badge" [attr.data-status]="ep.status">{{ ep.status }}</span>
+              </div>
+            </mat-option>
+          </mat-select>
         </mat-form-field>
 
-        <div class="drawer-footer">
-          <button class="gp-button gp-action" (click)="saveStory()">Inject User Story Row</button>
-          <button class="gp-button gp-cancel" (click)="closeAllDrawers()">Cancel Transaction</button>
-        </div>
+        <mat-form-field appearance="outline">
+          <mat-label>Sprint Allocation</mat-label>
+          <mat-select [(ngModel)]="storyForm.sprint_id">
+            <mat-option [value]="null">Unscheduled Backlog Pool</mat-option>
+            <mat-option *ngFor="let sp of sprintsCollection" [value]="sp.id">{{ sp.name }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Priority Level</mat-label>
+          <mat-select [(ngModel)]="storyForm.priority">
+            <mat-option value="LOW">Low Allocation</mat-option><mat-option value="MEDIUM">Medium Base</mat-option><mat-option value="HIGH">High Priority</mat-option><mat-option value="CRITICAL">Mission Critical</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <mat-form-field appearance="outline">
+          <mat-label>Reporter</mat-label>
+          <input matInput [matAutocomplete]="storyCreatorAuto" [(ngModel)]="creatorSearchInput" (input)="filterCreatorAutocomplete()" />
+          <mat-autocomplete #storyCreatorAuto="matAutocomplete">
+            <mat-option *ngFor="let user of filteredCreators" [value]="user.name" (onSelectionChange)="selectCreatorUser(user)">
+              <div class="autocomplete-rich-user-panel">
+                <div class="mini-avatar-circle qa-color">{{ user.name.slice(0, 2).toUpperCase() }}</div>
+                <div class="user-meta-column">
+                  <span class="user-main-name">{{ user.name }}</span>
+                  <span class="user-sub-id">{{ user.employee_id_prefix }}-{{ user.employee_id_number }} • {{ user.role_name }}</span>
+                </div>
+              </div>
+            </mat-option>
+          </mat-autocomplete>
+        </mat-form-field>
+        
+        <mat-form-field appearance="outline">
+          <mat-label>Lead Engineer</mat-label>
+          <input matInput [matAutocomplete]="storyAssigneeAuto" [(ngModel)]="assigneeSearchInput" (input)="filterAssigneeAutocomplete()" />
+          <mat-autocomplete #storyAssigneeAuto="matAutocomplete">
+            <mat-option *ngFor="let user of filteredAssignees" [value]="user.name" (onSelectionChange)="selectAssigneeUser(user)">
+              <div class="autocomplete-rich-user-panel">
+                <div class="mini-avatar-circle eng-color">{{ user.name.slice(0, 2).toUpperCase() }}</div>
+                <div class="user-meta-column">
+                  <span class="user-main-name">{{ user.name }}</span>
+                  <span class="user-sub-id">{{ user.employee_id_prefix }}-{{ user.employee_id_number }} • {{ user.role_name }}</span>
+                </div>
+              </div>
+            </mat-option>
+          </mat-autocomplete>
+        </mat-form-field>
+        
+        <mat-form-field appearance="outline">
+          <mat-label>Sprint Status Block</mat-label>
+          <mat-select [(ngModel)]="storyForm.status">
+            <mat-option value="BACKLOG">BACKLOG</mat-option><mat-option value="TODO">TO DO</mat-option><mat-option value="IN_PROGRESS">IN PROGRESS</mat-option><mat-option value="BLOCKED">BLOCKED</mat-option><mat-option value="COMPLETED">DONE</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <mat-form-field appearance="outline" style="width: 100%; margin-bottom: 20px;"><mat-label>Acceptance Mapping Parameters (Definition of Done)</mat-label><textarea matInput [(ngModel)]="storyForm.description" rows="3"></textarea></mat-form-field>
+      <div style="display: flex; gap: 12px; justify-content: flex-end;">
+        <button style="background: transparent; color: #475569; border: 1px solid #e2e8f0; padding: 8px 14px; border-radius: 6px; font-weight: 500; cursor: pointer;" (click)="closeAllDrawers()">Cancel</button>
+        <button style="background: #16a34a; color: #ffffff; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 500; cursor: pointer;" (click)="saveStory()">Commit Story Target</button>
       </div>
     </div>
 
-    <div class="matrix-search-input-frame">
-      <div class="search-lens">
-        <svg class="icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
+    <!-- SUB-TASKS FORM -->
+    <div *ngIf="editingTaskId !== null && activeViewTab === 'TASKS'" style="background: #ffffff; border: 1px solid #e2e8f0; padding: 24px; border-radius: 8px; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+      <h3 style="margin: 0 0 20px 0; font-size: 16px; font-weight: 600; color: #0f172a;">{{ editingTaskId === 0 ? 'Create Functional Engineering Task' : 'Modify Task Parameters' }}</h3>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <mat-form-field appearance="outline"><mat-label>Engineering Task Title</mat-label><input matInput [(ngModel)]="taskForm.title" required /></mat-form-field>
+        
+        <mat-form-field appearance="outline">
+          <mat-label>Context User Story Link</mat-label>
+          <mat-select [(ngModel)]="taskForm.story_id" required>
+            <mat-option *ngFor="let story of storiesCachedCollection" [value]="story.id">
+              <div class="dropdown-rich-option">
+                <span class="dropdown-primary-label">{{ story.title }}</span>
+                <span class="dropdown-badge-pill weight-badge">{{ story.story_points || 0 }} SP</span>
+              </div>
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
       </div>
-      <input type="text" [(ngModel)]="searchTerm" [placeholder]="activeViewTab === 'EPICS' ? 'Query active operational high-level epics index database rows...' : 'Query structural user story descriptive statements...'" />
-      <button *ngIf="searchTerm" class="clear-search-btn" (click)="searchTerm = ''">&times;</button>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <mat-form-field appearance="outline">
+          <mat-label>Creator</mat-label>
+          <input matInput [matAutocomplete]="taskCreatorAuto" [(ngModel)]="creatorSearchInput" (input)="filterCreatorAutocomplete()" />
+          <mat-autocomplete #taskCreatorAuto="matAutocomplete">
+            <mat-option *ngFor="let user of filteredCreators" [value]="user.name" (onSelectionChange)="selectCreatorUser(user)">
+              <div class="autocomplete-rich-user-panel">
+                <div class="mini-avatar-circle eng-color">{{ user.name.slice(0, 2).toUpperCase() }}</div>
+                <div class="user-meta-column">
+                  <span class="user-main-name">{{ user.name }}</span>
+                  <span class="user-sub-id">{{ user.employee_id_prefix }}-{{ user.employee_id_number }} • {{ user.role_name }}</span>
+                </div>
+              </div>
+            </mat-option>
+          </mat-autocomplete>
+        </mat-form-field>
+        
+        <mat-form-field appearance="outline">
+          <mat-label>Assigned Engineer</mat-label>
+          <input matInput [matAutocomplete]="taskAssigneeAuto" [(ngModel)]="assigneeSearchInput" (input)="filterAssigneeAutocomplete()" />
+          <mat-autocomplete #taskAssigneeAuto="matAutocomplete">
+            <mat-option *ngFor="let user of filteredAssignees" [value]="user.name" (onSelectionChange)="selectAssigneeUser(user)">
+              <div class="autocomplete-rich-user-panel">
+                <div class="mini-avatar-circle dev-color">{{ user.name.slice(0, 2).toUpperCase() }}</div>
+                <div class="user-meta-column">
+                  <span class="user-main-name">{{ user.name }}</span>
+                  <span class="user-sub-id">{{ user.employee_id_prefix }}-{{ user.employee_id_number }} • {{ user.role_name }}</span>
+                </div>
+              </div>
+            </mat-option>
+          </mat-autocomplete>
+        </mat-form-field>
+        
+        <mat-form-field appearance="outline">
+          <mat-label>Workflow Column Tracker</mat-label>
+          <mat-select [(ngModel)]="taskForm.status">
+            <mat-option value="TODO">TO DO</mat-option><mat-option value="IN_PROGRESS">IN PROGRESS</mat-option><mat-option value="BLOCKED">BLOCKED</mat-option><mat-option value="COMPLETED">DONE</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <mat-form-field appearance="outline" style="width: 100%; margin-bottom: 20px;"><mat-label>Technical Implementation Requirements</mat-label><textarea matInput [(ngModel)]="taskForm.description" rows="3"></textarea></mat-form-field>
+      <div style="display: flex; gap: 12px; justify-content: flex-end;">
+        <button style="background: transparent; color: #475569; border: 1px solid #e2e8f0; padding: 8px 14px; border-radius: 6px; font-weight: 500; cursor: pointer;" (click)="closeAllDrawers()">Cancel</button>
+        <button style="background: #0284c7; color: #ffffff; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 500; cursor: pointer;" (click)="saveTask()">Save Task Definition</button>
+      </div>
     </div>
 
-    <div *ngIf="activeViewTab === 'EPICS'" class="matrix-view-layer">
-      <div class="matrix-filter-header">
-        <div class="matrix-badge-legend">
-          <div class="legend-indicator"></div>
-          <span>Active Epic Blueprints View Dashboard</span>
-        </div>
-      </div>
 
-      <div class="matrix-header-row matrix-row four-column-grid">
-        <div class="cell">Functional Scope Mapping Base</div>
-        <div class="cell">Epic Definition Specifications</div>
-        <div class="cell">Assigned Account Stakeholder</div>
-        <div class="cell text-right">Runtime Mutation Execution Engine</div>
+    <!-- ========================================== -->
+    <!-- 📄 HOVER-ENABLED GRID REGISTRIES            -->
+    <!-- ========================================== -->
+    
+    <!-- GRID VIEW 1: EPICS INITIATIVES -->
+    <div *ngIf="activeViewTab === 'EPICS'" class="matrix-view-layer" style="border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+      <div style="display: grid; grid-template-columns: 140px 2.2fr 1.8fr 1.8fr 130px; background: #f8fafc; padding: 14px 20px; font-weight: 600; font-size: 13px; color: #475569; border-bottom: 1px solid #e2e8f0;">
+        <div>Epic Code</div>
+        <div>Core Stream Milestone</div>
+        <div>Product Manager</div>
+        <div>Feature Owner</div>
+        <div style="text-align: right;">Backlog Options</div>
       </div>
-
-      <div class="matrix-row-scroller" *ngIf="epics$ | async as epicsList">
-        <div *ngFor="let epic of filterCollection(epicsList)" class="matrix-row data-row four-column-grid">
+      
+      <div *ngIf="epics$ | async as list">
+        <div *ngFor="let item of filterCollection(list)" style="display: grid; grid-template-columns: 140px 2.2fr 1.8fr 1.8fr 130px; padding: 16px 20px; border-bottom: 1px solid #f1f5f9; align-items: center; background: #ffffff; font-size: 14px;">
+          <div><span style="background: #f0fdf4; color: #166534; padding: 4px 10px; font-weight: 600; border-radius: 6px; font-size: 12px; border: 1px solid #bbf7d0;">{{ item.epic_code }}</span></div>
           
-          <div class="cell primary-identity-cell">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <div class="privilege-icon-shield"></div>
-              <span class="saas-role-badge primary-badge">{{ epic.epic_code }}</span>
+          <div style="padding-right: 16px; min-width: 0; white-space: normal; word-break: break-word; position: relative;">
+            <div cdkOverlayOrigin #epicTrigger="cdkOverlayOrigin"
+                 (mouseenter)="activeHoverId = item.id" (mouseleave)="activeHoverId = null"
+                 style="cursor: help; display: block; width: 100%;">
+              <span style="font-weight: 600; color: #0f172a; display: block; margin-bottom: 4px; line-height: 1.4;">{{ item.name }}</span>
+              <span style="color: #64748b; font-size: 13px; display: block; line-height: 1.4; margin-bottom: 6px;">{{ item.description || 'No strategic overview mapped.' }}</span>
+              <span style="display: inline-block; background: #f1f5f9; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; color: #334155;">{{ item.status }}</span>
             </div>
-            <span class="project-indicator-tag">Scope: {{ resolveProjectName(epic.project_id) }}</span>
+
+            <ng-template cdkConnectedOverlay
+                         [cdkConnectedOverlayOrigin]="epicTrigger"
+                         [cdkConnectedOverlayOpen]="activeHoverId === item.id"
+                         [cdkConnectedOverlayPositions]="[{ originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 8 }]">
+              <div (mouseenter)="activeHoverId = item.id" (mouseleave)="activeHoverId = null">
+                <mat-card style="width: 380px; padding: 20px; background: #ffffff; border-radius: 12px; box-shadow: 0 12px 32px rgba(15, 23, 42, 0.15); border: 1px solid #e2e8f0;">
+                  <mat-card-header style="margin-bottom: 12px; padding: 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                      <div>
+                        <span style="background: #2563eb; color: #ffffff; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; margin-bottom: 6px; display: inline-block;">{{ item.epic_code }}</span>
+                        <mat-card-title style="font-size: 16px; font-weight: 600; color: #0f172a; margin: 0; line-height: 1.3;">{{ item.name }}</mat-card-title>
+                      </div>
+                      <span style="background: #e0f2fe; font-size: 11px; padding: 4px 8px; border-radius: 6px; font-weight: 600; color: #0369a1;">{{ item.status }}</span>
+                    </div>
+                  </mat-card-header>
+                  <mat-divider style="margin-bottom: 12px; border-color: #f1f5f9;"></mat-divider>
+                  <mat-card-content style="padding: 0; font-size: 13px; color: #334155;">
+                    <p style="margin: 0 0 16px 0; line-height: 1.5; color: #475569;"><strong>Strategic Objective:</strong> {{ item.description || 'No specialized technical overview mapped.' }}</p>
+                  </mat-card-content>
+                </mat-card>
+              </div>
+            </ng-template>
           </div>
 
-          <div class="cell description-payload-cell">
-            <strong class="entity-title-label">{{ epic.name }}</strong>
-            <p class="entity-narrative-paragraph">{{ epic.description || 'No descriptive blueprint specs mapped.' }}</p>
-            <span class="status-pill" [attr.data-status]="epic.status">{{ epic.status }}</span>
-          </div>
-
-          <div class="cell structural-owner-cell">
-            <div class="user-inline-capsule" *ngIf="resolveUserObject(epic.assignee_user_id) as owner">
-              <img [src]="getUserAvatarUrl(owner)" class="capsule-avatar" alt="" />
-              <div class="capsule-text">
-                <span class="owner-fullname">{{ owner.name }}</span>
-                <span class="owner-meta-role">{{ owner.role || 'Pipeline Stakeholder' }}</span>
+          <!-- PM USER CARD BLOCK -->
+          <div>
+            <div *ngIf="resolveUserObject(item.creator_user_id) as creator" class="user-profile-column-card">
+              <div class="user-column-avatar-circle">
+                <span>{{ creator.name.slice(0, 2).toUpperCase() }}</span>
+              </div>
+              <div class="user-column-info-stack">
+                <span class="user-column-name">{{ creator.name }}</span>
+                <span class="user-column-role">{{ creator.role_name }}</span>
+                <span class="user-column-empid">ID: {{ creator.employee_id_prefix }}-{{ creator.employee_id_number }}</span>
               </div>
             </div>
-            <span class="unassigned-placeholder-label" *ngIf="!epic.assignee_user_id">Unassigned Registry Queue</span>
           </div>
 
-          <div class="cell Action-trigger-cell text-right">
-            <button class="grid-icon-action edit-trigger" (click)="editEpic(epic)" title="Edit Core Specifications">
-              MDFY
-            </button>
-            <button class="grid-icon-action delete-trigger" (click)="deleteEpic(epic.id)" title="Purge Datastore Entry">
-              PRGE
-            </button>
+          <!-- OWNER USER CARD BLOCK -->
+          <div>
+            <div *ngIf="resolveUserObject(item.assignee_user_id) as assignee" class="user-profile-column-card">
+              <div class="user-column-avatar-circle team-lead-accent">
+                <span>{{ assignee.name.slice(0, 2).toUpperCase() }}</span>
+              </div>
+              <div class="user-column-info-stack">
+                <span class="user-column-name">{{ assignee.name }}</span>
+                <span class="user-column-role">{{ assignee.role_name }}</span>
+                <span class="user-column-empid">ID: {{ assignee.employee_id_prefix }}-{{ assignee.employee_id_number }}</span>
+              </div>
+            </div>
+            <span *ngIf="!item.assignee_user_id" style="color: #94a3b8; font-style: italic; font-size: 13px;">Unassigned Initiative</span>
           </div>
 
-        </div>
-        <div *ngIf="filterCollection(epicsList).length === 0" class="empty-workspace-state">
-          No matching epic blueprints found within the chosen context layer.
+          <div style="text-align: right; display: flex; gap: 8px; justify-content: flex-end;">
+            <button (click)="editEpic(item)" style="background: transparent; border: none; color: #2563eb; font-weight: 500; font-size: 13px; cursor: pointer; padding: 4px 8px;">Edit</button>
+            <button (click)="deleteEpic(item.id)" style="background: transparent; border: none; color: #dc2626; font-weight: 500; font-size: 13px; cursor: pointer; padding: 4px 8px;">Delete</button>
+          </div>
         </div>
       </div>
     </div>
 
-    <div *ngIf="activeViewTab === 'STORIES'" class="matrix-view-layer">
-      <div class="matrix-filter-header">
-        <div class="matrix-badge-legend">
-          <div class="legend-indicator action-legend"></div>
-          <span>Target User Stories Task Ledger</span>
-        </div>
+    <!-- GRID VIEW 2: USER STORIES BACKLOG -->
+    <div *ngIf="activeViewTab === 'STORIES'" class="matrix-view-layer" style="border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+      <div style="display: grid; grid-template-columns: 160px 2.2fr 1.8fr 1.8fr 130px; background: #f8fafc; padding: 14px 20px; border-bottom: 1px solid #e2e8f0; align-items: center;">
+        <div class="wrapped-column-header-text">Backlog Weight</div>
+        <div class="wrapped-column-header-text">User Narrative Feature</div>
+        <div class="wrapped-column-header-text">Reporter</div>
+        <div class="wrapped-column-header-text">Lead Engineer</div>
+        <div style="text-align: right; font-weight: 600; font-size: 13px; color: #475569;">Backlog Options</div>
       </div>
-
-      <div class="matrix-header-row matrix-row four-column-grid">
-        <div class="cell">Story Identity Mapping</div>
-        <div class="cell">Criteria Requirements Specifications</div>
-        <div class="cell">Allocation Domain Scope</div>
-        <div class="cell text-right">Runtime Mutation Execution Engine</div>
-      </div>
-
-      <div class="matrix-row-scroller" *ngIf="stories$ | async as storiesList">
-        <div *ngFor="let story of filterCollection(storiesList)" class="matrix-row data-row four-column-grid">
+      
+      <div *ngIf="stories$ | async as list">
+        <div *ngFor="let item of filterCollection(list)" style="display: grid; grid-template-columns: 160px 2.2fr 1.8fr 1.8fr 130px; padding: 16px 20px; border-bottom: 1px solid #f1f5f9; align-items: center; background: #ffffff; font-size: 14px;">
+          <div>
+            <span style="background: #f8fafc; color: #334155; font-size: 12px; padding: 4px 8px; border-radius: 6px; font-weight: 600; display: inline-block; margin-bottom: 6px; border: 1px solid #e2e8f0;">{{ item.story_points || 0 }} Points</span>
+            <div style="font-size: 12px; color: #64748b; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px;">Epic: {{ resolveEpicTitle(item.epic_id) }}</div>
+          </div>
           
-          <div class="cell primary-identity-cell">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span class="story-points-badge">{{ story.story_points || 0 }} SP</span>
-              <span class="priority-flag" [attr.data-priority]="story.priority">{{ story.priority }}</span>
-            </div>
-            <span class="project-indicator-tag">Module: {{ resolveEpicTitle(story.epic_id) }}</span>
-          </div>
-
-          <div class="cell description-payload-cell">
-            <strong class="entity-title-label">{{ story.title }}</strong>
-            <p class="entity-narrative-paragraph">{{ story.description || 'No explicit acceptance requirements documented.' }}</p>
-            <span class="status-pill" [attr.data-status]="story.status">{{ story.status }}</span>
-          </div>
-
-          <div class="cell structural-owner-cell">
-            <div class="sprint-mapping-context" style="margin-bottom: 6px;">
-              <span class="sprint-micro-tag">Sprint Context</span>
-              <div class="sprint-identity-label">
-                {{ story.sprint_id ? 'Active Sprint Block ID #' + story.sprint_id : 'Product Backlog Buffer' }}
+          <div style="padding-right: 16px; min-width: 0; white-space: normal; word-break: break-word; position: relative;">
+            <div cdkOverlayOrigin #storyTrigger="cdkOverlayOrigin"
+                 (mouseenter)="activeHoverId = item.id" (mouseleave)="activeHoverId = null"
+                 style="cursor: help; display: block; width: 100%;">
+              <span style="font-weight: 600; color: #0f172a; display: block; margin-bottom: 4px; line-height: 1.4;">{{ item.title }}</span>
+              <span style="color: #64748b; font-size: 13px; display: block; line-height: 1.4; margin-bottom: 8px;">{{ item.description || 'No detailed acceptance criteria parameters mapped.' }}</span>
+              <div style="display: flex; gap: 8px;">
+                <span style="background: #fff7ed; border: 1px solid #ffedd5; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; color: #c2410c;">Priority: {{ item.priority }}</span>
+                <span style="background: #f0fdf4; border: 1px solid #bbf7d0; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; color: #166534;">Status: {{ item.status }}</span>
               </div>
             </div>
-            
-            <div class="user-inline-capsule" *ngIf="resolveUserObject(story.assignee_user_id) as worker">
-              <img [src]="getUserAvatarUrl(worker)" class="capsule-avatar" alt="" />
-              <div class="capsule-text">
-                <span class="owner-fullname">{{ worker.name }}</span>
+
+            <ng-template cdkConnectedOverlay
+                         [cdkConnectedOverlayOrigin]="storyTrigger"
+                         [cdkConnectedOverlayOpen]="activeHoverId === item.id"
+                         [cdkConnectedOverlayPositions]="[{ originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 8 }]">
+              <div (mouseenter)="activeHoverId = item.id" (mouseleave)="activeHoverId = null">
+                <mat-card style="width: 400px; padding: 20px; background: #ffffff; border-radius: 12px; box-shadow: 0 12px 32px rgba(15, 23, 42, 0.15); border: 1px solid #e2e8f0;">
+                  <mat-card-header style="margin-bottom: 12px; padding: 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                      <div>
+                        <span style="background: #16a34a; color: #ffffff; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; margin-bottom: 6px; display: inline-block;">Story Template</span>
+                        <mat-card-title style="font-size: 15px; font-weight: 600; color: #0f172a; margin: 0; line-height: 1.4;">{{ item.title }}</mat-card-title>
+                      </div>
+                      <span style="background: #f0fdf4; font-size: 11px; padding: 4px 8px; border-radius: 6px; font-weight: 600; color: #166534;">{{ item.status }}</span>
+                    </div>
+                  </mat-card-header>
+                  <mat-divider style="margin-bottom: 12px; border-color: #f1f5f9;"></mat-divider>
+                  <mat-card-content style="padding: 0; font-size: 13px; color: #334155;">
+                    <p style="margin: 0 0 16px 0; line-height: 1.5; color: #475569;"><strong>Acceptance Criteria (DoD):</strong> {{ item.description || 'No detailed acceptance criteria parameters mapped.' }}</p>
+                  </mat-card-content>
+                </mat-card>
+              </div>
+            </ng-template>
+          </div>
+
+          <!-- REPORTER USER CARD BLOCK -->
+          <div>
+            <div *ngIf="resolveUserObject(item.creator_user_id) as creator" class="user-profile-column-card">
+              <div class="user-column-avatar-circle reporter-accent">
+                <span>{{ creator.name.slice(0, 2).toUpperCase() }}</span>
+              </div>
+              <div class="user-column-info-stack">
+                <span class="user-column-name">{{ creator.name }}</span>
+                <span class="user-column-role">{{ creator.role_name }}</span>
+                <span class="user-column-empid">ID: {{ creator.employee_id_prefix }}-{{ creator.employee_id_number }}</span>
               </div>
             </div>
           </div>
 
-          <div class="cell Action-trigger-cell text-right">
-            <button class="grid-icon-action edit-trigger" (click)="editStory(story)" title="Edit Requirements">
-              MDFY
-            </button>
-            <button class="grid-icon-action delete-trigger" (click)="deleteStory(story.id)" title="Delete User Story">
-              PRGE
-            </button>
+          <!-- LEAD ENGINEER USER CARD BLOCK -->
+          <div>
+            <div *ngIf="resolveUserObject(item.assignee_user_id) as worker" class="user-profile-column-card">
+              <div class="user-column-avatar-circle engineering-accent">
+                <span>{{ worker.name.slice(0, 2).toUpperCase() }}</span>
+              </div>
+              <div class="user-column-info-stack">
+                <span class="user-column-name">{{ worker.name }}</span>
+                <span class="user-column-role">{{ worker.role_name }}</span>
+                <span class="user-column-empid">ID: {{ worker.employee_id_prefix }}-{{ worker.employee_id_number }}</span>
+              </div>
+            </div>
+            <span *ngIf="!item.assignee_user_id" style="color: #94a3b8; font-style: italic; font-size: 13px;">Unassigned Lead</span>
           </div>
 
+          <div style="text-align: right; display: flex; gap: 8px; justify-content: flex-end;">
+            <button (click)="editStory(item)" style="background: transparent; border: none; color: #2563eb; font-weight: 500; font-size: 13px; cursor: pointer; padding: 4px 8px;">Edit</button>
+            <button (click)="deleteStory(item.id)" style="background: transparent; border: none; color: #dc2626; font-weight: 500; font-size: 13px; cursor: pointer; padding: 4px 8px;">Delete</button>
+          </div>
         </div>
-        <div *ngIf="filterCollection(storiesList).length === 0" class="empty-workspace-state">
-          No matching execution user stories mapped inside this filtering threshold matrix.
+      </div>
+    </div>
+
+    <!-- GRID VIEW 3: ENGINEERING IMPLEMENTATION TASKS -->
+    <div *ngIf="activeViewTab === 'TASKS'" class="matrix-view-layer" style="border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+      <div style="display: grid; grid-template-columns: 180px 2.1fr 1.8fr 1.8fr 130px; background: #f8fafc; padding: 14px 20px; border-bottom: 1px solid #e2e8f0; align-items: center;">
+        <div class="wrapped-column-header-text">Backlog Alignment</div>
+        <div class="wrapped-column-header-text">Actionable Sub-Task Work</div>
+        <div class="wrapped-column-header-text">Created By</div>
+        <div class="wrapped-column-header-text">Assigned Builder</div>
+        <div style="text-align: right; font-weight: 600; font-size: 13px; color: #475569;">Backlog Options</div>
+      </div>
+      
+      <div *ngIf="tasks$ | async as list">
+        <div *ngFor="let item of filterCollection(list)" style="display: grid; grid-template-columns: 180px 2.1fr 1.8fr 1.8fr 130px; padding: 16px 20px; border-bottom: 1px solid #f1f5f9; align-items: center; background: #ffffff; font-size: 14px;">
+          <div>
+            <span style="font-size: 12px; color: #64748b; font-weight: 500; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 160px;" [title]="resolveStoryTitle(item.story_id)">
+              ↳ Parent Story: {{ resolveStoryTitle(item.story_id) }}
+            </span>
+          </div>
+          
+          <div style="padding-right: 16px; min-width: 0; white-space: normal; word-break: break-word; position: relative;">
+            <div cdkOverlayOrigin #taskTrigger="cdkOverlayOrigin"
+                 (mouseenter)="activeHoverId = item.id" (mouseleave)="activeHoverId = null"
+                 style="cursor: help; display: block; width: 100%;">
+              <span style="font-weight: 600; color: #0f172a; display: block; margin-bottom: 4px; line-height: 1.4;">{{ item.title }}</span>
+              <span style="color: #64748b; font-size: 13px; display: block; line-height: 1.4; margin-bottom: 6px;">{{ item.description || 'No specialized technical requirements mapped.' }}</span>
+              <div>
+                <span style="font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;" 
+                      [style.color]="item.status === 'COMPLETED' || item.status === 'DONE' ? '#166534' : (item.status === 'BLOCKED' ? '#991b1b' : '#9a3412')" 
+                      [style.background]="item.status === 'COMPLETED' || item.status === 'DONE' ? '#f0fdf4' : (item.status === 'BLOCKED' ? '#fef2f2' : '#fff7ed')">
+                  {{ item.status }}
+                </span>
+              </div>
+            </div>
+
+            <ng-template cdkConnectedOverlay
+                         [cdkConnectedOverlayOrigin]="taskTrigger"
+                         [cdkConnectedOverlayOpen]="activeHoverId === item.id"
+                         [cdkConnectedOverlayPositions]="[{ originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 8 }]">
+              <div (mouseenter)="activeHoverId = item.id" (mouseleave)="activeHoverId = null">
+                <mat-card style="width: 360px; padding: 20px; background: #ffffff; border-radius: 12px; box-shadow: 0 12px 32px rgba(15, 23, 42, 0.15); border: 1px solid #e2e8f0;">
+                  <mat-card-header style="margin-bottom: 12px; padding: 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                      <div>
+                        <span style="background: #0284c7; color: #ffffff; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; margin-bottom: 6px; display: inline-block;">Sub-Task Execution</span>
+                        <mat-card-title style="font-size: 15px; font-weight: 600; color: #0f172a; margin: 0; line-height: 1.4;">{{ item.title }}</mat-card-title>
+                      </div>
+                    </div>
+                  </mat-card-header>
+                  <mat-divider style="margin-bottom: 12px; border-color: #f1f5f9;"></mat-divider>
+                  <mat-card-content style="padding: 0; font-size: 13px; color: #334155;">
+                    <p style="margin: 0 0 16px 0; line-height: 1.5; color: #475569;"><strong>Implementation Blueprint:</strong> {{ item.description || 'No specialized technical requirements mapped.' }}</p>
+                  </mat-card-content>
+                </mat-card>
+              </div>
+            </ng-template>
+          </div>
+
+          <!-- TASK CREATOR USER BLOCK -->
+          <div>
+            <div *ngIf="resolveUserObject(item.creator_user_id) as creator" class="user-profile-column-card">
+              <div class="user-column-avatar-circle">
+                <span>{{ creator.name.slice(0, 2).toUpperCase() }}</span>
+              </div>
+              <div class="user-column-info-stack">
+                <span class="user-column-name">{{ creator.name }}</span>
+                <span class="user-column-role">{{ creator.role_name }}</span>
+                <span class="user-column-empid">ID: {{ creator.employee_id_prefix }}-{{ creator.employee_id_number }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ASSIGNED BUILDER USER BLOCK -->
+          <div>
+            <div *ngIf="resolveUserObject(item.assignee_user_id) as worker" class="user-profile-column-card">
+              <div class="user-column-avatar-circle engineering-accent">
+                <span>{{ worker.name.slice(0, 2).toUpperCase() }}</span>
+              </div>
+              <div class="user-column-info-stack">
+                <span class="user-column-name">{{ worker.name }}</span>
+                <span class="user-column-role">{{ worker.role_name }}</span>
+                <span class="user-column-empid">ID: {{ worker.employee_id_prefix }}-{{ worker.employee_id_number }}</span>
+              </div>
+            </div>
+            <span *ngIf="!item.assignee_user_id" style="color: #94a3b8; font-style: italic; font-size: 13px;">Unassigned Task</span>
+          </div>
+
+          <div style="text-align: right; display: flex; gap: 8px; justify-content: flex-end;">
+            <button (click)="editTask(item)" style="background: transparent; border: none; color: #2563eb; font-weight: 500; font-size: 13px; cursor: pointer; padding: 4px 8px;">Edit</button>
+            <button (click)="deleteTask(item.id)" style="background: transparent; border: none; color: #dc2626; font-weight: 500; font-size: 13px; cursor: pointer; padding: 4px 8px;">Delete</button>
+          </div>
         </div>
       </div>
     </div>
