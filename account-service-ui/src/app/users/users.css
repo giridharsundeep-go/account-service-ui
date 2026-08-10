@@ -24,7 +24,7 @@
 .saas-container {
   background-color: var(--matrix-bg-base);
   min-height: 100vh;
-  padding-top: 40px;
+  padding-left: 10px;
   font-family: system-ui, -apple-system, sans-serif;
   color: var(--matrix-text-primary);
   box-sizing: border-box;
@@ -505,5 +505,38 @@
     border-top: 1px dashed var(--matrix-border-light);
     padding-top: 12px;
     justify-content: flex-start;
+  }
+}
+
+.matrix-identity-avatar {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden; /* Encapsulates images completely within circular track boundaries */
+}
+
+/* If no picture exists, inject data-initials via CSS standard */
+.matrix-identity-avatar[data-initials]::before {
+  content: attr(data-initials);
+  color: #475569;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: -0.02em;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
   }
 }

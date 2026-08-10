@@ -19,14 +19,18 @@ import { MatSliderModule } from '@angular/material/slider';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatListModule } from '@angular/material/list';
-
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatMenuModule } from '@angular/material/menu';
 import { UserSelectDialog } from '../user-select-dialog/user-select-dialog';
 
 export interface UserAccountNode {
-  id: number;
+  id: number | string;
   name?: string;
   username?: string;
-  email: string;
+  email?: string;
   role?: string;
 }
 
@@ -64,6 +68,23 @@ export interface StrategicInitiative {
   associatedUserIds: number[];
 }
 
+export interface SprintItem {
+  id: string | number;
+  project_id?: number;
+  projectCode: string;
+  projectName: string;
+  sprint_number: number;
+  name: string;
+  status: 'CURRENT' | 'PLANNED' | 'COMPLETED' | 'ON_HOLD';
+  scheduled_start_date: string;
+  scheduled_end_date: string;
+  duration_weeks: number;
+  target_velocity: number;
+  completedPoints: number;
+  activation_type: 'AUTOMATIC' | 'MANUAL';
+  description?: string;
+}
+
 @Component({
   selector: 'app-projects',
   standalone: true,
@@ -82,7 +103,12 @@ export interface StrategicInitiative {
     MatSliderModule,
     MatChipsModule,
     MatDialogModule,
-    MatListModule
+    MatListModule,
+    MatExpansionModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatProgressBarModule,
+    MatMenuModule
   ]
 })
 export class Projects implements OnInit {
@@ -106,7 +132,7 @@ export class Projects implements OnInit {
   activeCalibrationTab: 'engine' | 'preview' = 'engine';
   isLoadingPreview = false;
   calculatedSprintsPreview: any[] = [];
-  previewStartDate: string = new Date().toISOString().split('T')[0];
+  previewStartDate: Date | string | null = new Date();
   previewActivationType: 'AUTOMATIC' | 'MANUAL' = 'AUTOMATIC';
 
   agileTuning = { focusFactor: 0.80, scopeBufferPercent: 15 };
@@ -117,11 +143,13 @@ export class Projects implements OnInit {
 
   projectForm!: StrategicInitiative;
 
-  // --- Perspectives & Unified Sprints Mode Operational States ---
+  // --- Sprints Perspective Read-Only Operational States ---
   public dashboardViewMode: 'projects' | 'sprints' = 'projects';
-  public sprintTimelineFilter: 'ALL' | 'CURRENT' | 'FUTURE' = 'ALL';
-  public globalSprintsCollection: any[] = [];
+  public sprintTimelineFilter: 'ALL' | 'CURRENT' | 'FUTURE' | 'COMPLETED' = 'ALL';
+  public globalSprintsCollection: SprintItem[] = [];
   public activeProjectFilterCode: string = '';
+  public sprintSearchQuery: string = '';
+  public sprintSortBy: 'START_DATE' | 'NAME' | 'VELOCITY' = 'START_DATE';
 
   constructor(
     private http: HttpClient,
@@ -158,6 +186,10 @@ export class Projects implements OnInit {
         return processedProjects;
       })
     );
+  }
+
+  private safeToString(value: any): string {
+    return value !== null && value !== undefined ? String(value).trim() : '';
   }
 
   resetProjectForm(): void {
@@ -224,28 +256,21 @@ export class Projects implements OnInit {
           }
           if (!Array.isArray(teamRecords)) teamRecords = [];
 
-          this.selectedUsers = individualRecords.map((item: any) => {
-            if (!item) return 0;
-            return Number(item.user_id || item.id || (typeof item === 'number' || typeof item === 'string' ? item : 0));
-          }).filter((id: number) => id > 0);
+          this.selectedUsers = individualRecords.map((item: any) => Number(item.user_id || item.id || 0)).filter((id: number) => id > 0);
           this.projectForm.associatedUserIds = [...this.selectedUsers];
 
-          this.selectedTeamIds = teamRecords.map((item: any) => {
-            if (!item) return '';
-            // If the get route returns raw primitive integer IDs, cast them directly to strings
-            return String(item.team_id || item.id || (typeof item === 'number' || typeof item === 'string' ? item : ''));
-          }).filter((id: string) => id.length > 0);
+          this.selectedTeamIds = teamRecords.map((item: any) => this.safeToString(item.team_id || item.id || item)).filter((id: string) => id.length > 0);
           this.projectForm.associatedTeamIds = [...this.selectedTeamIds];
         },
         error: (err) => {
           console.error('Relational mapping lookup error occurred:', err);
           this.selectedUsers = project.associatedUserIds ? [...project.associatedUserIds].map(Number) : [];
-          this.selectedTeamIds = project.associatedTeamIds ? [...project.associatedTeamIds].map(String) : [];
+          this.selectedTeamIds = project.associatedTeamIds ? [...project.associatedTeamIds].map(id => this.safeToString(id)) : [];
         }
       });
     } else {
       this.selectedUsers = project.associatedUserIds ? [...project.associatedUserIds].map(Number) : [];
-      this.selectedTeamIds = project.associatedTeamIds ? [...project.associatedTeamIds].map(String) : [];
+      this.selectedTeamIds = project.associatedTeamIds ? [...project.associatedTeamIds].map(id => this.safeToString(id)) : [];
       this.rebuildChipsMatrix();
       this.cdr.detectChanges();
     }
@@ -258,12 +283,9 @@ export class Projects implements OnInit {
   setBuilderStep(step: number): void {
     if (step >= 1 && step <= 4) {
       this.activeBuilderStep = step;
-      if (step === 2) {
-        this.rebuildChipsMatrix();
-      }
-      if (step === 4) {
-        this.generateSprintPreview();
-      }
+      if (step === 2) this.rebuildChipsMatrix();
+      if (step === 3) this.calculateAgileMetrics();
+      if (step === 4) this.generateSprintPreview();
       this.cdr.detectChanges();
     }
   }
@@ -271,12 +293,9 @@ export class Projects implements OnInit {
   nextBuilderStep(): void {
     if (this.activeBuilderStep < 4) {
       this.activeBuilderStep++;
-      if (this.activeBuilderStep === 2) {
-        this.rebuildChipsMatrix();
-      }
-      if (this.activeBuilderStep === 4) {
-        this.generateSprintPreview();
-      }
+      if (this.activeBuilderStep === 2) this.rebuildChipsMatrix();
+      if (this.activeBuilderStep === 3) this.calculateAgileMetrics();
+      if (this.activeBuilderStep === 4) this.generateSprintPreview();
       this.cdr.detectChanges();
     }
   }
@@ -289,15 +308,23 @@ export class Projects implements OnInit {
   }
 
   calculateAgileMetrics(): void {
-    const rawPoints = this.projectForm.total_backlog_points || 0;
-    const velocity = this.projectForm.target_velocity || 1;
-    const durationWeeks = this.projectForm.sprint_duration_weeks || 2;
+    if (!this.projectForm) return;
 
-    const bufferedPoints = rawPoints * (1 + (this.agileTuning.scopeBufferPercent / 100));
-    const effectiveVelocity = velocity * this.agileTuning.focusFactor;
-    
-    this.projectForm.computed_sprint_count = Math.ceil(bufferedPoints / (effectiveVelocity || 1));
+    const rawPoints = Math.max(0, Number(this.projectForm.total_backlog_points) || 0);
+    const velocity = Math.max(1, Number(this.projectForm.target_velocity) || 1);
+    const durationWeeks = Math.max(1, Number(this.projectForm.sprint_duration_weeks) || 1);
+
+    const scopeBuffer = Number(this.agileTuning?.scopeBufferPercent) || 0;
+    const bufferedPoints = Math.round(rawPoints * (1 + (scopeBuffer / 100)));
+
+    const focusFactor = Math.max(0.01, Number(this.agileTuning?.focusFactor) || 0.8);
+    const effectiveVelocity = Math.max(1, Math.round(velocity * focusFactor));
+
+    this.projectForm.computed_sprint_count = bufferedPoints > 0 ? Math.ceil(bufferedPoints / effectiveVelocity) : 0;
     this.projectForm.computed_total_duration_weeks = this.projectForm.computed_sprint_count * durationWeeks;
+
+    this.cdr.markForCheck();
+    this.cdr.detectChanges();
   }
 
   generateSprintPreview(): void {
@@ -306,19 +333,40 @@ export class Projects implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      const rawPoints = this.projectForm.total_backlog_points || 0;
-      const velocity = this.projectForm.target_velocity || 1;
-      const durationWeeks = this.projectForm.sprint_duration_weeks || 2;
+      this.calculateAgileMetrics();
 
-      const bufferedPoints = rawPoints * (1 + (this.agileTuning.scopeBufferPercent / 100));
-      const effectiveVelocity = velocity * this.agileTuning.focusFactor;
-      const totalSprintsNeeded = Math.ceil(bufferedPoints / (effectiveVelocity || 1));
+      const rawPoints = Math.max(0, Number(this.projectForm.total_backlog_points) || 0);
+      const velocity = Math.max(1, Number(this.projectForm.target_velocity) || 1);
+      const durationWeeks = Math.max(1, Number(this.projectForm.sprint_duration_weeks) || 1);
 
+      const scopeBuffer = Number(this.agileTuning.scopeBufferPercent) || 0;
+      let remainingPoints = Math.round(rawPoints * (1 + (scopeBuffer / 100)));
+
+      const focusFactor = Math.max(0.01, Number(this.agileTuning.focusFactor) || 0.8);
+      const effectiveVelocity = Math.max(1, Math.round(velocity * focusFactor));
+
+      const totalSprintsNeeded = this.projectForm.computed_sprint_count;
       const mockSprintsArray = [];
-      let currentIterationStartDate = new Date(this.previewStartDate);
-      const prefixCode = this.projectForm.project_code ? `${this.projectForm.project_code.trim()}-` : 'SPRINT-';
+
+      let currentIterationStartDate: Date;
+      if (this.previewStartDate instanceof Date) {
+        currentIterationStartDate = new Date(this.previewStartDate.getTime());
+      } else if (typeof this.previewStartDate === 'string' && this.previewStartDate.trim()) {
+        currentIterationStartDate = new Date(this.previewStartDate);
+      } else {
+        currentIterationStartDate = new Date();
+      }
+
+      if (isNaN(currentIterationStartDate.getTime())) currentIterationStartDate = new Date();
+
+      const prefixCode = this.projectForm.project_code && this.projectForm.project_code.trim()
+        ? `${this.projectForm.project_code.trim()}-`
+        : 'SPRINT-';
 
       for (let i = 1; i <= totalSprintsNeeded; i++) {
+        const sprintTargetPoints = Math.min(remainingPoints, effectiveVelocity);
+        remainingPoints = Math.max(0, remainingPoints - sprintTargetPoints);
+
         const currentIterationEndDate = new Date(currentIterationStartDate);
         currentIterationEndDate.setDate(currentIterationEndDate.getDate() + (durationWeeks * 7) - 1);
 
@@ -331,7 +379,7 @@ export class Projects implements OnInit {
           scheduled_start_date: currentIterationStartDate.toISOString().split('T')[0],
           scheduled_end_date: currentIterationEndDate.toISOString().split('T')[0],
           duration_weeks: durationWeeks,
-          target_velocity: Math.round(effectiveVelocity),
+          target_velocity: sprintTargetPoints,
           activation_type: this.previewActivationType
         });
 
@@ -352,7 +400,7 @@ export class Projects implements OnInit {
 
   commitProjectToSystem(): void {
     this.isSaving = true;
-    
+
     const body = {
       ...this.projectForm,
       associatedTeamIds: this.selectedTeamIds,
@@ -369,10 +417,8 @@ export class Projects implements OnInit {
       switchMap((projectRes: any) => {
         const responseData = projectRes?.data || projectRes;
         const confirmedProjectId = this.projectForm.id || responseData?.id || responseData?.project_id;
-        
-        if (!confirmedProjectId) {
-          throw new Error('Could not resolve a valid project context ID context mapping layer.');
-        }
+
+        if (!confirmedProjectId) throw new Error('Could not resolve a valid project context ID.');
 
         const initializedSprintsPayload = this.calculatedSprintsPreview.map(sprint => ({
           ...sprint,
@@ -380,10 +426,8 @@ export class Projects implements OnInit {
           user_id: this.projectForm.user_id || 1
         }));
 
-        // Convert string team IDs back to numbers for the backend sync API signature request payload layout
         const numericTeamIds = this.selectedTeamIds.map(id => Number(id)).filter(id => !isNaN(id));
 
-        // ✅ FIXED FEATURE INTEGRATION: Triggers parallel sync commands to your new bulk allocation targets
         return forkJoin({
           sprintsSync: this.http.put(`${this.baseUrl}/sprints/project/${confirmedProjectId}/sync`, {
             previewStartDate: this.previewStartDate,
@@ -411,7 +455,7 @@ export class Projects implements OnInit {
         this.isComposerOpen = false;
         this.projectsRefresh$.next();
       },
-      error: (err) => console.error('Failed syncing unified structural configuration pipelines and allocations:', err)
+      error: (err) => console.error('Failed syncing dynamic configuration pipelines:', err)
     });
   }
 
@@ -423,21 +467,20 @@ export class Projects implements OnInit {
     });
   }
 
-  // --- Sprints Portfolio Compilers & Perspectives Filtering Logics ---
   private buildGlobalSprintsMatrix(projects: StrategicInitiative[]): void {
-    const combinedSprints: any[] = [];
-    
+    const combinedSprints: SprintItem[] = [];
+
     projects.forEach((proj, index) => {
       const durationWeeks = proj.sprint_duration_weeks || 2;
       const sprintCount = proj.computed_sprint_count || 3;
       let seedDate = new Date();
-      
+
       seedDate.setDate(seedDate.getDate() - (index * 12));
 
       for (let i = 1; i <= sprintCount; i++) {
         const endDate = new Date(seedDate);
         endDate.setDate(endDate.getDate() + (durationWeeks * 7) - 1);
-        
+
         let status: 'CURRENT' | 'PLANNED' | 'COMPLETED' = 'PLANNED';
         const now = new Date();
         if (now >= seedDate && now <= endDate) {
@@ -446,16 +489,23 @@ export class Projects implements OnInit {
           status = 'COMPLETED';
         }
 
+        const targetVel = Math.round(proj.target_velocity || 30);
+        const completedVel = status === 'COMPLETED' ? targetVel : (status === 'CURRENT' ? Math.round(targetVel * 0.65) : 0);
+
         combinedSprints.push({
           id: `${proj.project_code || 'PRJ'}-S${i}-${1000 + i}`,
+          project_id: proj.id,
           projectCode: proj.project_code || 'SANDBOX',
+          projectName: proj.name,
           sprint_number: i,
           name: `${proj.project_code || 'PRJ'} - Sprint ${i}`,
           status: status,
           scheduled_start_date: seedDate.toISOString().split('T')[0],
           scheduled_end_date: endDate.toISOString().split('T')[0],
           duration_weeks: durationWeeks,
-          target_velocity: Math.round(proj.target_velocity || 30)
+          target_velocity: targetVel,
+          completedPoints: completedVel,
+          activation_type: 'AUTOMATIC'
         });
 
         const nextStart = new Date(endDate);
@@ -469,13 +519,11 @@ export class Projects implements OnInit {
 
   public setViewMode(mode: 'projects' | 'sprints'): void {
     this.dashboardViewMode = mode;
-    if (mode === 'projects') {
-      this.activeProjectFilterCode = ''; 
-    }
+    if (mode === 'projects') this.activeProjectFilterCode = '';
     this.cdr.detectChanges();
   }
 
-  public setSprintFilter(filter: 'ALL' | 'CURRENT' | 'FUTURE'): void {
+  public setSprintFilter(filter: 'ALL' | 'CURRENT' | 'FUTURE' | 'COMPLETED'): void {
     this.sprintTimelineFilter = filter;
     this.cdr.detectChanges();
   }
@@ -486,39 +534,77 @@ export class Projects implements OnInit {
     this.setViewMode('sprints');
   }
 
-  public shouldDisplaySprintRow(sprint: any): boolean {
-    if (this.activeProjectFilterCode && sprint.projectCode !== this.activeProjectFilterCode) {
-      return false;
+  // --- SPRINT READ-ONLY ACCESSORS ---
+
+  public getFilteredSprints(statusCategory?: 'CURRENT' | 'PLANNED' | 'COMPLETED'): SprintItem[] {
+    let list = [...this.globalSprintsCollection];
+
+    if (this.activeProjectFilterCode) {
+      list = list.filter(s => s.projectCode === this.activeProjectFilterCode);
     }
-    if (this.sprintTimelineFilter === 'CURRENT') {
-      return sprint.status === 'CURRENT';
+
+    if (statusCategory) {
+      list = list.filter(s => s.status === statusCategory);
+    } else if (this.sprintTimelineFilter !== 'ALL') {
+      if (this.sprintTimelineFilter === 'CURRENT') list = list.filter(s => s.status === 'CURRENT');
+      if (this.sprintTimelineFilter === 'FUTURE') list = list.filter(s => s.status === 'PLANNED');
+      if (this.sprintTimelineFilter === 'COMPLETED') list = list.filter(s => s.status === 'COMPLETED');
     }
-    if (this.sprintTimelineFilter === 'FUTURE') {
-      return sprint.status === 'PLANNED';
+
+    if (this.sprintSearchQuery.trim()) {
+      const q = this.sprintSearchQuery.toLowerCase().trim();
+      list = list.filter(s =>
+        s.name.toLowerCase().includes(q) ||
+        s.projectCode.toLowerCase().includes(q) ||
+        s.projectName.toLowerCase().includes(q)
+      );
     }
-    return true;
+
+    list.sort((a, b) => {
+      if (this.sprintSortBy === 'START_DATE') {
+        return new Date(a.scheduled_start_date).getTime() - new Date(b.scheduled_start_date).getTime();
+      }
+      if (this.sprintSortBy === 'NAME') {
+        return a.name.localeCompare(b.name);
+      }
+      if (this.sprintSortBy === 'VELOCITY') {
+        return b.target_velocity - a.target_velocity;
+      }
+      return 0;
+    });
+
+    return list;
+  }
+
+  public getRunningSprints(): SprintItem[] {
+    return this.getFilteredSprints('CURRENT');
+  }
+
+  public getUpcomingSprints(): SprintItem[] {
+    return this.getFilteredSprints('PLANNED');
+  }
+
+  public getCompletedSprints(): SprintItem[] {
+    return this.getFilteredSprints('COMPLETED');
   }
 
   public getFilteredSprintsCount(): number {
-    return this.globalSprintsCollection.filter(s => this.shouldDisplaySprintRow(s)).length;
+    return this.getFilteredSprints().length;
   }
 
-  public executeSprintAction(sprint: any, contextType: string): void {
-    console.log(`Executing operational framework pipeline for target ${sprint.id}: Action mode: ${contextType}`);
-    if (contextType === 'ACTIVATE') {
-      sprint.status = 'CURRENT';
-    }
-    this.cdr.detectChanges();
+  public getSprintProgress(sprint: SprintItem): number {
+    if (!sprint.target_velocity || sprint.target_velocity === 0) return 0;
+    const pct = Math.round(((sprint.completedPoints || 0) / sprint.target_velocity) * 100);
+    return Math.min(100, Math.max(0, pct));
   }
 
-  // --- Core Background Roster & Metadata Loaders ---
   private loadProductsBackground(): void {
     this.http.get<any>(`${this.baseUrl}/products`, { headers: this.auth.getAuthHeaders() }).subscribe({
       next: (res) => {
         this.systemProducts = res?.data || res || [];
         this.cdr.detectChanges();
       },
-      error: (err) => console.error('Failed to resolve master product collections:', err)
+      error: (err) => console.error('Failed to resolve product collections:', err)
     });
   }
 
@@ -595,15 +681,25 @@ export class Projects implements OnInit {
     });
   }
 
-  onTeamSelectionChange(selectedOptions: any[]): void {
-    this.selectedTeamIds = selectedOptions.map(opt => opt.value.toString());
+  onTeamSelectionChange(selection: any): void {
+    let rawValues: any[] = [];
+    if (Array.isArray(selection)) {
+      rawValues = selection;
+    } else if (selection && selection.value && Array.isArray(selection.value)) {
+      rawValues = selection.value;
+    } else if (selection !== null && selection !== undefined) {
+      rawValues = [selection];
+    }
+
+    this.selectedTeamIds = rawValues.map(val => this.safeToString(val)).filter(val => val !== '');
     this.projectForm.associatedTeamIds = [...this.selectedTeamIds];
     this.rebuildChipsMatrix();
     this.cdr.detectChanges();
   }
 
   isTeamSelected(teamId: number | string): boolean {
-    return this.selectedTeamIds.includes(teamId.toString());
+    const cleanId = this.safeToString(teamId);
+    return this.selectedTeamIds.includes(cleanId);
   }
 
   removeUserChip(userObj: any): void {
@@ -622,15 +718,23 @@ export class Projects implements OnInit {
 
     if (this.liveActiveTeams && this.liveActiveTeams.length > 0) {
       this.liveActiveTeams.forEach(team => {
-        if (team && team.id && this.selectedTeamIds.includes(team.id.toString()) && team.members) {
-          team.members.forEach((member: UserAccountNode) => {
-            const cleanId = Number(member.id);
-            temporaryChipsMap.set(cleanId, {
-              id: cleanId,
-              name: member.name || member.username || member.email || `User ${cleanId}`,
-              isFromTeam: true,
-              teamName: team.name
-            });
+        if (!team) return;
+        const cleanTeamId = this.safeToString(team.id);
+
+        if (this.selectedTeamIds.includes(cleanTeamId) && Array.isArray(team.members)) {
+          team.members.forEach((member: any) => {
+            if (!member) return;
+            const rawId = member.id || member.userId || member.user_id;
+            const cleanId = Number(rawId);
+
+            if (!isNaN(cleanId) && cleanId > 0) {
+              temporaryChipsMap.set(cleanId, {
+                id: cleanId,
+                name: member.name || member.username || member.displayName || member.email || `User ${cleanId}`,
+                isFromTeam: true,
+                teamName: team.name || 'Team Member'
+              });
+            }
           });
         }
       });
@@ -639,11 +743,11 @@ export class Projects implements OnInit {
     if (this.selectedUsers && this.selectedUsers.length > 0) {
       this.selectedUsers.forEach((id: number) => {
         const cleanId = Number(id);
-        if (!temporaryChipsMap.has(cleanId)) {
+        if (!isNaN(cleanId) && cleanId > 0 && !temporaryChipsMap.has(cleanId)) {
           const match = this.organizationPersonnel.find(u => Number(u.id) === cleanId);
           temporaryChipsMap.set(cleanId, {
             id: cleanId,
-            name: match ? (match.name || match.username || match.email) : `Specialist Node #${cleanId}`,
+            name: match ? (match.name || match.username || match.email || `User ${cleanId}`) : `Specialist Node #${cleanId}`,
             isFromTeam: false
           });
         }

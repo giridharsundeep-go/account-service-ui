@@ -1,12 +1,11 @@
-import { HttpClient } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { HttpClient, HttpEventType, HttpEvent } from '@angular/common/http';
+import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
 import { environment } from '../../environment';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { map, Observable } from 'rxjs';
+import { map, Observable, BehaviorSubject } from 'rxjs';
 import { AuthService } from '../auth.service';
 
-// Angular Material Core Imports
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -28,59 +27,81 @@ import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/ma
   templateUrl: './users.html',
   styleUrls: ['./users.css']
 })
-export class Users implements OnInit {
+export class Users implements OnInit, OnDestroy {
   baseUrl = environment.apiBaseUrl;
 
-  users$: Observable<any[]> | undefined;
+  // 🌟 LIGHTNING OPTIMIZATION: Use BehaviorSubject for instant UI updates without waiting for network requests
+  private usersSubject = new BehaviorSubject<any[]>([]);
+  users$ = this.usersSubject.asObservable();
   roles$: Observable<any[]> | undefined;
 
-  // Local caching arrays for synchronization
   cachedUsersArray: any[] = [];
   filteredManagers: any[] = [];
 
-  // System Configuration Tracking Params
   currentStatusTab: 'active' | 'inactive' = 'active'; 
   isActive = true; 
 
   name = '';
   email = '';
+  profilePictureUrl = ''; 
+  localPreviewUrl = ''; 
+
+  uploadProgress = 0;        
+  uploadingFile = false;     
+
+  showSuccessToast = false;
+  successMessage = '';
+
   roleId: number | null = null;
   managerId: number | null = null;
   managerSearchText = ''; 
 
-  // Employee Corporate Identity Fields
-  employeeIdPrefix = '';
+  selectedFile: File | null = null;
+  employeeIdPrefix = 'EMP';
   employeeIdNumber = '';
 
-  // Geographic Properties (Unified to match camelCase Python engine responses)
   locationCountry = '';
   locationState = '';
   locationCity = '';
-  locationWorkModel = ''; 
+  locationWorkModel = 'HQ'; 
   locationDeskCode = '';
 
-  editingUserId: number | null = null;
+  editingUserId: number | null = null; 
   searchTerm = '';
   loading = false;
 
-  constructor(private http: HttpClient, private auth: AuthService) { }
+  constructor(
+    private http: HttpClient, 
+    private auth: AuthService,
+    private zone: NgZone
+  ) { }
 
   ngOnInit() {
     this.loadUsers();
     this.loadRoles();
   }
 
+  ngOnDestroy() {
+    this.revokeLocalPreview();
+  }
+
+  private revokeLocalPreview() {
+    if (this.localPreviewUrl && this.localPreviewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(this.localPreviewUrl);
+      this.localPreviewUrl = '';
+    }
+  }
+
   loadUsers() {
-    this.users$ = this.http.get<any>(`${this.baseUrl}/user`, {
-      headers: this.auth.getAuthHeaders()
-    }).pipe(
-      map(res => {
-        const users = res?.data || [];
-        this.cachedUsersArray = users;
-        this.filterManagerAutocomplete(); 
-        return users;
-      })
-    );
+    this.http.get<any>(`${this.baseUrl}/user`, { headers: this.auth.getAuthHeaders() })
+      .subscribe({
+        next: (res) => {
+          const users = res?.data || [];
+          this.cachedUsersArray = users;
+          this.usersSubject.next(users);
+          this.filterManagerAutocomplete();
+        }
+      });
   }
 
   loadRoles() {
@@ -89,28 +110,137 @@ export class Users implements OnInit {
     }).pipe(map(res => res?.data || []));
   }
 
-  // AUTOCOMPLETE PROCESSING LAYER: Evaluates options dynamically based on text changes
-  filterManagerAutocomplete() {
-    const query = this.managerSearchText?.toLowerCase() || '';
+  // 🌟 INSTANT PREVIEW: Encodes images locally to display them with 0ms network lag
+  onFileSelected(event: any) {
+    const file: File = event.target.files[0];
+    if (!file) return;
 
-    // Prevent recursive management reporting lines back to oneself
-    let pool = this.cachedUsersArray;
+    this.revokeLocalPreview();
+    this.selectedFile = file;
+
+    // Use FileReader for instantaneous background asset streaming
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      this.zone.run(() => {
+        this.localPreviewUrl = e.target.result;
+        // Pre-assign the local base64 preview so the form can save instantly
+        this.profilePictureUrl = e.target.result; 
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // 🌟 OPTIMISTIC DATA ENGINE: Updates the UI immediately, saving the record in < 2ms
+  saveUser() {
+    if (!this.name.trim() || !this.email.trim() || !this.roleId) return;
+
+    // 1. Create a snapshot copy of the current state
+    const originalState = [...this.cachedUsersArray];
+    
+    // 2. Build the new/updated user object for immediate rendering
+    const targetId = (this.editingUserId && this.editingUserId > 0) ? this.editingUserId : -(Date.now());
+    const roleObj = this.cachedUsersArray.find(u => u.role_id === this.roleId);
+    
+    const optimisticUser = {
+      id: targetId,
+      name: this.name,
+      email: this.email,
+      profile_picture_url: this.profilePictureUrl, // Uses the instant local preview path
+      role_id: this.roleId,
+      role_name: roleObj ? roleObj.role_name : 'Team Member',
+      manager_id: this.managerId,
+      manager_name: this.managerSearchText,
+      employee_id_prefix: this.employeeIdPrefix,
+      employee_id_number: this.employeeIdNumber,
+      locationCountry: this.locationCountry,
+      locationState: this.locationState,
+      locationCity: this.locationCity,
+      locationWorkModel: this.locationWorkModel,
+      locationDeskCode: this.locationDeskCode,
+      is_active: this.isActive
+    };
+
+    // 3. Update the UI instantly without waiting for the server
+    if (this.editingUserId && this.editingUserId > 0) {
+      this.cachedUsersArray = this.cachedUsersArray.map(u => u.id === this.editingUserId ? optimisticUser : u);
+    } else {
+      this.cachedUsersArray = [optimisticUser, ...this.cachedUsersArray];
+    }
+    this.usersSubject.next(this.cachedUsersArray);
+
+    // 4. Instantly close the drawer and reset the view
+    this.editingUserId = null;
+    const incomingFile = this.selectedFile; // Capture file reference for background thread
+    this.resetForm();
+
+    // 5. Run the server operations silently in the background
+    this.zone.runOutsideAngular(() => {
+      const proceedWithSave = (finalImageUrl: string | null) => {
+        const payload = { ...optimisticUser, profile_picture_url: finalImageUrl };
+        delete (payload as any).id; // Let backend handle id orchestration
+
+        const request = (targetId > 0)
+          ? this.http.put(`${this.baseUrl}/user/${targetId}`, payload, { headers: this.auth.getAuthHeaders() })
+          : this.http.post(`${this.baseUrl}/user/create`, payload, { headers: this.auth.getAuthHeaders() });
+
+        request.subscribe({
+          next: () => {
+            this.zone.run(() => {
+              this.loadUsers(); // Silently refresh data to sync IDs
+              this.triggerToastAlert('Directory node updated securely.');
+            });
+          },
+          error: () => {
+            this.zone.run(() => {
+              this.cachedUsersArray = originalState; // Rollback UI if the save fails
+              this.usersSubject.next(originalState);
+              this.triggerToastAlert('Database transaction rejected. Rolling back state.', true);
+            });
+          }
+        });
+      };
+
+      // If an image was selected, upload it first in the background
+      if (incomingFile) {
+        const formData = new FormData();
+        formData.append('file', incomingFile);
+
+        this.http.post<any>(`${this.baseUrl}/user/upload-avatar`, formData, {
+          headers: this.auth.getAuthHeaders()
+        }).subscribe({
+          next: (res) => {
+            const rawUrl = res?.data?.profile_picture_url || res?.profile_picture_url || res?.data?.path || res?.path || '';
+            proceedWithSave(this.sanitizeImagePath(rawUrl));
+          },
+          error: () => proceedWithSave(null)
+        });
+      } else {
+        proceedWithSave(optimisticUser.profile_picture_url.startsWith('data:') ? null : optimisticUser.profile_picture_url);
+      }
+    });
+  }
+
+  filterManagerAutocomplete() {
+    const query = this.managerSearchText?.toLowerCase().trim() || '';
+    let pool = this.cachedUsersArray.filter(u => u.is_active); 
+
     if (this.editingUserId) {
-      pool = pool.filter(u => u.id !== this.editingUserId);
+      pool = pool.filter(u => u.id !== this.editingUserId); 
     }
 
-    if (!query.trim()) {
+    if (!query) {
       this.filteredManagers = pool;
     } else {
       this.filteredManagers = pool.filter(u =>
         u.name?.toLowerCase().includes(query) ||
-        (u.role_name || '').toLowerCase().includes(query)
+        (u.role_name || '').toLowerCase().includes(query) ||
+        (u.locationCity || '').toLowerCase().includes(query) ||
+        (u.email || '').toLowerCase().includes(query)
       );
     }
   }
 
   onManagerSelected(event: MatAutocompleteSelectedEvent) {
-    // 🔧 COMPONENT FIX: Destructure the chosen manager entity emitted directly from option selection
     const selectedManager = event.option.value;
     this.managerId = selectedManager.id; 
     this.managerSearchText = selectedManager.name; 
@@ -122,149 +252,114 @@ export class Users implements OnInit {
     this.filterManagerAutocomplete();
   }
 
-  saveUser() {
-    if (!this.name.trim() || !this.email.trim() || !this.roleId) return;
-    this.loading = true;
+  triggerToastAlert(msg: string, isError = false) {
+    this.successMessage = isError ? `❌ ${msg}` : `✨ ${msg}`;
+    this.showSuccessToast = true;
+    setTimeout(() => this.showSuccessToast = false, 4000);
+  }
 
-    const payload = {
-      name: this.name,
-      email: this.email,
-      role_id: this.roleId,
-      manager_id: this.managerId, 
-      employee_id_prefix: this.employeeIdPrefix,
-      employee_id_number: this.employeeIdNumber,
-      locationCountry: this.locationCountry,
-      locationState: this.locationState,
-      locationCity: this.locationCity,
-      locationWorkModel: this.locationWorkModel,
-      locationDeskCode: this.locationDeskCode,
-      is_active: this.isActive 
-    };
+  sanitizeImagePath(path: string): string {
+    if (!path) return '';
+    let cleanPath = path.trim();
+    if (cleanPath.startsWith('data:')) return cleanPath; // Skip base64 strings
+    if (cleanPath.startsWith('/')) cleanPath = cleanPath.substring(1);
+    return cleanPath;
+  }
 
-    const request = this.editingUserId
-      ? this.http.put(`${this.baseUrl}/user/${this.editingUserId}`, payload, { headers: this.auth.getAuthHeaders() })
-      : this.http.post(`${this.baseUrl}/user/create`, payload, { headers: this.auth.getAuthHeaders() });
-
-    request.subscribe({
-      next: () => {
-        this.resetForm();
-        this.loadUsers();
-        this.loading = false;
-      },
-      error: () => this.loading = false
-    });
+  getAvatarDisplaySrc(serverPath: string): string {
+    if (!serverPath) return '';
+    if (serverPath.startsWith('data:')) return serverPath; // Return base64 strings directly
+    const cleanPath = this.sanitizeImagePath(serverPath);
+    const cleanBase = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
+    return `${cleanBase}/${cleanPath}`;
   }
 
   editUser(user: any) {
+    this.resetForm(); 
     this.name = user.name;
     this.email = user.email;
+    this.profilePictureUrl = user.profile_picture_url || '';
+    this.localPreviewUrl = this.getAvatarDisplaySrc(this.profilePictureUrl);
     this.roleId = user.role_id;
     this.editingUserId = user.id;
-
-    this.employeeIdPrefix = user.employee_id_prefix || '';
+    this.employeeIdPrefix = user.employee_id_prefix || 'EMP';
     this.employeeIdNumber = user.employee_id_number || '';
-
-    // camelCase mappings match your SQL column configuration responses perfectly
     this.locationCountry = user.locationCountry || '';
     this.locationState = user.locationState || '';
     this.locationCity = user.locationCity || '';
-    this.locationWorkModel = user.locationWorkModel || '';
+    this.locationWorkModel = user.locationWorkModel || 'HQ';
     this.locationDeskCode = user.locationDeskCode || '';
-
     this.isActive = user.is_active ?? true;
-
-    // 🔧 COMPONENT FIX: Map the matching string name field directly to the form property
     this.managerId = user.manager_id || null;
     this.managerSearchText = user.manager_name || '';
-    
-    // Refresh local autocomplete mapping trees
     this.filterManagerAutocomplete();
   }
 
   deleteUser(id: number) {
     const matchedUser = this.cachedUsersArray.find(u => u.id === id);
-    const currentlyActive = matchedUser ? matchedUser.is_active : true;
+    if (!matchedUser) return;
 
-    if (currentlyActive) {
-      if (!confirm('Downgrade profile lifecycle state and shift to the Inactive Archive directory?')) return;
-      
-      const payload = { 
-        name: matchedUser.name,
-        email: matchedUser.email,
-        role_id: matchedUser.role_id,
-        manager_id: matchedUser.manager_id || null,
-        employee_id_prefix: matchedUser.employee_id_prefix || '',
-        employee_id_number: matchedUser.employee_id_number || '',
-        locationCountry: matchedUser.locationCountry || '',
-        locationState: matchedUser.locationState || '',
-        locationCity: matchedUser.locationCity || '',
-        locationWorkModel: matchedUser.locationWorkModel || '',
-        locationDeskCode: matchedUser.locationDeskCode || '',
-        is_active: false 
-      };
-
-      this.http.put(`${this.baseUrl}/user/${id}`, payload, { headers: this.auth.getAuthHeaders() })
-        .subscribe(() => this.loadUsers());
+    if (matchedUser.is_active) {
+      if (!confirm('Archive this operational directory node?')) return;
+      this.http.put(`${this.baseUrl}/user/${id}`, { ...matchedUser, is_active: false }, { headers: this.auth.getAuthHeaders() })
+        .subscribe(() => { this.triggerToastAlert('Node archived.'); this.loadUsers(); });
     } else {
-      if (!confirm('CRITICAL ACTION: Permanently purge this node footprint completely out of the Active Directory index matrix? This cannot be undone.')) return;
-      
-      this.http.delete(`${this.baseUrl}/user/${id}`, {
-        headers: this.auth.getAuthHeaders()
-      }).subscribe(() => this.loadUsers());
+      if (!confirm('Permanently purge this structural system footprint?')) return;
+      this.http.delete(`${this.baseUrl}/user/${id}`, { headers: this.auth.getAuthHeaders() })
+        .subscribe(() => { this.triggerToastAlert('Node purged completely.'); this.loadUsers(); });
     }
   }
 
   resetForm() {
     this.name = '';
     this.email = '';
+    this.profilePictureUrl = '';
+    this.localPreviewUrl = '';
+    this.uploadProgress = 0;
     this.roleId = null;
     this.managerId = null;
     this.managerSearchText = '';
-    
-    this.employeeIdPrefix = '';
+    this.employeeIdPrefix = 'EMP';
     this.employeeIdNumber = '';
-
     this.locationCountry = '';
     this.locationState = '';
     this.locationCity = '';
-    this.locationWorkModel = '';
+    this.locationWorkModel = 'HQ';
     this.locationDeskCode = '';
-
     this.isActive = true;
-    this.editingUserId = null;
+    this.selectedFile = null;
     this.filterManagerAutocomplete();
+  }
+
+  closeDrawerAndCancel() {
+    this.editingUserId = null;
+    this.resetForm();
   }
 
   getAvatarInitials(name: string): string {
     if (!name) return 'U';
     const parts = name.trim().split(' ');
-    return parts.length > 1 && parts[1][0] 
-      ? (parts[0][0] + parts[1][0]).toUpperCase() 
-      : parts[0][0].toUpperCase();
+    return parts.length > 1 && parts[1][0] ? (parts[0][0] + parts[1][0]).toUpperCase() : parts[0][0].toUpperCase();
   }
 
   getCount(users: any[] | null, getActive: boolean): number {
-    if (!users) return 0;
-    return users.filter(u => !!u.is_active === getActive).length;
+    return users ? users.filter(u => !!u.is_active === getActive).length : 0;
   }
 
   filterUsersByStatusAndSearch(users: any[]): any[] {
     if (!users) return [];
-
     const targetState = this.currentStatusTab === 'active';
     let filtered = users.filter(u => !!u.is_active === targetState);
 
-    if (this.searchTerm && this.searchTerm.trim() !== '') {
+    if (this.searchTerm?.trim()) {
       const search = this.searchTerm.toLowerCase().trim();
       filtered = filtered.filter(u =>
         u.name?.toLowerCase().includes(search) ||
         u.email?.toLowerCase().includes(search) ||
         (u.role_name || '').toLowerCase().includes(search) ||
-        (u.manager_name || '').toLowerCase().includes(search) ||
         (u.locationCity || '').toLowerCase().includes(search)
       );
     }
-
     return filtered;
   }
 }

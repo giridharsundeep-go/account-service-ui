@@ -35,7 +35,7 @@ export class AuthService {
   setSession(data: { user: any; token: string }) {
     if (!this.isBrowser()) return;
 
-    const expiry = new Date().getTime() + (15 * 60 * 1000);
+    const expiry = new Date().getTime() + (15 * 60 * 100000);
     console.log(data)
     localStorage.setItem('token', data.token);
     localStorage.setItem('user', JSON.stringify(data.user.id));

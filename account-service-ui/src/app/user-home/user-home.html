@@ -1,85 +1,116 @@
 <main class="profile-page">
 
+  <!-- 🔝 TOP HEADER & STICKY NAVIGATION (Google Developers Style) -->
+  <header class="top-header-wrapper">
+    
+    <!-- Tier 1: Main Header Toolbar -->
     <mat-toolbar class="toolbar">
-        <span style="color: black;font-weight: bold;font-size: 20px;">Greatley Poshley</span>
-        <span class="spacer"></span>
+      <div class="brand">
+        <span class="brand-title">Greatley Poshley</span>
+      </div>
 
-        <button mat-icon-button>
-            <mat-icon>settings</mat-icon>
+      <nav class="top-nav">
+      <div class="nav-container">
+        
+        <button 
+          class="nav-item" 
+          [class.active]="activeMenu === 'create'" 
+          (click)="setActive('create')">
+          <mat-icon>add_business</mat-icon>
+          <span>Organisations</span>
         </button>
+
+        <button 
+          class="nav-item" 
+          [class.active]="activeMenu === 'dashboard'" 
+          (click)="setActive('dashboard')">
+          <mat-icon>dashboard</mat-icon>
+          <span>Dashboard</span>
+        </button>
+
+        <button 
+          class="nav-item" 
+          [class.active]="activeMenu === 'roles'" 
+          (click)="setActive('roles')">
+          <mat-icon>badge</mat-icon>
+          <span>Roles</span>
+        </button>
+
+        <button 
+          class="nav-item" 
+          [class.active]="activeMenu === 'users'" 
+          (click)="setActive('users')">
+          <mat-icon>person</mat-icon>
+          <span>Users</span>
+        </button>
+
+        <button 
+          class="nav-item" 
+          [class.active]="activeMenu === 'teams'" 
+          (click)="setActive('teams')">
+          <mat-icon>groups</mat-icon>
+          <span>Teams</span>
+        </button>
+
+        <button 
+          class="nav-item" 
+          [class.active]="activeMenu === 'products'" 
+          (click)="setActive('products')">
+          <mat-icon>inventory_2</mat-icon>
+          <span>Products</span>
+        </button>
+
+        <button 
+          class="nav-item" 
+          [class.active]="activeMenu === 'projects'" 
+          (click)="setActive('projects')">
+          <mat-icon>folder</mat-icon>
+          <span>Projects</span>
+        </button>
+
+        <button 
+          class="nav-item" 
+          [class.active]="activeMenu === 'epics'" 
+          (click)="setActive('epics')">
+          <mat-icon>layers</mat-icon>
+          <span>Epics & Backlogs</span>
+        </button>
+
+      </div>
+    </nav>
+
+      <span class="spacer"></span>
+
+      <!-- User Profile Header Summary -->
+      <div class="side-user">
+        <div class="mini-avatar">
+          {{ user.name?.charAt(0) }}
+        </div>
+        <div class="user-details">
+          <div class="mini-name">{{ user.name }}</div>
+        </div>
+      </div>
+
+      <button mat-icon-button class="settings-btn">
+        <mat-icon>settings</mat-icon>
+      </button>
     </mat-toolbar>
 
-    <section class="main-layout">
+    
+  </header>
 
-        <aside class="side-panel" style="padding-top: 40px;">
-
-            <div class="side-user">
-                <div class="mini-avatar">
-                    {{ user.name?.charAt(0) }}
-                </div>
-                <div>
-                    <div class="mini-name">{{ user.name }}</div>
-                    <div class="mini-email">{{ user.email }}</div>
-                </div>
-            </div>
-
-            <div class="side-section">
-                <p class="side-title">Applications</p>
-
-                <div class="side-item" [class.active]="activeMenu==='create'" (click)="setActive('create')">
-                    <mat-icon>add_business</mat-icon>
-                    <span>Organisations</span>
-                </div>
-
-                <div class="side-item" [class.active]="activeMenu==='dashboard'" (click)="setActive('dashboard')">
-                    <mat-icon>dashboard</mat-icon>
-                    <span>Dashboard</span>
-                </div>
-
-                <div class="side-item" [class.active]="activeMenu==='roles'" (click)="setActive('roles')">
-                    <mat-icon>badge</mat-icon>
-                    <span>Roles</span>
-                </div>
-
-                <div class="side-item" [class.active]="activeMenu==='users'" (click)="setActive('users')">
-                    <mat-icon>person</mat-icon>
-                    <span>Users</span>
-                </div>
-
-                <div class="side-item" [class.active]="activeMenu==='teams'" (click)="setActive('teams')">
-                    <mat-icon>groups</mat-icon>
-                    <span>Teams</span>
-                </div>
-
-                <div class="side-item" [class.active]="activeMenu==='products'" (click)="setActive('products')">
-                    <mat-icon>inventory_2</mat-icon>
-                    <span>Products</span>
-                </div>
-                <div class="side-item" [class.active]="activeMenu==='projects'" (click)="setActive('projects')">
-                    <mat-icon>folder</mat-icon>
-                    <span> Projects</span>
-                </div>
-            
-                <div class="side-item" [class.active]="activeMenu==='epics'" (click)="setActive('epics')">
-                    <mat-icon>inventory_2</mat-icon>
-                    <span> Epics & Backlogs </span>
-                </div>
-
-            </div>
-
-        </aside>
-
-        <div class="content-area">
-            <app-organisation *ngIf="activeMenu === 'create'"></app-organisation>
-            <app-dashboard *ngIf="activeMenu === 'dashboard'"></app-dashboard>
-            <app-roles *ngIf="activeMenu === 'roles'"></app-roles>
-            <app-users *ngIf="activeMenu === 'users'"></app-users>
-            <app-teams *ngIf="activeMenu === 'teams'"></app-teams>
-            <app-products *ngIf="activeMenu === 'products'"></app-products>
-            <app-projects *ngIf="activeMenu === 'projects'"></app-projects>
-            <app-epics *ngIf="activeMenu === 'epics'"> </app-epics>
-        </div>
-
-    </section>
+  <!-- 📄 MAIN CONTENT AREA -->
+  <section class="main-layout">
+    <div class="content-area">
+      <app-organisation *ngIf="activeMenu === 'create'"></app-organisation>
+      <app-dashboard *ngIf="activeMenu === 'dashboard'"></app-dashboard>
+      <app-roles *ngIf="activeMenu === 'roles'"></app-roles>
+      <app-users *ngIf="activeMenu === 'users'"></app-users>
+      <app-teams *ngIf="activeMenu === 'teams'"></app-teams>
+      <app-products *ngIf="activeMenu === 'products'"></app-products>
+      <app-projects *ngIf="activeMenu === 'projects'"></app-projects>
+      <app-epics *ngIf="activeMenu === 'epics'"></app-epics>
+    </div>
+  </section>
 
 </main>
