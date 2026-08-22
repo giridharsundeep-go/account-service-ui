@@ -11,7 +11,6 @@
     
     <!-- LEFT GROUP: Project Dropdown & View Switcher -->
     <div class="toolbar-left-group">
-      <!-- Project Dropdown -->
       <mat-form-field appearance="outline" class="filter-pill-field project-select-field">
         <mat-label>Project</mat-label>
         <mat-select [ngModel]="selectedProjectId()" (ngModelChange)="onProjectChange($event)">
@@ -21,7 +20,6 @@
 
       <div class="divider-v"></div>
 
-      <!-- View Switcher -->
       <div class="segmented-tabs">
         <button class="tab-btn" [class.active]="activeTab() === 'TREE'" (click)="activeTab.set('TREE')">
           <i class="material-icons">format_list_bulleted</i> Structure View
@@ -34,8 +32,6 @@
 
     <!-- RIGHT GROUP: Filter Toggle, Quick Add Actions, Upload/Download -->
     <div class="toolbar-right-group">
-      
-      <!-- Filter Toggle Icon Button -->
       <button class="gp-button-light inline-btn icon-only" 
               (click)="showFilters.set(!showFilters())" 
               [class.active]="showFilters()" 
@@ -45,30 +41,25 @@
 
       <div class="divider-v"></div>
 
-      <!-- Quick Add Actions: Epic+, Story+, Task+ -->
       <button class="gp-button header-btn" (click)="openCreateEpic()">+ Epic</button>
       <button class="gp-button-light action-btn story-btn" (click)="openCreateStory()">+ Story</button>
       <button class="gp-button-light action-btn task-btn" (click)="openCreateTask()">+ Task</button>
 
       <div class="divider-v"></div>
 
-      <!-- Upload / Download Actions -->
       <label class="gp-button-light inline-btn icon-only file-import-label" title="Import CSV Data">
         <i class="material-icons">upload</i>
-        <input type="file" (change)="$event" accept=".csv" style="display:none;" />
+        <input type="file" (change)="triggerCSVImport($event)" accept=".csv" style="display:none;" />
       </label>
-      <button class="gp-button-light inline-btn icon-only" title="Export Workspace CSV">
+      <button class="gp-button-light inline-btn icon-only" (click)="exportToCSV()" title="Export Workspace CSV">
         <i class="material-icons">download</i>
       </button>
-
     </div>
   </div>
 
   <!-- EXPANDABLE FILTERS PANEL -->
   <div class="filter-card-bar top-unfied-card" *ngIf="showFilters()">
-    <div class="filter-grid-secondary" style="border-top: none; padding-top: 0; display: flex; flex-wrap: wrap; gap: 12px; width: 100%; align-items: center;">
-      
-      <!-- Search Input Field -->
+    <div class="filter-grid-secondary">
       <mat-form-field appearance="outline" class="filter-pill-field search-filter-field">
         <mat-label>Search keyword or code...</mat-label>
         <input matInput 
@@ -78,7 +69,6 @@
                placeholder="Press '/' to focus..." />
       </mat-form-field>
 
-      <!-- Team Filter -->
       <mat-form-field appearance="outline" class="filter-pill-field">
         <mat-label>Team</mat-label>
         <mat-select [ngModel]="selectedTeamFilter()" (ngModelChange)="onTeamFilterChange($event)">
@@ -87,7 +77,6 @@
         </mat-select>
       </mat-form-field>
 
-      <!-- Sprint Cycle Filter -->
       <mat-form-field appearance="outline" class="filter-pill-field">
         <mat-label>Sprint Cycle</mat-label>
         <mat-select [ngModel]="selectedSprintFilter()" (ngModelChange)="selectedSprintFilter.set($event)">
@@ -96,7 +85,6 @@
         </mat-select>
       </mat-form-field>
 
-      <!-- Assignee Filter -->
       <mat-form-field appearance="outline" class="filter-pill-field">
         <mat-label>Assignee</mat-label>
         <mat-select [ngModel]="selectedAssigneeFilter()" (ngModelChange)="selectedAssigneeFilter.set($event)">
@@ -105,7 +93,6 @@
         </mat-select>
       </mat-form-field>
 
-      <!-- Priority Filter -->
       <mat-form-field appearance="outline" class="filter-pill-field">
         <mat-label>Priority</mat-label>
         <mat-select [ngModel]="selectedPriorityFilter()" (ngModelChange)="selectedPriorityFilter.set($event)">
@@ -114,7 +101,6 @@
         </mat-select>
       </mat-form-field>
 
-      <!-- Status Filter -->
       <mat-form-field appearance="outline" class="filter-pill-field">
         <mat-label>Status</mat-label>
         <mat-select [ngModel]="selectedStatusFilter()" (ngModelChange)="selectedStatusFilter.set($event)">
@@ -122,10 +108,8 @@
           <mat-option *ngFor="let st of statusPipeline" [value]="st">{{ st }}</mat-option>
         </mat-select>
       </mat-form-field>
-      
-      <div style="display:flex; align-items:flex-end;">
-         <button class="gp-button-light action-btn clear-btn" (click)="clearAllFilters()" title="Reset Filters" style="margin-bottom: 22px;">Clear</button>
-      </div>
+
+      <button class="gp-button-light action-btn danger" (click)="clearAllFilters()" title="Reset Filters">Clear</button>
     </div>
   </div>
 
@@ -148,7 +132,7 @@
       </mat-form-field>
 
       <button class="gp-button-light action-btn danger" (click)="bulkDeleteSelected()">
-        <i class="material-icons">delete</i> Delete Selected
+        <i class="material-icons">delete</i> Delete
       </button>
       <button class="close-btn" (click)="clearSelection()">✕</button>
     </div>
@@ -158,7 +142,6 @@
   <div class="sprint-cycles-container" *ngIf="activeTab() === 'TREE'" cdkDropListGroup>
     <div *ngFor="let cycleGroup of sprintTreeGroups()" class="sprint-cycle-block">
 
-      <!-- SPRINT HEADER WITH EXPAND / COLLAPSE -->
       <div class="sprint-cycle-header" [class.has-bottom-margin]="isSprintExpanded(cycleGroup.sprint.id)">
         <div class="sprint-cycle-title">
           <span class="google-chevron" [class.open]="isSprintExpanded(cycleGroup.sprint.id)"
@@ -175,21 +158,30 @@
 
         <div class="sprint-header-actions">
           <span class="pts-capacity-badge">Points: <strong>{{ cycleGroup.totalPoints }}</strong> / {{ cycleGroup.sprint.capacity || 30 }}</span>
+          <button *ngIf="cycleGroup.sprint.status === 'FUTURE' && cycleGroup.sprint.id !== 0"
+            class="gp-button-light inline-btn" (click)="startSprint(cycleGroup.sprint)">Start Sprint</button>
+          <button *ngIf="cycleGroup.sprint.status === 'ACTIVE' && cycleGroup.sprint.id !== 0"
+            class="gp-button-light inline-btn" (click)="completeSprint(cycleGroup.sprint)">Complete Sprint</button>
           <div class="sprint-cycle-count">{{ cycleGroup.epics.length }} Epics</div>
         </div>
       </div>
 
-      <!-- TABLE CONTAINER -->
       <ng-container *ngIf="isSprintExpanded(cycleGroup.sprint.id)">
         <div class="google-card-table" *ngIf="cycleGroup.epics.length > 0; else emptySprint">
+
+          <!-- =========================================================
+               TABLE HEADER
+               Order:
+               Chevron | Select | Drag | Title | Type & Code | Status |
+               Allocated Issues & Test cases | Assignee | Reporter | Actions
+          ========================================================== -->
           <div class="table-header-row">
             <span></span>
             <mat-checkbox (change)="toggleSelectAllForSprint($event, cycleGroup)"></mat-checkbox>
             <span>Drag</span>
+            <span>Title</span>
             <span>Type & Code</span>
             <span>Status</span>
-            <span>Title / Name</span>
-            <span>Points</span>
             <span>Assignee</span>
             <span>Reporter</span>
             <span>Actions</span>
@@ -200,133 +192,345 @@
 
             <ng-container *ngFor="let epic of cycleGroup.epics">
 
-              <!-- EPIC ROW -->
+              <!-- =====================================================
+                   EPIC ROW
+              ====================================================== -->
               <div class="table-row epic-row" cdkDrag [cdkDragData]="epic">
-                <span class="google-chevron" [class.open]="epic.expanded" (click)="toggleEpicExpand(epic)">▶</span>
+
+                <!-- Chevron -->
+                <span class="google-chevron" [class.open]="epic.expanded"
+                  (click)="toggleEpicExpand(epic)">▶</span>
+
+                <!-- Select -->
                 <mat-checkbox [checked]="isItemSelected('EPIC', epic.id)"
                   (change)="toggleItemSelection('EPIC', epic.id)"></mat-checkbox>
-                <span class="drag-handle" cdkDragHandle><i class="material-icons">drag_indicator</i></span>
-                <span><span class="chip-tag epic">EPIC</span> {{ epic.epic_code }}</span>
 
+                <!-- Drag -->
+                <span class="drag-handle" cdkDragHandle>
+                  <i class="material-icons">drag_indicator</i>
+                </span>
+
+                <!-- TITLE -->
+                <span class="cell-title clickable-title" (click)="openViewEpic(epic)">
+                  {{ epic.name }}
+                </span>
+
+                <!-- TYPE & CODE -->
+                <span>
+                  <span class="chip-tag epic">EPIC</span>
+                  {{ epic.epic_code }}
+                </span>
+
+                <!-- STATUS -->
                 <span>
                   <select class="inline-status-select" [ngModel]="epic.status"
                     (ngModelChange)="updateEpicStatus(epic, $event)">
-                    <option *ngFor="let st of statusPipeline" [value]="st">{{ st }}</option>
+                    <option *ngFor="let st of statusPipeline" [value]="st">
+                      {{ st }}
+                    </option>
                   </select>
                 </span>
 
-                <span class="cell-title clickable-title" (click)="openViewEpic(epic)">{{ epic.name }}</span>
-                <span>—</span>
+               
 
-                <!-- Assignee -->
+                <!-- ASSIGNEE -->
                 <span class="user-cell">
                   <ng-container *ngIf="(epic.assignee_user_id | resolveUser: userMap()) as u">
-                    <div class="avatar-circle micro"><img *ngIf="u.avatarUrl" [src]="u.avatarUrl" /><span
-                        *ngIf="!u.avatarUrl">{{ getUserInitials(u.name) }}</span></div>
+                    <div class="avatar-circle micro">
+                      <img *ngIf="u.avatarUrl" [src]="u.avatarUrl" />
+                      <span *ngIf="!u.avatarUrl">
+                        {{ getUserInitials(u.name) }}
+                      </span>
+                    </div>
                     <span class="user-name">{{ u.name }}</span>
                   </ng-container>
-                  <span *ngIf="!epic.assignee_user_id" class="role-badge">Unassigned</span>
+
+                  <span *ngIf="!epic.assignee_user_id" class="role-badge">
+                    Unassigned
+                  </span>
                 </span>
 
-                <!-- Reporter -->
+                <!-- REPORTER -->
                 <span class="reporter-cell">
                   <ng-container *ngIf="(epic.reporter_user_id | resolveUser: userMap()) as r">
-                    <div class="avatar-circle micro reporter-avatar"><img *ngIf="r.avatarUrl"
-                        [src]="r.avatarUrl" /><span *ngIf="!r.avatarUrl">{{ getUserInitials(r.name) }}</span></div>
+                    <div class="avatar-circle micro reporter-avatar">
+                      <img *ngIf="r.avatarUrl" [src]="r.avatarUrl" />
+                      <span *ngIf="!r.avatarUrl">
+                        {{ getUserInitials(r.name) }}
+                      </span>
+                    </div>
                     <span class="user-name">{{ r.name }}</span>
                   </ng-container>
                 </span>
 
+                <!-- ACTIONS -->
                 <span class="actions-cell">
-                  <button class="gp-button-light inline-btn" (click)="openCreateStory(epic)" title="Add Child Story">+ Story</button>
-                  <button class="gp-button-light inline-btn icon-only" (click)="openViewEpic(epic)"><i class="material-icons">edit</i></button>
+                  <button class="gp-button-light inline-btn"
+                    (click)="openCreateStory(epic)">
+                    + Story
+                  </button>
+
+                  <button class="gp-button-light inline-btn icon-only"
+                    (click)="openViewEpic(epic)"
+                    title="Edit Epic">
+                    <i class="material-icons">edit</i>
+                  </button>
                 </span>
               </div>
 
-              <!-- STORIES UNDER EPIC -->
+              <!-- =====================================================
+                   STORIES UNDER EPIC
+              ====================================================== -->
               <ng-container *ngIf="epic.expanded">
                 <ng-container *ngFor="let story of epic.stories">
 
+                  <!-- STORY ROW -->
                   <div class="table-row story-row indent-story">
+
+                    <!-- Chevron -->
                     <span class="google-chevron" [class.open]="story.expanded"
                       (click)="toggleStoryExpand(story)">▶</span>
+
+                    <!-- Select -->
                     <mat-checkbox [checked]="isItemSelected('STORY', story.id)"
                       (change)="toggleItemSelection('STORY', story.id)"></mat-checkbox>
-                    <span class="drag-handle"><i class="material-icons">subdirectory_arrow_right</i></span>
-                    <span><span class="chip-tag story">STORY</span> #{{ story.id }}</span>
 
+                    <!-- Drag / hierarchy indicator -->
+                    <span class="drag-handle">
+                      <i class="material-icons">subdirectory_arrow_right</i>
+                    </span>
+
+                    <!-- TITLE -->
+                    <span class="cell-title clickable-title"
+                      (click)="openViewStory(story)">
+                      {{ story.title }}
+                    </span>
+
+                    <!-- TYPE & CODE -->
+                    <span>
+                      <span class="chip-tag story">STORY</span>
+                      #{{ story.id }}
+                    </span>
+
+                    <!-- STATUS -->
                     <span>
                       <select class="inline-status-select" [ngModel]="story.status"
                         (ngModelChange)="updateStoryStatus(story, $event)">
-                        <option *ngFor="let st of statusPipeline" [value]="st">{{ st }}</option>
+                        <option *ngFor="let st of statusPipeline" [value]="st">
+                          {{ st }}
+                        </option>
                       </select>
                     </span>
 
-                    <span class="cell-title clickable-title" (click)="openViewStory(story)">{{ story.title }}</span>
-                    <span><span class="pts-pill">{{ story.story_points }} pts</span></span>
+                    <!-- ALLOCATED ISSUES & TEST CASES -->
+                    <span class="allocated-pills-cell">
 
-                    <span class="user-cell">
-                      <ng-container *ngIf="(story.assignee_user_id | resolveUser: userMap()) as u">
-                        <div class="avatar-circle micro"><img *ngIf="u.avatarUrl" [src]="u.avatarUrl" /><span
-                            *ngIf="!u.avatarUrl">{{ getUserInitials(u.name) }}</span></div>
-                        <span class="user-name">{{ u.name }}</span>
-                      </ng-container>
-                      <span *ngIf="!story.assignee_user_id" class="role-badge">Unassigned</span>
+                      <!-- Issues -->
+                      <span class="allocation-pill issue-pill"
+                        *ngFor="let issue of story.issues"
+                        [title]="issue.title"
+                        [class.blocking-issue]="issue.isBlocking">
+                        <i class="material-icons">
+                          {{ issue.isBlocking ? 'block' : 'bug_report' }}
+                        </i>
+                        <span class="blocked-tag" *ngIf="issue.isBlocking">
+                          BLOCKED BY:
+                        </span>
+                        {{ issue.issueCode || ('#' + issue.id) }}
+                        <i class="material-icons remove-pill-btn"
+                          (click)="removeIssueFromItem(story, issue, 'STORY'); $event.stopPropagation();"
+                          title="Remove issue">
+                          close
+                        </i>
+                      </span>
+
+                      <!-- View Test Cases -->
+                      <button
+                        *ngIf="story.testCases?.length"
+                        type="button"
+                        class="view-testcases-btn"
+                        (click)="openTestCasesPopup(story, 'STORY'); $event.stopPropagation()"
+                        title="View test cases for this Story">
+                        <i class="material-icons">visibility</i>
+                        <span>View Test Cases</span>
+                        <span class="view-testcases-count">
+                          {{ story.testCases?.length }}
+                        </span>
+                      </button>
+
+                      <span
+                        *ngIf="(!story.issues || story.issues.length === 0) && (!story.testCases || story.testCases.length === 0)"
+                        class="muted-text">
+                        —
+                      </span>
                     </span>
 
+                    <!-- ASSIGNEE -->
+                    <span class="user-cell">
+                      <ng-container *ngIf="(story.assignee_user_id | resolveUser: userMap()) as u">
+                        <div class="avatar-circle micro">
+                          <img *ngIf="u.avatarUrl" [src]="u.avatarUrl" />
+                          <span *ngIf="!u.avatarUrl">
+                            {{ getUserInitials(u.name) }}
+                          </span>
+                        </div>
+                        <span class="user-name">{{ u.name }}</span>
+                      </ng-container>
+
+                      <span *ngIf="!story.assignee_user_id" class="role-badge">
+                        Unassigned
+                      </span>
+                    </span>
+
+                    <!-- REPORTER -->
                     <span class="reporter-cell">
                       <ng-container *ngIf="(story.reporter_user_id | resolveUser: userMap()) as r">
-                        <div class="avatar-circle micro reporter-avatar"><img *ngIf="r.avatarUrl"
-                            [src]="r.avatarUrl" /><span *ngIf="!r.avatarUrl">{{ getUserInitials(r.name) }}</span></div>
+                        <div class="avatar-circle micro reporter-avatar">
+                          <img *ngIf="r.avatarUrl" [src]="r.avatarUrl" />
+                          <span *ngIf="!r.avatarUrl">
+                            {{ getUserInitials(r.name) }}
+                          </span>
+                        </div>
                         <span class="user-name">{{ r.name }}</span>
                       </ng-container>
                     </span>
 
+                    <!-- ACTIONS -->
                     <span class="actions-cell">
-                      <button class="gp-button-light inline-btn" (click)="openCreateTask(story)" title="Add Task">+ Task</button>
-                      <button class="gp-button-light inline-btn icon-only" (click)="openViewStory(story)"><i class="material-icons">edit</i></button>
+                      <button class="gp-button-light inline-btn"
+                        (click)="openCreateTask(story)">
+                        + Task
+                      </button>
+
+                      <button class="gp-button-light inline-btn icon-only"
+                        (click)="openViewStory(story)"
+                        title="Edit Story">
+                        <i class="material-icons">edit</i>
+                      </button>
                     </span>
                   </div>
 
-                  <!-- TASKS UNDER STORY -->
+                  <!-- ===================================================
+                       TASKS UNDER STORY
+                  ==================================================== -->
                   <ng-container *ngIf="story.expanded">
-                    <div *ngFor="let task of story.tasks" class="table-row task-row indent-task">
+                    <div *ngFor="let task of story.tasks"
+                      class="table-row task-row indent-task">
+
+                      <!-- No chevron for task -->
                       <span></span>
+
+                      <!-- Select -->
                       <mat-checkbox [checked]="isItemSelected('TASK', task.id)"
                         (change)="toggleItemSelection('TASK', task.id)"></mat-checkbox>
-                      <span class="drag-handle"><i class="material-icons">notes</i></span>
-                      <span><span class="chip-tag task">TASK</span> #{{ task.id }}</span>
 
+                      <!-- Drag / hierarchy indicator -->
+                      <span class="drag-handle">
+                        <i class="material-icons">notes</i>
+                      </span>
+
+                      <!-- TITLE -->
+                      <span class="cell-title clickable-title"
+                        (click)="openViewTask(task)">
+                        {{ task.title }}
+                      </span>
+
+                      <!-- TYPE & CODE -->
+                      <span>
+                        <span class="chip-tag task">TASK</span>
+                        #{{ task.id }}
+                      </span>
+
+                      <!-- STATUS -->
                       <span>
                         <select class="inline-status-select" [ngModel]="task.status"
                           (ngModelChange)="updateTaskStatus(task, $event)">
-                          <option *ngFor="let st of statusPipeline" [value]="st">{{ st }}</option>
+                          <option *ngFor="let st of statusPipeline" [value]="st">
+                            {{ st }}
+                          </option>
                         </select>
                       </span>
 
-                      <span class="cell-title clickable-title" (click)="openViewTask(task)">{{ task.title }}</span>
-                      <span>—</span>
+                      <!-- ALLOCATED ISSUES & TEST CASES -->
+                      <span class="allocated-pills-cell">
 
-                      <span class="user-cell">
-                        <ng-container *ngIf="(task.assignee_user_id | resolveUser: userMap()) as u">
-                          <div class="avatar-circle micro"><img *ngIf="u.avatarUrl" [src]="u.avatarUrl" /><span
-                              *ngIf="!u.avatarUrl">{{ getUserInitials(u.name) }}</span></div>
-                          <span class="user-name">{{ u.name }}</span>
-                        </ng-container>
-                        <span *ngIf="!task.assignee_user_id" class="role-badge">Unassigned</span>
+                        <!-- Issues -->
+                        <span class="allocation-pill issue-pill"
+                          *ngFor="let issue of task.issues"
+                          [title]="issue.title"
+                          [class.blocking-issue]="issue.isBlocking">
+                          <i class="material-icons">
+                            {{ issue.isBlocking ? 'block' : 'bug_report' }}
+                          </i>
+                          <span class="blocked-tag" *ngIf="issue.isBlocking">
+                            BLOCKED BY:
+                          </span>
+                          {{ issue.issueCode || ('#' + issue.id) }}
+                          <i class="material-icons remove-pill-btn"
+                            (click)="removeIssueFromItem(task, issue, 'TASK'); $event.stopPropagation();"
+                            title="Remove issue">
+                            close
+                          </i>
+                        </span>
+
+                        <!-- View Test Cases -->
+                        <button
+                          *ngIf="task.testCases?.length"
+                          type="button"
+                          class="view-testcases-btn"
+                          (click)="openTestCasesPopup(task, 'TASK'); $event.stopPropagation()"
+                          title="View test cases for this Task">
+                          <i class="material-icons">visibility</i>
+                          <span>View Test Cases</span>
+                          <span class="view-testcases-count">
+                            {{ task.testCases?.length }}
+                          </span>
+                        </button>
+
+                        <span
+                          *ngIf="(!task.issues || task.issues.length === 0) && (!task.testCases || task.testCases.length === 0)"
+                          class="muted-text">
+                          —
+                        </span>
                       </span>
 
+                      <!-- ASSIGNEE -->
+                      <span class="user-cell">
+                        <ng-container *ngIf="(task.assignee_user_id | resolveUser: userMap()) as u">
+                          <div class="avatar-circle micro">
+                            <img *ngIf="u.avatarUrl" [src]="u.avatarUrl" />
+                            <span *ngIf="!u.avatarUrl">
+                              {{ getUserInitials(u.name) }}
+                            </span>
+                          </div>
+                          <span class="user-name">{{ u.name }}</span>
+                        </ng-container>
+
+                        <span *ngIf="!task.assignee_user_id" class="role-badge">
+                          Unassigned
+                        </span>
+                      </span>
+
+                      <!-- REPORTER -->
                       <span class="reporter-cell">
                         <ng-container *ngIf="(task.reporter_user_id | resolveUser: userMap()) as r">
-                          <div class="avatar-circle micro reporter-avatar"><img *ngIf="r.avatarUrl"
-                              [src]="r.avatarUrl" /><span *ngIf="!r.avatarUrl">{{ getUserInitials(r.name) }}</span>
+                          <div class="avatar-circle micro reporter-avatar">
+                            <img *ngIf="r.avatarUrl" [src]="r.avatarUrl" />
+                            <span *ngIf="!r.avatarUrl">
+                              {{ getUserInitials(r.name) }}
+                            </span>
                           </div>
                           <span class="user-name">{{ r.name }}</span>
                         </ng-container>
                       </span>
 
+                      <!-- ACTIONS -->
                       <span class="actions-cell">
-                        <button class="gp-button-light inline-btn icon-only" (click)="openViewTask(task)"><i class="material-icons">edit</i></button>
+                        <button class="gp-button-light inline-btn icon-only"
+                          (click)="openViewTask(task)"
+                          title="Edit Task">
+                          <i class="material-icons">edit</i>
+                        </button>
                       </span>
                     </div>
                   </ng-container>
@@ -346,14 +550,11 @@
           </div>
         </ng-template>
       </ng-container>
-
     </div>
   </div>
 
   <!-- KANBAN BOARD VIEW -->
   <div class="kanban-board-container" *ngIf="activeTab() === 'KANBAN'">
-    
-    <!-- KANBAN SPRINT HEADING & USER AVATARS BAR -->
     <div class="kanban-sprint-header-card top-unfied-card" *ngIf="displayedKanbanSprint() as currentSp">
       <div class="kanban-header-left">
         <div class="sprint-cycle-title">
@@ -393,7 +594,6 @@
     </div>
 
     <div class="kanban-grid" cdkDropListGroup>
-
       <div class="kanban-column" *ngFor="let status of statusPipeline">
         <div class="kanban-column-header">
           <span class="status-badge" [ngClass]="status.toLowerCase()">{{ status }}</span>
@@ -403,7 +603,7 @@
         <div class="kanban-card-list" cdkDropList [cdkDropListData]="kanbanItemsByStatus()[status]"
           (cdkDropListDropped)="onKanbanDrop($event, status)">
 
-          <div class="kanban-card" *ngFor="let item of kanbanItemsByStatus()[status]" cdkDrag>
+          <div class="kanban-card" *ngFor="let item of kanbanItemsByStatus()[status]" cdkDrag [cdkDragData]="item">
             <div class="kanban-card-top">
               <span class="chip-tag" [ngClass]="item.type.toLowerCase()">{{ item.type }}</span>
               <span class="item-code">{{ item.code }}</span>
@@ -414,7 +614,22 @@
 
             <div class="kanban-card-title clickable-title" (click)="openEditKanbanItem(item)">{{ item.title }}</div>
 
-            <!-- KANBAN USER BADGE FLEX CONTAINER -->
+            <!-- KANBAN CARD ALLOCATED ISSUES & TEST CASES -->
+            <div class="kanban-card-allocated" *ngIf="(item.issues && item.issues.length > 0) || (item.testCases && item.testCases.length > 0)">
+              <div class="allocated-pills-cell">
+                <span class="allocation-pill issue-pill" *ngFor="let issue of item.issues" [class.blocking-issue]="issue.isBlocking">
+                  <i class="material-icons">{{ issue.isBlocking ? 'block' : 'bug_report' }}</i> 
+                  <span class="blocked-tag" *ngIf="issue.isBlocking">BLOCKED BY:</span>
+                  {{ issue.issueCode || ('#' + issue.id) }}
+                  <i class="material-icons remove-pill-btn" (click)="removeIssueFromItem(item.originalItem, issue, item.type); $event.stopPropagation();">close</i>
+                </span>
+                <span class="allocation-pill testcase-pill" *ngFor="let tc of item.testCases">
+                  <i class="material-icons">playlist_add_check</i> {{ getTestCaseCode(tc) }}
+                  <span class="tc-status-pill" [ngClass]="(tc.executionStatus || 'UNEXECUTED').toLowerCase()">{{ tc.executionStatus || 'PENDING' }}</span>
+                </span>
+              </div>
+            </div>
+
             <div class="kanban-user-badge-row" *ngIf="item.assignee_user_id"
               (click)="filterByUser(item.assignee_user_id)" title="Click to filter by user">
               <ng-container *ngIf="(item.assignee_user_id | resolveUser: userMap()) as assignee">
@@ -441,14 +656,13 @@
           </div>
         </div>
       </div>
-
     </div>
   </div>
 
   <!-- MODALS CONTAINER -->
   <div class="drawer-overlay" *ngIf="activeDrawer() !== 'NONE'" (click)="closeDrawers()">
 
-    <!-- EPIC MODAL -->
+    <!-- EPIC MODAL (Test cases section removed) -->
     <div class="side-drawer" *ngIf="activeDrawer() === 'EPIC'" (click)="$event.stopPropagation()">
       <div class="drawer-header">
         <div class="drawer-header-title">
@@ -482,6 +696,22 @@
           <mat-label>Description</mat-label>
           <textarea matInput [(ngModel)]="currentEpic.description" [disabled]="isReadOnly()" rows="3"></textarea>
         </mat-form-field>
+
+        <div class="form-section-title">Allocated Issues</div>
+        <div class="allocated-details-block">
+          <div class="detail-group">
+            <strong>Allocated Issues:</strong>
+            <div class="pills-container">
+              <span class="allocation-pill issue-pill" *ngFor="let issue of currentEpic.issues" [class.blocking-issue]="issue.isBlocking">
+                <i class="material-icons">{{ issue.isBlocking ? 'block' : 'bug_report' }}</i> 
+                <span class="blocked-tag" *ngIf="issue.isBlocking">BLOCKED BY:</span>
+                {{ issue.issueCode || ('#' + issue.id) }} - {{ issue.title }}
+                <i class="material-icons remove-pill-btn" *ngIf="!isReadOnly()" (click)="removeIssueFromItem(currentEpic, issue, 'EPIC')">close</i>
+              </span>
+              <span *ngIf="!currentEpic.issues || currentEpic.issues.length === 0" class="muted-text">No issues allocated</span>
+            </div>
+          </div>
+        </div>
 
         <div class="form-section-title">Workflow & Ownership</div>
         <div class="form-grid-2col">
@@ -560,13 +790,40 @@
           <textarea matInput [(ngModel)]="currentStory.description" [disabled]="isReadOnly()" rows="3"></textarea>
         </mat-form-field>
 
-        <div class="form-section-title">Planning & Estimation</div>
+        <!-- DISPLAY & ATTACH TEST CASES IN STORY MODAL -->
+        <div class="form-section-title">Allocated Issues & Test Cases</div>
+        <div class="allocated-details-block">
+          <div class="detail-group">
+            <strong>Allocated Issues:</strong>
+            <div class="pills-container">
+              <span class="allocation-pill issue-pill" *ngFor="let issue of currentStory.issues" [class.blocking-issue]="issue.isBlocking">
+                <i class="material-icons">{{ issue.isBlocking ? 'block' : 'bug_report' }}</i> 
+                <span class="blocked-tag" *ngIf="issue.isBlocking">BLOCKED BY:</span>
+                {{ issue.issueCode || ('#' + issue.id) }} - {{ issue.title }}
+                <i class="material-icons remove-pill-btn" *ngIf="!isReadOnly()" (click)="removeIssueFromItem(currentStory, issue, 'STORY')">close</i>
+              </span>
+              <span *ngIf="!currentStory.issues || currentStory.issues.length === 0" class="muted-text">No issues allocated</span>
+            </div>
+          </div>
+        </div>
+        <!-- STORY TEST CASES - VIEW ONLY -->
+        <div class="form-section-title">Test Cases</div>
+        <div class="testcase-view-trigger">
+          <button *ngIf="currentStory.testCases?.length" type="button" class="view-testcases-btn drawer-testcases-btn" (click)="openTestCasesPopup(currentStory, 'STORY'); $event.stopPropagation()">
+            <i class="material-icons">visibility</i> View Test Cases
+            <span class="view-testcases-count">{{ currentStory.testCases?.length }}</span>
+          </button>
+          <span *ngIf="!currentStory.testCases?.length" class="muted-text">No test cases associated with this Story</span>
+        </div>
+
+<div class="form-section-title">Planning & Estimation</div>
         <div class="form-grid-2col">
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Sprint Cycle</mat-label>
             <mat-select [(ngModel)]="currentStory.sprint_id" [disabled]="isReadOnly()">
-              <mat-option *ngFor="let sp of projectSprints()" [value]="sp.id">{{ sp.name }}</mat-option>
-            </mat-select>
+<mat-option *ngFor="let sp of projectSprints()" [value]="sp.id">
+  {{ sp.name }}
+</mat-option>            </mat-select>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
@@ -633,15 +890,41 @@
           <textarea matInput [(ngModel)]="currentTask.description" [disabled]="isReadOnly()" rows="3"></textarea>
         </mat-form-field>
 
-        <div class="form-section-title">Hierarchy & Sprint</div>
+        <!-- DISPLAY & ATTACH TEST CASES IN TASK MODAL -->
+        <div class="form-section-title">Allocated Issues & Test Cases</div>
+        <div class="allocated-details-block">
+          <div class="detail-group">
+            <strong>Allocated Issues:</strong>
+            <div class="pills-container">
+              <span class="allocation-pill issue-pill" *ngFor="let issue of currentTask.issues" [class.blocking-issue]="issue.isBlocking">
+                <i class="material-icons">{{ issue.isBlocking ? 'block' : 'bug_report' }}</i> 
+                <span class="blocked-tag" *ngIf="issue.isBlocking">BLOCKED BY:</span>
+                {{ issue.issueCode || ('#' + issue.id) }} - {{ issue.title }}
+                <i class="material-icons remove-pill-btn" *ngIf="!isReadOnly()" (click)="removeIssueFromItem(currentTask, issue, 'TASK')">close</i>
+              </span>
+              <span *ngIf="!currentTask.issues || currentTask.issues.length === 0" class="muted-text">No issues allocated</span>
+            </div>
+          </div>
+        </div>
+        <!-- TASK TEST CASES - VIEW ONLY -->
+        <div class="form-section-title">Test Cases</div>
+        <div class="testcase-view-trigger">
+          <button *ngIf="currentTask.testCases?.length" type="button" class="view-testcases-btn drawer-testcases-btn" (click)="openTestCasesPopup(currentTask, 'TASK'); $event.stopPropagation()">
+            <i class="material-icons">visibility</i> View Test Cases
+            <span class="view-testcases-count">{{ currentTask.testCases?.length }}</span>
+          </button>
+          <span *ngIf="!currentTask.testCases?.length" class="muted-text">No test cases associated with this Task</span>
+        </div>
+
+<div class="form-section-title">Hierarchy & Sprint</div>
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Parent Story</mat-label>
           <mat-select [(ngModel)]="currentTask.story_id" [disabled]="isReadOnly()">
-            <ng-container *ngFor="let ep of hierarchyTree()">
-              <mat-option *ngFor="let st of ep.stories" [value]="st.id">
-                {{ st.title }} (#{{ st.id }})
-              </mat-option>
-            </ng-container>
+            <mat-option
+              *ngFor="let story of availableStories(); trackBy: trackByStoryId"
+              [value]="story.id">
+              {{ story.title }} (#{{ story.id }})
+            </mat-option>
           </mat-select>
         </mat-form-field>
 
@@ -685,5 +968,30 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- TEST CASE VIEW POPUP -->
+  <div class="testcase-popup-overlay" *ngIf="testCasePopupOpen()" (click)="closeTestCasesPopup()">
+    <div class="testcase-popup" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <div class="testcase-popup-header">
+        <div class="testcase-popup-title-wrap">
+          <div class="testcase-popup-icon"><i class="material-icons">fact_check</i></div>
+          <div><h3>{{ testCasePopupTitle() }}</h3><span>{{ testCasePopupItems().length }} {{ testCasePopupItems().length === 1 ? 'Test Case' : 'Test Cases' }}</span></div>
+        </div>
+        <button type="button" class="testcase-popup-close" (click)="closeTestCasesPopup()"><i class="material-icons">close</i></button>
+      </div>
+      <div class="testcase-popup-body">
+        <div class="testcase-popup-row" *ngFor="let tc of testCasePopupItems(); trackBy: trackByTestCaseId">
+          <div class="testcase-popup-row-icon"><i class="material-icons">playlist_add_check</i></div>
+          <div class="testcase-popup-info"><div class="testcase-popup-code">{{ getTestCaseCode(tc) }}</div><div class="testcase-popup-name">{{ tc.title || tc.name || 'Untitled Test Case' }}</div></div>
+          <span class="tc-status-pill" [ngClass]="(tc.executionStatus || 'UNEXECUTED').toLowerCase()">{{ tc.executionStatus || 'UNEXECUTED' }}</span>
+        </div>
+        <div class="testcase-popup-empty" *ngIf="testCasePopupItems().length === 0">
+          <i class="material-icons">playlist_add_check</i><strong>No test cases found</strong>
+          <span>There are no test cases associated with this {{ testCasePopupType() === 'STORY' ? 'Story' : 'Task' }}.</span>
+        </div>
+      </div>
+      <div class="testcase-popup-footer"><button type="button" class="gp-button-light footer-btn" (click)="closeTestCasesPopup()">Close</button></div>
+    </div>
   </div>
 </div>

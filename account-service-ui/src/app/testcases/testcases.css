@@ -1,0 +1,172 @@
+.main-wrapper {
+  padding: 10px;
+  min-height: 100vh;
+  box-sizing: border-box;
+  background-color: #ffffff;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-left h1 {
+  font-size: 24px;
+  font-weight: 500;
+  margin: 0;
+  color: #1f1f1f;
+}
+
+.count-chip {
+  background-color: #e1e3e1;
+  color: #444746;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.filter-card {
+  margin-bottom: 24px;
+  border-radius: 12px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+.filter-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px !important;
+}
+
+@media (min-width: 960px) {
+  .filter-container {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.search-field {
+  flex: 1;
+  max-width: 440px;
+  margin-bottom: -1.25em;
+}
+
+.dropdown-filters {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.dropdown-filters mat-form-field {
+  margin-bottom: -1.25em;
+  width: 160px;
+}
+
+.table-card {
+  border-radius: 12px !important;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+.full-width-table {
+  width: 100%;
+}
+
+.code-tag {
+  font-family: 'Roboto Mono', monospace;
+  background-color: #e8f0fe;
+  color: #1a73e8;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.title-cell {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0;
+}
+
+.title-text {
+  font-weight: 500;
+  color: #202124;
+}
+
+.sub-text {
+  font-size: 12px;
+  color: #5f6368;
+}
+
+.status-chip {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  min-height: 24px !important;
+  border-radius: 12px !important;
+  text-transform: uppercase;
+}
+
+.status-chip[data-priority="CRITICAL"],
+.status-chip[data-priority="HIGH"],
+.status-chip[data-status="FAIL"] {
+  background-color: #fce8e6 !important;
+  color: #c5221f !important;
+}
+
+.status-chip[data-priority="MEDIUM"],
+.status-chip[data-status="BLOCKED"] {
+  background-color: #fef7e0 !important;
+  color: #b06000 !important;
+}
+
+.status-chip[data-priority="LOW"],
+.status-chip[data-status="PASS"] {
+  background-color: #e6f4ea !important;
+  color: #137333 !important;
+}
+
+.status-chip[data-status="DRAFT"] {
+  background-color: #f1f3f4 !important;
+  color: #5f6368 !important;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.no-data-cell {
+  text-align: center;
+  padding: 32px !important;
+  color: #5f6368;
+}
+
+/* Dialog Styling */
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  padding-top: 8px;
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.full-width {
+  width: 100%;
+}

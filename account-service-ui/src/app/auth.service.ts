@@ -55,4 +55,15 @@ export class AuthService {
       Authorization: `Bearer ${token ?? ''}`
     });
   }
+
+  getCurrentUser(): { id: number; [key: string]: any } | null {
+    const userStr = localStorage.getItem('user'); // Or wherever you store logged-in user data
+    if (!userStr) return null;
+    try {
+      return JSON.parse(userStr);
+    } catch {
+      return null;
+    }
+  }
+
 }

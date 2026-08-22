@@ -7,8 +7,14 @@
       <p class="header-subtitle">Govern product registries and manage high-level scope definitions.</p>
     </div>
     <div class="workspace-control-bar" style="display: flex; gap: 16px;">
-      <button class="gp-button gp-primary header-wide-btn" (click)="initiateNewProduct()">
-        <mat-icon>add_box</mat-icon> Create Product
+      <!-- Pure Angular Material Button with Material Icon -->
+      <button 
+        mat-flat-button 
+        color="primary" 
+        class="header-wide-btn" 
+        (click)="initiateNewProduct()">
+        <mat-icon>add_box</mat-icon>
+        <span>Create Product</span>
       </button>
     </div>
   </div>
@@ -40,22 +46,40 @@
         </div>
       </div>
 
-      <!-- FOOTER MASTER ACTIONS -->
+      <!-- FOOTER MASTER ACTIONS USING MATERIAL BUTTONS -->
       <div class="drawer-footer">
-        <button mat-button type="button" [disabled]="isSaving" (click)="closeComposerDrawer()">
+        <button 
+          mat-stroked-button 
+          type="button" 
+          [disabled]="isSaving" 
+          (click)="closeComposerDrawer()">
           Cancel
         </button>
         
         <!-- Post Method Integration for New Records -->
-        <button mat-flat-button color="primary" type="button" *ngIf="!productForm.id" [disabled]="isSaving || !productForm.name" (click)="saveAndInitializeProduct()">
-          <mat-spinner diameter="20" style="display:inline-block; vertical-align:middle; margin-right:8px;" *ngIf="isSaving"></mat-spinner>
-          <mat-icon>add</mat-icon> Save Product
+        <button 
+          mat-flat-button 
+          color="primary" 
+          type="button" 
+          *ngIf="!productForm.id" 
+          [disabled]="isSaving || !productForm.name" 
+          (click)="saveAndInitializeProduct()">
+          <mat-spinner diameter="20" class="btn-spinner" *ngIf="isSaving"></mat-spinner>
+          <mat-icon *ngIf="!isSaving">add</mat-icon>
+          <span>Save Product</span>
         </button>
 
         <!-- Put Method Integration for Existing Records -->
-        <button mat-flat-button color="accent" type="button" *ngIf="productForm.id" [disabled]="isSaving || !productForm.name" (click)="commitPortfolioChanges()">
-          <mat-spinner diameter="20" style="display:inline-block; vertical-align:middle; margin-right:8px;" *ngIf="isSaving"></mat-spinner>
-          <mat-icon>save</mat-icon> Update Product
+        <button 
+          mat-flat-button 
+          color="accent" 
+          type="button" 
+          *ngIf="productForm.id" 
+          [disabled]="isSaving || !productForm.name" 
+          (click)="commitPortfolioChanges()">
+          <mat-spinner diameter="20" class="btn-spinner" *ngIf="isSaving"></mat-spinner>
+          <mat-icon *ngIf="!isSaving">save</mat-icon>
+          <span>Update Product</span>
         </button>
       </div>
 
@@ -73,22 +97,27 @@
 
     <!-- Iterating over Backend Observable Stream Mapping -->
     <div class="saas-project-grid-layout" *ngIf="products$ | async as productsList; else loadingDashboard">
-      <div class="empty-chips-fallback" style="grid-column: 1 / -1; min-height: 180px; display: flex; align-items: center; justify-content: center;" *ngIf="productsList.length === 0">
+      <div class="empty-chips-fallback" *ngIf="productsList.length === 0">
         <p>No managed products discovered inside your registry profile stack. Click "Create Product" to begin.</p>
       </div>
 
-      <div class="project-saas-card" *ngFor="let product of productsList" (click)="loadProductToComposer(product)" style="cursor: pointer;">
+      <div class="project-saas-card" *ngFor="let product of productsList" (click)="loadProductToComposer(product)">
         <div>
-          <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 700;">{{ product.name }}</h3>
-          <p style="margin: 0 0 16px 0; font-size: 13px; color: #666; line-height: 1.5;">
+          <h3 class="card-title">{{ product.name }}</h3>
+          <p class="card-description">
             {{ product.description || 'No descriptive overview details configured for this platform core.' }}
           </p>
         </div>
 
-        <!-- System Delete Node Interface Anchor -->
-        <div style="display: flex; justify-content: flex-end; align-items: center; border-top: 1px solid #eee; padding-top: 12px; margin-top: auto;">
-          <button mat-icon-button color="warn" type="button" (click)="$event.stopPropagation(); archiveProductEntity(product.id)">
-            <mat-icon style="font-size: 20px;">delete_forever</mat-icon>
+        <!-- System Delete Node Interface Anchor using Material Icon Button -->
+        <div class="card-actions">
+          <button 
+            mat-icon-button 
+            color="warn" 
+            type="button" 
+            aria-label="Delete Product"
+            (click)="$event.stopPropagation(); archiveProductEntity(product.id)">
+            <mat-icon>delete_forever</mat-icon>
           </button>
         </div>
       </div>
@@ -96,9 +125,9 @@
 
     <!-- Async Fallback Stream Spinner Component -->
     <ng-template #loadingDashboard>
-      <div class="api-loading-overlay" style="display: flex; flex-direction: column; align-items: center; padding: 40px 0;">
+      <div class="api-loading-overlay">
         <mat-spinner diameter="40"></mat-spinner>
-        <p style="margin-top: 12px; color: #777;">Streaming data nodes from pipeline infrastructure...</p>
+        <p>Streaming data nodes from pipeline infrastructure...</p>
       </div>
     </ng-template>
   </div>

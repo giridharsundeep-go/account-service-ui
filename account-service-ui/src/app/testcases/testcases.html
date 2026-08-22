@@ -1,0 +1,299 @@
+<div class="mat-app-background main-wrapper">
+  <!-- Top App Toolbar -->
+  <header class="app-header">
+    <div class="header-left">
+      <h1>Test Cases</h1>
+      <span class="count-chip">{{ dataSource.filteredData.length }} Items</span>
+    </div>
+    <button mat-flat-button color="primary" (click)="openCreateModal()">
+      <mat-icon>add</mat-icon>
+      Create Test Case
+    </button>
+  </header>
+
+  <!-- Filter & Search Card -->
+  <mat-card class="filter-card">
+    <mat-card-content class="filter-container">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Search Test Cases</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput [(ngModel)]="searchTerm" (keyup)="applyFilters()" placeholder="Search code, title, description..." />
+        <button mat-icon-button matSuffix *ngIf="searchTerm" (click)="searchTerm = ''; applyFilters()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </mat-form-field>
+
+      <div class="dropdown-filters">
+        <mat-form-field appearance="outline">
+          <mat-label>Project</mat-label>
+          <mat-select [(ngModel)]="selectedProjectFilter" (selectionChange)="applyFilters()">
+            <mat-option value="">All Projects</mat-option>
+            <mat-option *ngFor="let p of projects" [value]="getOptionId(p)">{{ p.name || 'Project #' + getOptionId(p) }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Priority</mat-label>
+          <mat-select [(ngModel)]="selectedPriorityFilter" (selectionChange)="applyFilters()">
+            <mat-option value="">All Priorities</mat-option>
+            <mat-option value="LOW">Low</mat-option>
+            <mat-option value="MEDIUM">Medium</mat-option>
+            <mat-option value="HIGH">High</mat-option>
+            <mat-option value="CRITICAL">Critical</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Status</mat-label>
+          <mat-select [(ngModel)]="selectedStatusFilter" (selectionChange)="applyFilters()">
+            <mat-option value="">All Statuses</mat-option>
+            <mat-option value="DRAFT">Draft</mat-option>
+            <mat-option value="PASS">Pass</mat-option>
+            <mat-option value="FAIL">Fail</mat-option>
+            <mat-option value="BLOCKED">Blocked</mat-option>
+            <mat-option value="RETEST">Retest</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <button mat-button color="warn" *ngIf="searchTerm || selectedProjectFilter || selectedPriorityFilter || selectedStatusFilter" (click)="clearFilters()">
+          Clear Filters
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Material Data Table Card -->
+  <mat-card class="table-card">
+    <mat-card-content>
+      <table mat-table [dataSource]="dataSource" matSort class="full-width-table">
+        
+        <!-- Code Column -->
+        <ng-container matColumnDef="testCaseCode">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Code </th>
+          <td mat-cell *matCellDef="let element">
+            <span class="code-tag">{{ getTestCaseCode(element) }}</span>
+          </td>
+        </ng-container>
+
+        <!-- Title Column -->
+        <ng-container matColumnDef="title">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Title & Details </th>
+          <td mat-cell *matCellDef="let element">
+            <div class="title-cell">
+              <span class="title-text">{{ getTestCaseTitle(element) }}</span>
+              <span class="sub-text" *ngIf="element.description">{{ element.description }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Priority Column -->
+        <ng-container matColumnDef="priority">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Priority </th>
+          <td mat-cell *matCellDef="let element">
+            <mat-chip [attr.data-priority]="element.priority" class="status-chip">
+              {{ element.priority || 'MEDIUM' }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Status Column -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Status </th>
+          <td mat-cell *matCellDef="let element">
+            <mat-chip [attr.data-status]="element.status" class="status-chip">
+              {{ element.status || 'DRAFT' }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Project Column -->
+        <ng-container matColumnDef="project">
+          <th mat-header-cell *matHeaderCellDef> Project </th>
+          <td mat-cell *matCellDef="let element">
+            {{ getProjectDisplay(element) }}
+          </td>
+        </ng-container>
+
+        <!-- Epic Column -->
+        <ng-container matColumnDef="epic">
+          <th mat-header-cell *matHeaderCellDef> Epic </th>
+          <td mat-cell *matCellDef="let element">
+            {{ getEpicDisplay(element) }}
+          </td>
+        </ng-container>
+
+        <!-- Story Column -->
+        <ng-container matColumnDef="story">
+          <th mat-header-cell *matHeaderCellDef> Story </th>
+          <td mat-cell *matCellDef="let element">
+            {{ getStoryDisplay(element) }}
+          </td>
+        </ng-container>
+
+        <!-- Task Column -->
+        <ng-container matColumnDef="task">
+          <th mat-header-cell *matHeaderCellDef> Task </th>
+          <td mat-cell *matCellDef="let element">
+            {{ getTaskDisplay(element) }}
+          </td>
+        </ng-container>
+
+        <!-- Tester / User Column -->
+        <ng-container matColumnDef="user">
+          <th mat-header-cell *matHeaderCellDef> Tester </th>
+          <td mat-cell *matCellDef="let element">
+            {{ getUserDisplay(element) }}
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="text-right"> Actions </th>
+          <td mat-cell *matCellDef="let element" class="text-right">
+            <button mat-icon-button color="primary" matTooltip="Edit" (click)="openEditModal(element)">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" matTooltip="Delete" (click)="deleteTestcase(element.id)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell no-data-cell" colspan="10">
+            No matching test cases found.
+          </td>
+        </tr>
+      </table>
+
+      <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<!-- Material Dialog Template -->
+<ng-template #dialogTemplate>
+  <h2 mat-dialog-title>{{ isEditMode ? 'Edit Test Case' : 'Create New Test Case' }}</h2>
+  
+  <mat-dialog-content>
+    <form [formGroup]="testcaseForm" class="dialog-form">
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="flex-1">
+          <mat-label>Test Case Code *</mat-label>
+          <input matInput formControlName="testCaseCode" placeholder="TC-101" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="flex-1">
+          <mat-label>Project *</mat-label>
+          <mat-select formControlName="projectId" [compareWith]="compareFn">
+            <mat-option *ngFor="let p of projects" [value]="getOptionId(p)">{{ p.name || 'Project #' + getOptionId(p) }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Title *</mat-label>
+        <input matInput formControlName="title" placeholder="Test scenario title" />
+      </mat-form-field>
+
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="flex-1">
+          <mat-label>Priority</mat-label>
+          <mat-select formControlName="priority">
+            <mat-option value="LOW">Low</mat-option>
+            <mat-option value="MEDIUM">Medium</mat-option>
+            <mat-option value="HIGH">High</mat-option>
+            <mat-option value="CRITICAL">Critical</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="flex-1">
+          <mat-label>Status</mat-label>
+          <mat-select formControlName="status">
+            <mat-option value="DRAFT">Draft</mat-option>
+            <mat-option value="PASS">Pass</mat-option>
+            <mat-option value="FAIL">Fail</mat-option>
+            <mat-option value="BLOCKED">Blocked</mat-option>
+            <mat-option value="RETEST">Retest</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="flex-1">
+          <mat-label>Epic</mat-label>
+          <mat-select formControlName="epicId" [compareWith]="compareFn">
+            <mat-option [value]="''">None</mat-option>
+            <mat-option *ngFor="let e of epics" [value]="getOptionId(e)">
+              {{ e.name || e.title || 'Epic #' + getOptionId(e) }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="flex-1">
+          <mat-label>User Story</mat-label>
+          <mat-select formControlName="storyId" [compareWith]="compareFn">
+            <mat-option [value]="''">None</mat-option>
+            <mat-option *ngFor="let s of stories" [value]="getOptionId(s)">
+              {{ s.title || s.name || s.storyTitle || s.storyName || s.description || 'Story #' + getOptionId(s) }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="flex-1">
+          <mat-label>Task</mat-label>
+          <mat-select formControlName="taskId" [compareWith]="compareFn">
+            <mat-option [value]="''">None</mat-option>
+            <mat-option *ngFor="let t of tasks" [value]="getOptionId(t)">
+              {{ t.title || t.name || t.taskTitle || t.taskName || t.description || 'Task #' + getOptionId(t) }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="flex-1">
+          <mat-label>Assigned Tester</mat-label>
+          <mat-select formControlName="userId" [compareWith]="compareFn">
+            <mat-option [value]="''">Unassigned</mat-option>
+            <mat-option *ngFor="let u of users" [value]="getOptionId(u)">
+              {{ u.username || u.name || u.email || 'User #' + getOptionId(u) }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Preconditions</mat-label>
+        <textarea matInput formControlName="preconditions" rows="2"></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Steps *</mat-label>
+        <textarea matInput formControlName="steps" rows="3"></textarea>
+      </mat-form-field>
+
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="flex-1">
+          <mat-label>Expected Result *</mat-label>
+          <textarea matInput formControlName="expectedResult" rows="2"></textarea>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="flex-1">
+          <mat-label>Actual Result</mat-label>
+          <textarea matInput formControlName="actualResult" rows="2"></textarea>
+        </mat-form-field>
+      </div>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="closeModal()">Cancel</button>
+    <button mat-flat-button color="primary" [disabled]="testcaseForm.invalid" (click)="onSubmit()">
+      {{ isEditMode ? 'Update' : 'Save' }}
+    </button>
+  </mat-dialog-actions>
+</ng-template>

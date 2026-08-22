@@ -40,7 +40,7 @@
 
     <div class="org-grid">
 
-        <div class="org-card" *ngFor="let org of (organisations$ | async)" (click)="openOrgCreateDialog()">
+        <div class="org-card" *ngFor="let org of (organisations$ | async)" (click)="goToOrganisation(org.slug || org.id)">
 
             <!-- HEADER -->
             <div class="org-card-header">
@@ -52,7 +52,7 @@
                     </ng-template>
                 </div>
 
-                <button mat-icon-button (click)="openOrgCreateDialog(); $event.stopPropagation()">
+                <button mat-icon-button (click)="goToOrganisation(org.slug || org.id); $event.stopPropagation()">
                     <mat-icon>arrow_forward</mat-icon>
                 </button>
 
@@ -62,6 +62,13 @@
             <div class="org-card-body">
 
                 <h3 class="org-title">{{ org.title }}</h3>
+
+                <!-- ORG SLUG / IDENTIFIER BADGE -->
+                <div class="org-slug-badge" *ngIf="org.slug">
+                    <mat-icon class="slug-icon">domain</mat-icon>
+                    <span>{{ org.slug.startsWith('/') ? org.slug : '/' + org.slug }}</span>
+                </div>
+
                 <p class="org-desc">{{ org.description || 'No description' }}</p>
 
                 <div class="org-meta">

@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { AuthService } from '../auth.service';
@@ -30,7 +30,6 @@ import { CreateOrgDialog } from '../create-org-dialog/create-org-dialog';
 export class Organisation implements OnInit {
 
   baseUrl = environment.apiBaseUrl;
-
 
   constructor(
     private dialog: MatDialog,
@@ -65,7 +64,6 @@ export class Organisation implements OnInit {
     this.activeMenu = menu;
   }
 
-  // 👤 User Info
   user = {
     name: 'Giridhar Sundeep',
     email: 'giridharsundeep.pro@gmail.com',
@@ -73,8 +71,10 @@ export class Organisation implements OnInit {
     image: null as string | ArrayBuffer | null
   };
 
+  // ✅ Added slug field to organization model
   organisation = {
     title: '',
+    slug: '',
     description: '',
     email: '',
     phone: ''
@@ -104,13 +104,22 @@ export class Organisation implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         this.organisation = result;
-        this.loadOrganisations(); // 🔄 refresh list
+        this.loadOrganisations();
       }
     });
   }
 
-  goToOrganisation(orgId?: number) {
-    if (!orgId) return;
-    this.router.navigate(['/org', orgId]);
+  /**
+   * ✅ Handles navigation using either slug or id
+   * Strips leading slashes if slug is formatted like "/my-org"
+   */
+  goToOrganisation(identifier?: string | number) {
+    if (!identifier) return;
+
+    const routeParam = typeof identifier === 'string' && identifier.startsWith('/')
+      ? identifier.substring(1)
+      : identifier;
+
+    this.router.navigate(['/org', routeParam]);
   }
 }

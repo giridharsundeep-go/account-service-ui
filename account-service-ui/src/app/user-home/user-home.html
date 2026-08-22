@@ -1,108 +1,149 @@
-<main class="profile-page">
+<div class="app-layout-container">
 
-  <!-- 🔝 TOP HEADER & STICKY NAVIGATION (Google Developers Style) -->
-  <header class="top-header-wrapper">
+  <!-- 🔝 TOP HEADER TOOLBAR -->
+  <mat-toolbar class="toolbar">
     
-    <!-- Tier 1: Main Header Toolbar -->
-    <mat-toolbar class="toolbar">
+    <!-- LEFT SECTION: BRAND -->
+    <div class="header-left">
       <div class="brand">
         <span class="brand-title">Greatley Poshley</span>
       </div>
+    </div>
 
-      <nav class="top-nav">
-      <div class="nav-container">
-        
-        <button 
-          class="nav-item" 
-          [class.active]="activeMenu === 'create'" 
-          (click)="setActive('create')">
-          <mat-icon>add_business</mat-icon>
-          <span>Organisations</span>
-        </button>
-
-        <button 
-          class="nav-item" 
-          [class.active]="activeMenu === 'dashboard'" 
-          (click)="setActive('dashboard')">
-          <mat-icon>dashboard</mat-icon>
-          <span>Dashboard</span>
-        </button>
-
-        <button 
-          class="nav-item" 
-          [class.active]="activeMenu === 'roles'" 
-          (click)="setActive('roles')">
-          <mat-icon>badge</mat-icon>
-          <span>Roles</span>
-        </button>
-
-        <button 
-          class="nav-item" 
-          [class.active]="activeMenu === 'users'" 
-          (click)="setActive('users')">
-          <mat-icon>person</mat-icon>
-          <span>Users</span>
-        </button>
-
-        <button 
-          class="nav-item" 
-          [class.active]="activeMenu === 'teams'" 
-          (click)="setActive('teams')">
-          <mat-icon>groups</mat-icon>
-          <span>Teams</span>
-        </button>
-
-        <button 
-          class="nav-item" 
-          [class.active]="activeMenu === 'products'" 
-          (click)="setActive('products')">
-          <mat-icon>inventory_2</mat-icon>
-          <span>Products</span>
-        </button>
-
-        <button 
-          class="nav-item" 
-          [class.active]="activeMenu === 'projects'" 
-          (click)="setActive('projects')">
-          <mat-icon>folder</mat-icon>
-          <span>Projects</span>
-        </button>
-
-        <button 
-          class="nav-item" 
-          [class.active]="activeMenu === 'epics'" 
-          (click)="setActive('epics')">
-          <mat-icon>layers</mat-icon>
-          <span>Epics & Backlogs</span>
-        </button>
-
+    <!-- CENTER SECTION: SEARCH BAR -->
+    <div class="header-center">
+      <div class="search-container">
+        <mat-icon class="search-icon">search</mat-icon>
+        <input 
+          type="text" 
+          class="search-input" 
+          placeholder="Search projects, users, teams..." 
+          [(ngModel)]="searchQuery" />
+        <kbd class="shortcut-badge">⌘K</kbd>
       </div>
-    </nav>
+    </div>
 
-      <span class="spacer"></span>
-
-      <!-- User Profile Header Summary -->
-      <div class="side-user">
-        <div class="mini-avatar">
-          {{ user.name?.charAt(0) }}
-        </div>
-        <div class="user-details">
-          <div class="mini-name">{{ user.name }}</div>
-        </div>
-      </div>
-
-      <button mat-icon-button class="settings-btn">
-        <mat-icon>settings</mat-icon>
+    <!-- RIGHT SECTION: CREATION MENU, USER MGMT & PROFILE -->
+    <div class="header-right">
+      
+      <!-- ⚡ NEWRELIC-STYLE VIBRANT CREATE BUTTON -->
+      <button 
+        mat-flat-button 
+        [matMenuTriggerFor]="createMenu" 
+        class="nr-create-btn">
+        <mat-icon class="add-icon">add_circle</mat-icon>
+        <span>Create</span>
+        <mat-icon class="dropdown-icon">expand_more</mat-icon>
       </button>
-    </mat-toolbar>
 
+      <!-- 👥 USER MANAGEMENT MENU TRIGGER -->
+      <button 
+        mat-button 
+        [matMenuTriggerFor]="userGroupMenu" 
+        class="header-nav-btn icon-user-mgmt" 
+        [class.active]="isUserGroupActive()">
+        <mat-icon>manage_accounts</mat-icon>
+        <span>User Management</span>
+        <mat-icon class="dropdown-icon">expand_more</mat-icon>
+      </button>
+
+      <!-- 👤 USER PROFILE DROPDOWN MENU TRIGGER -->
+      <button mat-button [matMenuTriggerFor]="profileMenu" class="user-menu-trigger">
+        <div class="side-user">
+          <div class="mini-avatar">
+            {{ user.name?.charAt(0) }}
+          </div>
+          <div class="user-details">
+            <span class="mini-name">{{ user.name }}</span>
+          </div>
+          <mat-icon class="dropdown-icon">expand_more</mat-icon>
+        </div>
+      </button>
+
+    </div>
+
+  </mat-toolbar>
+
+  <!-- 🧭 HORIZONTAL SUB-NAVIGATION BAR WITH SUB-MENU TRIGGERS -->
+  <nav class="sub-nav-bar">
     
-  </header>
+    <!-- DASHBOARD -->
+    <button 
+      class="sub-nav-item icon-dashboard" 
+      [class.active]="activeMenu === 'dashboard'" 
+      (click)="setActive('dashboard')">
+      <mat-icon>dashboard</mat-icon>
+      <span>Dashboard</span>
+    </button>
 
-  <!-- 📄 MAIN CONTENT AREA -->
-  <section class="main-layout">
-    <div class="content-area">
-      <app-organisation *ngIf="activeMenu === 'create'"></app-organisation>
+    <!-- PRODUCTS -->
+    <button 
+      class="sub-nav-item icon-products" 
+      [class.active]="activeMenu === 'products'" 
+      (click)="setActive('products')">
+      <mat-icon>inventory_2</mat-icon>
+      <span>Products</span>
+    </button>
+
+    <!-- PROJECTS -->
+    <button 
+      class="sub-nav-item icon-projects" 
+      [class.active]="activeMenu === 'projects'" 
+      (click)="setActive('projects')">
+      <mat-icon>folder</mat-icon>
+      <span>Projects</span>
+    </button>
+
+    <!-- EPICS -->
+    <button 
+      class="sub-nav-item icon-epics" 
+      [class.active]="activeMenu === 'epics'" 
+      (click)="setActive('epics')">
+      <mat-icon>layers</mat-icon>
+      <span style="color: black;">Epics & Backlogs</span>
+    </button>
+
+    <!-- 🐛 ISSUES -->
+    <button 
+      class="sub-nav-item icon-issues" 
+      [class.active]="activeMenu === 'issues'" 
+      (click)="setActive('issues')">
+      <mat-icon>bug_report</mat-icon>
+      <span style="color: black;">Issues</span>
+    </button>
+
+    <!-- 🧪 TEST CASES -->
+    <button 
+      class="sub-nav-item icon-tests" 
+      [class.active]="activeMenu === 'test-cases'" 
+      (click)="setActive('test-cases')">
+      <mat-icon>playlist_add_check</mat-icon>
+      <span style="color: black;">Test Cases</span>
+    </button>
+
+    <!-- 🚀 RELEASES -->
+    <button 
+      class="sub-nav-item icon-releases" 
+      [class.active]="activeMenu === 'releases'" 
+      (click)="setActive('releases')">
+      <mat-icon>rocket_launch</mat-icon>
+      <span style="color: black;">Releases</span>
+    </button>
+
+    <!-- 📚 DOCUMENTATION -->
+    <button 
+      class="sub-nav-item icon-docs" 
+      [class.active]="activeMenu === 'docs'" 
+      (click)="setActive('docs')">
+      <mat-icon>description</mat-icon>
+      <span style="color: black;">Documentation</span>
+    </button>
+
+  </nav>
+
+  <!-- 📄 DYNAMICALLY FITTED MAIN CONTENT AREA -->
+  <main class="main-viewport-content">
+    <div class="content-wrapper">
       <app-dashboard *ngIf="activeMenu === 'dashboard'"></app-dashboard>
       <app-roles *ngIf="activeMenu === 'roles'"></app-roles>
       <app-users *ngIf="activeMenu === 'users'"></app-users>
@@ -110,7 +151,112 @@
       <app-products *ngIf="activeMenu === 'products'"></app-products>
       <app-projects *ngIf="activeMenu === 'projects'"></app-projects>
       <app-epics *ngIf="activeMenu === 'epics'"></app-epics>
+      <app-issues *ngIf="activeMenu === 'issues'"></app-issues>
+      <app-testcases *ngIf="activeMenu === 'test-cases'"></app-testcases>
+      <app-releases *ngIf="activeMenu === 'releases'"></app-releases>
+      <app-docs *ngIf="activeMenu === 'docs'"></app-docs>
     </div>
-  </section>
+  </main>
 
-</main>
+  <!-- 🦶 RIGHT FOOTER AREA -->
+  <footer class="app-footer">
+    <div class="footer-left">
+      <span>&copy; {{ currentYear }} Greatley Poshley Ltd. All rights reserved.</span>
+    </div>
+    <div class="footer-right">
+      <a href="javascript:void(0)" (click)="setActive('docs')">Documentation</a>
+      <span class="dot-separator">•</span>
+      <a href="javascript:void(0)">System Status</a>
+      <span class="dot-separator">•</span>
+      <a href="javascript:void(0)">Support</a>
+    </div>
+  </footer>
+
+</div>
+
+<!-- 🪟 GLOBAL ANGULAR MATERIAL DROPDOWN MENU DEFINITIONS -->
+
+<!-- Create Action Dropdown -->
+<mat-menu #createMenu="matMenu" yPosition="below" xPosition="after" class="custom-mat-dropdown">
+  <div class="nr-menu-header">Quick Actions</div>
+  
+  <button mat-menu-item (click)="onCreateItem('epic')">
+    <mat-icon class="icon-epics">layers</mat-icon>
+    <span>Create Epic</span>
+  </button>
+
+  <button mat-menu-item (click)="onCreateItem('story')">
+    <mat-icon class="icon-story">auto_stories</mat-icon>
+    <span>Create Story</span>
+  </button>
+
+  <button mat-menu-item (click)="onCreateItem('task')">
+    <mat-icon class="icon-task">check_box</mat-icon>
+    <span>Create Task</span>
+  </button>
+
+  <mat-divider></mat-divider>
+
+  <button mat-menu-item (click)="onCreateItem('issue')">
+    <mat-icon class="icon-issues">bug_report</mat-icon>
+    <span>Create Issue</span>
+  </button>
+
+  <button mat-menu-item (click)="onCreateItem('test-case')">
+    <mat-icon class="icon-tests">playlist_add_check</mat-icon>
+    <span>Create Test Case</span>
+  </button>
+
+  <button mat-menu-item (click)="onCreateItem('release')">
+    <mat-icon class="icon-releases">rocket_launch</mat-icon>
+    <span>Create Release</span>
+  </button>
+</mat-menu>
+
+<!-- User Management Sub-menu -->
+<mat-menu #userGroupMenu="matMenu" yPosition="below" xPosition="after" class="custom-mat-dropdown">
+  <button mat-menu-item (click)="setActive('roles')" [class.active-subitem]="activeMenu === 'roles'">
+    <mat-icon class="icon-roles">badge</mat-icon>
+    <span>Roles</span>
+  </button>
+
+  <button mat-menu-item (click)="setActive('teams')" [class.active-subitem]="activeMenu === 'teams'">
+    <mat-icon class="icon-teams">groups</mat-icon>
+    <span>Teams</span>
+  </button>
+
+  <button mat-menu-item (click)="setActive('users')" [class.active-subitem]="activeMenu === 'users'">
+    <mat-icon class="icon-users">person</mat-icon>
+    <span>Users</span>
+  </button>
+</mat-menu>
+
+<!-- Profile Sub-menu -->
+<mat-menu #profileMenu="matMenu" yPosition="below" xPosition="before" class="custom-mat-dropdown profile-dropdown">
+  <div class="menu-user-header">
+    <div class="menu-avatar">{{ user.name?.charAt(0) }}</div>
+    <div class="menu-user-info">
+      <strong>{{ user.name }}</strong>
+      <span>{{ user.email }}</span>
+    </div>
+  </div>
+  
+  <mat-divider></mat-divider>
+
+  <button mat-menu-item (click)="openEditDialog()">
+    <mat-icon class="icon-profile-popup">person_outline</mat-icon>
+    <span>Edit Profile</span>
+  </button>
+
+  <button mat-menu-item (click)="setActive('dashboard')">
+    <mat-icon class="icon-dashboard">dashboard</mat-icon>
+    <span>My Dashboard</span>
+  </button>
+
+  <mat-divider></mat-divider>
+
+  <button mat-menu-item (click)="logout()" class="logout-menu-item">
+    <mat-icon class="logout-icon">logout</mat-icon>
+    <span>Logout</span>
+  </button>
+</mat-menu>

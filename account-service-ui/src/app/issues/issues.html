@@ -1,0 +1,366 @@
+<div class="issues-container">
+
+  <!-- Toast Notification -->
+  <div class="toast-notification" *ngIf="toastMessage()">
+    <mat-icon>check_circle</mat-icon>
+    <span>{{ toastMessage() }}</span>
+  </div>
+
+  <!-- Header & Toolbar -->
+  <header class="issues-header">
+    <div class="header-title">
+      <h1>Issue Management Overview</h1>
+      <span class="project-badge">
+        <mat-icon inline>folder_open</mat-icon> {{ activeProjectName() }}
+      </span>
+    </div>
+
+    <div class="header-controls">
+      <mat-form-field appearance="outline" class="toolbar-select">
+        <mat-label>Project</mat-label>
+        <mat-select [ngModel]="selectedProjectId()" (ngModelChange)="onProjectChange($event)">
+          <mat-option *ngFor="let p of projects()" [value]="p.id">{{ p.name }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="toolbar-select">
+        <mat-label>Sprint</mat-label>
+        <mat-select [ngModel]="selectedSprintFilter()" (ngModelChange)="onSprintFilterChange($event)">
+          <mat-option value="ALL">All Sprints</mat-option>
+          <mat-option *ngFor="let s of filteredSprints()" [value]="s.id">{{ s.name }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-button-toggle-group [ngModel]="viewMode()" (ngModelChange)="viewMode.set($event)" aria-label="View Mode">
+        <mat-button-toggle value="CARDS">
+          <mat-icon>account_tree</mat-icon> Hierarchy
+        </mat-button-toggle>
+        <mat-button-toggle value="TABLE">
+          <mat-icon>table_chart</mat-icon> Table
+        </mat-button-toggle>
+      </mat-button-toggle-group>
+
+      <button mat-raised-button color="primary" class="create-btn" (click)="openCreateIssue()">
+        <mat-icon>add</mat-icon> Create Issue
+      </button>
+    </div>
+  </header>
+
+  <!-- Metrics Overview Bar -->
+  <div class="metrics-bar">
+    <mat-card class="metric-card">
+      <span class="metric-label">Total Issues</span>
+      <span class="metric-value">{{ metrics().total }}</span>
+    </mat-card>
+    <mat-card class="metric-card open">
+      <span class="metric-label">Open / Backlog</span>
+      <span class="metric-value">{{ metrics().open }}</span>
+    </mat-card>
+    <mat-card class="metric-card progress">
+      <span class="metric-label">In Progress</span>
+      <span class="metric-value">{{ metrics().inProgress }}</span>
+    </mat-card>
+    <mat-card class="metric-card completed">
+      <span class="metric-label">Completed</span>
+      <span class="metric-value">{{ metrics().completed }}</span>
+    </mat-card>
+    <mat-card class="metric-card blocked" *ngIf="metrics().blocked > 0">
+      <span class="metric-label">Blocked</span>
+      <span class="metric-value">{{ metrics().blocked }}</span>
+    </mat-card>
+  </div>
+
+  <!-- MAIN CONTENT AREA -->
+  <main class="content-area">
+
+    <!-- 1. HIERARCHY CARDS VIEW -->
+    <div *ngIf="viewMode() === 'CARDS'" class="hierarchy-container">
+      <mat-card *ngFor="let epic of groupedHierarchy()" class="epic-card">
+        
+        <!-- EPIC HEADER -->
+        <div class="epic-header epic-header-clickable" (click)="toggleEpicCollapse(epic.id)">
+          <div class="epic-title">
+            <button mat-icon-button type="button" class="collapse-btn" (click)="$event.stopPropagation(); toggleEpicCollapse(epic.id)">
+              <mat-icon>{{ isEpicCollapsed(epic.id) ? 'expand_more' : 'expand_less' }}</mat-icon>
+            </button>
+            <span class="type-tag epic-tag"><mat-icon inline>bolt</mat-icon> EPIC</span>
+            <h2>{{ epic.title }}</h2>
+          </div>
+          <span class="count-pill">{{ epic.totalIssuesCount }} Allocated Issues</span>
+        </div>
+
+        <!-- EXPANDABLE BODY -->
+        <ng-container *ngIf="!isEpicCollapsed(epic.id)">
+          <!-- LEVEL 1: DIRECT EPIC ISSUES -->
+          <div *ngIf="epic.directIssues.length > 0" class="allocation-node epic-node">
+            <span class="node-label"><mat-icon inline>hub</mat-icon> Direct Epic Allocations</span>
+            <div class="issues-chips">
+              <div *ngFor="let issue of epic.directIssues" class="issue-chip" (click)="openViewIssue(issue)">
+                <span class="chip-code">{{ issue.issue_code || issue.issueCode }}</span>
+                <span class="chip-title">{{ issue.title }}</span>
+                <span class="status-pill {{ issue.status.toLowerCase() }}">{{ issue.status }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- STORIES LIST -->
+          <div class="stories-wrapper" *ngIf="epic.stories.length > 0">
+            <mat-card *ngFor="let story of epic.stories" class="story-card">
+              
+              <div class="story-header">
+                <span class="type-tag story-tag"><mat-icon inline>bookmark</mat-icon> STORY</span>
+                <h4>{{ story.title }}</h4>
+              </div>
+
+              <!-- LEVEL 2: STORY ALLOCATED ISSUES -->
+              <div class="story-issues" *ngIf="story.issues.length > 0">
+                <span class="subnode-label">Story-Level Allocations:</span>
+                <div *ngFor="let issue of story.issues" class="issue-card-sm" (click)="openViewIssue(issue)">
+                  <div class="issue-top">
+                    <span class="issue-code">{{ issue.issue_code || issue.issueCode }}</span>
+                    <span class="status-pill {{ issue.status.toLowerCase() }}">{{ issue.status }}</span>
+                  </div>
+                  <div class="issue-title-text">{{ issue.title }}</div>
+                </div>
+              </div>
+
+              <!-- LEVEL 3: TASK ALLOCATED ISSUES -->
+              <div class="tasks-wrapper" *ngIf="story.tasks.length > 0">
+                <div *ngFor="let task of story.tasks" class="task-node">
+                  <div class="task-header">
+                    <span class="type-tag task-tag"><mat-icon inline>check_box</mat-icon> TASK</span>
+                    <span>{{ task.title }}</span>
+                  </div>
+
+                  <div class="task-issues">
+                    <div *ngFor="let issue of task.issues" class="issue-card-xs" (click)="openViewIssue(issue)">
+                      <div class="issue-top-xs">
+                        <span class="issue-code">{{ issue.issue_code || issue.issueCode }}</span>
+                        <span class="status-pill {{ issue.status.toLowerCase() }}">{{ issue.status }}</span>
+                      </div>
+                      <div class="issue-title-text">{{ issue.title }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </mat-card>
+          </div>
+        </ng-container>
+
+      </mat-card>
+
+      <mat-card class="empty-state-card" *ngIf="groupedHierarchy().length === 0">
+        <mat-icon class="empty-icon">inbox</mat-icon>
+        <p>No Epics or linked Issues found for this Project/Sprint.</p>
+      </mat-card>
+    </div>
+
+    <!-- 2. MATERIAL TABLE VIEW -->
+    <div *ngIf="viewMode() === 'TABLE'" class="table-container mat-elevation-z2">
+      <table mat-table [dataSource]="issuesList()" class="full-width-table">
+
+        <!-- Code Column -->
+        <ng-container matColumnDef="code">
+          <th mat-header-cell *matHeaderCellDef> Code </th>
+          <td mat-cell *matCellDef="let issue" class="issue-code"> {{ issue.issue_code || issue.issueCode }} </td>
+        </ng-container>
+
+        <!-- Title Column -->
+        <ng-container matColumnDef="title">
+          <th mat-header-cell *matHeaderCellDef> Title </th>
+          <td mat-cell *matCellDef="let issue" class="issue-title"> {{ issue.title }} </td>
+        </ng-container>
+
+        <!-- Status Column -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef> Status </th>
+          <td mat-cell *matCellDef="let issue">
+            <span class="status-pill {{ issue.status.toLowerCase() }}">{{ issue.status }}</span>
+          </td>
+        </ng-container>
+
+        <!-- Epic Column -->
+        <ng-container matColumnDef="epic">
+          <th mat-header-cell *matHeaderCellDef> Epic </th>
+          <td mat-cell *matCellDef="let issue">
+            <span class="hierarchy-name epic-name">{{ getLinkedEpicNames(issue) }}</span>
+          </td>
+        </ng-container>
+
+        <!-- Story Column -->
+        <ng-container matColumnDef="story">
+          <th mat-header-cell *matHeaderCellDef> Story </th>
+          <td mat-cell *matCellDef="let issue">
+            <span class="hierarchy-name story-name">{{ getLinkedStoryNames(issue) }}</span>
+          </td>
+        </ng-container>
+
+        <!-- Task Column -->
+        <ng-container matColumnDef="task">
+          <th mat-header-cell *matHeaderCellDef> Task </th>
+          <td mat-cell *matCellDef="let issue">
+            <span class="hierarchy-name task-name">{{ getLinkedTaskNames(issue) }}</span>
+          </td>
+        </ng-container>
+
+        <!-- Assignee Column -->
+        <ng-container matColumnDef="assignee">
+          <th mat-header-cell *matHeaderCellDef> Assignee </th>
+          <td mat-cell *matCellDef="let issue">
+            <ng-container *ngIf="(issue.assignee_user_id || issue.assigneeUserId) | resolveUser : userMap() as assignee; else unassigned">
+              {{ assignee ? assignee.name : 'Unassigned' }}
+            </ng-container>
+            <ng-template #unassigned>Unassigned</ng-template>
+          </td>
+        </ng-container>
+
+        <!-- Reporter Column -->
+        <ng-container matColumnDef="reporter">
+          <th mat-header-cell *matHeaderCellDef> Reporter </th>
+          <td mat-cell *matCellDef="let issue">
+            <ng-container *ngIf="(issue.reporter_user_id || issue.reporterUserId) | resolveUser : userMap() as reporter; else noReporter">
+              {{ reporter ? reporter.name : '—' }}
+            </ng-container>
+            <ng-template #noReporter>—</ng-template>
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef> Actions </th>
+          <td mat-cell *matCellDef="let issue" (click)="$event.stopPropagation()">
+            <button mat-icon-button color="primary" (click)="openViewIssue(issue)" title="Edit">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" (click)="deleteIssue(issue.id)" title="Delete">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" (click)="openViewIssue(row)" class="clickable-row"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell empty-cell" colspan="9">No issues found for the selected project/sprint.</td>
+        </tr>
+      </table>
+    </div>
+
+  </main>
+
+  <!-- MATERIAL SLIDE-OVER DRAWER WITH OVERLAY FIX -->
+  <div class="drawer-backdrop" *ngIf="activeDrawer() !== 'NONE'" (click)="closeDrawers()"></div>
+
+  <div class="drawer-panel" [class.open]="activeDrawer() !== 'NONE'">
+    <header class="drawer-header">
+      <h2>{{ drawerMode() === 'CREATE' ? 'Create Issue' : (isReadOnly() ? 'Issue Details' : 'Edit Issue') }}</h2>
+      <div class="actions">
+        <button *ngIf="drawerMode() === 'EDIT' && isReadOnly()" mat-stroked-button color="primary" (click)="enableEditMode()">
+          <mat-icon>edit</mat-icon> Edit
+        </button>
+        <button mat-icon-button (click)="closeDrawers()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </header>
+
+    <div class="drawer-body">
+      <form (ngSubmit)="saveIssue()" #issueForm="ngForm">
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Title *</mat-label>
+          <input matInput [(ngModel)]="currentIssue.title" name="title" [disabled]="isReadOnly()" required />
+        </mat-form-field>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="col">
+            <mat-label>Issue Code *</mat-label>
+            <input matInput [(ngModel)]="currentIssue.issue_code" name="issue_code" [disabled]="isReadOnly()" required />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="col">
+            <mat-label>Status</mat-label>
+            <mat-select [(ngModel)]="currentIssue.status" name="status" [disabled]="isReadOnly()">
+              <mat-option *ngFor="let st of statusPipeline" [value]="st">{{ st }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="col">
+            <mat-label>Project *</mat-label>
+            <mat-select [ngModel]="currentIssue.project_id" (ngModelChange)="onDrawerProjectChange($event)" name="project_id" [disabled]="isReadOnly()" required>
+              <mat-option *ngFor="let p of projects()" [value]="p.id">{{ p.name }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="col">
+            <mat-label>Sprint (Filtered by Project)</mat-label>
+            <mat-select [ngModel]="currentIssue.sprint_id" (ngModelChange)="onDrawerSprintChange($event)" name="sprint_id" [disabled]="isReadOnly()">
+              <mat-option [value]="null">Backlog / None</mat-option>
+              <mat-option *ngFor="let s of filteredSprints()" [value]="s.id">{{ s.name }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="col">
+            <mat-label>Assignee</mat-label>
+            <mat-select [(ngModel)]="currentIssue.assignee_user_id" name="assignee_user_id" [disabled]="isReadOnly()">
+              <mat-option [value]="null">Unassigned</mat-option>
+              <mat-option *ngFor="let u of users()" [value]="u.id">{{ u.name }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="col">
+            <mat-label>Reporter</mat-label>
+            <mat-select [(ngModel)]="currentIssue.reporter_user_id" name="reporter_user_id" [disabled]="isReadOnly()">
+              <mat-option *ngFor="let u of users()" [value]="u.id">{{ u.name }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="allocation-section">
+          <h3><mat-icon inline>hub</mat-icon> Linked Allocations (Cascading)</h3>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Epics (Filtered by Sprint)</mat-label>
+            <mat-select multiple [ngModel]="selectedDrawerEpicIds()" (ngModelChange)="onEpicSelectChange($event)" name="epicIds" [disabled]="isReadOnly()">
+              <mat-option *ngFor="let item of availableEpics()" [value]="item.id">{{ item.title }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Stories (Filtered by Selected Epics)</mat-label>
+            <mat-select multiple [ngModel]="selectedDrawerStoryIds()" (ngModelChange)="onStorySelectChange($event)" name="storyIds" [disabled]="isReadOnly()">
+              <mat-option *ngFor="let item of availableStories()" [value]="item.id">{{ item.title }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Tasks (Filtered by Selected Stories)</mat-label>
+            <mat-select multiple [ngModel]="selectedDrawerTaskIds()" (ngModelChange)="selectedDrawerTaskIds.set($event)" name="taskIds" [disabled]="isReadOnly()">
+              <mat-option *ngFor="let item of availableTasks()" [value]="item.id">{{ item.title }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Description</mat-label>
+          <textarea matInput [(ngModel)]="currentIssue.description" name="description" rows="4" [disabled]="isReadOnly()"></textarea>
+        </mat-form-field>
+
+        <div class="drawer-footer" *ngIf="!isReadOnly()">
+          <button type="button" mat-button (click)="closeDrawers()">Cancel</button>
+          <button type="submit" mat-raised-button color="primary" [disabled]="!issueForm.form.valid">
+            {{ drawerMode() === 'CREATE' ? 'Create' : 'Save Changes' }}
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+</div>

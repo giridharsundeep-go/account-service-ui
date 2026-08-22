@@ -9,17 +9,19 @@
     <div class="header-actions">
       <!-- Perspective Switcher -->
       <div class="view-toggle-group">
-        <button type="button" class="gp-button-light compact" [class.active]="dashboardViewMode === 'projects'"
+        <button type="button" mat-raised-button [class.active]="dashboardViewMode === 'projects'"
           (click)="setViewMode('projects')">
           <mat-icon>folder</mat-icon> Projects
         </button>
-        <button type="button" class="gp-button-light compact" [class.active]="dashboardViewMode === 'sprints'"
+
+        <button type="button" mat-raised-button [class.active]="dashboardViewMode === 'sprints'"
           (click)="setViewMode('sprints')">
           <mat-icon>view_week</mat-icon> Sprints ({{ getFilteredSprintsCount() }})
         </button>
       </div>
 
-      <button type="button" class="gp-button header-btn" *ngIf="dashboardViewMode === 'projects'" (click)="initiateNewProject()">
+      <button type="button" mat-raised-button color="primary" *ngIf="dashboardViewMode === 'projects'"
+        (click)="initiateNewProject()">
         <mat-icon>add</mat-icon> New Initiative
       </button>
     </div>
@@ -66,7 +68,7 @@
           </div>
 
           <div class="card-actions">
-            <button type="button" class="gp-button-light action-btn"
+            <button type="button" mat-raised-button color="black"
               (click)="switchToSprintsForProject(proj.project_code)">
               <mat-icon>date_range</mat-icon> View Sprints
             </button>
@@ -96,13 +98,13 @@
       <div class="sprints-toolbar-container">
         <div class="sprints-filter-header">
           <div class="filter-pills">
-            <button type="button" class="gp-button-light pill-btn" [class.active]="sprintTimelineFilter === 'ALL'"
+            <button type="button" mat-button [class.active]="sprintTimelineFilter === 'ALL'"
               (click)="setSprintFilter('ALL')">All Sprints</button>
-            <button type="button" class="gp-button-light pill-btn" [class.active]="sprintTimelineFilter === 'CURRENT'"
+            <button type="button" mat-button [class.active]="sprintTimelineFilter === 'CURRENT'"
               (click)="setSprintFilter('CURRENT')">Running</button>
-            <button type="button" class="gp-button-light pill-btn" [class.active]="sprintTimelineFilter === 'FUTURE'"
+            <button type="button" mat-button [class.active]="sprintTimelineFilter === 'FUTURE'"
               (click)="setSprintFilter('FUTURE')">Planned</button>
-            <button type="button" class="gp-button-light pill-btn" [class.active]="sprintTimelineFilter === 'COMPLETED'"
+            <button type="button" mat-button [class.active]="sprintTimelineFilter === 'COMPLETED'"
               (click)="setSprintFilter('COMPLETED')">Completed</button>
           </div>
 
@@ -118,7 +120,6 @@
             <input matInput [(ngModel)]="sprintSearchQuery" placeholder="Search Sprints">
             <mat-icon matSuffix>search</mat-icon>
           </mat-form-field>
-
         </div>
       </div>
 
@@ -336,7 +337,7 @@
         <div class="allocation-block">
           <div class="block-header">
             <label>Assigned Candidates / Personnel</label>
-            <button type="button" class="gp-button-light inline-btn" (click)="openUserSelectionDialog()">
+            <button type="button" mat-stroked-button color="accent" (click)="openUserSelectionDialog()">
               <mat-icon>person_add</mat-icon> Select Specialists
             </button>
           </div>
@@ -367,11 +368,8 @@
             <span class="slider-value-badge">{{ projectForm.total_backlog_points || 0 }} pts</span>
           </div>
           <mat-slider min="10" max="1000" step="10" discrete>
-            <input matSliderThumb 
-                   [(ngModel)]="projectForm.total_backlog_points"
-                   (valueChange)="calculateAgileMetrics()"
-                   (input)="calculateAgileMetrics()"
-                   (ngModelChange)="calculateAgileMetrics()">
+            <input matSliderThumb [(ngModel)]="projectForm.total_backlog_points" (valueChange)="calculateAgileMetrics()"
+              (input)="calculateAgileMetrics()" (ngModelChange)="calculateAgileMetrics()">
           </mat-slider>
         </div>
 
@@ -381,11 +379,8 @@
             <span class="slider-value-badge">{{ projectForm.target_velocity || 0 }} pts</span>
           </div>
           <mat-slider min="5" max="200" step="5" discrete>
-            <input matSliderThumb 
-                   [(ngModel)]="projectForm.target_velocity" 
-                   (valueChange)="calculateAgileMetrics()"
-                   (input)="calculateAgileMetrics()"
-                   (ngModelChange)="calculateAgileMetrics()">
+            <input matSliderThumb [(ngModel)]="projectForm.target_velocity" (valueChange)="calculateAgileMetrics()"
+              (input)="calculateAgileMetrics()" (ngModelChange)="calculateAgileMetrics()">
           </mat-slider>
         </div>
 
@@ -395,11 +390,9 @@
             <span class="slider-value-badge">{{ projectForm.sprint_duration_weeks || 1 }} wks</span>
           </div>
           <mat-slider min="1" max="6" step="1" discrete>
-            <input matSliderThumb 
-                   [(ngModel)]="projectForm.sprint_duration_weeks"
-                   (valueChange)="calculateAgileMetrics()"
-                   (input)="calculateAgileMetrics()"
-                   (ngModelChange)="calculateAgileMetrics()">
+            <input matSliderThumb [(ngModel)]="projectForm.sprint_duration_weeks"
+              (valueChange)="calculateAgileMetrics()" (input)="calculateAgileMetrics()"
+              (ngModelChange)="calculateAgileMetrics()">
           </mat-slider>
         </div>
 
@@ -409,11 +402,8 @@
             <span class="slider-value-badge">{{ ((agileTuning.focusFactor || 0.8) * 100) | number:'1.0-0' }}%</span>
           </div>
           <mat-slider min="0.1" max="1.0" step="0.05" discrete>
-            <input matSliderThumb 
-                   [(ngModel)]="agileTuning.focusFactor" 
-                   (valueChange)="calculateAgileMetrics()"
-                   (input)="calculateAgileMetrics()"
-                   (ngModelChange)="calculateAgileMetrics()">
+            <input matSliderThumb [(ngModel)]="agileTuning.focusFactor" (valueChange)="calculateAgileMetrics()"
+              (input)="calculateAgileMetrics()" (ngModelChange)="calculateAgileMetrics()">
           </mat-slider>
         </div>
 
@@ -484,20 +474,20 @@
 
     <!-- Wizard Navigation & Submit Footer -->
     <div class="drawer-footer">
-      <button type="button" class="gp-button-light footer-btn" (click)="previousBuilderStep()"
+      <button type="button" mat-stroked-button color="accent" (click)="previousBuilderStep()"
         [disabled]="activeBuilderStep === 1 || isSaving">
         Back
       </button>
 
       <div class="footer-actions">
-        <button type="button" class="gp-button-light footer-btn" (click)="closeComposerDrawer()"
+        <button type="button" mat-stroked-button color="accent" (click)="closeComposerDrawer()"
           [disabled]="isSaving">Cancel</button>
 
-        <button *ngIf="activeBuilderStep < 4" type="button" class="gp-button footer-btn" (click)="nextBuilderStep()">
+        <button *ngIf="activeBuilderStep < 4" type="button" mat-flat-button color="primary" (click)="nextBuilderStep()">
           Next Step
         </button>
 
-        <button *ngIf="activeBuilderStep === 4" type="button" class="gp-button footer-btn commit-btn"
+        <button *ngIf="activeBuilderStep === 4" type="button" mat-flat-button color="primary"
           (click)="commitProjectToSystem()" [disabled]="isSaving">
           <mat-spinner diameter="20" *ngIf="isSaving"></mat-spinner>
           <mat-icon *ngIf="!isSaving">rocket_launch</mat-icon>

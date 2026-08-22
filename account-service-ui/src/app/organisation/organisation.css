@@ -575,3 +575,25 @@ html, body {
   margin-top: 30px;
   color: gray;
 }
+
+/* ORG SLUG / IDENTIFIER BADGE */
+.org-slug-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f1f5f9;
+  color: #0b57d0;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: monospace;
+  margin-bottom: 8px;
+}
+
+.org-slug-badge .slug-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+}

@@ -143,13 +143,27 @@ export class Projects implements OnInit {
 
   projectForm!: StrategicInitiative;
 
-  // --- Sprints Perspective Read-Only Operational States ---
+  // --- Sprints Perspective Operational States ---
   public dashboardViewMode: 'projects' | 'sprints' = 'projects';
   public sprintTimelineFilter: 'ALL' | 'CURRENT' | 'FUTURE' | 'COMPLETED' = 'ALL';
   public globalSprintsCollection: SprintItem[] = [];
   public activeProjectFilterCode: string = '';
   public sprintSearchQuery: string = '';
   public sprintSortBy: 'START_DATE' | 'NAME' | 'VELOCITY' = 'START_DATE';
+
+  // --- Inline Sprint Form State ---
+  public isSprintModalOpen = false;
+  public editingSprintId: string | number | null = null;
+  public sprintForm: Partial<SprintItem> = {
+    name: '',
+    projectCode: '',
+    sprint_number: 1,
+    target_velocity: 30,
+    duration_weeks: 2,
+    scheduled_start_date: new Date().toISOString().split('T')[0],
+    scheduled_end_date: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
+    status: 'PLANNED'
+  };
 
   constructor(
     private http: HttpClient,
@@ -534,7 +548,7 @@ export class Projects implements OnInit {
     this.setViewMode('sprints');
   }
 
-  // --- SPRINT READ-ONLY ACCESSORS ---
+  // --- GOOGLE DEV SPRINT FUNCTIONS & API INTEGRATIONS ---
 
   public getFilteredSprints(statusCategory?: 'CURRENT' | 'PLANNED' | 'COMPLETED'): SprintItem[] {
     let list = [...this.globalSprintsCollection];
@@ -596,6 +610,85 @@ export class Projects implements OnInit {
     if (!sprint.target_velocity || sprint.target_velocity === 0) return 0;
     const pct = Math.round(((sprint.completedPoints || 0) / sprint.target_velocity) * 100);
     return Math.min(100, Math.max(0, pct));
+  }
+
+  public startSprint(sprint: SprintItem): void {
+    sprint.status = 'CURRENT';
+    this.http.put(`${this.baseUrl}/sprints/${sprint.id}/start`, { status: 'CURRENT' }, { headers: this.auth.getAuthHeaders() }).pipe(
+      catchError(() => of(null))
+    ).subscribe(() => this.cdr.detectChanges());
+  }
+
+  public completeSprint(sprint: SprintItem): void {
+    sprint.status = 'COMPLETED';
+    sprint.completedPoints = sprint.target_velocity;
+    this.http.put(`${this.baseUrl}/sprints/${sprint.id}/complete`, { status: 'COMPLETED' }, { headers: this.auth.getAuthHeaders() }).pipe(
+      catchError(() => of(null))
+    ).subscribe(() => this.cdr.detectChanges());
+  }
+
+  public openCreateSprintModal(): void {
+    this.editingSprintId = null;
+    this.sprintForm = {
+      name: '',
+      projectCode: this.activeProjectFilterCode || 'PRJ',
+      sprint_number: this.globalSprintsCollection.length + 1,
+      target_velocity: 30,
+      duration_weeks: 2,
+      scheduled_start_date: new Date().toISOString().split('T')[0],
+      scheduled_end_date: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
+      status: 'PLANNED'
+    };
+    this.isSprintModalOpen = true;
+    this.cdr.detectChanges();
+  }
+
+  public editSprint(sprint: SprintItem): void {
+    this.editingSprintId = sprint.id;
+    this.sprintForm = { ...sprint };
+    this.isSprintModalOpen = true;
+    this.cdr.detectChanges();
+  }
+
+  public saveSprintModal(): void {
+    if (!this.sprintForm.name) return;
+
+    if (this.editingSprintId) {
+      const matchIndex = this.globalSprintsCollection.findIndex(s => s.id === this.editingSprintId);
+      if (matchIndex > -1) {
+        this.globalSprintsCollection[matchIndex] = {
+          ...this.globalSprintsCollection[matchIndex],
+          ...this.sprintForm
+        } as SprintItem;
+      }
+    } else {
+      const newSprint: SprintItem = {
+        id: `SPR-${Date.now()}`,
+        projectCode: this.sprintForm.projectCode || 'PRJ',
+        projectName: 'Strategic Initiative Workspace',
+        sprint_number: Number(this.sprintForm.sprint_number) || 1,
+        name: this.sprintForm.name,
+        status: (this.sprintForm.status as any) || 'PLANNED',
+        scheduled_start_date: this.sprintForm.scheduled_start_date || new Date().toISOString().split('T')[0],
+        scheduled_end_date: this.sprintForm.scheduled_end_date || new Date().toISOString().split('T')[0],
+        duration_weeks: Number(this.sprintForm.duration_weeks) || 2,
+        target_velocity: Number(this.sprintForm.target_velocity) || 30,
+        completedPoints: 0,
+        activation_type: 'AUTOMATIC'
+      };
+      this.globalSprintsCollection.unshift(newSprint);
+    }
+
+    this.isSprintModalOpen = false;
+    this.cdr.detectChanges();
+  }
+
+  public deleteSprint(sprintId: string | number): void {
+    if (!confirm('Are you sure you want to remove this sprint execution cycle?')) return;
+    this.globalSprintsCollection = this.globalSprintsCollection.filter(s => s.id !== sprintId);
+    this.http.delete(`${this.baseUrl}/sprints/${sprintId}`, { headers: this.auth.getAuthHeaders() }).pipe(
+      catchError(() => of(null))
+    ).subscribe(() => this.cdr.detectChanges());
   }
 
   private loadProductsBackground(): void {

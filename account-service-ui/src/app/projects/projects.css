@@ -1,120 +1,58 @@
-/* Base Theme Button Overrides & Global Classes */
-.gp-button {
-  width: 100%;
-  height: 48px;
-  border-radius: 20px;
-  background-color: #001c51;
-  color: white;
-  font-size: 16px;
-  border: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: opacity 0.2s ease, transform 0.1s ease;
+/* ==========================================
+   1. ANGULAR MATERIAL THEMING (MDC TOKENS)
+   ========================================== */
+
+/* Theme primary and accent colors while preserving Material structure & ripples */
+:root {
+  --mdc-filled-button-container-color: #001c51;
+  --mdc-filled-button-label-text-color: #ffffff;
+  
+  --mdc-protected-button-container-color: #001c51;
+  --mdc-protected-button-label-text-color: #ffffff;
+
+  --mdc-outlined-button-outline-color: #2678bf;
+  --mdc-outlined-button-label-text-color: #2678bf;
 }
 
-.gp-button-light {
-  width: 100%;
-  height: 48px;
-  border-radius: 20px;
-  border: 1px solid #2678bf;
-  background-color: #2678bf;
-  color: black;
-  font-size: 16px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: opacity 0.2s ease, transform 0.1s ease;
+/* Material Primary Color Targets */
+button[mat-flat-button][color="primary"],
+button[mat-stroked-button][color="primary"] {
+  --mdc-filled-button-container-color: #001c51;
+  --mdc-protected-button-container-color: #001c51;
 }
 
-.gp-button:hover,
-.gp-button-light:hover {
-  opacity: 0.92;
+/* Material Accent / Secondary Targets */
+button[mat-flat-button][color="accent"],
+button[mat-stroked-button][color="accent"] {
+  --mdc-filled-button-container-color: #2678bf;
+  --mdc-protected-button-container-color: #2678bf;
 }
 
-.gp-button:active,
-.gp-button-light:active {
-  transform: scale(0.98);
+/* Material Stroked Accent Targets */
+button[mat-stroked-button][color="accent"] {
+  --mdc-outlined-button-outline-color: #2678bf;
+  --mdc-outlined-button-label-text-color: #2678bf;
 }
 
-.gp-button:disabled,
-.gp-button-light:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* Sizing variations */
-.gp-button.header-btn {
-  width: auto;
-  padding: 0 24px;
-}
-
-.gp-button-light.compact {
-  width: auto;
-  height: 38px;
+/* Filter Pill Toggles using Native Material Buttons */
+.filter-pills button[mat-button] {
   border-radius: 16px;
-  font-size: 14px;
-  padding: 0 16px;
-  border: none;
-  background-color: transparent;
-}
-
-.gp-button-light.compact.active {
-  background-color: #2678bf;
-  color: #ffffff;
-}
-
-.gp-button-light.action-btn,
-.gp-button.action-btn {
-  width: auto;
-  height: 36px;
-  border-radius: 14px;
-  font-size: 13px;
-  padding: 0 16px;
-}
-
-.gp-button-light.pill-btn {
-  width: auto;
-  height: 32px;
-  border-radius: 16px;
-  font-size: 12px;
-  padding: 0 16px;
-  background-color: transparent;
   color: #475569;
-  border-color: #cbd5e1;
+  border: 1px solid #cbd5e1;
+  min-width: unset;
 }
 
-.gp-button-light.pill-btn.active {
+.filter-pills button[mat-button].active {
   background-color: #001c51;
   color: #ffffff;
   border-color: #001c51;
 }
 
-.gp-button-light.inline-btn {
-  width: auto;
-  height: 36px;
-  border-radius: 12px;
-  font-size: 13px;
-  padding: 0 14px;
-}
 
-.gp-button.footer-btn,
-.gp-button-light.footer-btn {
-  width: auto;
-  height: 40px;
-  border-radius: 16px;
-  font-size: 14px;
-  padding: 0 20px;
-}
+/* ==========================================
+   2. DASHBOARD & CONTAINER LAYOUT
+   ========================================== */
 
-/* Container Layout */
 .projects-dashboard-container {
   padding-left: 10px;
   background-color: #ffffff;
@@ -154,12 +92,16 @@
 .view-toggle-group {
   background: #e2e8f0;
   padding: 4px;
-  border-radius: 20px;
+  border-radius: 10px;
   display: flex;
   gap: 4px;
 }
 
-/* Projects Grid */
+
+/* ==========================================
+   3. PROJECTS GRID VIEW
+   ========================================== */
+
 .search-filter-bar {
   margin-bottom: 16px;
 }
@@ -182,13 +124,13 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .project-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
 }
 
 .card-header {
@@ -199,7 +141,7 @@
 }
 
 .project-code {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   color: #2678bf;
   background: #e0f2fe;
@@ -264,7 +206,11 @@
   align-items: center;
 }
 
-/* Sprints View Enhanced Controls */
+
+/* ==========================================
+   4. SPRINTS VIEW CONTROLS & ACCORDION
+   ========================================== */
+
 .sprints-toolbar-container {
   display: flex;
   flex-direction: column;
@@ -299,7 +245,7 @@
 
 .active-filter-badge {
   font-size: 13px;
-  background: #e0e7ff;
+  background: #e0e0ff;
   color: #001c51;
   padding: 4px 12px;
   border-radius: 16px;
@@ -424,7 +370,12 @@
   color: #94a3b8;
 }
 
-/* Modal Overlay & Card */
+
+/* ==========================================
+   5. MODALS & DRAWERS (WIZARDS)
+   ========================================== */
+
+/* Modal Backdrop & Card */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -433,7 +384,7 @@
   height: 100vh;
   background: rgba(15, 23, 42, 0.4);
   backdrop-filter: blur(2px);
-  z-index: 1050;
+  z-index: 500;
 }
 
 .sprint-modal-card {
@@ -446,7 +397,7 @@
   background: #ffffff;
   border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-  z-index: 1051;
+  z-index: 501;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -490,7 +441,7 @@
   height: 100vh;
   background: rgba(15, 23, 42, 0.4);
   backdrop-filter: blur(2px);
-  z-index: 1000;
+  z-index: 400;
 }
 
 .composer-drawer {
@@ -498,11 +449,12 @@
   top: 0;
   right: -100vw;
   left: auto;
-  width: 100vw;
+  width: 100%;
+  max-width: 640px;
   height: 100vh;
   background: #ffffff;
-  box-shadow: -4px 0 24px rgba(0,0,0,0.15);
-  z-index: 1001;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+  z-index: 401;
   display: flex;
   flex-direction: column;
   transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -642,7 +594,6 @@
   margin-left: 4px;
 }
 
-/* Step 3 Slider Controls */
 .slider-group {
   margin-bottom: 20px;
 }
@@ -763,7 +714,6 @@
   font-weight: 600;
 }
 
-/* Footer & Commit Action */
 .drawer-footer {
   padding: 16px 24px;
   border-top: 1px solid #e2e8f0;
@@ -786,4 +736,54 @@
   padding: 32px;
   color: #64748b;
   font-size: 13px;
+}
+
+/* ==========================================
+   VIEW TOGGLE SWITCHER (MAT-RAISED-BUTTON)
+   ========================================== */
+
+/* Outer container for toggle buttons */
+.view-toggle-group {
+  display: inline-flex;
+  gap: 6px;
+  background-color: #f1f5f9;
+  padding: 4px;
+  border-radius: 24px;
+}
+
+/* Material Raised Button Toggle Base Style */
+.view-toggle-group button[mat-raised-button] {
+  border-radius: 20px !important;
+  height: 40px !important;
+  padding: 0 16px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  box-shadow: none !important; /* Flat look when unselected */
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Inactive State Colors */
+  --mdc-protected-button-container-color: transparent;
+  --mdc-protected-button-label-text-color: #64748b;
+}
+
+/* Hover state for inactive button */
+.view-toggle-group button[mat-raised-button]:not(.active):hover {
+  --mdc-protected-button-container-color: #e2e8f0;
+  --mdc-protected-button-label-text-color: #1e293b;
+}
+
+/* Active / Selected State Style */
+.view-toggle-group button[mat-raised-button].active {
+  --mdc-protected-button-container-color: #001c51;
+  --mdc-protected-button-label-text-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 28, 81, 0.25) !important; /* Subtle elevation on active */
+}
+
+/* Icon Alignment Inside Button */
+.view-toggle-group button[mat-raised-button] mat-icon {
+  margin-right: 6px;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  vertical-align: middle;
 }

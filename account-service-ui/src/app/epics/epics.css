@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Google Workspace Agile Tracker - Full Updated Stylesheet
+   Google Workspace Agile Tracker Stylesheet
    ========================================================================== */
 
 :host {
@@ -36,10 +36,6 @@
   padding-top: 0px;
 }
 
-/* ==========================================================================
-   UNIFIED TOP HEADERS & BARS
-   ========================================================================== */
-
 .top-unfied-card {
   background: var(--g-surface);
   border: 1px solid var(--g-border);
@@ -52,12 +48,8 @@
   box-shadow: var(--g-elevation-1);
 }
 
-.brand-section { display: flex; align-items: center; gap: 16px; }
-.google-logo { font-weight: 600; font-size: 18px; display: flex; align-items: center; gap: 8px; }
-.app-subtitle { color: var(--g-text-muted); font-size: 15px; font-weight: 500; }
 .divider-v { width: 1px; height: 24px; background: var(--g-border); margin: 0 4px; }
 
-/* Segmented Tabs */
 .segmented-tabs { display: flex; align-items: center; gap: 6px; margin-left: 16px; background: #f1f3f4; padding: 4px; border-radius: 10px; }
 .tab-btn {
   display: flex;
@@ -80,27 +72,6 @@
   font-weight: 600;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
-
-.header-right-actions { display: flex; align-items: center; gap: 8px; }
-
-/* Filter Bar Label & Pills */
-.filter-card-bar { flex-wrap: wrap; gap: 12px; }
-.filter-card-label { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; min-width: 90px; }
-.filter-pill-group { display: flex; gap: 10px; flex: 1; margin-left: 12px; flex-wrap: wrap; align-items: center; }
-.filter-pill-field { flex: 1; min-width: 150px; }
-.filter-pill-field.search-flex { flex: 2; min-width: 260px; }
-
-/* Angular Material Form Overrides for Filter Bar */
-.filter-pill-group .mat-mdc-form-field {
-  font-size: 13px;
-}
-.filter-pill-group .mat-mdc-form-field-subscript-wrapper {
-  display: none;
-}
-
-/* ==========================================================================
-   BUTTON SYSTEM
-   ========================================================================== */
 
 .gp-button {
   width: 100%;
@@ -141,65 +112,31 @@
   opacity: 0.92;
 }
 
-.gp-button:active,
-.gp-button-light:active {
-  transform: scale(0.98);
-}
-
-.gp-button:disabled,
-.gp-button-light:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* Button Sizing Variations */
 .gp-button.header-btn {
   width: auto;
-  padding: 0 24px;
   height: 40px;
-}
-
-.gp-button-light.compact {
-  width: auto;
-  height: 38px;
-  border-radius: 16px;
+  padding: 0 20px;
   font-size: 14px;
-  padding: 0 16px;
-  border: none;
-  background-color: transparent;
-  color: var(--g-text-main);
-}
-
-.gp-button-light.compact.active {
-  background-color: #2678bf;
-  color: #ffffff;
 }
 
 .gp-button-light.action-btn {
   width: auto;
   height: 36px;
-  border-radius: 14px;
+  padding: 0 16px;
+  border-radius: 12px;
   font-size: 13px;
-  padding: 0 16px;
+}
+
+.gp-button-light.action-btn.story-btn {
+  background-color: #1e8e3e;
+  border-color: #1e8e3e;
   color: #ffffff;
 }
 
-.gp-button-light.pill-btn {
-  width: auto;
-  height: 32px;
-  border-radius: 16px;
-  font-size: 12px;
-  padding: 0 16px;
-  background-color: transparent;
-  color: #475569;
-  border-color: #cbd5e1;
-}
-
-.gp-button-light.pill-btn.active {
-  background-color: #001c51;
-  color: #ffffff;
-  border-color: #001c51;
+.gp-button-light.action-btn.task-btn {
+  background-color: #f9ab00;
+  border-color: #f9ab00;
+  color: #000000;
 }
 
 .gp-button-light.inline-btn {
@@ -244,58 +181,6 @@
   padding: 0 20px;
 }
 
-/* ==========================================================================
-   TEAM BAR & STATS
-   ========================================================================== */
-
-.team-bar { background: #f8f9fa; padding: 8px 20px; }
-.bar-label { font-size: 12px; font-weight: 600; color: var(--g-text-muted); }
-.team-avatars-flex { display: flex; gap: 8px; flex-wrap: wrap; flex: 1; margin-left: 12px; }
-.user-badge-chip {
-  display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 16px;
-  border: 1px solid var(--g-border); background: white; cursor: pointer; font-size: 12px;
-  transition: all 0.15s ease;
-}
-.user-badge-chip:hover { border-color: #2678bf; background: #f8faff; }
-.user-badge-chip.active-user { background: #e8f0fe; border-color: #2678bf; color: #001c51; font-weight: 600; }
-
-.sprint-stats-card {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: var(--g-surface);
-}
-
-.sprint-stats-grid { 
-  display: flex; 
-  gap: 24px; 
-  width: 100%;
-  justify-content: center;
-}
-
-/* Highlighted Stat Pills */
-.stat-pill {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: #001c51;
-  border: 1px solid #00153f;
-  padding: 12px 24px;
-  border-radius: 12px;
-  min-width: 120px;
-  box-shadow: 0 4px 10px rgba(0, 28, 81, 0.2);
-  transition: transform 0.2s ease;
-}
-.stat-pill:hover {
-  transform: translateY(-2px);
-}
-.stat-label { font-size: 12px; color: #a8c7fa; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
-.stat-value { font-size: 26px; font-weight: 800; color: #ffffff; }
-
-/* ==========================================================================
-   FLOATING BULK ACTIONS BAR
-   ========================================================================== */
-
 .bulk-action-bar {
   position: fixed;
   bottom: 24px;
@@ -316,10 +201,6 @@
 .compact-select { width: 140px; }
 .compact-select .mat-mdc-form-field-subscript-wrapper { display: none; }
 
-/* ==========================================================================
-   SPRINT CYCLES & HIERARCHICAL TREE TABLE
-   ========================================================================== */
-
 .sprint-cycle-block {
   background: var(--g-surface);
   border: 1px solid var(--g-border);
@@ -334,18 +215,17 @@
 }
 .sprint-cycle-header.has-bottom-margin { margin-bottom: 12px; }
 .sprint-cycle-title { display: flex; align-items: center; gap: 10px; }
-.sprint-cycle-title h3 { margin: 0; font-size: 15px; font-weight: 700; color: var(--g-text-main); }
+.sprint-cycle-title h3, .kanban-header-left h2 { margin: 0; font-size: 15px; font-weight: 700; color: var(--g-text-main); }
 .sprint-date-range { font-size: 12px; color: var(--g-text-muted); }
 .sprint-header-actions { display: flex; align-items: center; gap: 12px; }
 .sprint-cycle-count { font-size: 12px; font-weight: 600; color: var(--g-text-muted); }
 .pts-capacity-badge { font-size: 12px; color: var(--g-text-muted); background: #f1f3f4; padding: 4px 8px; border-radius: 6px; }
 
-/* Tree Table Structure */
 .google-card-table { border: 1px solid var(--g-border); border-radius: 8px; overflow: hidden; margin-top: 12px; }
 
 .table-header-row, .table-row {
   display: grid;
-  grid-template-columns: 24px 32px 32px 130px 130px 1fr 80px 150px 150px 110px;
+  grid-template-columns: 24px 32px 32px minmax(180px, 1fr) 130px 130px 240px 150px 150px 110px;
   align-items: center;
   padding: 8px 16px;
   border-bottom: 1px solid #f1f3f4;
@@ -376,7 +256,64 @@
 .actions-cell { display: flex; align-items: center; gap: 4px; }
 .pts-pill { background: #eef2ff; color: #3730a3; font-weight: 700; font-size: 11px; padding: 2px 6px; border-radius: 4px; }
 
-/* Status Badges */
+/* Allocated Badges & Pills */
+.allocated-pills-cell { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; overflow: hidden; }
+.allocation-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.allocation-pill i { font-size: 12px; }
+.allocation-pill.issue-pill { background-color: #fce8e6; color: #d93025; border: 1px solid #fad2cf; }
+.allocation-pill.issue-pill.blocking-issue { background-color: #fdeded; color: #b71c1c; border: 1px solid #f5c6cb; font-weight: 700; }
+.blocked-tag { font-size: 8px; background: #b71c1c; color: #fff; padding: 1px 3px; border-radius: 3px; font-weight: 800; }
+
+.allocation-pill.testcase-pill { background-color: #e8f0fe; color: #1a73e8; border: 1px solid #aecbfa; }
+
+/* Execution Status Badge on Test Cases */
+.tc-status-pill {
+  font-size: 8px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.tc-status-pill.passed { background: #e6f4ea; color: #1e8e3e; }
+.tc-status-pill.failed { background: #fce8e6; color: #d93025; }
+.tc-status-pill.blocked { background: #fef7e0; color: #b06000; }
+.tc-status-pill.in_progress { background: #e0f2fe; color: #0369a1; }
+.tc-status-pill.unexecuted, .tc-status-pill.pending { background: #f1f3f4; color: #5f6368; }
+
+.remove-pill-btn {
+  font-size: 11px !important;
+  cursor: pointer;
+  border-radius: 50%;
+  padding: 1px;
+  margin-left: 2px;
+  opacity: 0.7;
+}
+.remove-pill-btn:hover { opacity: 1; background: rgba(0,0,0,0.1); }
+
+.muted-text { color: var(--g-text-muted); font-size: 11px; }
+
+.allocated-details-block {
+  background: #f8f9fa;
+  border: 1px solid var(--g-border);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.detail-group { display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
+.pills-container { display: flex; flex-wrap: wrap; gap: 6px; }
+
 .status-badge {
   font-size: 10px;
   padding: 3px 8px;
@@ -394,7 +331,6 @@
 .status-badge.blocked { background: #fce8e6; color: var(--g-red); border: 1px solid #fad2cf; }
 .status-badge.completed, .status-badge.active { background: #e6f4ea; color: var(--g-green); border: 1px solid #a8dab5; }
 
-/* Type Chips */
 .chip-tag { font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
 .chip-tag.epic { background: #e8f0fe; color: #001c51; }
 .chip-tag.story { background: #e6f4ea; color: var(--g-green); }
@@ -403,7 +339,6 @@
 .drag-handle { cursor: grab; color: #bdc1c6; display: flex; align-items: center; }
 .empty-sprint-msg { font-size: 13px; color: var(--g-text-muted); padding: 30px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 12px; border: 1px dashed var(--g-border); border-radius: 8px; }
 
-/* Avatars & Users */
 .user-cell, .reporter-cell { display: flex; align-items: center; gap: 6px; overflow: hidden; }
 .user-name { font-size: 11px; color: var(--g-text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .role-badge { font-size: 10px; color: var(--g-text-muted); }
@@ -426,13 +361,9 @@
 .avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
 .reporter-avatar { background: var(--g-purple); }
 
-/* ==========================================================================
-   KANBAN BOARD VIEW
-   ========================================================================== */
-
 .kanban-board-container { margin-top: 12px; overflow-x: auto; padding-bottom: 16px; }
 .kanban-grid { display: grid; grid-template-columns: repeat(6, minmax(250px, 1fr)); gap: 12px; align-items: start; }
-.kanban-column { background: #f1f3f4; border: 1px solid var(--g-border); border-radius: 12px; padding: 12px; min-height: 550px; }
+.kanban-column { background: #f1f3f4; border: 1px solid var(--g-border); border-radius: 12px; padding: 12px; height: 100%; }
 .kanban-column-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .column-count { font-size: 11px; font-weight: 700; color: var(--g-text-muted); background: white; padding: 2px 8px; border-radius: 10px; }
 .kanban-card-list { display: flex; flex-direction: column; gap: 8px; min-height: 200px; }
@@ -444,6 +375,7 @@
 .kanban-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 .item-code { font-size: 11px; font-weight: 600; color: var(--g-text-muted); }
 .kanban-card-title { font-size: 12px; font-weight: 600; margin-bottom: 8px; color: var(--g-text-main); }
+.kanban-card-allocated { margin-bottom: 8px; }
 
 .kanban-user-badge-row {
   display: flex;
@@ -455,364 +387,302 @@
   cursor: pointer;
   transition: background-color 0.15s ease;
 }
-.kanban-user-badge-row:hover {
-  background-color: #f1f3f4;
-}
-.user-role-stack {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-.user-role-stack .user-name {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--g-text-main);
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-}
-.user-role-stack .role-badge {
-  font-size: 9px;
-  color: var(--g-text-muted);
-}
+.kanban-user-badge-row:hover { background-color: #f1f3f4; }
+.user-role-stack { display: flex; flex-direction: column; overflow: hidden; }
+.user-role-stack .user-name { font-size: 11px; font-weight: 600; color: var(--g-text-main); white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+.user-role-stack .role-badge { font-size: 9px; color: var(--g-text-muted); }
 
 .kanban-card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f3f4; padding-top: 6px; margin-top: 6px; }
 .priority-pill { font-size: 10px; font-weight: 700; text-transform: uppercase; }
 .empty-column-drop { font-size: 12px; color: var(--g-text-muted); text-align: center; padding: 20px 0; border: 1px dashed var(--g-border); border-radius: 8px; }
 
-/* ==========================================================================
-   MODALS / SLIDE-IN DRAWERS (CREATION & EDITING)
-   ========================================================================== */
-
 .drawer-overlay {
-  position: fixed; 
-  inset: 0; 
-  background: rgba(32, 33, 36, 0.45); 
-  backdrop-filter: blur(2px);
-  z-index: 10000;
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  padding: 20px;
-  animation: fadeIn 0.15s ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  position: fixed; inset: 0; background: rgba(32, 33, 36, 0.45); backdrop-filter: blur(2px);
+  z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px;
 }
 
 .side-drawer {
-  position: relative; 
-  width: 720px; 
-  max-width: 95vw; 
-  max-height: 88vh; 
-  background: #ffffff;
-  border-radius: 16px; 
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2); 
-  display: flex; 
-  flex-direction: column; 
-  overflow: hidden;
-  animation: modalSlideUp 0.2s cubic-bezier(0, 0, 0.2, 1);
+  position: relative; width: 720px; max-width: 95vw; max-height: 88vh; background: #ffffff;
+  border-radius: 16px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2); display: flex; flex-direction: column; overflow: hidden;
 }
 
-@keyframes modalSlideUp {
-  from { transform: translateY(20px); opacity: 0.8; }
-  to { transform: translateY(0); opacity: 1; }
+.drawer-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid var(--g-border); background: #ffffff; }
+.drawer-header-title { display: flex; align-items: center; gap: 10px; }
+.drawer-header-title h3 { margin: 0; font-size: 18px; font-weight: 600; color: var(--g-text-main); }
+.close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--g-text-muted); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+.drawer-body { padding: 20px 24px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+.drawer-body .full-width { width: 100%; }
+.form-grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #2678bf; margin: 16px 0 10px 0; border-bottom: 1px solid var(--g-border); padding-bottom: 4px; }
+.drawer-footer { padding: 14px 24px; border-top: 1px solid var(--g-border); display: flex; justify-content: flex-end; gap: 12px; background: #f8f9fa; }
+
+.g-toast {
+  position: fixed; top: 20px; right: 20px; background: #202124; color: white;
+  padding: 10px 18px; border-radius: 8px; font-size: 13px; display: flex; align-items: center; gap: 10px;
+  box-shadow: var(--g-elevation-2); z-index: 10001;
 }
 
-.drawer-header { 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
-  padding: 16px 24px; 
-  border-bottom: 1px solid var(--g-border); 
-  background: #ffffff; 
+.filter-card-bar { display: flex; flex-direction: column; gap: 12px; padding: 16px 20px; }
+.filter-grid-secondary { display: flex; flex-wrap: wrap; gap: 12px; width: 100%; align-items: center; }
+.filter-pill-field { flex: 1; min-width: 160px; }
+.filter-pill-field.search-filter-field { min-width: 240px; flex-grow: 1; max-width: 320px; }
+.filter-pill-field .mat-mdc-form-field-subscript-wrapper { display: none; }
+
+.single-line-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; }
+.toolbar-left-group, .toolbar-right-group { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.project-select-field { padding-top: 10px; width: 280px; }
+.kanban-sprint-header-card { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 16px; }
+.kanban-header-users { display: flex; align-items: center; gap: 12px; }
+.team-avatars-flex { display: flex; gap: 8px; flex-wrap: wrap; flex: 1; }
+.user-badge-chip { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 16px; border: 1px solid var(--g-border); background: white; cursor: pointer; font-size: 12px; }
+.user-badge-chip.active-user { background: #e8f0fe; border-color: #2678bf; color: #001c51; font-weight: 600; }
+.file-import-label { cursor: pointer; }
+
+/* ==========================================================================
+   Story / Task Test Case Attachment UI
+   ========================================================================== */
+
+.testcase-attachment-field {
+  margin-top: 4px;
 }
 
-.drawer-header-title {
+.testcase-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: #e8f0fe;
+  color: #1a73e8;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.testcase-pill {
+  max-width: 100%;
+}
+
+.testcase-view-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  min-width: 0;
 }
 
-.drawer-header-title h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--g-text-main);
+.testcase-view-row .material-icons {
+  font-size: 16px;
+  color: #1a73e8;
 }
 
-.close-btn { 
-  background: none; 
-  border: none; 
-  font-size: 20px; 
-  cursor: pointer; 
-  color: var(--g-text-muted);
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+.drawer-body .pills-container .allocation-pill.testcase-pill {
+  align-items: center;
+  min-height: 26px;
+}
+
+@media (max-width: 900px) {
+  .drawer-body .pills-container .allocation-pill.testcase-pill {
+    max-width: 100%;
+  }
+}
+
+
+/* =========================================================
+   READ-ONLY TEST CASE DISPLAY
+   Stories and Tasks
+   ========================================================= */
+
+.testcase-view-section {
+  width: 100%;
+  margin: 8px 0 20px;
+  border: 1px solid var(--g-border);
+  border-radius: 10px;
+  background: var(--g-surface);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.testcase-view-header {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  background: #f8f9fa;
+  border-bottom: 1px solid var(--g-border);
+}
+
+.testcase-view-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--g-text-main);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.testcase-view-label .material-icons {
+  font-size: 19px;
+  color: #2678bf;
+}
+
+.testcase-view-help {
+  margin-top: 3px;
+  color: var(--g-text-muted);
+  font-size: 12px;
+}
+
+.testcase-view-section .testcase-count {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  min-width: 28px;
+  height: 26px;
+  margin-left: 0;
+  padding: 0 9px;
+  border-radius: 14px;
+  background: #e8f0fe;
+  color: #1a73e8;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.testcase-list {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.testcase-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 58px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #edf0f4;
+  box-sizing: border-box;
   transition: background-color 0.15s ease;
 }
 
-.close-btn:hover {
-  background-color: #f1f3f4;
-  color: var(--g-text-main);
+.testcase-row:last-child {
+  border-bottom: none;
 }
 
-.drawer-body { 
-  padding: 20px 24px; 
-  flex: 1; 
-  overflow-y: auto; 
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.testcase-row:hover {
+  background: #f8f9fa;
 }
 
-/* Material Form Fields Inside Drawers */
-.drawer-body .full-width {
-  width: 100%;
-}
-
-.drawer-body .mat-mdc-form-field {
-  margin-bottom: 4px;
-}
-
-.form-grid-2col { 
-  display: grid; 
-  grid-template-columns: 1fr 1fr; 
-  gap: 16px; 
-}
-
-.form-section-title { 
-  font-size: 11px; 
-  font-weight: 700; 
-  text-transform: uppercase; 
-  letter-spacing: 0.5px;
-  color: #2678bf; 
-  margin: 16px 0 10px 0; 
-  border-bottom: 1px solid var(--g-border); 
-  padding-bottom: 4px; 
-}
-
-.drawer-footer { 
-  padding: 14px 24px; 
-  border-top: 1px solid var(--g-border); 
-  display: flex; 
-  justify-content: flex-end; 
-  gap: 12px; 
-  background: #f8f9fa; 
-}
-
-/* ==========================================================================
-   TOAST NOTIFICATION
-   ========================================================================== */
-
-.g-toast {
-  position: fixed; 
-  top: 20px; 
-  right: 20px; 
-  background: #202124; 
-  color: white;
-  padding: 10px 18px; 
-  border-radius: 8px; 
-  font-size: 13px; 
-  display: flex; 
-  align-items: center; 
-  gap: 10px;
-  box-shadow: var(--g-elevation-2); 
-  z-index: 10001; 
-  animation: slideIn 0.2s ease;
-}
-
-@keyframes slideIn { 
-  from { transform: translateY(-20px); opacity: 0; } 
-  to { transform: translateY(0); opacity: 1; } 
-}
-
-/* Filter Container Improvements */
-.filter-card-bar {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px 20px;
-}
-
-.filter-header-row {
+.testcase-icon {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
   display: flex;
   align-items: center;
-  gap: 16px;
-  width: 100%;
+  justify-content: center;
+  border-radius: 8px;
+  background: #e8f0fe;
+  color: #1a73e8;
 }
 
-.filter-primary-group {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1;
-}
-
-.filter-primary-group .project-select {
-  min-width: 200px;
-  flex: 0 0 220px;
-}
-
-.expandable-search {
-  display: flex;
-  align-items: center;
-  transition: width 0.3s ease;
-}
-.expandable-search:not(.expanded) {
-  width: 32px;
-}
-.expandable-search.expanded {
-  flex: 1;
-  min-width: 280px;
-}
-
-/* Secondary Filters Grid Layout */
-.filter-grid-secondary {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 10px 14px;
-  width: 100%;
-  padding-top: 16px;
-  border-top: 1px solid #f1f3f4;
-  animation: fadeIn 0.2s ease-in-out;
-}
-
-.filter-pill-field {
-  width: 100%;
-  margin: 0;
-}
-
-.filter-pill-field .mat-mdc-form-field-subscript-wrapper {
-  display: none;
-}
-
-.clear-btn {
-  height: 40px;
-  white-space: nowrap;
-  padding: 0 16px;
-}
-
-/* Custom Alignment for Search Bar in Top Header */
-.header-right-actions .top-search-input {
-  min-width: 240px;
-  margin-top: 5px; /* Offsets Angular Material's internal padding */
-}
-
-/* Enhances the transition effect when the search bar expands */
-.header-right-actions .expandable-search {
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-}
-
-/* Single-line Layout Alignment */
-.single-line-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  white-space: nowrap;
-}
-
-.toolbar-left-group,
-.toolbar-right-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-/* Adjustments for inputs inside the single line bar */
-.project-select-field {
-  padding-top: 10px;
-  width: 520px;
-}
-
-.kanban-sprint-header-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.kanban-header-left h2 {
-  margin: 0;
+.testcase-icon .material-icons {
   font-size: 18px;
-  font-weight: 700;
-  color: var(--g-text-main);
 }
 
-.kanban-header-users {
+.testcase-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.testcase-code {
+  color: #1a73e8;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+}
+
+.testcase-title {
+  margin-top: 2px;
+  color: var(--g-text-main);
+  font-size: 13px;
+  line-height: 18px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.testcase-row .tc-status-pill {
+  flex-shrink: 0;
+  min-width: 82px;
+  text-align: center;
+  font-size: 9px;
+  padding: 3px 7px;
+  border-radius: 10px;
+}
+
+.no-testcases {
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-.kanban-header-users .bar-label {
-  font-size: 13px;
-  font-weight: 600;
+  padding: 20px 16px;
   color: var(--g-text-muted);
 }
 
-.gp-button-light.action-btn.task-btn {
-  background-color: var(--g-yellow);
-  border-color: var(--g-yellow);
-  color: #000000;
+.no-testcases > .material-icons {
+  font-size: 22px;
+  color: #9aa0a6;
 }
 
-.gp-button-light.action-btn.task-btn:hover {
-  opacity: 0.9;
-}
-
-.file-import-label {
-  cursor: pointer;
-}
-
-/* Layout Alignment */
-.single-line-toolbar {
+.no-testcases > div {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  white-space: nowrap;
+  flex-direction: column;
+  gap: 3px;
 }
 
-.toolbar-left-group,
-.toolbar-right-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
+.no-testcases strong {
+  color: var(--g-text-main);
+  font-size: 13px;
 }
 
-/* Search Bar Inside Filters Panel */
-.search-filter-field {
-  min-width: 240px;
-  flex-grow: 1;
-  max-width: 320px;
+.no-testcases span {
+  color: var(--g-text-muted);
+  font-size: 12px;
+}
+
+/* Test cases are view-only in the Story/Task tree and Kanban. */
+.testcase-pill .remove-pill-btn {
+  display: none !important;
+}
+
+@media (max-width: 700px) {
+  .testcase-view-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .testcase-row {
+    align-items: flex-start;
+  }
+
+  .testcase-title {
+    white-space: normal;
+  }
+
+  .testcase-row .tc-status-pill {
+    min-width: 70px;
+  }
 }
 
 
-/* Quick Action Colors */
-.gp-button-light.action-btn.task-btn {
-  background-color: var(--g-yellow);
-  border-color: var(--g-yellow);
-  color: #000000;
-}
-
-.file-import-label {
-  cursor: pointer;
-}
+/* VIEW TEST CASES */
+.view-testcases-btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;height:30px;padding:0 10px;border:1px solid #aecbfa;border-radius:8px;background:#e8f0fe;color:#1a73e8;font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer}
+.view-testcases-btn:hover{background:#dbe8fd;border-color:#7aa7e8}.view-testcases-btn .material-icons{font-size:16px}
+.view-testcases-count{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#1a73e8;color:#fff;font-size:9px;font-weight:800}
+.testcase-view-trigger{display:flex;align-items:center;min-height:36px;margin-bottom:12px}.drawer-testcases-btn{height:36px;padding:0 14px;font-size:12px}
+/* TEST CASE POPUP */
+.testcase-popup-overlay{position:fixed;inset:0;z-index:12000;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(32,33,36,.48);backdrop-filter:blur(3px)}
+.testcase-popup{width:680px;max-width:96vw;max-height:82vh;display:flex;flex-direction:column;overflow:hidden;background:#fff;border:1px solid #dadce0;border-radius:16px;box-shadow:0 16px 48px rgba(32,33,36,.25)}
+.testcase-popup-header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 20px;border-bottom:1px solid #e5e7eb}.testcase-popup-title-wrap{display:flex;align-items:center;gap:12px}.testcase-popup-icon{width:42px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:#e8f0fe;color:#1a73e8}.testcase-popup-icon .material-icons{font-size:22px}.testcase-popup-title-wrap h3{margin:0;color:#202124;font-size:17px;font-weight:700}.testcase-popup-title-wrap span{display:block;margin-top:3px;color:#5f6368;font-size:12px}
+.testcase-popup-close{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:0;border-radius:50%;background:transparent;color:#5f6368;cursor:pointer}.testcase-popup-close:hover{background:#f1f3f4}.testcase-popup-body{flex:1;min-height:0;overflow-y:auto;padding:8px 0}.testcase-popup-row{display:flex;align-items:center;gap:12px;min-height:68px;padding:12px 20px;border-bottom:1px solid #f0f1f3}.testcase-popup-row:hover{background:#f8f9fa}.testcase-popup-row-icon{width:36px;height:36px;min-width:36px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#f1f3f4;color:#1a73e8}.testcase-popup-info{flex:1;min-width:0}.testcase-popup-code{color:#1a73e8;font-size:11px;font-weight:800}.testcase-popup-name{margin-top:2px;color:#202124;font-size:13px;line-height:19px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.testcase-popup-row .tc-status-pill{min-width:82px;text-align:center;flex-shrink:0}.testcase-popup-empty{min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;color:#5f6368;text-align:center}.testcase-popup-empty .material-icons{font-size:34px;color:#9aa0a6}.testcase-popup-empty strong{color:#3c4043;font-size:14px}.testcase-popup-empty span{max-width:360px;color:#80868b;font-size:12px}.testcase-popup-footer{display:flex;justify-content:flex-end;padding:12px 20px;border-top:1px solid #e5e7eb;background:#f8f9fa}
+@media(max-width:700px){.testcase-popup-overlay{padding:12px}.testcase-popup{width:100%;max-height:90vh}.testcase-popup-row{align-items:flex-start}.testcase-popup-name{white-space:normal}.testcase-popup-row .tc-status-pill{min-width:68px}}
