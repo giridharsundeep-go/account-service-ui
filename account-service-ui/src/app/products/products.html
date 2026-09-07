@@ -1,135 +1,115 @@
-<div class="saas-container">
-  
-  <!-- 🔝 SAAS SUB-HEADER -->
-  <div class="saas-header">
-    <div class="header-title-block">
-      <h2>Product Portfolios</h2>
-      <p class="header-subtitle">Govern product registries and manage high-level scope definitions.</p>
+<main class="products-page">
+  <header class="google-header">
+    <div class="header-brand">
+      <div>
+        
+        <p style="font-size: 20px;">Product registry and platform portfolio</p>
+      </div>
     </div>
-    <div class="workspace-control-bar" style="display: flex; gap: 16px;">
-      <!-- Pure Angular Material Button with Material Icon -->
-      <button 
-        mat-flat-button 
-        color="primary" 
-        class="header-wide-btn" 
-        (click)="initiateNewProduct()">
-        <mat-icon>add_box</mat-icon>
-        <span>Create Product</span>
+    <button mat-flat-button class="primary-action" type="button" (click)="initiateNewProduct()">
+      <mat-icon>add</mat-icon><span>Create Product</span>
+    </button>
+  </header>
+
+  <section class="search-toolbar">
+    <div class="search-shell">
+      <mat-icon class="search-icon">search</mat-icon>
+      <input type="search" [(ngModel)]="productLookupFilter" placeholder="Search products" aria-label="Search products">
+      <button *ngIf="productLookupFilter" class="search-clear" type="button" (click)="productLookupFilter=''">
+        <mat-icon>close</mat-icon>
       </button>
     </div>
-  </div>
+    <button class="filter-button" type="button" [class.active]="filterPanelOpen" (click)="toggleFilters()">
+      <mat-icon>tune</mat-icon><span>Filters</span>
+    </button>
+    <div class="toolbar-spacer"></div>
+  </section>
 
-  <!-- ⚙️ UNIFIED SINGLE FORM PANEL (Create / Update Drawer) -->
-  <div class="form-drawer-wrapper" [class.open]="isComposerOpen">
-    <div class="drawer-card">
-      
-      <div class="drawer-body-viewport">
-        <div class="form-section-block">
-          <div class="step-instruction-heading">
-            <h4>Product Registry Profile</h4>
-            <p>Define the foundational configuration parameters below.</p>
-          </div>
-
-          <div class="form-vertical-stack">
-            <!-- Product Name Input Mapping -->
-            <mat-form-field appearance="outline" class="saas-form-field">
-              <mat-label>Product Name</mat-label>
-              <input matInput [(ngModel)]="productForm.name" name="productName" required placeholder="e.g., Nexus Core Engine">
-            </mat-form-field>
-
-            <!-- Product Description Textarea Mapping -->
-            <mat-form-field appearance="outline" class="saas-form-field">
-              <mat-label>Product Description</mat-label>
-              <textarea matInput [(ngModel)]="productForm.description" name="productDesc" rows="6" placeholder="Detail the core value proposition..."></textarea>
-            </mat-form-field>
-          </div>
-        </div>
-      </div>
-
-      <!-- FOOTER MASTER ACTIONS USING MATERIAL BUTTONS -->
-      <div class="drawer-footer">
-        <button 
-          mat-stroked-button 
-          type="button" 
-          [disabled]="isSaving" 
-          (click)="closeComposerDrawer()">
-          Cancel
-        </button>
-        
-        <!-- Post Method Integration for New Records -->
-        <button 
-          mat-flat-button 
-          color="primary" 
-          type="button" 
-          *ngIf="!productForm.id" 
-          [disabled]="isSaving || !productForm.name" 
-          (click)="saveAndInitializeProduct()">
-          <mat-spinner diameter="20" class="btn-spinner" *ngIf="isSaving"></mat-spinner>
-          <mat-icon *ngIf="!isSaving">add</mat-icon>
-          <span>Save Product</span>
-        </button>
-
-        <!-- Put Method Integration for Existing Records -->
-        <button 
-          mat-flat-button 
-          color="accent" 
-          type="button" 
-          *ngIf="productForm.id" 
-          [disabled]="isSaving || !productForm.name" 
-          (click)="commitPortfolioChanges()">
-          <mat-spinner diameter="20" class="btn-spinner" *ngIf="isSaving"></mat-spinner>
-          <mat-icon *ngIf="!isSaving">save</mat-icon>
-          <span>Update Product</span>
-        </button>
-      </div>
-
+  <section class="filters-panel" *ngIf="filterPanelOpen">
+    <div class="filter-group">
+      <span class="filter-label">Registry</span>
+      <button class="filter-chip selected" type="button">All products</button>
     </div>
-  </div>
+    <button class="clear-filters" type="button" (click)="clearFilters()">Clear filters</button>
+  </section>
 
-  <!-- 📊 MONITORED PORTFOLIOS CONTAINER -->
-  <div class="dashboard-workspace">
-    <div class="workspace-section-header">
-      <div class="section-title-group">
-        <h3 class="section-main-heading">Active Registries</h3>
-      </div>
-    </div>
-    <hr class="section-divider-line">
-
-    <!-- Iterating over Backend Observable Stream Mapping -->
-    <div class="saas-project-grid-layout" *ngIf="products$ | async as productsList; else loadingDashboard">
-      <div class="empty-chips-fallback" *ngIf="productsList.length === 0">
-        <p>No managed products discovered inside your registry profile stack. Click "Create Product" to begin.</p>
-      </div>
-
-      <div class="project-saas-card" *ngFor="let product of productsList" (click)="loadProductToComposer(product)">
+  <div class="modal-backdrop" *ngIf="isComposerOpen" (click)="closeComposerDrawer()">
+    <section class="product-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <header class="modal-header">
         <div>
-          <h3 class="card-title">{{ product.name }}</h3>
-          <p class="card-description">
-            {{ product.description || 'No descriptive overview details configured for this platform core.' }}
-          </p>
+          <span class="modal-kicker">{{ productForm.id ? 'EDIT PRODUCT' : 'NEW PRODUCT' }}</span>
+          <h2>{{ productForm.id ? 'Update product' : 'Create product' }}</h2>
+          <p>Define the product registry information.</p>
         </div>
+        <button class="icon-button" type="button" (click)="closeComposerDrawer()" aria-label="Close">
+          <mat-icon>close</mat-icon>
+        </button>
+      </header>
 
-        <!-- System Delete Node Interface Anchor using Material Icon Button -->
-        <div class="card-actions">
-          <button 
-            mat-icon-button 
-            color="warn" 
-            type="button" 
-            aria-label="Delete Product"
-            (click)="$event.stopPropagation(); archiveProductEntity(product.id)">
-            <mat-icon>delete_forever</mat-icon>
-          </button>
+      <div class="modal-body">
+        <div class="form-section">
+          <div class="section-accent"></div>
+          <div><h3>Product details</h3><p>Keep the product name and description clear and easy to identify.</p></div>
+        </div>
+        <div class="form-grid">
+          <mat-form-field appearance="outline" class="product-field">
+            <mat-label>Product Name</mat-label>
+            <input matInput [(ngModel)]="productForm.name" name="productName" required placeholder="e.g. Nexus Core Engine">
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="product-field">
+            <mat-label>Product Description</mat-label>
+            <textarea matInput [(ngModel)]="productForm.description" name="productDescription" rows="6" placeholder="Describe the product and its purpose..."></textarea>
+          </mat-form-field>
         </div>
       </div>
-    </div>
 
-    <!-- Async Fallback Stream Spinner Component -->
-    <ng-template #loadingDashboard>
-      <div class="api-loading-overlay">
-        <mat-spinner diameter="40"></mat-spinner>
-        <p>Streaming data nodes from pipeline infrastructure...</p>
-      </div>
-    </ng-template>
+      <footer class="modal-footer">
+        <button class="secondary-button" type="button" [disabled]="isSaving" (click)="closeComposerDrawer()">Cancel</button>
+        <button class="primary-action modal-save" type="button" *ngIf="!productForm.id" [disabled]="isSaving || !productForm.name" (click)="saveAndInitializeProduct()">
+          <mat-spinner diameter="18" *ngIf="isSaving"></mat-spinner><mat-icon *ngIf="!isSaving">add</mat-icon><span>Create Product</span>
+        </button>
+        <button class="primary-action modal-save" type="button" *ngIf="productForm.id" [disabled]="isSaving || !productForm.name" (click)="commitPortfolioChanges()">
+          <mat-spinner diameter="18" *ngIf="isSaving"></mat-spinner><mat-icon *ngIf="!isSaving">save</mat-icon><span>Update Product</span>
+        </button>
+      </footer>
+    </section>
   </div>
 
-</div>
+  <section class="directory">
+    <div class="directory-header">
+      <div><span class="directory-kicker">DIRECTORY</span><h2>Products</h2></div>
+    </div>
+
+    <ng-container *ngIf="products$ | async as productsList; else loadingDashboard">
+      <div class="product-grid" *ngIf="filterProducts(productsList).length; else emptyProducts">
+        <article class="product-card" *ngFor="let product of filterProducts(productsList); trackBy: trackProduct" (click)="loadProductToComposer(product)">
+          <div class="card-top">
+            <div class="product-avatar">{{ product.name?.charAt(0)?.toUpperCase() || 'P' }}</div>
+            <span class="product-state">ACTIVE</span>
+          </div>
+          <div class="product-content">
+            <h3>{{ product.name }}</h3>
+            <p>{{ product.description || 'No descriptive overview configured for this product.' }}</p>
+          </div>
+          <div class="card-footer">
+            <span class="open-label">Open product</span>
+            <button class="delete-button" type="button" aria-label="Delete Product" (click)="$event.stopPropagation(); archiveProductEntity(product.id)">
+              <mat-icon>delete_outline</mat-icon>
+            </button>
+          </div>
+        </article>
+      </div>
+      <ng-template #emptyProducts>
+        <div class="empty-state">
+          <div class="empty-icon"><mat-icon>inventory_2</mat-icon></div>
+          <h3>No products found</h3><p>No products match your search. Create a new product to start your registry.</p>
+          <button class="primary-action" type="button" (click)="initiateNewProduct()"><mat-icon>add</mat-icon><span>Create Product</span></button>
+        </div>
+      </ng-template>
+    </ng-container>
+
+    <ng-template #loadingDashboard>
+      <div class="loading-state"><mat-spinner diameter="36"></mat-spinner><p>Loading product directory...</p></div>
+    </ng-template>
+  </section>
+</main>

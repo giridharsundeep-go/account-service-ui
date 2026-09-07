@@ -100,7 +100,8 @@ export interface IssueRecord {
     MatButtonToggleModule,
     MatCardModule,
     MatChipsModule,
-    MatBadgeModule
+    MatBadgeModule,
+    MatIconModule
   ],
   templateUrl: './issues.html',
   styleUrls: ['./issues.css'],
@@ -129,6 +130,7 @@ export class Issues implements OnInit {
   selectedSprintFilter = signal<number | 'ALL'>('ALL');
   selectedStatusFilter = signal<string | 'ALL'>('ALL');
   searchTerm = signal<string>('');
+  showFilters = signal<boolean>(false);
 
   collapsedEpicIds = signal<Set<number>>(new Set());
 
@@ -236,8 +238,23 @@ export class Issues implements OnInit {
     return this.rawTasks().filter(t => !t.storyId || storyIds.includes(Number(t.storyId)));
   });
 
+  filteredIssues = computed(() => {
+    const term = this.searchTerm().trim().toLowerCase();
+    const status = this.selectedStatusFilter();
+
+    return this.issuesList().filter(issue => {
+      const matchesSearch = !term || [
+        issue.issue_code, issue.issueCode, issue.title, issue.description,
+        this.getLinkedEpicNames(issue), this.getLinkedStoryNames(issue), this.getLinkedTaskNames(issue)
+      ].some(value => String(value ?? '').toLowerCase().includes(term));
+
+      const matchesStatus = status === 'ALL' || String(issue.status || '').toUpperCase() === String(status).toUpperCase();
+      return matchesSearch && matchesStatus;
+    });
+  });
+
   metrics = computed(() => {
-    const all = this.issuesList();
+    const all = this.filteredIssues();
     return {
       total: all.length,
       open: all.filter(i => ['OPEN', 'TODO', 'BACKLOG'].includes(i.status?.toUpperCase() || '')).length,
@@ -261,7 +278,7 @@ export class Issues implements OnInit {
   }
 
   groupedHierarchy = computed(() => {
-    const issues = this.issuesList();
+    const issues = this.filteredIssues();
     const epics = this.rawEpics();
     const stories = this.rawStories();
     const tasks = this.rawTasks();

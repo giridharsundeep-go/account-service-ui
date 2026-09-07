@@ -1,262 +1,881 @@
-<div class="app-layout-container">
+<div
+  class="app-shell"
+  [class.nav-collapsed]="isCollapsed">
 
-  <!-- 🔝 TOP HEADER TOOLBAR -->
-  <mat-toolbar class="toolbar">
-    
-    <!-- LEFT SECTION: BRAND -->
+  <!-- =========================================================
+       TOP HEADER
+  ========================================================== -->
+
+  <header class="app-header">
+
+    <!-- LEFT HEADER -->
     <div class="header-left">
+
+      <!-- MENU -->
+      <button
+        type="button"
+        class="icon-button menu-button"
+        (click)="toggleSidebar()"
+        [attr.aria-label]="
+          isCollapsed
+            ? 'Expand navigation'
+            : 'Collapse navigation'
+        "
+        title="Toggle navigation">
+
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3 6h18"></path>
+          <path d="M3 12h18"></path>
+          <path d="M3 18h18"></path>
+        </svg>
+
+      </button>
+
+      <!-- BRAND -->
       <div class="brand">
-        <span class="brand-title">Greatley Poshley</span>
+
+        <span class="brand-name">
+          Greatley Poshley
+        </span>
+
       </div>
+
     </div>
 
-    <!-- CENTER SECTION: SEARCH BAR -->
-    <div class="header-center">
-      <div class="search-container">
-        <mat-icon class="search-icon">search</mat-icon>
-        <input 
-          type="text" 
-          class="search-input" 
-          placeholder="Search projects, users, teams..." 
-          [(ngModel)]="searchQuery" />
-        <kbd class="shortcut-badge">⌘K</kbd>
+
+    <!-- =======================================================
+         SEARCH
+    ======================================================== -->
+
+    <div class="search-area">
+
+      <div class="search-box">
+
+        <button
+          type="button"
+          class="search-button"
+          (click)="focusSearch()"
+          aria-label="Search">
+
+          <svg viewBox="0 0 24 24">
+            <circle
+              cx="10.8"
+              cy="10.8"
+              r="6.8">
+            </circle>
+
+            <path d="M16 16l5 5"></path>
+          </svg>
+
+        </button>
+
+
+        <input
+          #searchInput
+          class="search-input"
+          type="text"
+          [(ngModel)]="searchQuery"
+          placeholder="Search projects, users, teams..."
+          autocomplete="off" />
+
+
+        <button
+          *ngIf="searchQuery"
+          type="button"
+          class="search-clear"
+          (click)="clearSearch()"
+          aria-label="Clear search">
+
+          <svg viewBox="0 0 24 24">
+            <path d="M6 6l12 12"></path>
+            <path d="M18 6L6 18"></path>
+          </svg>
+
+        </button>
+
+
+        <span
+          *ngIf="!searchQuery"
+          class="search-shortcut">
+
+          ⌘ K
+
+        </span>
+
       </div>
+
     </div>
 
-    <!-- RIGHT SECTION: CREATION MENU, USER MGMT & PROFILE -->
+
+    <!-- =======================================================
+         RIGHT HEADER
+    ======================================================== -->
+
     <div class="header-right">
-      
-      <!-- ⚡ NEWRELIC-STYLE VIBRANT CREATE BUTTON -->
-      <button 
-        mat-flat-button 
-        [matMenuTriggerFor]="createMenu" 
-        class="nr-create-btn">
-        <mat-icon class="add-icon">add_circle</mat-icon>
-        <span>Create</span>
-        <mat-icon class="dropdown-icon">expand_more</mat-icon>
-      </button>
 
-      <!-- 👥 USER MANAGEMENT MENU TRIGGER -->
-      <button 
-        mat-button 
-        [matMenuTriggerFor]="userGroupMenu" 
-        class="header-nav-btn icon-user-mgmt" 
-        [class.active]="isUserGroupActive()">
-        <mat-icon>manage_accounts</mat-icon>
-        <span>User Management</span>
-        <mat-icon class="dropdown-icon">expand_more</mat-icon>
-      </button>
+      <!-- CREATE -->
+      <div class="create-wrapper">
 
-      <!-- 👤 USER PROFILE DROPDOWN MENU TRIGGER -->
-      <button mat-button [matMenuTriggerFor]="profileMenu" class="user-menu-trigger">
-        <div class="side-user">
-          <div class="mini-avatar">
-            {{ user.name?.charAt(0) }}
+        <button
+          type="button"
+          class="header-create-button"
+          [class.open]="createMenuOpen"
+          (click)="toggleCreateMenu($event)">
+
+          <svg viewBox="0 0 24 24">
+            <path d="M12 5v14"></path>
+            <path d="M5 12h14"></path>
+          </svg>
+
+          <span class="desktop-label">
+            Create
+          </span>
+
+          <svg
+            class="create-chevron"
+            viewBox="0 0 24 24">
+
+            <path d="M7 10l5 5 5-5"></path>
+
+          </svg>
+
+        </button>
+
+
+        <!-- CREATE MENU -->
+        <div
+          *ngIf="createMenuOpen"
+          class="popover create-popover">
+
+          <div class="popover-title">
+            Create
           </div>
-          <div class="user-details">
-            <span class="mini-name">{{ user.name }}</span>
-          </div>
-          <mat-icon class="dropdown-icon">expand_more</mat-icon>
+
+
+          <button
+            *ngFor="let item of createItems"
+            type="button"
+            class="popover-item"
+            (click)="onCreateItem(item.id)">
+
+            <span class="popover-icon">
+
+              <!-- EPIC -->
+              <svg
+                *ngIf="item.icon === 'epics'"
+                viewBox="0 0 24 24">
+
+                <path d="M4 5h16v14H4z"></path>
+                <path d="M8 9h8"></path>
+                <path d="M8 13h5"></path>
+
+              </svg>
+
+
+              <!-- STORY -->
+              <svg
+                *ngIf="item.icon === 'story'"
+                viewBox="0 0 24 24">
+
+                <path d="M5 4h14v16H5z"></path>
+                <path d="M8 8h8"></path>
+                <path d="M8 12h8"></path>
+                <path d="M8 16h5"></path>
+
+              </svg>
+
+
+              <!-- TASK -->
+              <svg
+                *ngIf="item.icon === 'task'"
+                viewBox="0 0 24 24">
+
+                <path d="M5 5h14v14H5z"></path>
+                <path d="M8 12l3 3 5-6"></path>
+
+              </svg>
+
+
+              <!-- ISSUE -->
+              <svg
+                *ngIf="item.icon === 'issues'"
+                viewBox="0 0 24 24">
+
+                <path d="M12 3l9 17H3z"></path>
+                <path d="M12 9v5"></path>
+                <path d="M12 17v1"></path>
+
+              </svg>
+
+
+              <!-- TEST CASE -->
+              <svg
+                *ngIf="item.icon === 'tests'"
+                viewBox="0 0 24 24">
+
+                <path d="M4 5h16v14H4z"></path>
+                <path d="M7 9l2 2 4-4"></path>
+                <path d="M7 15h8"></path>
+
+              </svg>
+
+
+              <!-- RELEASE -->
+              <svg
+                *ngIf="item.icon === 'releases'"
+                viewBox="0 0 24 24">
+
+                <path d="M5 19L19 5"></path>
+                <path d="M9 5h10v10"></path>
+
+              </svg>
+
+            </span>
+
+            <span>
+              Create {{ item.label }}
+            </span>
+
+          </button>
+
         </div>
+
+      </div>
+
+
+      <!-- HELP -->
+      <button
+        type="button"
+        class="icon-button desktop-only"
+        title="Help"
+        aria-label="Help">
+
+        <svg viewBox="0 0 24 24">
+
+          <circle
+            cx="12"
+            cy="12"
+            r="9">
+          </circle>
+
+          <path
+            d="M9.8 9a2.3 2.3 0 1 1 3.9 1.6c-1 .9-1.7 1.2-1.7 2.7">
+          </path>
+
+          <path d="M12 17h.01"></path>
+
+        </svg>
+
       </button>
 
+
+      <!-- SETTINGS -->
+      <button
+        type="button"
+        class="icon-button desktop-only"
+        title="Settings"
+        aria-label="Settings">
+
+        <svg viewBox="0 0 24 24">
+
+          <circle
+            cx="12"
+            cy="12"
+            r="3.5">
+          </circle>
+
+          <path
+            d="M19 15l1 1-2 2-1-1
+               a7 7 0 0 1-2 1v2h-3v-2
+               a7 7 0 0 1-2-1l-1 1-2-2
+               1-1a7 7 0 0 1-1-2H4v-3h2
+               a7 7 0 0 1 1-2L6 7l2-2
+               1 1a7 7 0 0 1 2-1V3h3v2
+               a7 7 0 0 1 2 1l1-1 2 2-1 1
+               a7 7 0 0 1 1 2h2v3h-2
+               a7 7 0 0 1-1 2z">
+          </path>
+
+        </svg>
+
+      </button>
+
+
+      <!-- PROFILE -->
+      <div class="profile-wrapper">
+
+        <button
+          type="button"
+          class="profile-button"
+          (click)="toggleProfileMenu($event)"
+          aria-label="Account">
+
+          <span class="profile-avatar">
+            {{ userInitials }}
+          </span>
+
+        </button>
+
+
+        <!-- PROFILE POPUP -->
+        <div
+          *ngIf="profileMenuOpen"
+          class="popover profile-popover">
+
+          <div class="profile-card">
+
+            <div class="profile-avatar profile-large">
+              {{ userInitials }}
+            </div>
+
+            <strong>
+              {{ user.name }}
+            </strong>
+
+            <span>
+              {{ user.email }}
+            </span>
+
+          </div>
+
+
+          <div class="popover-divider"></div>
+
+
+          <button
+            type="button"
+            class="popover-item"
+            (click)="openEditDialog()">
+
+            <span class="popover-icon">
+
+              <svg viewBox="0 0 24 24">
+
+                <circle
+                  cx="12"
+                  cy="8"
+                  r="4">
+                </circle>
+
+                <path
+                  d="M4 21a8 8 0 0 1 16 0">
+                </path>
+
+              </svg>
+
+            </span>
+
+            Edit profile
+
+          </button>
+
+
+          <button
+            type="button"
+            class="popover-item"
+            (click)="setActive('dashboard')">
+
+            <span class="popover-icon">
+
+              <svg viewBox="0 0 24 24">
+
+                <path d="M4 4h7v7H4z"></path>
+                <path d="M13 4h7v7h-7z"></path>
+                <path d="M4 13h7v7H4z"></path>
+                <path d="M13 13h7v7h-7z"></path>
+
+              </svg>
+
+            </span>
+
+            My Dashboard
+
+          </button>
+
+
+          <div class="popover-divider"></div>
+
+
+          <button
+            type="button"
+            class="popover-item danger"
+            (click)="logout()">
+
+            <span class="popover-icon">
+
+              <svg viewBox="0 0 24 24">
+
+                <path d="M10 4H5v16h5"></path>
+                <path d="M14 8l4 4-4 4"></path>
+                <path d="M8 12h10"></path>
+
+              </svg>
+
+            </span>
+
+            Sign out
+
+          </button>
+
+        </div>
+
+      </div>
+
     </div>
 
-  </mat-toolbar>
+  </header>
 
-  <!-- 🧭 HORIZONTAL SUB-NAVIGATION BAR WITH SUB-MENU TRIGGERS -->
-  <nav class="sub-nav-bar">
-    
-    <!-- DASHBOARD -->
-    <button 
-      class="sub-nav-item icon-dashboard" 
-      [class.active]="activeMenu === 'dashboard'" 
-      (click)="setActive('dashboard')">
-      <mat-icon>dashboard</mat-icon>
-      <span>Dashboard</span>
-    </button>
 
-    <!-- PRODUCTS -->
-    <button 
-      class="sub-nav-item icon-products" 
-      [class.active]="activeMenu === 'products'" 
-      (click)="setActive('products')">
-      <mat-icon>inventory_2</mat-icon>
-      <span>Products</span>
-    </button>
+  <!-- =========================================================
+       APPLICATION BODY
+  ========================================================== -->
 
-    <!-- PROJECTS -->
-    <button 
-      class="sub-nav-item icon-projects" 
-      [class.active]="activeMenu === 'projects'" 
-      (click)="setActive('projects')">
-      <mat-icon>folder</mat-icon>
-      <span>Projects</span>
-    </button>
+  <div class="app-body">
 
-    <!-- EPICS -->
-    <button 
-      class="sub-nav-item icon-epics" 
-      [class.active]="activeMenu === 'epics'" 
-      (click)="setActive('epics')">
-      <mat-icon>layers</mat-icon>
-      <span style="color: black;">Epics & Backlogs</span>
-    </button>
 
-    <!-- 🐛 ISSUES -->
-    <button 
-      class="sub-nav-item icon-issues" 
-      [class.active]="activeMenu === 'issues'" 
-      (click)="setActive('issues')">
-      <mat-icon>bug_report</mat-icon>
-      <span style="color: black;">Issues</span>
-    </button>
+    <!-- =======================================================
+         SIDEBAR
+    ======================================================== -->
 
-    <!-- 🧪 TEST CASES -->
-    <button 
-      class="sub-nav-item icon-tests" 
-      [class.active]="activeMenu === 'test-cases'" 
-      (click)="setActive('test-cases')">
-      <mat-icon>playlist_add_check</mat-icon>
-      <span style="color: black;">Test Cases</span>
-    </button>
+    <aside
+      class="sidebar"
+      [class.collapsed]="isCollapsed">
 
-    <!-- 🚀 RELEASES -->
-    <button 
-      class="sub-nav-item icon-releases" 
-      [class.active]="activeMenu === 'releases'" 
-      (click)="setActive('releases')">
-      <mat-icon>rocket_launch</mat-icon>
-      <span style="color: black;">Releases</span>
-    </button>
 
-    <!-- 📚 DOCUMENTATION -->
-    <button 
-      class="sub-nav-item icon-docs" 
-      [class.active]="activeMenu === 'docs'" 
-      (click)="setActive('docs')">
-      <mat-icon>description</mat-icon>
-      <span style="color: black;">Documentation</span>
-    </button>
+      <!-- CREATE -->
+      <div class="sidebar-create">
 
-  </nav>
+        <button
+          type="button"
+          class="sidebar-create-button"
+          [class.open]="createMenuOpen"
+          (click)="toggleCreateMenu($event)">
 
-  <!-- 📄 DYNAMICALLY FITTED MAIN CONTENT AREA -->
-  <main class="main-viewport-content">
-    <div class="content-wrapper">
-      <app-dashboard *ngIf="activeMenu === 'dashboard'"></app-dashboard>
-      <app-roles *ngIf="activeMenu === 'roles'"></app-roles>
-      <app-users *ngIf="activeMenu === 'users'"></app-users>
-      <app-teams *ngIf="activeMenu === 'teams'"></app-teams>
-      <app-products *ngIf="activeMenu === 'products'"></app-products>
-      <app-projects *ngIf="activeMenu === 'projects'"></app-projects>
-      <app-epics *ngIf="activeMenu === 'epics'"></app-epics>
-      <app-issues *ngIf="activeMenu === 'issues'"></app-issues>
-      <app-testcases *ngIf="activeMenu === 'test-cases'"></app-testcases>
-      <app-releases *ngIf="activeMenu === 'releases'"></app-releases>
-      <app-docs *ngIf="activeMenu === 'docs'"></app-docs>
-    </div>
-  </main>
+          <svg viewBox="0 0 24 24">
 
-  <!-- 🦶 RIGHT FOOTER AREA -->
-  <footer class="app-footer">
-    <div class="footer-left">
-      <span>&copy; {{ currentYear }} Greatley Poshley Ltd. All rights reserved.</span>
-    </div>
-    <div class="footer-right">
-      <a href="javascript:void(0)" (click)="setActive('docs')">Documentation</a>
-      <span class="dot-separator">•</span>
-      <a href="javascript:void(0)">System Status</a>
-      <span class="dot-separator">•</span>
-      <a href="javascript:void(0)">Support</a>
-    </div>
-  </footer>
+            <path d="M12 5v14"></path>
+            <path d="M5 12h14"></path>
+
+          </svg>
+
+          <span *ngIf="!isCollapsed">
+            Create
+          </span>
+
+        </button>
+
+      </div>
+
+
+      <!-- =====================================================
+           NAVIGATION
+      ====================================================== -->
+
+      <nav
+        class="navigation"
+        aria-label="Main navigation">
+
+
+        <!-- PRIMARY -->
+        <button
+          *ngFor="let item of primaryNavigation"
+          type="button"
+          class="nav-item"
+          [class.active]="isActive(item.id)"
+          [class.collapsed-item]="isCollapsed"
+          (click)="setActive(item.id)"
+          [attr.title]="isCollapsed ? item.label : null">
+
+
+          <span class="nav-icon">
+
+
+            <!-- DASHBOARD -->
+            <svg
+              *ngIf="item.icon === 'dashboard'"
+              viewBox="0 0 24 24">
+
+              <path d="M4 4h7v7H4z"></path>
+              <path d="M13 4h7v7h-7z"></path>
+              <path d="M4 13h7v7H4z"></path>
+              <path d="M13 13h7v7h-7z"></path>
+
+            </svg>
+
+
+            <!-- PRODUCTS -->
+            <svg
+              *ngIf="item.icon === 'products'"
+              viewBox="0 0 24 24">
+
+              <path d="M4 7l8-4 8 4-8 4z"></path>
+              <path d="M4 7v10l8 4 8-4V7"></path>
+              <path d="M12 11v10"></path>
+
+            </svg>
+
+
+            <!-- PROJECTS -->
+            <svg
+              *ngIf="item.icon === 'projects'"
+              viewBox="0 0 24 24">
+
+              <path d="M3 6h7l2 2h9v11H3z"></path>
+
+            </svg>
+
+
+            <!-- EPICS -->
+            <svg
+              *ngIf="item.icon === 'epics'"
+              viewBox="0 0 24 24">
+
+              <path d="M4 5h16v14H4z"></path>
+              <path d="M8 9h8"></path>
+              <path d="M8 13h6"></path>
+
+            </svg>
+
+
+            <!-- ISSUES -->
+            <svg
+              *ngIf="item.icon === 'issues'"
+              viewBox="0 0 24 24">
+
+              <path d="M12 3l9 17H3z"></path>
+              <path d="M12 9v5"></path>
+              <path d="M12 17v1"></path>
+
+            </svg>
+
+
+            <!-- TESTS -->
+            <svg
+              *ngIf="item.icon === 'tests'"
+              viewBox="0 0 24 24">
+
+              <path d="M4 5h16v14H4z"></path>
+              <path d="M7 9l2 2 4-4"></path>
+              <path d="M7 15h8"></path>
+
+            </svg>
+
+
+            <!-- RELEASES -->
+            <svg
+              *ngIf="item.icon === 'releases'"
+              viewBox="0 0 24 24">
+
+              <path d="M5 19L19 5"></path>
+              <path d="M9 5h10v10"></path>
+
+            </svg>
+
+
+            <!-- DOCS -->
+            <svg
+              *ngIf="item.icon === 'docs'"
+              viewBox="0 0 24 24">
+
+              <path d="M6 3h9l4 4v14H6z"></path>
+              <path d="M15 3v5h4"></path>
+              <path d="M9 12h6"></path>
+              <path d="M9 16h6"></path>
+
+            </svg>
+
+          </span>
+
+
+          <span
+            class="nav-label"
+            *ngIf="!isCollapsed">
+
+            {{ item.label }}
+
+          </span>
+
+        </button>
+
+
+        <!-- ADMINISTRATION -->
+        <div
+          class="navigation-section"
+          *ngIf="!isCollapsed">
+
+          Administration
+
+        </div>
+
+
+        <div
+          class="navigation-divider"
+          *ngIf="isCollapsed">
+        </div>
+
+
+        <!-- ADMIN -->
+        <button
+          *ngFor="let item of administrationNavigation"
+          type="button"
+          class="nav-item"
+          [class.active]="isActive(item.id)"
+          [class.collapsed-item]="isCollapsed"
+          (click)="setActive(item.id)"
+          [attr.title]="isCollapsed ? item.label : null">
+
+
+          <span class="nav-icon">
+
+
+            <!-- ROLES -->
+            <svg
+              *ngIf="item.icon === 'roles'"
+              viewBox="0 0 24 24">
+
+              <path
+                d="M12 3l7 3v5c0 5-3.5 8.5-7 10
+                   -3.5-1.5-7-5-7-10V6z">
+              </path>
+
+              <path d="M9 12l2 2 4-4"></path>
+
+            </svg>
+
+
+            <!-- USERS -->
+            <svg
+              *ngIf="item.icon === 'users'"
+              viewBox="0 0 24 24">
+
+              <circle
+                cx="12"
+                cy="8"
+                r="3.5">
+              </circle>
+
+              <path
+                d="M5 20a7 7 0 0 1 14 0">
+              </path>
+
+            </svg>
+
+
+            <!-- TEAMS -->
+            <svg
+              *ngIf="item.icon === 'teams'"
+              viewBox="0 0 24 24">
+
+              <circle
+                cx="9"
+                cy="8"
+                r="3">
+              </circle>
+
+              <circle
+                cx="17"
+                cy="9"
+                r="2.5">
+              </circle>
+
+              <path
+                d="M3 20a6 6 0 0 1 12 0">
+              </path>
+
+              <path
+                d="M15 15a5 5 0 0 1 6 5">
+              </path>
+
+            </svg>
+
+          </span>
+
+
+          <span
+            class="nav-label"
+            *ngIf="!isCollapsed">
+
+            {{ item.label }}
+
+          </span>
+
+        </button>
+
+      </nav>
+
+
+      <!-- =====================================================
+           COLLAPSE
+      ====================================================== -->
+
+      <div class="sidebar-bottom">
+
+        <button
+          type="button"
+          class="nav-item collapse-item"
+          (click)="toggleSidebar()"
+          [attr.title]="
+            isCollapsed
+              ? 'Expand navigation'
+              : 'Collapse navigation'
+          ">
+
+          <span class="nav-icon">
+
+            <!-- COLLAPSE -->
+            <svg
+              *ngIf="!isCollapsed"
+              viewBox="0 0 24 24">
+
+              <path d="M15 6l-6 6 6 6"></path>
+
+            </svg>
+
+
+            <!-- EXPAND -->
+            <svg
+              *ngIf="isCollapsed"
+              viewBox="0 0 24 24">
+
+              <path d="M9 6l6 6-6 6"></path>
+
+            </svg>
+
+          </span>
+
+
+          <span
+            class="nav-label"
+            *ngIf="!isCollapsed">
+
+            Collapse navigation
+
+          </span>
+
+        </button>
+
+      </div>
+
+    </aside>
+
+
+    <!-- =======================================================
+         MAIN
+    ======================================================== -->
+
+    <section class="main">
+
+      <main class="content">
+
+
+        <!-- APPLICATION COMPONENTS -->
+
+        <ng-container
+          *ngIf="!isViewerRoute()">
+
+
+          <app-dashboard
+            *ngIf="activeMenu === 'dashboard'">
+          </app-dashboard>
+
+
+          <app-roles
+            *ngIf="activeMenu === 'roles'">
+          </app-roles>
+
+
+          <app-users
+            *ngIf="activeMenu === 'users'">
+          </app-users>
+
+
+          <app-teams
+            *ngIf="activeMenu === 'teams'">
+          </app-teams>
+
+
+          <app-products
+            *ngIf="activeMenu === 'products'">
+          </app-products>
+
+
+          <app-projects
+            *ngIf="activeMenu === 'projects'">
+          </app-projects>
+
+
+          <app-epics
+            *ngIf="activeMenu === 'epics'">
+          </app-epics>
+
+
+          <app-issues
+            *ngIf="activeMenu === 'issues'">
+          </app-issues>
+
+
+          <app-testcases
+            *ngIf="activeMenu === 'test-cases'">
+          </app-testcases>
+
+
+          <app-releases
+            *ngIf="activeMenu === 'releases'">
+          </app-releases>
+
+
+          <app-docs
+            *ngIf="activeMenu === 'docs'">
+          </app-docs>
+
+        </ng-container>
+
+
+        <!-- ROUTER -->
+        <router-outlet></router-outlet>
+
+      </main>
+
+
+      <!-- =====================================================
+           FOOTER
+      ====================================================== -->
+
+      <footer class="footer">
+
+        <span>
+          © {{ currentYear }} Greatley Poshley Ltd.
+        </span>
+
+
+        <span class="footer-links">
+
+          <a
+            href="javascript:void(0)"
+            (click)="setActive('docs')">
+
+            Documentation
+
+          </a>
+
+          <span>•</span>
+
+          <a href="javascript:void(0)">
+            System Status
+          </a>
+
+          <span>•</span>
+
+          <a href="javascript:void(0)">
+            Support
+          </a>
+
+        </span>
+
+      </footer>
+
+    </section>
+
+  </div>
 
 </div>
-
-<!-- 🪟 GLOBAL ANGULAR MATERIAL DROPDOWN MENU DEFINITIONS -->
-
-<!-- Create Action Dropdown -->
-<mat-menu #createMenu="matMenu" yPosition="below" xPosition="after" class="custom-mat-dropdown">
-  <div class="nr-menu-header">Quick Actions</div>
-  
-  <button mat-menu-item (click)="onCreateItem('epic')">
-    <mat-icon class="icon-epics">layers</mat-icon>
-    <span>Create Epic</span>
-  </button>
-
-  <button mat-menu-item (click)="onCreateItem('story')">
-    <mat-icon class="icon-story">auto_stories</mat-icon>
-    <span>Create Story</span>
-  </button>
-
-  <button mat-menu-item (click)="onCreateItem('task')">
-    <mat-icon class="icon-task">check_box</mat-icon>
-    <span>Create Task</span>
-  </button>
-
-  <mat-divider></mat-divider>
-
-  <button mat-menu-item (click)="onCreateItem('issue')">
-    <mat-icon class="icon-issues">bug_report</mat-icon>
-    <span>Create Issue</span>
-  </button>
-
-  <button mat-menu-item (click)="onCreateItem('test-case')">
-    <mat-icon class="icon-tests">playlist_add_check</mat-icon>
-    <span>Create Test Case</span>
-  </button>
-
-  <button mat-menu-item (click)="onCreateItem('release')">
-    <mat-icon class="icon-releases">rocket_launch</mat-icon>
-    <span>Create Release</span>
-  </button>
-</mat-menu>
-
-<!-- User Management Sub-menu -->
-<mat-menu #userGroupMenu="matMenu" yPosition="below" xPosition="after" class="custom-mat-dropdown">
-  <button mat-menu-item (click)="setActive('roles')" [class.active-subitem]="activeMenu === 'roles'">
-    <mat-icon class="icon-roles">badge</mat-icon>
-    <span>Roles</span>
-  </button>
-
-  <button mat-menu-item (click)="setActive('teams')" [class.active-subitem]="activeMenu === 'teams'">
-    <mat-icon class="icon-teams">groups</mat-icon>
-    <span>Teams</span>
-  </button>
-
-  <button mat-menu-item (click)="setActive('users')" [class.active-subitem]="activeMenu === 'users'">
-    <mat-icon class="icon-users">person</mat-icon>
-    <span>Users</span>
-  </button>
-</mat-menu>
-
-<!-- Profile Sub-menu -->
-<mat-menu #profileMenu="matMenu" yPosition="below" xPosition="before" class="custom-mat-dropdown profile-dropdown">
-  <div class="menu-user-header">
-    <div class="menu-avatar">{{ user.name?.charAt(0) }}</div>
-    <div class="menu-user-info">
-      <strong>{{ user.name }}</strong>
-      <span>{{ user.email }}</span>
-    </div>
-  </div>
-  
-  <mat-divider></mat-divider>
-
-  <button mat-menu-item (click)="openEditDialog()">
-    <mat-icon class="icon-profile-popup">person_outline</mat-icon>
-    <span>Edit Profile</span>
-  </button>
-
-  <button mat-menu-item (click)="setActive('dashboard')">
-    <mat-icon class="icon-dashboard">dashboard</mat-icon>
-    <span>My Dashboard</span>
-  </button>
-
-  <mat-divider></mat-divider>
-
-  <button mat-menu-item (click)="logout()" class="logout-menu-item">
-    <mat-icon class="logout-icon">logout</mat-icon>
-    <span>Logout</span>
-  </button>
-</mat-menu>

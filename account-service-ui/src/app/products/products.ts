@@ -43,6 +43,22 @@ export class Products implements OnInit {
   products$: Observable<AgileProductNode[]> | undefined;
   
   productLookupFilter = '';
+  filterPanelOpen = false;
+  statusFilter = 'ALL';
+
+  toggleFilters(): void { this.filterPanelOpen = !this.filterPanelOpen; }
+  clearFilters(): void { this.productLookupFilter = ''; this.statusFilter = 'ALL'; }
+  filterProducts(products: AgileProductNode[]): AgileProductNode[] {
+    const q = this.productLookupFilter.trim().toLowerCase();
+    if (!q) return products;
+    return products.filter(p =>
+      (p.name || '').toLowerCase().includes(q) ||
+      (p.description || '').toLowerCase().includes(q)
+    );
+  }
+  trackProduct(_index: number, product: AgileProductNode): number | string {
+    return product.id ?? product.name;
+  }
   isComposerOpen = false;
   isSaving = false;
 

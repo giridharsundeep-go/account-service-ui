@@ -1,299 +1,2199 @@
-<div class="mat-app-background main-wrapper">
-  <!-- Top App Toolbar -->
-  <header class="app-header">
-    <div class="header-left">
-      <h1>Test Cases</h1>
-      <span class="count-chip">{{ dataSource.filteredData.length }} Items</span>
+<div class="testcases-page">
+
+    <!-- =========================================================
+       TOAST
+  ========================================================== -->
+
+    <div class="success-toast" *ngIf="showSuccessToast">
+        <span class="toast-icon">✓</span>
+        <span>{{ successMessage }}</span>
     </div>
-    <button mat-flat-button color="primary" (click)="openCreateModal()">
-      <mat-icon>add</mat-icon>
-      Create Test Case
-    </button>
-  </header>
 
-  <!-- Filter & Search Card -->
-  <mat-card class="filter-card">
-    <mat-card-content class="filter-container">
-      <mat-form-field appearance="outline" class="search-field">
-        <mat-label>Search Test Cases</mat-label>
-        <mat-icon matPrefix>search</mat-icon>
-        <input matInput [(ngModel)]="searchTerm" (keyup)="applyFilters()" placeholder="Search code, title, description..." />
-        <button mat-icon-button matSuffix *ngIf="searchTerm" (click)="searchTerm = ''; applyFilters()">
-          <mat-icon>close</mat-icon>
-        </button>
-      </mat-form-field>
 
-      <div class="dropdown-filters">
-        <mat-form-field appearance="outline">
-          <mat-label>Project</mat-label>
-          <mat-select [(ngModel)]="selectedProjectFilter" (selectionChange)="applyFilters()">
-            <mat-option value="">All Projects</mat-option>
-            <mat-option *ngFor="let p of projects" [value]="getOptionId(p)">{{ p.name || 'Project #' + getOptionId(p) }}</mat-option>
-          </mat-select>
-        </mat-form-field>
+    <!-- =========================================================
+       HEADER
+  ========================================================== -->
 
-        <mat-form-field appearance="outline">
-          <mat-label>Priority</mat-label>
-          <mat-select [(ngModel)]="selectedPriorityFilter" (selectionChange)="applyFilters()">
-            <mat-option value="">All Priorities</mat-option>
-            <mat-option value="LOW">Low</mat-option>
-            <mat-option value="MEDIUM">Medium</mat-option>
-            <mat-option value="HIGH">High</mat-option>
-            <mat-option value="CRITICAL">Critical</mat-option>
-          </mat-select>
-        </mat-form-field>
+    <header class="directory-header">
 
-        <mat-form-field appearance="outline">
-          <mat-label>Status</mat-label>
-          <mat-select [(ngModel)]="selectedStatusFilter" (selectionChange)="applyFilters()">
-            <mat-option value="">All Statuses</mat-option>
-            <mat-option value="DRAFT">Draft</mat-option>
-            <mat-option value="PASS">Pass</mat-option>
-            <mat-option value="FAIL">Fail</mat-option>
-            <mat-option value="BLOCKED">Blocked</mat-option>
-            <mat-option value="RETEST">Retest</mat-option>
-          </mat-select>
-        </mat-form-field>
+        <div class="header-title">
 
-        <button mat-button color="warn" *ngIf="searchTerm || selectedProjectFilter || selectedPriorityFilter || selectedStatusFilter" (click)="clearFilters()">
-          Clear Filters
-        </button>
-      </div>
-    </mat-card-content>
-  </mat-card>
+            <div>
+                <span class="page-eyebrow">
+                    QUALITY MANAGEMENT
+                </span>
 
-  <!-- Material Data Table Card -->
-  <mat-card class="table-card">
-    <mat-card-content>
-      <table mat-table [dataSource]="dataSource" matSort class="full-width-table">
-        
-        <!-- Code Column -->
-        <ng-container matColumnDef="testCaseCode">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header> Code </th>
-          <td mat-cell *matCellDef="let element">
-            <span class="code-tag">{{ getTestCaseCode(element) }}</span>
-          </td>
-        </ng-container>
-
-        <!-- Title Column -->
-        <ng-container matColumnDef="title">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header> Title & Details </th>
-          <td mat-cell *matCellDef="let element">
-            <div class="title-cell">
-              <span class="title-text">{{ getTestCaseTitle(element) }}</span>
-              <span class="sub-text" *ngIf="element.description">{{ element.description }}</span>
+                <span class="page-title">
+                    Test Lab
+                </span>
             </div>
-          </td>
-        </ng-container>
 
-        <!-- Priority Column -->
-        <ng-container matColumnDef="priority">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header> Priority </th>
-          <td mat-cell *matCellDef="let element">
-            <mat-chip [attr.data-priority]="element.priority" class="status-chip">
-              {{ element.priority || 'MEDIUM' }}
-            </mat-chip>
-          </td>
-        </ng-container>
+        </div>
 
-        <!-- Status Column -->
-        <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header> Status </th>
-          <td mat-cell *matCellDef="let element">
-            <mat-chip [attr.data-status]="element.status" class="status-chip">
-              {{ element.status || 'DRAFT' }}
-            </mat-chip>
-          </td>
-        </ng-container>
 
-        <!-- Project Column -->
-        <ng-container matColumnDef="project">
-          <th mat-header-cell *matHeaderCellDef> Project </th>
-          <td mat-cell *matCellDef="let element">
-            {{ getProjectDisplay(element) }}
-          </td>
-        </ng-container>
+        <div class="header-actions">
 
-        <!-- Epic Column -->
-        <ng-container matColumnDef="epic">
-          <th mat-header-cell *matHeaderCellDef> Epic </th>
-          <td mat-cell *matCellDef="let element">
-            {{ getEpicDisplay(element) }}
-          </td>
-        </ng-container>
+            <!-- PROJECT -->
 
-        <!-- Story Column -->
-        <ng-container matColumnDef="story">
-          <th mat-header-cell *matHeaderCellDef> Story </th>
-          <td mat-cell *matCellDef="let element">
-            {{ getStoryDisplay(element) }}
-          </td>
-        </ng-container>
+            <div class="project-selector">
 
-        <!-- Task Column -->
-        <ng-container matColumnDef="task">
-          <th mat-header-cell *matHeaderCellDef> Task </th>
-          <td mat-cell *matCellDef="let element">
-            {{ getTaskDisplay(element) }}
-          </td>
-        </ng-container>
+                <span class="project-label">
+                    Project
+                </span>
 
-        <!-- Tester / User Column -->
-        <ng-container matColumnDef="user">
-          <th mat-header-cell *matHeaderCellDef> Tester </th>
-          <td mat-cell *matCellDef="let element">
-            {{ getUserDisplay(element) }}
-          </td>
-        </ng-container>
+                <select [ngModel]="selectedProjectId" (ngModelChange)="onProjectChange($event)">
 
-        <!-- Actions Column -->
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef class="text-right"> Actions </th>
-          <td mat-cell *matCellDef="let element" class="text-right">
-            <button mat-icon-button color="primary" matTooltip="Edit" (click)="openEditModal(element)">
-              <mat-icon>edit</mat-icon>
+                    <option [ngValue]="null">
+                        Select project
+                    </option>
+
+                    <option *ngFor="let project of projects" [ngValue]="getOptionId(project)">
+                        {{ project.name || project.title }}
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- SEARCH -->
+
+            <div class="search-box">
+
+                <span class="search-icon">
+                    ⌕
+                </span>
+
+                <input type="text" [(ngModel)]="searchText" (ngModelChange)="onSearchChange()"
+                    placeholder="Search test cases..." />
+
+                <button *ngIf="searchText" type="button" class="clear-search" (click)="clearSearch()">
+                    ×
+                </button>
+
+            </div>
+
+            <div class="suite-header-actions">
+
+                <button type="button" class="suite-action-button" *ngIf="selectedSuite"
+                    (click)="openAddTestCasesToSuite()">
+
+                    <span class="material-symbols-outlined">
+                        playlist_add
+                    </span>
+
+                    <span>
+                        Add Test Cases
+                    </span>
+
+                </button>
+
+            </div>
+
+
+            <!-- FILTER -->
+
+            <button type="button" class="filter-button" [class.active]="showFilters" (click)="toggleFilters()">
+
+                <span>☷</span>
+
+                Filters
+
+                <span class="filter-count" *ngIf="activeFilterCount">
+                    {{ activeFilterCount }}
+                </span>
+
             </button>
-            <button mat-icon-button color="warn" matTooltip="Delete" (click)="deleteTestcase(element.id)">
-              <mat-icon>delete</mat-icon>
+
+
+            <!-- CREATE -->
+
+            <button type="button" class="primary-button" [disabled]="!selectedProjectId" (click)="openCreateTestCase()">
+
+                <span>＋</span>
+
+                Create Test Case
+
             </button>
-          </td>
-        </ng-container>
 
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </div>
 
-        <tr class="mat-row" *matNoDataRow>
-          <td class="mat-cell no-data-cell" colspan="10">
-            No matching test cases found.
-          </td>
-        </tr>
-      </table>
+    </header>
 
-      <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
-    </mat-card-content>
-  </mat-card>
+
+    <!-- =========================================================
+       FILTER PANEL
+  ========================================================== -->
+
+    <div class="filter-panel" *ngIf="showFilters">
+
+        <div class="filter-field">
+
+            <label>Status</label>
+
+            <select [(ngModel)]="selectedStatus" (ngModelChange)="onSearchChange()">
+
+                <option value="">
+                    All Statuses
+                </option>
+
+                <option *ngFor="let status of statuses" [value]="status">
+                    {{ status }}
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="filter-field">
+
+            <label>Priority</label>
+
+            <select [(ngModel)]="selectedPriority" (ngModelChange)="onSearchChange()">
+
+                <option value="">
+                    All Priorities
+                </option>
+
+                <option *ngFor="let priority of priorities" [value]="priority">
+                    {{ priority }}
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="filter-field">
+
+            <label>Type</label>
+
+            <select [(ngModel)]="selectedType" (ngModelChange)="onSearchChange()">
+
+                <option value="">
+                    All Types
+                </option>
+
+                <option *ngFor="let type of types" [value]="type">
+                    {{ type }}
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="filter-field">
+
+            <label>Assignee</label>
+
+            <select [(ngModel)]="selectedAssignee" (ngModelChange)="onSearchChange()">
+
+                <option value="">
+                    All Assignees
+                </option>
+
+                <option *ngFor="let assignee of assignees" [value]="assignee">
+                    {{ assignee }}
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <button type="button" class="clear-filter-button" (click)="clearFilters()">
+            Clear Filters
+        </button>
+
+    </div>
+
+
+    <!-- =========================================================
+       MAIN WORKSPACE
+  ========================================================== -->
+
+    <main class="workspace">
+
+
+        <!-- =======================================================
+         LEFT TREE
+    ======================================================== -->
+
+        <aside class="hierarchy-panel">
+
+            <div class="tree-header">
+
+                <div>
+
+                    <strong>
+                        Test Plans
+                    </strong>
+
+                    <span>
+                        {{ testPlans.length }}
+                    </span>
+
+                </div>
+
+                <button type="button" class="tree-add-button" title="Create Test Plan" [disabled]="!selectedProjectId"
+                    (click)="openCreatePlan()">
+                    ＋
+                </button>
+
+            </div>
+
+
+            <!-- PROJECT NOT SELECTED -->
+
+            <div class="tree-empty" *ngIf="!selectedProjectId">
+
+                <div class="empty-icon">
+                    ◇
+                </div>
+
+                <strong>
+                    Select a project
+                </strong>
+
+                <span>
+                    Select a project above to view its test plans,
+                    suites and test cases.
+                </span>
+
+            </div>
+
+
+            <!-- NO PLANS -->
+
+            <div class="tree-empty" *ngIf="
+          selectedProjectId &&
+          !testPlans.length
+        ">
+
+                <div class="empty-icon">
+                    □
+                </div>
+
+                <strong>
+                    No test plans
+                </strong>
+
+                <span>
+                    Create a test plan to get started.
+                </span>
+
+                <button type="button" class="small-primary-button" (click)="openCreatePlan()">
+                    Create Test Plan
+                </button>
+
+            </div>
+
+
+            <!-- TREE -->
+
+            <div class="tree-content" *ngIf="
+          selectedProjectId &&
+          testPlans.length
+        ">
+
+                <!-- ===================================================
+             TEST PLANS
+        ==================================================== -->
+
+                <div class="plan-node" *ngFor="
+            let plan of testPlans;
+            trackBy: trackByPlan
+          ">
+
+                    <div class="tree-row plan-row" [class.selected]="
+              selectedPlan?.id === plan.id &&
+              !selectedSuite
+            " (click)="selectPlan($event, plan)">
+
+                        <button type="button" class="expand-button" (click)="togglePlan($event, plan)">
+                            {{ plan.expanded ? '⌄' : '›' }}
+                        </button>
+
+
+                        <span class="node-icon plan-icon">
+                            ▣
+                        </span>
+
+
+                        <span class="node-name">
+                            {{ plan.name }}
+                        </span>
+
+
+                        <span class="node-count">
+                            {{ plan.suites?.length || 0 }}
+                        </span>
+
+
+                        <div class="node-actions">
+
+                            <button type="button" title="Add Suite" (click)="
+                  $event.stopPropagation();
+                  selectedPlan = plan;
+                  openCreateSuite()
+                ">
+                                ＋
+                            </button>
+
+
+                            <button type="button" title="Edit Plan" (click)="openEditPlan($event, plan)">
+                                ✎
+                            </button>
+
+
+                            <button type="button" title="Delete Plan" (click)="deletePlan($event, plan)">
+                                ⋮
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =================================================
+               SUITES
+          ================================================== -->
+
+                    <div class="suite-tree" *ngIf="plan.expanded">
+
+                        <div class="suite-node" *ngFor="
+                let suite of plan.suites || [];
+                trackBy: trackBySuite
+              ">
+
+                            <div class="tree-row suite-row" [class.selected]="
+                  selectedSuite?.id === suite.id
+                " (click)="
+                  selectSuite(
+                    $event,
+                    plan,
+                    suite
+                  )
+                ">
+
+                                <button type="button" class="expand-button" (click)="
+                    toggleSuite(
+                      $event,
+                      plan,
+                      suite
+                    )
+                  ">
+                                    {{ suite.expanded ? '⌄' : '›' }}
+                                </button>
+
+
+                                <span class="node-icon suite-icon">
+                                    ▤
+                                </span>
+
+
+                                <span class="node-name">
+                                    {{ suite.name }}
+                                </span>
+
+
+                                <span class="node-count">
+                                    {{ suite.testCases?.length || 0 }}
+                                </span>
+
+
+                                <div class="node-actions">
+
+                                    <button type="button" title="Add Test Case" (click)="
+                      $event.stopPropagation();
+                      selectedPlan = plan;
+                      selectedSuite = suite;
+                      openCreateTestCase()
+                    ">
+                                        ＋
+                                    </button>
+
+
+                                    <button type="button" title="Edit Suite" (click)="
+                      openEditSuite(
+                        $event,
+                        suite
+                      )
+                    ">
+                                        ✎
+                                    </button>
+
+
+                                    <button type="button" title="Delete Suite" (click)="
+                      deleteSuite(
+                        $event,
+                        suite
+                      )
+                    ">
+                                        ⋮
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- =============================================
+                   TEST CASES
+              ============================================== -->
+
+                            <div class="testcase-tree" *ngIf="suite.expanded">
+
+                                <div class="tree-row testcase-row" *ngFor="
+                    let testcase of suite.testCases || [];
+                    trackBy: trackByTestCase
+                  " [class.selected]="
+                    selectedTestCase?.id === testcase.id
+                  " (click)="
+                    selectTestCase(
+                      $event,
+                      testcase
+                    )
+                  ">
+
+                                    <span class="case-line"></span>
+
+                                    <span class="node-icon testcase-icon">
+                                        □
+                                    </span>
+
+                                    <span class="case-code">
+                                        {{ getTestCaseCode(testcase) }}
+                                    </span>
+
+                                    <span class="case-title">
+                                        {{ getTestCaseTitle(testcase) }}
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- ADD SUITE -->
+
+                        <button type="button" class="tree-add-child" (click)="
+                selectedPlan = plan;
+                openCreateSuite()
+              ">
+                            ＋ Add test suite
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </aside>
+
+
+        <!-- =======================================================
+         RIGHT DETAIL PANEL
+    ======================================================== -->
+
+        <section class="detail-panel">
+
+
+            <!-- =====================================================
+           TEST CASE DETAIL
+      ====================================================== -->
+
+            <ng-container *ngIf="
+          selectedTestCase as testcase;
+          else hierarchyDetail
+        ">
+
+                <div class="detail-header">
+
+                    <div>
+
+                        <div class="breadcrumb">
+
+                            <span>
+                                {{ getPlanDisplay(testcase) }}
+                            </span>
+
+                            <span>›</span>
+
+                            <span>
+                                {{ getSuiteDisplay(testcase) }}
+                            </span>
+
+                            <span>›</span>
+
+                            <strong>
+                                {{ getTestCaseCode(testcase) }}
+                            </strong>
+
+                        </div>
+
+
+                        <h2>
+                            {{ getTestCaseTitle(testcase) }}
+                        </h2>
+
+                    </div>
+
+
+                    <div class="detail-actions">
+
+                        <button type="button" class="secondary-button" (click)="openEditTestCase(testcase)">
+                            ✎ Edit
+                        </button>
+
+
+                        <button type="button" class="danger-outline-button" (click)="deleteTestcase(testcase)">
+                            Delete
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <div class="detail-scroll">
+
+
+                    <!-- SUMMARY -->
+
+                    <div class="summary-grid">
+
+                        <div class="summary-card">
+
+                            <span>
+                                Test Case
+                            </span>
+
+                            <strong>
+                                {{ getTestCaseCode(testcase) }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="summary-card">
+
+                            <span>
+                                Status
+                            </span>
+
+                            <strong class="status-badge" [ngClass]="
+                  getStatusClass(
+                    testcase.status
+                  )
+                ">
+                                {{ testcase.status || 'DRAFT' }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="summary-card">
+
+                            <span>
+                                Priority
+                            </span>
+
+                            <strong class="priority-badge" [ngClass]="
+                  getPriorityClass(
+                    testcase.priority
+                  )
+                ">
+                                {{ testcase.priority || 'MEDIUM' }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="summary-card">
+
+                            <span>
+                                Project
+                            </span>
+
+                            <strong>
+                                {{ getProjectDisplay(testcase) }}
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- HIERARCHY -->
+
+                    <div class="info-card">
+
+                        <div class="card-heading">
+                            Test Hierarchy
+                        </div>
+
+                        <div class="hierarchy-details">
+
+                            <div>
+
+                                <span>
+                                    Test Plan
+                                </span>
+
+                                <strong>
+                                    {{ getPlanDisplay(testcase) }}
+                                </strong>
+
+                            </div>
+
+
+                            <div>
+
+                                <span>
+                                    Test Suite
+                                </span>
+
+                                <strong>
+                                    {{ getSuiteDisplay(testcase) }}
+                                </strong>
+
+                            </div>
+
+
+                            <div>
+
+                                <span>
+                                    Assignee
+                                </span>
+
+                                <strong>
+                                    {{
+                                    testcase.assignee ||
+                                    getUserDisplay(testcase)
+                                    }}
+                                </strong>
+
+                            </div>
+
+
+                            <div>
+
+                                <span>
+                                    Type
+                                </span>
+
+                                <strong>
+                                    {{ testcase.type || 'Functional' }}
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- DESCRIPTION -->
+
+                    <div class="info-card">
+
+                        <div class="card-heading">
+                            Description
+                        </div>
+
+                        <p>
+                            {{
+                            testcase.description ||
+                            'No description provided.'
+                            }}
+                        </p>
+
+                    </div>
+
+
+                    <!-- PRECONDITIONS -->
+
+                    <div class="info-card">
+
+                        <div class="card-heading">
+                            Preconditions
+                        </div>
+
+                        <p>
+                            {{
+                            testcase.preconditions ||
+                            'No preconditions provided.'
+                            }}
+                        </p>
+
+                    </div>
+
+
+                    <!-- STEPS / EXPECTED -->
+
+                    <div class="two-column-details">
+
+                        <div class="info-card">
+
+                            <div class="card-heading">
+                                Test Steps
+                            </div>
+
+                            <div class="formatted-text">
+                                {{
+                                testcase.steps ||
+                                'No test steps provided.'
+                                }}
+                            </div>
+
+                        </div>
+
+
+                        <div class="info-card">
+
+                            <div class="card-heading">
+                                Expected Result
+                            </div>
+
+                            <div class="formatted-text">
+                                {{
+                                testcase.expectedResult ||
+                                'No expected result provided.'
+                                }}
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ACTUAL RESULT -->
+
+                    <div class="info-card">
+
+                        <div class="card-heading">
+                            Actual Result
+                        </div>
+
+                        <div class="formatted-text">
+                            {{
+                            testcase.actualResult ||
+                            'Not executed yet.'
+                            }}
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </ng-container>
+
+
+            <!-- =====================================================
+           PLAN / SUITE DETAIL
+      ====================================================== -->
+
+            <ng-template #hierarchyDetail>
+
+
+                <!-- ===================================================
+             SUITE
+        ==================================================== -->
+
+                <div class="hierarchy-detail" *ngIf="
+            selectedSuite as suite;
+            else planOnly
+          ">
+
+                    <div class="large-node-icon suite-large">
+                        ▤
+                    </div>
+
+
+                    <div class="detail-header">
+
+                        <div>
+
+                            <div class="eyebrow">
+                                TEST SUITE
+                            </div>
+
+                            <h2>
+                                {{ suite.name }}
+                            </h2>
+
+                            <p>
+                                {{
+                                suite.description ||
+                                'No description provided.'
+                                }}
+                            </p>
+
+                        </div>
+
+
+                        <button type="button" class="primary-button" (click)="openCreateTestCase()">
+                            ＋ Create Test Case
+                        </button>
+
+                    </div>
+
+
+                    <div class="summary-grid">
+
+                        <div class="summary-card">
+
+                            <span>
+                                Test Plan
+                            </span>
+
+                            <strong>
+                                {{ selectedPlan?.name || '—' }}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="summary-card">
+
+                            <span>
+                                Test Cases
+                            </span>
+
+                            <strong>
+                                {{ suite.testCases?.length || 0 }}
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="suite-case-list">
+
+                        <div class="section-heading">
+                            Test Cases
+                        </div>
+
+
+                        <button type="button" class="suite-case-item" *ngFor="
+                let testcase of suite.testCases || [];
+                trackBy: trackByTestCase
+              " (click)="
+                selectTestCase(
+                  $event,
+                  testcase
+                )
+              ">
+
+                            <span class="case-code">
+                                {{ getTestCaseCode(testcase) }}
+                            </span>
+
+                            <span class="case-title">
+                                {{ getTestCaseTitle(testcase) }}
+                            </span>
+
+                            <span class="status-badge" [ngClass]="
+                  getStatusClass(
+                    testcase.status
+                  )
+                ">
+                                {{ testcase.status || 'DRAFT' }}
+                            </span>
+
+                            <span class="priority-badge">
+                                {{ testcase.priority || 'MEDIUM' }}
+                            </span>
+
+                            <span class="arrow">
+                                ›
+                            </span>
+
+                        </button>
+
+
+                        <div class="empty-detail" *ngIf="!suite.testCases?.length">
+
+                            No test cases in this suite.
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ===================================================
+             PLAN
+        ==================================================== -->
+
+                <ng-template #planOnly>
+
+                    <div class="hierarchy-detail" *ngIf="selectedPlan as plan">
+
+                        <div class="large-node-icon plan-large">
+                            ▣
+                        </div>
+
+
+                        <div class="detail-header">
+
+                            <div>
+
+                                <div class="eyebrow">
+                                    TEST PLAN
+                                </div>
+
+                                <h2>
+                                    {{ plan.name }}
+                                </h2>
+
+                                <p>
+                                    {{
+                                    plan.description ||
+                                    'No description provided.'
+                                    }}
+                                </p>
+
+                            </div>
+
+
+                            <button type="button" class="primary-button" (click)="openCreateSuite()">
+                                ＋ Create Test Suite
+                            </button>
+
+                        </div>
+
+
+                        <div class="summary-grid">
+
+                            <div class="summary-card">
+
+                                <span>
+                                    Project
+                                </span>
+
+                                <strong>
+                                    {{
+                                    getProjectDisplay({
+                                    project: plan.project,
+                                    projectId: plan.projectId
+                                    })
+                                    }}
+                                </strong>
+
+                            </div>
+
+
+                            <div class="summary-card">
+
+                                <span>
+                                    Test Suites
+                                </span>
+
+                                <strong>
+                                    {{ plan.suites?.length || 0 }}
+                                </strong>
+
+                            </div>
+
+
+                            <div class="summary-card">
+
+                                <span>
+                                    Test Cases
+                                </span>
+
+                                <strong>
+
+                                    {{
+                                    (plan.suites || []).reduce(
+                                    (total, suite) =>
+                                    total +
+                                    (suite.testCases?.length || 0),
+                                    0
+                                    )
+                                    }}
+
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="suite-case-list">
+
+                            <div class="section-heading">
+                                Test Suites
+                            </div>
+
+
+                            <button type="button" class="suite-case-item" *ngFor="
+                  let suite of plan.suites || [];
+                  trackBy: trackBySuite
+                " (click)="
+                  selectSuite(
+                    $event,
+                    plan,
+                    suite
+                  )
+                ">
+
+                                <span class="suite-item-icon">
+                                    ▤
+                                </span>
+
+                                <span class="case-title">
+                                    {{ suite.name }}
+                                </span>
+
+                                <span class="case-count">
+                                    {{ suite.testCases?.length || 0 }}
+                                    test cases
+                                </span>
+
+                                <span class="arrow">
+                                    ›
+                                </span>
+
+                            </button>
+
+
+                            <div class="empty-detail" *ngIf="!plan.suites?.length">
+
+                                No test suites in this test plan.
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- NOTHING SELECTED -->
+
+                    <div class="no-selection" *ngIf="!selectedPlan">
+
+                        <div class="no-selection-icon">
+                            □
+                        </div>
+
+                        <h2>
+                            Select a test plan
+                        </h2>
+
+                        <p>
+                            Choose a test plan, test suite or test case
+                            from the left panel.
+                        </p>
+
+                    </div>
+
+                </ng-template>
+
+            </ng-template>
+
+        </section>
+
+    </main>
+
+
+    <!-- =========================================================
+       CREATE TEST PLAN MODAL
+  ========================================================== -->
+
+    <div class="modal-backdrop" *ngIf="showCreatePlanModal" (click)="closeCreatePlan()">
+
+        <div class="modal-card" (click)="$event.stopPropagation()">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <span class="modal-eyebrow">
+                        TEST PLAN
+                    </span>
+
+                    <h2>
+                        Create Test Plan
+                    </h2>
+
+                </div>
+
+                <button type="button" class="modal-close" (click)="closeCreatePlan()">
+                    ×
+                </button>
+
+            </div>
+
+
+            <div class="modal-body">
+
+                <label>
+                    Name
+                </label>
+
+                <input type="text" [(ngModel)]="planForm.name" placeholder="Enter test plan name" />
+
+
+                <label>
+                    Project
+                </label>
+
+                <select [(ngModel)]="planForm.projectId">
+
+                    <option [ngValue]="null">
+                        Select project
+                    </option>
+
+                    <option *ngFor="let project of projects" [ngValue]="getOptionId(project)">
+                        {{ project.name || project.title }}
+                    </option>
+
+                </select>
+
+
+                <label>
+                    Description
+                </label>
+
+                <textarea rows="5" [(ngModel)]="planForm.description"
+                    placeholder="Describe the purpose of this test plan"></textarea>
+
+            </div>
+
+
+            <div class="modal-footer">
+
+                <button type="button" class="secondary-button" (click)="closeCreatePlan()">
+                    Cancel
+                </button>
+
+                <button type="button" class="primary-button" (click)="createPlan()" [disabled]="
+            !planForm.name?.trim() ||
+            !selectedProjectId
+          ">
+                    Create Plan
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+       EDIT TEST PLAN MODAL
+  ========================================================== -->
+
+    <div class="modal-backdrop" *ngIf="showEditPlanModal" (click)="closeEditPlan()">
+
+        <div class="modal-card" (click)="$event.stopPropagation()">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <span class="modal-eyebrow">
+                        TEST PLAN
+                    </span>
+
+                    <h2>
+                        Edit Test Plan
+                    </h2>
+
+                </div>
+
+                <button type="button" class="modal-close" (click)="closeEditPlan()">
+                    ×
+                </button>
+
+            </div>
+
+
+            <div class="modal-body">
+
+                <label>
+                    Name
+                </label>
+
+                <input type="text" [(ngModel)]="planForm.name" />
+
+
+                <label>
+                    Project
+                </label>
+
+                <select [(ngModel)]="planForm.projectId">
+
+                    <option [ngValue]="null">
+                        Select project
+                    </option>
+
+                    <option *ngFor="let project of projects" [ngValue]="getOptionId(project)">
+                        {{ project.name || project.title }}
+                    </option>
+
+                </select>
+
+
+                <label>
+                    Description
+                </label>
+
+                <textarea rows="5" [(ngModel)]="planForm.description"></textarea>
+
+            </div>
+
+
+            <div class="modal-footer">
+
+                <button type="button" class="secondary-button" (click)="closeEditPlan()">
+                    Cancel
+                </button>
+
+                <button type="button" class="primary-button" (click)="updatePlan()">
+                    Save Changes
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+       CREATE TEST SUITE MODAL
+  ========================================================== -->
+
+    <div class="modal-backdrop" *ngIf="showCreateSuiteModal" (click)="closeCreateSuite()">
+
+        <div class="modal-card" (click)="$event.stopPropagation()">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <span class="modal-eyebrow">
+                        TEST SUITE
+                    </span>
+
+                    <h2>
+                        Create Test Suite
+                    </h2>
+
+                </div>
+
+                <button type="button" class="modal-close" (click)="closeCreateSuite()">
+                    ×
+                </button>
+
+            </div>
+
+
+            <div class="modal-body">
+
+                <label>
+                    Test Plan
+                </label>
+
+                <select [(ngModel)]="suiteForm.testPlanId">
+
+                    <option [ngValue]="null">
+                        Select test plan
+                    </option>
+
+                    <option *ngFor="let plan of testPlans" [ngValue]="plan.id">
+                        {{ plan.name }}
+                    </option>
+
+                </select>
+
+
+                <label>
+                    Suite Name
+                </label>
+
+                <input type="text" [(ngModel)]="suiteForm.name" placeholder="Enter test suite name" />
+
+
+                <label>
+                    Description
+                </label>
+
+                <textarea rows="5" [(ngModel)]="suiteForm.description"
+                    placeholder="Describe this test suite"></textarea>
+
+            </div>
+
+
+            <div class="modal-footer">
+
+                <button type="button" class="secondary-button" (click)="closeCreateSuite()">
+                    Cancel
+                </button>
+
+                <button type="button" class="primary-button" (click)="createSuite()" [disabled]="
+            !suiteForm.name?.trim() ||
+            !suiteForm.testPlanId
+          ">
+                    Create Suite
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+       EDIT TEST SUITE MODAL
+  ========================================================== -->
+
+    <div class="modal-backdrop" *ngIf="showEditSuiteModal" (click)="closeEditSuite()">
+
+        <div class="modal-card" (click)="$event.stopPropagation()">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <span class="modal-eyebrow">
+                        TEST SUITE
+                    </span>
+
+                    <h2>
+                        Edit Test Suite
+                    </h2>
+
+                </div>
+
+                <button type="button" class="modal-close" (click)="closeEditSuite()">
+                    ×
+                </button>
+
+            </div>
+
+
+            <div class="modal-body">
+
+                <label>
+                    Test Plan
+                </label>
+
+                <select [(ngModel)]="suiteForm.testPlanId">
+
+                    <option *ngFor="let plan of testPlans" [ngValue]="plan.id">
+                        {{ plan.name }}
+                    </option>
+
+                </select>
+
+
+                <label>
+                    Suite Name
+                </label>
+
+                <input type="text" [(ngModel)]="suiteForm.name" />
+
+
+                <label>
+                    Description
+                </label>
+
+                <textarea rows="5" [(ngModel)]="suiteForm.description"></textarea>
+
+            </div>
+
+
+            <div class="modal-footer">
+
+                <button type="button" class="secondary-button" (click)="closeEditSuite()">
+                    Cancel
+                </button>
+
+                <button type="button" class="primary-button" (click)="updateSuite()">
+                    Save Changes
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+       CREATE / EDIT TEST CASE MODAL
+  ========================================================== -->
+
+    <div class="modal-backdrop" *ngIf="
+      showCreateTestCaseModal ||
+      showEditTestCaseModal
+    " (click)="
+      showCreateTestCaseModal
+        ? closeCreateTestCase()
+        : closeEditTestCase()
+    ">
+
+        <div class="modal-card testcase-modal" (click)="$event.stopPropagation()">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <span class="modal-eyebrow">
+                        TEST CASE
+                    </span>
+
+                    <h2>
+                        {{
+                        showEditTestCaseModal
+                        ? 'Edit Test Case'
+                        : 'Create Test Case'
+                        }}
+                    </h2>
+
+                </div>
+
+                <button type="button" class="modal-close" (click)="
+            showCreateTestCaseModal
+              ? closeCreateTestCase()
+              : closeEditTestCase()
+          ">
+                    ×
+                </button>
+
+            </div>
+
+
+            <div class="modal-body">
+
+
+                <div class="form-grid">
+
+
+                    <!-- CODE -->
+
+                    <div class="form-group">
+
+                        <label>
+                            Test Case Code
+                        </label>
+
+                        <input type="text" [(ngModel)]="testcaseForm.testCaseCode" placeholder="TC-001" />
+
+                    </div>
+
+
+                    <!-- TITLE -->
+
+                    <div class="form-group">
+
+                        <label>
+                            Title
+                        </label>
+
+                        <input type="text" [(ngModel)]="testcaseForm.title" placeholder="Enter test case title" />
+
+                    </div>
+
+
+                    <!-- PROJECT -->
+
+                    <div class="form-group">
+
+                        <label>
+                            Project
+                        </label>
+
+                        <select [(ngModel)]="testcaseForm.projectId" (ngModelChange)="
+                selectedProjectId = $event
+                  ? toNumber($event)
+                  : null;
+                loadEpics();
+                loadStories()
+              ">
+
+                            <option [ngValue]="null">
+                                Select project
+                            </option>
+
+                            <option *ngFor="let project of projects" [ngValue]="getOptionId(project)">
+                                {{ project.name || project.title }}
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- TEST PLAN -->
+
+                    <div class="form-group">
+
+                        <label>
+                            Test Plan
+                        </label>
+
+                        <select [(ngModel)]="testcaseForm.testPlanId">
+
+                            <option [ngValue]="null">
+                                Select test plan
+                            </option>
+
+                            <option *ngFor="let plan of testPlans" [ngValue]="plan.id">
+                                {{ plan.name }}
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- TEST SUITE -->
+
+                    <div class="form-group">
+
+                        <label>
+                            Test Suite
+                        </label>
+
+                        <select [(ngModel)]="testcaseForm.testSuiteId">
+
+                            <option [ngValue]="null">
+                                Select test suite
+                            </option>
+
+                            <option *ngFor="
+                  let suite of testSuites
+                " [ngValue]="suite.id">
+                                {{ suite.name }}
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- STATUS -->
+
+                    <div class="form-group">
+
+                        <label>
+                            Status
+                        </label>
+
+                        <select [(ngModel)]="testcaseForm.status">
+
+                            <option value="DRAFT">
+                                Draft
+                            </option>
+
+                            <option value="READY">
+                                Ready
+                            </option>
+
+                            <option value="IN_PROGRESS">
+                                In Progress
+                            </option>
+
+                            <option value="PASSED">
+                                Passed
+                            </option>
+
+                            <option value="FAILED">
+                                Failed
+                            </option>
+
+                            <option value="BLOCKED">
+                                Blocked
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- PRIORITY -->
+
+                    <div class="form-group">
+
+                        <label>
+                            Priority
+                        </label>
+
+                        <select [(ngModel)]="testcaseForm.priority">
+
+                            <option value="LOW">
+                                Low
+                            </option>
+
+                            <option value="MEDIUM">
+                                Medium
+                            </option>
+
+                            <option value="HIGH">
+                                High
+                            </option>
+
+                            <option value="CRITICAL">
+                                Critical
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- TYPE -->
+
+                    <div class="form-group">
+
+                        <label>
+                            Type
+                        </label>
+
+                        <select [(ngModel)]="testcaseForm.type">
+
+                            <option *ngFor="let type of types" [value]="type">
+                                {{ type }}
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <!-- DESCRIPTION -->
+
+                <label>
+                    Description
+                </label>
+
+                <textarea rows="4" [(ngModel)]="testcaseForm.description"
+                    placeholder="Describe the test case"></textarea>
+
+
+                <!-- PRECONDITIONS -->
+
+                <label>
+                    Preconditions
+                </label>
+
+                <textarea rows="4" [(ngModel)]="testcaseForm.preconditions"
+                    placeholder="Enter prerequisites"></textarea>
+
+
+                <!-- STEPS -->
+
+                <label>
+                    Test Steps
+                </label>
+
+                <textarea rows="7" [(ngModel)]="testcaseForm.steps"
+                    placeholder="1. Open the application&#10;2. Perform the action&#10;3. Verify the result"></textarea>
+
+
+                <!-- EXPECTED -->
+
+                <label>
+                    Expected Result
+                </label>
+
+                <textarea rows="5" [(ngModel)]="testcaseForm.expectedResult"
+                    placeholder="Describe the expected result"></textarea>
+
+
+                <!-- ACTUAL -->
+
+                <label>
+                    Actual Result
+                </label>
+
+                <textarea rows="5" [(ngModel)]="testcaseForm.actualResult"
+                    placeholder="Enter actual result after execution"></textarea>
+
+            </div>
+
+
+            <div class="modal-footer">
+
+                <button type="button" class="secondary-button" (click)="
+            showCreateTestCaseModal
+              ? closeCreateTestCase()
+              : closeEditTestCase()
+          ">
+                    Cancel
+                </button>
+
+
+                <button *ngIf="showCreateTestCaseModal" type="button" class="primary-button" (click)="createTestCase()"
+                    [disabled]="
+            !testcaseForm.title?.trim() ||
+            !testcaseForm.steps?.trim() ||
+            !testcaseForm.expectedResult?.trim() ||
+            !selectedProjectId
+          ">
+                    Create Test Case
+                </button>
+
+
+                <button *ngIf="showEditTestCaseModal" type="button" class="primary-button" (click)="updateTestCase()">
+                    Save Changes
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
 </div>
 
-<!-- Material Dialog Template -->
-<ng-template #dialogTemplate>
-  <h2 mat-dialog-title>{{ isEditMode ? 'Edit Test Case' : 'Create New Test Case' }}</h2>
-  
-  <mat-dialog-content>
-    <form [formGroup]="testcaseForm" class="dialog-form">
-      <div class="form-row">
-        <mat-form-field appearance="outline" class="flex-1">
-          <mat-label>Test Case Code *</mat-label>
-          <input matInput formControlName="testCaseCode" placeholder="TC-101" />
-        </mat-form-field>
+<!-- ============================================================
+     ADD TEST CASES TO SUITE MODAL
+============================================================= -->
 
-        <mat-form-field appearance="outline" class="flex-1">
-          <mat-label>Project *</mat-label>
-          <mat-select formControlName="projectId" [compareWith]="compareFn">
-            <mat-option *ngFor="let p of projects" [value]="getOptionId(p)">{{ p.name || 'Project #' + getOptionId(p) }}</mat-option>
-          </mat-select>
-        </mat-form-field>
+<div
+  class="modal-backdrop add-testcases-backdrop"
+  *ngIf="showAddTestCasesModal"
+  (click)="closeAddTestCasesToSuite()">
+
+  <div
+    class="add-testcases-modal"
+    (click)="$event.stopPropagation()">
+
+    <!-- HEADER -->
+
+    <div class="add-testcases-header">
+
+      <div class="add-testcases-title-area">
+
+        <div class="add-testcases-icon">
+          <span class="material-symbols-outlined">
+            playlist_add
+          </span>
+        </div>
+
+        <div>
+
+          <h2>
+            Add Test Cases
+          </h2>
+
+          <div class="add-testcases-subtitle">
+
+            Add existing test cases to
+
+            <strong>
+              {{ selectedSuite?.name || 'Test Suite' }}
+            </strong>
+
+          </div>
+
+        </div>
+
       </div>
 
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Title *</mat-label>
-        <input matInput formControlName="title" placeholder="Test scenario title" />
-      </mat-form-field>
+      <button
+        type="button"
+        class="modal-close-button"
+        [disabled]="isAddingTestCases"
+        (click)="closeAddTestCasesToSuite()">
 
-      <div class="form-row">
-        <mat-form-field appearance="outline" class="flex-1">
-          <mat-label>Priority</mat-label>
-          <mat-select formControlName="priority">
-            <mat-option value="LOW">Low</mat-option>
-            <mat-option value="MEDIUM">Medium</mat-option>
-            <mat-option value="HIGH">High</mat-option>
-            <mat-option value="CRITICAL">Critical</mat-option>
-          </mat-select>
-        </mat-form-field>
+        <span class="material-symbols-outlined">
+          close
+        </span>
 
-        <mat-form-field appearance="outline" class="flex-1">
-          <mat-label>Status</mat-label>
-          <mat-select formControlName="status">
-            <mat-option value="DRAFT">Draft</mat-option>
-            <mat-option value="PASS">Pass</mat-option>
-            <mat-option value="FAIL">Fail</mat-option>
-            <mat-option value="BLOCKED">Blocked</mat-option>
-            <mat-option value="RETEST">Retest</mat-option>
-          </mat-select>
-        </mat-form-field>
+      </button>
+
+    </div>
+
+
+    <!-- TOOLBAR -->
+
+    <div class="add-testcases-toolbar">
+
+      <div class="add-testcases-search">
+
+        <span class="material-symbols-outlined">
+          search
+        </span>
+
+        <input
+          type="text"
+          [(ngModel)]="addTestCaseSearch"
+          placeholder="Search test cases..."
+        />
+
+        <button
+          *ngIf="addTestCaseSearch"
+          type="button"
+          class="search-clear"
+          (click)="addTestCaseSearch = ''">
+
+          <span class="material-symbols-outlined">
+            close
+          </span>
+
+        </button>
+
       </div>
 
-      <div class="form-row">
-        <mat-form-field appearance="outline" class="flex-1">
-          <mat-label>Epic</mat-label>
-          <mat-select formControlName="epicId" [compareWith]="compareFn">
-            <mat-option [value]="''">None</mat-option>
-            <mat-option *ngFor="let e of epics" [value]="getOptionId(e)">
-              {{ e.name || e.title || 'Epic #' + getOptionId(e) }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
 
-        <mat-form-field appearance="outline" class="flex-1">
-          <mat-label>User Story</mat-label>
-          <mat-select formControlName="storyId" [compareWith]="compareFn">
-            <mat-option [value]="''">None</mat-option>
-            <mat-option *ngFor="let s of stories" [value]="getOptionId(s)">
-              {{ s.title || s.name || s.storyTitle || s.storyName || s.description || 'Story #' + getOptionId(s) }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
+      <div class="add-testcases-toolbar-actions">
+
+        <button
+          type="button"
+          class="secondary-toolbar-button"
+          (click)="selectAllAvailableTestCases()">
+
+          Select visible
+
+        </button>
+
+        <button
+          type="button"
+          class="secondary-toolbar-button"
+          (click)="clearSelectedAvailableTestCases()">
+
+          Clear visible
+
+        </button>
+
       </div>
 
-      <div class="form-row">
-        <mat-form-field appearance="outline" class="flex-1">
-          <mat-label>Task</mat-label>
-          <mat-select formControlName="taskId" [compareWith]="compareFn">
-            <mat-option [value]="''">None</mat-option>
-            <mat-option *ngFor="let t of tasks" [value]="getOptionId(t)">
-              {{ t.title || t.name || t.taskTitle || t.taskName || t.description || 'Task #' + getOptionId(t) }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
+    </div>
 
-        <mat-form-field appearance="outline" class="flex-1">
-          <mat-label>Assigned Tester</mat-label>
-          <mat-select formControlName="userId" [compareWith]="compareFn">
-            <mat-option [value]="''">Unassigned</mat-option>
-            <mat-option *ngFor="let u of users" [value]="getOptionId(u)">
-              {{ u.username || u.name || u.email || 'User #' + getOptionId(u) }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
+
+    <!-- SUMMARY -->
+
+    <div class="add-testcases-summary">
+
+      <div class="summary-left">
+
+        <span class="summary-count">
+          {{ filteredAvailableTestCases.length }}
+        </span>
+
+        test cases
+
       </div>
 
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Preconditions</mat-label>
-        <textarea matInput formControlName="preconditions" rows="2"></textarea>
-      </mat-form-field>
+      <div class="summary-selected">
 
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Steps *</mat-label>
-        <textarea matInput formControlName="steps" rows="3"></textarea>
-      </mat-form-field>
+        <span class="summary-selected-number">
+          {{ selectedAvailableTestCaseCount }}
+        </span>
 
-      <div class="form-row">
-        <mat-form-field appearance="outline" class="flex-1">
-          <mat-label>Expected Result *</mat-label>
-          <textarea matInput formControlName="expectedResult" rows="2"></textarea>
-        </mat-form-field>
+        selected
 
-        <mat-form-field appearance="outline" class="flex-1">
-          <mat-label>Actual Result</mat-label>
-          <textarea matInput formControlName="actualResult" rows="2"></textarea>
-        </mat-form-field>
       </div>
-    </form>
-  </mat-dialog-content>
 
-  <mat-dialog-actions align="end">
-    <button mat-button (click)="closeModal()">Cancel</button>
-    <button mat-flat-button color="primary" [disabled]="testcaseForm.invalid" (click)="onSubmit()">
-      {{ isEditMode ? 'Update' : 'Save' }}
-    </button>
-  </mat-dialog-actions>
-</ng-template>
+      <div class="summary-assigned">
+
+        {{ availableAlreadyAssignedCount }}
+        already in suite
+
+      </div>
+
+    </div>
+
+
+    <!-- TABLE -->
+
+    <div class="add-testcases-table-wrapper">
+
+      <table class="add-testcases-table">
+
+        <thead>
+
+          <tr>
+
+            <th class="check-column">
+              <span class="material-symbols-outlined">
+                done
+              </span>
+            </th>
+
+            <th>
+              Test Case
+            </th>
+
+            <th>
+              Title
+            </th>
+
+            <th>
+              Status
+            </th>
+
+            <th>
+              Priority
+            </th>
+
+            <th>
+              Suite
+            </th>
+
+          </tr>
+
+        </thead>
+
+
+        <tbody>
+
+          <tr
+            *ngFor="
+              let testcase of filteredAvailableTestCases;
+              trackBy: trackByTestCase
+            "
+            [class.selected-row]="
+              isTestCaseSelected(testcase)
+            "
+            (click)="toggleTestCaseForSuite(testcase)">
+
+            <td
+              class="check-column"
+              (click)="$event.stopPropagation()">
+
+              <label class="custom-checkbox">
+
+                <input
+                  type="checkbox"
+                  [checked]="
+                    isTestCaseSelected(testcase)
+                  "
+                  (change)="
+                    toggleTestCaseForSuite(testcase)
+                  "
+                />
+
+                <span class="checkbox-box">
+
+                  <span
+                    class="material-symbols-outlined"
+                    *ngIf="
+                      isTestCaseSelected(testcase)
+                    ">
+                    check
+                  </span>
+
+                </span>
+
+              </label>
+
+            </td>
+
+
+            <td>
+
+              <div class="tc-code">
+
+                {{ getTestCaseCode(testcase) }}
+
+              </div>
+
+            </td>
+
+
+            <td>
+
+              <div class="tc-title">
+
+                {{ getTestCaseTitle(testcase) }}
+
+              </div>
+
+              <div
+                class="tc-description"
+                *ngIf="testcase.description">
+
+                {{ testcase.description }}
+
+              </div>
+
+            </td>
+
+
+            <td>
+
+              <span
+                class="status-pill"
+                [ngClass]="
+                  getStatusClass(testcase.status)
+                ">
+
+                {{ testcase.status || 'DRAFT' }}
+
+              </span>
+
+            </td>
+
+
+            <td>
+
+              <span
+                class="priority-pill"
+                [ngClass]="
+                  getPriorityClass(testcase.priority)
+                ">
+
+                {{ testcase.priority || 'MEDIUM' }}
+
+              </span>
+
+            </td>
+
+
+            <td>
+
+              <span
+                class="current-suite"
+                *ngIf="
+                  getSuiteDisplay(testcase) !== '-'
+                ">
+
+                <span class="material-symbols-outlined">
+                  folder
+                </span>
+
+                {{ getSuiteDisplay(testcase) }}
+
+              </span>
+
+              <span
+                class="unassigned-suite"
+                *ngIf="
+                  getSuiteDisplay(testcase) === '-'
+                ">
+
+                Not assigned
+
+              </span>
+
+            </td>
+
+          </tr>
+
+
+          <!-- EMPTY -->
+
+          <tr
+            *ngIf="
+              filteredAvailableTestCases.length === 0
+            ">
+
+            <td
+              colspan="6"
+              class="empty-testcases">
+
+              <span class="material-symbols-outlined">
+                search_off
+              </span>
+
+              <strong>
+                No test cases found
+              </strong>
+
+              <span>
+                Try changing your search.
+              </span>
+
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+
+    <!-- FOOTER -->
+
+    <div class="add-testcases-footer">
+
+      <div class="footer-selection-info">
+
+        <span class="material-symbols-outlined">
+          check_circle
+        </span>
+
+        {{ selectedAvailableTestCaseCount }}
+        test case{{ selectedAvailableTestCaseCount === 1 ? '' : 's' }}
+        selected
+
+      </div>
+
+
+      <div class="footer-actions">
+
+        <button
+          type="button"
+          class="cancel-button"
+          [disabled]="isAddingTestCases"
+          (click)="closeAddTestCasesToSuite()">
+
+          Cancel
+
+        </button>
+
+
+        <button
+          type="button"
+          class="primary-button"
+          [disabled]="
+            isAddingTestCases ||
+            !selectedAvailableTestCaseCount ||
+            !selectedSuite?.id
+          "
+          (click)="addSelectedTestCasesToSuite()">
+
+          <span
+            class="material-symbols-outlined"
+            *ngIf="!isAddingTestCases">
+
+            playlist_add
+
+          </span>
+
+          <span
+            class="button-spinner"
+            *ngIf="isAddingTestCases">
+          </span>
+
+          <span>
+
+            {{
+              isAddingTestCases
+                ? 'Adding...'
+                : 'Add to Suite'
+            }}
+
+          </span>
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

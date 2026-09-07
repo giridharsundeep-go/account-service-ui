@@ -7,11 +7,6 @@ import { catchError } from 'rxjs/operators';
 import { environment } from '../../environment';
 import { AuthService } from '../auth.service';
 
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 
 @Pipe({
@@ -46,6 +41,7 @@ export interface Issue {
   id: number;
   title: string;
   issueCode?: string;
+  issue_code?: string;
   status?: string;
   isBlocking?: boolean;
   projectId?: number;
@@ -154,12 +150,7 @@ export interface KanbanItem {
     CommonModule,
     FormsModule,
     ResolveUserPipe,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatCheckboxModule,
-    MatTooltipModule,
-    DragDropModule
+    DragDropModule,
   ],
   templateUrl: './epics.html',
   styleUrls: ['./epics.css'],
@@ -204,12 +195,15 @@ export class Epics implements OnInit {
   toastMessage = signal<string | null>(null);
 
   activeDrawer = signal<'NONE' | 'EPIC' | 'STORY' | 'TASK'>('NONE');
+  // Template compatibility alias. Keep the existing activeDrawer as the source of truth.
+  activeModal = computed(() => this.activeDrawer());
   drawerMode = signal<'CREATE' | 'EDIT'>('CREATE');
   isReadOnly = signal<boolean>(false);
 
   currentEpic: Partial<EpicNode> = {};
   currentStory: Partial<StoryNode> = {};
   currentTask: Partial<TaskNode> = {};
+
 
   testCasePopupOpen = signal<boolean>(false);
   testCasePopupType = signal<'STORY' | 'TASK' | null>(null);
@@ -228,6 +222,43 @@ export class Epics implements OnInit {
       return res.data || res.items || res.epics || res.stories || res.tasks || res.result || [];
     }
     return [];
+  }
+
+  /** Public numeric normalizer used directly by the Angular template. */
+  toNumber(value: number | string | null | undefined): number {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  /** Execute a basic command from the rich-text editor toolbar. */
+  execEditor(command: string, value?: string): void {
+    if (typeof document === 'undefined') return;
+    try {
+      document.execCommand(command, false, value);
+    } catch (error) {
+      console.warn(`Editor command '${command}' is not supported`, error);
+    }
+  }
+
+  /** Insert a hyperlink into the currently focused rich-text editor. */
+  insertEditorLink(): void {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+    const url = window.prompt('Enter URL');
+    if (!url?.trim()) return;
+    this.execEditor('createLink', url.trim());
+  }
+
+  /** Template-compatible modal close handler. */
+  closeModal(): void {
+    this.closeDrawers();
+  }
+
+  /** Normalized CSS class for testcase execution/status labels. */
+  statusClass(status: string | null | undefined): string {
+    return String(status || 'UNKNOWN')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-');
   }
 
   getUserInitials(name?: string): string {
@@ -1132,46 +1163,212 @@ export class Epics implements OnInit {
 
   openCreateEpic() {
     this.isReadOnly.set(false);
-    this.currentEpic = { status: 'BACKLOG', project_id: this.selectedProjectId() || undefined };
+    this.currentEpic = {
+      project_id: this.selectedProjectId() || undefined,
+      sprint_id: null,
+      epic_code: '',
+      name: '',
+      description: '',
+      creator_user_id: undefined,
+      assignee_user_id: null,
+      reporter_user_id: null,
+      status: 'BACKLOG',
+      team_id: null,
+      issues: [],
+      testCases: [],
+      stories: []
+    };
     this.drawerMode.set('CREATE');
     this.activeDrawer.set('EPIC');
   }
 
-  openViewEpic(epic: EpicNode) {
-    this.currentEpic = { ...epic };
+  openEditEpic(epic: EpicNode) {
+    this.currentEpic = {
+      ...epic,
+      id: Number(epic.id),
+      project_id: Number(epic.project_id),
+      sprint_id: epic.sprint_id == null ? null : Number(epic.sprint_id),
+      creator_user_id: epic.creator_user_id == null ? undefined : Number(epic.creator_user_id),
+      assignee_user_id: epic.assignee_user_id == null ? null : Number(epic.assignee_user_id),
+      reporter_user_id: epic.reporter_user_id == null ? null : Number(epic.reporter_user_id),
+      team_id: epic.team_id == null ? null : Number(epic.team_id),
+      epic_code: String(epic.epic_code ?? ''),
+      name: String(epic.name ?? ''),
+      description: epic.description ?? '',
+      status: String(epic.status ?? 'BACKLOG'),
+      issues: [...(epic.issues || [])],
+      testCases: [...(epic.testCases || [])],
+      stories: [...(epic.stories || [])]
+    };
     this.isReadOnly.set(true);
     this.drawerMode.set('EDIT');
     this.activeDrawer.set('EPIC');
   }
 
-  saveEpic() {
-    if (!this.currentEpic.name || !this.currentEpic.project_id) return;
-    const req = this.currentEpic.id
-      ? this.http.put(`${this.baseUrl}/epics/${this.currentEpic.id}`, this.currentEpic, { headers: this.auth.getAuthHeaders() })
-      : this.http.post(`${this.baseUrl}/epics/create`, this.currentEpic, { headers: this.auth.getAuthHeaders() });
+  openViewEpic(epic: EpicNode): void {
+    if (!epic?.id) {
+      this.showToast('Invalid Epic ID');
+      return;
+    }
 
-    req.subscribe(() => {
-      this.showToast(`Epic ${this.drawerMode() === 'CREATE' ? 'created' : 'updated'} successfully`);
-      this.closeDrawers();
-      this.loadFullHierarchy();
-    });
+    this.currentEpic = {
+      ...epic,
+      testCases: epic.testCases ? [...epic.testCases] : []
+    };
+    this.isReadOnly.set(true);
+    this.drawerMode.set('EDIT');
+    this.activeDrawer.set('EPIC');
   }
 
-  openCreateStory(epic?: EpicNode) {
-    this.isReadOnly.set(false);
-    this.currentStory = { 
-      status: 'BACKLOG', 
-      priority: 'MEDIUM',
-      project_id: this.selectedProjectId() || undefined,
-      epic_id: epic ? epic.id : undefined,
-      testCases: []
+  openViewStory(story: StoryNode): void {
+    if (!story?.id) {
+      this.showToast('Invalid Story ID');
+      return;
+    }
+
+    this.currentStory = {
+      ...story,
+      testCases: this.getTestCasesForStory(story.id)
     };
-    this.loadEpicsForStoryProject(this.currentStory.project_id || 1);
-    this.drawerMode.set('CREATE');
+    this.isReadOnly.set(true);
+    this.drawerMode.set('EDIT');
     this.activeDrawer.set('STORY');
   }
 
-  openViewStory(story: StoryNode) {
+  openViewTask(task: TaskNode): void {
+    if (!task?.id) {
+      this.showToast('Invalid Task ID');
+      return;
+    }
+
+    this.currentTask = {
+      ...task,
+      testCases: this.getTestCasesForTask(task.id)
+    };
+    this.isReadOnly.set(true);
+    this.drawerMode.set('EDIT');
+    this.activeDrawer.set('TASK');
+  }
+
+  openViewIssue(issue: Issue): void {
+    const id = Number(
+      issue?.id ??
+      (issue as any)?.issue_id ??
+      (issue as any)?.issueId
+    );
+
+    if (!Number.isFinite(id) || id <= 0) {
+      this.showToast('Invalid Issue ID');
+      return;
+    }
+
+    const projectId = this.selectedProjectId();
+    if (!projectId) {
+      this.showToast('Please select a project first');
+      return;
+    }
+
+    const url =
+      `${window.location.origin}/viewer/ISSUE/${id}?projectId=${projectId}`;
+
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
+  saveEpic() {
+    const projectId = Number(this.currentEpic.project_id);
+    const epicId = Number(this.currentEpic.id);
+    const epicCode = String(this.currentEpic.epic_code ?? '').trim();
+    const name = String(this.currentEpic.name ?? '').trim();
+
+    if (!Number.isFinite(projectId) || projectId <= 0) {
+      this.showToast('Project is required');
+      return;
+    }
+    if (!epicCode) {
+      this.showToast('Epic code is required');
+      return;
+    }
+    if (!name) {
+      this.showToast('Epic name is required');
+      return;
+    }
+
+    const payload: any = {
+      project_id: projectId,
+      sprint_id: this.currentEpic.sprint_id == null ? null : Number(this.currentEpic.sprint_id),
+      epic_code: epicCode,
+      name,
+      description: String(this.currentEpic.description ?? '').trim() || null,
+      assignee_user_id: this.currentEpic.assignee_user_id == null ? null : Number(this.currentEpic.assignee_user_id),
+      reporter_user_id: this.currentEpic.reporter_user_id == null ? null : Number(this.currentEpic.reporter_user_id),
+      status: String(this.currentEpic.status ?? 'BACKLOG').trim() || 'BACKLOG'
+    };
+
+    if (this.currentEpic.creator_user_id != null) {
+      payload.creator_user_id = Number(this.currentEpic.creator_user_id);
+    }
+
+    const isCreate = !Number.isFinite(epicId) || epicId <= 0;
+    const req = isCreate
+      ? this.http.post(`${this.baseUrl}/epics/create`, payload, { headers: this.auth.getAuthHeaders() })
+      : this.http.put(`${this.baseUrl}/epics/${epicId}`, payload, { headers: this.auth.getAuthHeaders() });
+
+    req.subscribe({
+      next: () => {
+        this.showToast(`Epic ${isCreate ? 'created' : 'updated'} successfully`);
+        this.closeDrawers();
+        this.loadFullHierarchy();
+      },
+      error: (error: any) => {
+        console.error('Epic save failed:', error);
+        const message =
+          error?.error?.error ??
+          error?.error?.message ??
+          error?.message ??
+          `Could not ${isCreate ? 'create' : 'update'} Epic`;
+        this.showToast(String(message));
+      }
+    });
+  }
+
+  openCreateStory(epic?: EpicNode): void {
+
+  this.isReadOnly.set(false);
+
+  this.currentStory = {
+    status: 'BACKLOG',
+    priority: 'MEDIUM',
+    project_id:
+      this.selectedProjectId() || undefined,
+    epic_id:
+      epic?.id ?? undefined,
+    story_points: 0,
+    title: '',
+    description: '',
+    issues: [],
+    testCases: []
+  };
+
+  this.drawerMode.set('CREATE');
+
+  // IMPORTANT:
+  // Open the drawer immediately.
+  this.activeDrawer.set('STORY');
+
+  /*
+   * Load parent epics after the drawer is visible.
+   */
+  const projectId =
+    this.currentStory.project_id;
+
+  if (projectId) {
+    this.loadEpicsForStoryProject(
+      Number(projectId)
+    );
+  }
+}
+
+  openEditStory(story: StoryNode) {
     const normalized = this.normalizeStory(story);
     if (!normalized.id) {
       console.error('Invalid Story ID:', story);
@@ -1245,19 +1442,32 @@ export class Epics implements OnInit {
     });
   }
 
-  openCreateTask(story?: StoryNode) {
-    this.isReadOnly.set(false);
-    this.currentTask = { 
-      status: 'BACKLOG', 
-      priority: 'MEDIUM',
-      story_id: story ? story.id : undefined,
-      testCases: []
-    };
-    this.drawerMode.set('CREATE');
-    this.activeDrawer.set('TASK');
-  }
+  openCreateTask(story?: StoryNode): void {
 
-  openViewTask(task: TaskNode) {
+  this.isReadOnly.set(false);
+
+  this.currentTask = {
+    status: 'BACKLOG',
+    priority: 'MEDIUM',
+    story_id:
+      story?.id ?? undefined,
+    sprint_id:
+      story?.sprint_id ?? undefined,
+    title: '',
+    description: '',
+    assignee_user_id: null,
+    reporter_user_id: null,
+    issues: [],
+    testCases: []
+  };
+
+  this.drawerMode.set('CREATE');
+
+  // Open immediately.
+  this.activeDrawer.set('TASK');
+}
+
+  openEditTask(task: TaskNode) {
     const normalized = this.normalizeTask(task);
     if (!normalized.id) {
       console.error('Invalid Task ID:', task);
@@ -1428,5 +1638,6 @@ trackByStoryId(index: number, story: StoryNode): number {
 trackByUserId(index: number, user: any): number {
   return Number(user.id);
 }
+
 
 }
