@@ -286,7 +286,7 @@
                 <button
                   type="button"
                   class="row-action primary-row-action"
-                  (click)="switchToSprintsForProject(project.project_code)">
+                  (click)="switchToSprintsForProject(project.project_code, project.id)">
 
                   <mat-icon>
                     view_week
@@ -458,6 +458,20 @@
 
           </button>
 
+        </div>
+
+
+        <div
+          class="sprint-load-error"
+          *ngIf="sprintLoadError"
+          role="alert">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ sprintLoadError }}</span>
+          <button
+            type="button"
+            (click)="loadSprintsBackground(activeProjectFilterId || undefined)">
+            Retry
+          </button>
         </div>
 
 
@@ -1187,7 +1201,8 @@
           class="secondary-button"
           (click)="
             switchToSprintsForProject(
-              selectedProject.project_code
+              selectedProject.project_code,
+              selectedProject.id
             )
           ">
 
@@ -1903,6 +1918,21 @@
               Functional Teams
             </label>
 
+            <div
+              class="allocation-loading"
+              *ngIf="isLoadingResources">
+
+              <mat-spinner
+                diameter="22">
+              </mat-spinner>
+
+              <span>
+                Loading teams and users...
+              </span>
+
+            </div>
+
+
             <mat-form-field
               appearance="outline"
               class="full-width">
@@ -1914,9 +1944,21 @@
               <mat-select
                 multiple
                 [(ngModel)]="selectedTeamIds"
+                [disabled]="isLoadingResources"
                 (selectionChange)="
                   onTeamSelectionChange($event.value)
                 ">
+
+                <mat-option
+                  *ngIf="
+                    !isLoadingResources &&
+                    liveActiveTeams.length === 0
+                  "
+                  disabled>
+
+                  No teams available
+
+                </mat-option>
 
                 <mat-option
                   *ngFor="let team of liveActiveTeams"
@@ -1960,37 +2002,71 @@
             </div>
 
 
-            <div class="people-list">
+            <div
+                class="allocation-resource-note"
+                *ngIf="
+                  !isLoadingResources &&
+                  organizationPersonnel.length === 0
+                ">
+
+                No users available for specialist selection.
+
+              </div>
+
+
+              <div class="people-list">
 
               <div
                 class="person-chip"
                 *ngFor="let user of chipUserObjects">
 
-                <span class="person-avatar">
+                <span
+                  class="person-avatar"
+                  aria-hidden="true">
 
-                  {{
-                    user.name
-                      .charAt(0)
-                      .toUpperCase()
-                  }}
+                  <img
+                    *ngIf="hasUserAvatar(user)"
+                    [src]="getUserAvatar(user)"
+                    [alt]="user.name">
+
+                  <span
+                    *ngIf="!hasUserAvatar(user)">
+
+                    {{ getInitials(user.name) }}
+
+                  </span>
 
                 </span>
 
-                <span>
-                  {{ user.name }}
+
+                <span class="person-identity">
+
+                  <strong>
+                    {{ user.name }}
+                  </strong>
+
+                  <span class="person-email">
+                    {{ user.email }}
+                  </span>
+
+                  <span class="person-employee-code">
+                    {{ user.employeeCode }}
+                  </span>
+
+                  <small
+                    *ngIf="user.teamName">
+
+                    {{ user.teamName }}
+
+                  </small>
+
                 </span>
 
-                <small
-                  *ngIf="user.teamName">
-
-                  ·
-                  {{ user.teamName }}
-
-                </small>
 
                 <button
                   *ngIf="!user.isFromTeam"
                   type="button"
+                  aria-label="Remove user"
                   (click)="removeUserChip(user)">
 
                   <mat-icon>

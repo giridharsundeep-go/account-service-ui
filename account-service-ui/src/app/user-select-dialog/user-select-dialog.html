@@ -1,1 +1,127 @@
-<p>user-select-dialog works!</p>
+<div class="dialog-container">
+  <h2 mat-dialog-title class="dialog-title">Select Team Members</h2>
+
+  <div class="search-wrapper">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>Search users by name, email or employee code...</mat-label>
+      <input
+        matInput
+        [(ngModel)]="searchQuery"
+        placeholder="Search users..."
+        autocomplete="off" />
+
+      <button
+        *ngIf="searchQuery"
+        mat-icon-button
+        matSuffix
+        type="button"
+        aria-label="Clear search"
+        class="clear-btn"
+        (click)="searchQuery = ''">
+        &times;
+      </button>
+    </mat-form-field>
+  </div>
+
+  <mat-dialog-content class="dialog-content">
+
+    <div class="dialog-state" *ngIf="loadingUsers">
+      Loading users...
+    </div>
+
+    <div class="dialog-state error" *ngIf="!loadingUsers && usersLoadError">
+      {{ usersLoadError }}
+    </div>
+
+    <div
+      *ngIf="!loadingUsers && !usersLoadError && getFilteredUsers().length === 0"
+      class="empty-state">
+      {{
+        users.length === 0
+          ? 'No users available'
+          : 'No users match your search'
+      }}
+    </div>
+
+    <div class="users-list" *ngIf="!loadingUsers && getFilteredUsers().length > 0">
+
+      <div
+        class="user-row"
+        *ngFor="let user of getFilteredUsers()"
+        [class.selected]="localSelectedIds.includes(user.id)"
+        (click)="toggleUserSelection(user.id)">
+
+        <div class="user-left">
+
+          <input
+            type="checkbox"
+            class="styled-checkbox"
+            [checked]="localSelectedIds.includes(user.id)"
+            (click)="$event.stopPropagation()"
+            (change)="toggleUserSelection(user.id)" />
+
+          <div class="avatar">
+            <img
+              *ngIf="hasAvatar(user)"
+              [src]="getAvatarDisplaySrc(user)"
+              [alt]="user.name" />
+            <span *ngIf="!hasAvatar(user)">
+              {{ getInitials(user.name) }}
+            </span>
+          </div>
+
+          <div class="user-details" [attr.title]="user.name">
+
+            <span class="user-name">
+              {{ user.name }}
+            </span>
+
+            <span class="user-email">
+              {{ user.email }}
+            </span>
+
+            <span class="user-employee-code">
+              {{ getUserEmployeeCode(user) }}
+            </span>
+
+          </div>
+
+        </div>
+
+        <div class="selected-indicator" *ngIf="localSelectedIds.includes(user.id)">
+          ✓
+        </div>
+
+      </div>
+
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end" class="dialog-actions">
+
+    <span class="selection-counter">
+      {{ localSelectedIds.length }} user(s) selected
+    </span>
+
+    <div class="action-buttons">
+
+      <button
+        mat-stroked-button
+        type="button"
+        class="gp-button gp-cancel"
+        (click)="onCancel()">
+        Cancel
+      </button>
+
+      <button
+        mat-stroked-button
+        type="button"
+        class="gp-button gp-primary"
+        (click)="onSave()">
+        Apply Selection
+      </button>
+
+    </div>
+
+  </mat-dialog-actions>
+</div>

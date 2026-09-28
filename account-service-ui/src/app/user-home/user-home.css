@@ -35,7 +35,7 @@ body {
 ============================================================ */
 
 .app-shell {
-  --sidebar-width: 256px;
+  --sidebar-width: 206px;
   --sidebar-collapsed-width: 72px;
 
   width: 100%;
@@ -65,7 +65,7 @@ body {
 
   background: #ffffff;
 
-  border-bottom: 1px solid #ffffff;
+  border-bottom: 1px solid #cbcbcb;
 
   z-index: 100;
 }
@@ -445,7 +445,7 @@ body {
   align-items: center;
   justify-content: center;
 
-  background: #003aa5;
+  background: rgb(0, 124, 193);
 
   color: #ffffff;
 
@@ -655,7 +655,7 @@ body {
 
   background: #ffffff;
 
-  border-right: 1px solid #ffffff;
+  border-right: 1px solid #bdbcbc;
 
   overflow: hidden;
 

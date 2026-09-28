@@ -1,151 +1,224 @@
-/* 🌐 MAIN */
-.main {
-  height: 100vh;
-  background: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Inter', sans-serif;
+/* GREATLEY POSHLEY — LOGIN */
+
+:host {
+  display: block;
 }
 
-/* CENTER CONTAINER */
-.container {
-  width: 100%;
-  max-width: 420px;
-  padding: 20px;
-border: 1px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;   /* ✅ center horizontally */
-  justify-content: center; /* ✅ center vertically inside */
-  text-align: center;
-}
-
-/* 🔥 LOGO */
-.logo h1 {
-  font-size: 42px;
-  font-weight: 700;
-  margin-bottom: 20px;
-  color: #111;
-}
-
-/* 🧾 LOGIN CARD */
-.login-card {
-  width: 100%;                 /* ✅ responsive */
-  padding: 28px;
-  border-radius: 20px;
-  background: #ffffff;
-  border: 1px 1px 1px;
-  text-align: left;            /* form alignment */
-}
-
-/* Titles */
-.login-title {
-  font-size: 22px;
-  font-weight: 600;
-}
-
-.subtitle {
-  font-size: 13px;
-  color: #777;
-  margin-bottom: 20px;
-}
-
-/* FORM */
-.full-width {
-  width: 100%;
-  margin-bottom: 16px;
-}
-
-/* Forgot */
-.forgot-container {
-  text-align: right;
-  margin-bottom: 10px;
-}
-
-/* ERROR */
-.error {
-  color: red;
-  font-size: 12px;
-  margin-bottom: 10px;
-}
-
-/* 🔥 PRIMARY BUTTON */
-.gp-button {
-  width: 100%;
-  height: 52px;
-  border-radius: 30px;
-  background-color: #001c51;
-  color: white;
-  font-size: 16px;
-}
-
-/* SECONDARY BUTTON */
-.gp-button-light {
-  width: 100%;
-  height: 52px;
-  border-radius: 30px;
-  background-color: #2678bf;
-  color: white;
-  font-size: 16px;
-}
-
-/* Divider */
-.divider-text {
-  text-align: center;
-  font-size: 13px;
-  color: #777;
-  margin: 18px 0;
-}
-
-/* 📱 RESPONSIVE */
-@media (max-width: 480px) {
-  .logo h1 {
-    font-size: 32px;
-  }
-
-  .container {
-    padding: 16px;
-  }
-
-  .login-card {
-    padding: 20px;
-  }
-}
-
-/* 🌐 MAIN - Modified to accommodate footer */
 .main {
   min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
   background: #ffffff;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
   font-family: 'Inter', sans-serif;
-  box-sizing: border-box;
+  color: #111827;
 }
 
-/* CENTER CONTAINER */
 .container {
   width: 100%;
-  max-width: 420px;
-  padding: 20px;
+  max-width: 560px;
+  box-sizing: border-box;
+  padding: 40px 20px 24px;
+  margin: auto 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  text-align: center;
-  margin: auto 0; /* Pushes form to center vertically */
 }
 
-/* 🦶 FOOTER STYLES */
+/* BRAND */
+.brand {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.brand-logo {
+  width: 62px;
+  height: 62px;
+  object-fit: contain;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.brand-name {
+  font-size: 31px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.8px;
+  color: #111111;
+}
+
+.brand-name span {
+  color: #0788CC;
+}
+
+.brand-tagline {
+  margin-top: 8px;
+  font-size: 11px;
+  line-height: 1.4;
+  font-weight: 600;
+  letter-spacing: 1.7px;
+  text-transform: uppercase;
+  color: #8a8f98;
+}
+
+/* LOGIN CARD */
+.login-card {
+  width: 100%;
+  max-width: 440px;
+  box-sizing: border-box;
+  padding: 30px;
+  border: 1px solid #939495;
+  border-radius: 22px;
+  background: #ffffff;
+  text-align: left;
+}
+
+.login-title {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.25;
+  font-weight: 650;
+  letter-spacing: -0.35px;
+  color: #111827;
+}
+
+.subtitle {
+  margin: 7px 0 22px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #737983;
+}
+
+/* FORM */
+.full-width {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+/* Angular Material outline fields: 25px radius */
+::ng-deep .full-width .mat-mdc-text-field-wrapper {
+  min-height: 56px;
+  border-radius: 25px !important;
+  background: #ffffff;
+}
+
+::ng-deep .full-width .mdc-notched-outline {
+  border-radius: 25px !important;
+}
+
+::ng-deep .full-width .mdc-notched-outline__leading {
+  width: 25px !important;
+  border-radius: 25px 0 0 25px !important;
+}
+
+::ng-deep .full-width .mdc-notched-outline__trailing {
+  border-radius: 0 25px 25px 0 !important;
+}
+
+::ng-deep .full-width .mat-mdc-form-field-infix {
+  min-height: 56px;
+  box-sizing: border-box;
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+::ng-deep .full-width.mat-focused .mdc-notched-outline__leading,
+::ng-deep .full-width.mat-focused .mdc-notched-outline__notch,
+::ng-deep .full-width.mat-focused .mdc-notched-outline__trailing {
+  border-color: #0788CC !important;
+}
+
+/* FORGOT */
+.forgot-container {
+  display: flex;
+  justify-content: flex-end;
+  margin: -2px 0 14px;
+}
+
+.forgot-container button {
+  min-width: auto;
+  padding: 0 4px;
+  color: #0788CC;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ERROR */
+.error {
+  margin: 0 0 12px;
+  color: #dc2626;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* BUTTONS */
+.continue-button,
+.create-account-button {
+  width: 100%;
+  height: 50px;
+  border-radius: 25px !important;
+  box-sizing: border-box;
+  font-size: 15px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.continue-button {
+  border: 0;
+  background: rgb(0, 124, 193) !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.continue-button:hover {
+  background: rgb(0, 124, 193) !important;
+  box-shadow: 0 6px 16px rgba(7, 136, 204, 0.20) !important;
+}
+
+.continue-button:active {
+  background: rgb(0, 124, 193) !important;
+  transform: translateY(1px);
+}
+
+.create-account-button {
+  border: 1px solid black;
+  background: #111111;
+  color: #ffffff;
+  transition: background-color 0.2s ease, color 0.2s ease,
+              border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.create-account-button:hover {
+  background: #fffaf0 !important;
+  border-color: rgb(0, 124, 193) !important;
+  color: rgb(0, 124, 193) !important;
+}
+
+/* DIVIDER */
+.divider-text {
+  margin: 18px 0 12px;
+  text-align: center;
+  font-size: 12px;
+  color: #8a8f98;
+}
+
+/* FOOTER */
 .login-footer {
   width: 100%;
-  padding: 20px 16px;
+  box-sizing: border-box;
+  padding: 18px 16px 20px;
   text-align: center;
   font-size: 12px;
   color: #000000;
-  background-color: #001c51;
+  background: #ffffff;
 }
 
 .footer-links {
@@ -153,12 +226,12 @@ border: 1px;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 7px;
   flex-wrap: wrap;
 }
 
 .footer-links a {
-  color: #ffffff;
+  color: #255ec7;
   text-decoration: none;
   transition: color 0.2s ease;
 }
@@ -169,10 +242,45 @@ border: 1px;
 }
 
 .footer-links .dot {
-  color: #ccc;
+  color: #b8b8b8;
 }
 
 .copyright {
   margin: 0;
-  color: #999;
+  color: #777b82;
+}
+
+/* RESPONSIVE */
+@media (max-width: 480px) {
+  .container {
+    padding: 28px 16px 18px;
+  }
+
+  .brand {
+    margin-bottom: 22px;
+  }
+
+  .brand-logo {
+    width: 56px;
+    height: 56px;
+  }
+
+  .brand-name {
+    font-size: 28px;
+  }
+
+  .brand-tagline {
+    font-size: 9px;
+    letter-spacing: 1.35px;
+  }
+
+  .login-card {
+    max-width: 100%;
+    padding: 24px 20px;
+    border-radius: 20px;
+  }
+
+  .login-title {
+    font-size: 22px;
+  }
 }

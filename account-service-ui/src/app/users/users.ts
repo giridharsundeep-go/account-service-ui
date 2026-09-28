@@ -28,7 +28,7 @@ import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/ma
   styleUrls: ['./users.css']
 })
 export class Users implements OnInit, OnDestroy {
-  baseUrl = environment.apiBaseUrl;
+  baseUrl = environment.apiBaseUrlM;
 
   // 🌟 LIGHTNING OPTIMIZATION: Use BehaviorSubject for instant UI updates without waiting for network requests
   private usersSubject = new BehaviorSubject<any[]>([]);
@@ -93,15 +93,47 @@ export class Users implements OnInit, OnDestroy {
   }
 
   loadUsers() {
-    this.http.get<any>(`${this.baseUrl}/user`, { headers: this.auth.getAuthHeaders() })
+    this.http.get<any>(`${this.baseUrl}/users`, { headers: this.auth.getAuthHeaders() })
       .subscribe({
         next: (res) => {
-          const users = res?.data || [];
+          // Normalize the Spring API response once. The API returns
+          // camelCase fields and nested role/manager objects.
+          const users = Array.isArray(res?.data)
+            ? res.data.map((user: any) => this.normalizeUser(user))
+            : [];
+
           this.cachedUsersArray = users;
           this.usersSubject.next(users);
           this.filterManagerAutocomplete();
+        },
+        error: () => {
+          this.cachedUsersArray = [];
+          this.usersSubject.next([]);
+          this.filterManagerAutocomplete();
         }
       });
+  }
+
+  private normalizeUser(user: any): any {
+    const role = user?.role || null;
+    const manager = user?.manager || null;
+
+    return {
+      ...user,
+      is_active: user?.isActive ?? user?.is_active ?? false,
+      role_id: user?.role_id ?? role?.id ?? null,
+      role_name: user?.role_name ?? role?.name ?? '',
+      manager_id: user?.manager_id ?? manager?.id ?? null,
+      manager_name: user?.manager_name ?? manager?.name ?? '',
+      employee_id_prefix: user?.employee_id_prefix ?? user?.employeeIdPrefix ?? '',
+      employee_id_number: user?.employee_id_number ?? user?.employeeIdNumber ?? '',
+      profile_picture_url: user?.profile_picture_url ?? user?.profilePictureUrl ?? '',
+      locationCountry: user?.locationCountry ?? user?.location_country ?? '',
+      locationState: user?.locationState ?? user?.location_state ?? '',
+      locationCity: user?.locationCity ?? user?.location_city ?? '',
+      locationWorkModel: user?.locationWorkModel ?? user?.location_work_model ?? '',
+      locationDeskCode: user?.locationDeskCode ?? user?.location_desk_code ?? ''
+    };
   }
 
   loadRoles() {
@@ -176,8 +208,25 @@ export class Users implements OnInit, OnDestroy {
     // 5. Run the server operations silently in the background
     this.zone.runOutsideAngular(() => {
       const proceedWithSave = (finalImageUrl: string | null) => {
-        const payload = { ...optimisticUser, profile_picture_url: finalImageUrl };
-        delete (payload as any).id; // Let backend handle id orchestration
+        const payload: any = {
+          ...optimisticUser,
+          isActive: optimisticUser.is_active,
+          employeeIdPrefix: optimisticUser.employee_id_prefix,
+          employeeIdNumber: optimisticUser.employee_id_number,
+          profilePictureUrl: finalImageUrl,
+          roleId: optimisticUser.role_id,
+          managerId: optimisticUser.manager_id
+        };
+
+        delete payload.id;
+        delete payload.is_active;
+        delete payload.employee_id_prefix;
+        delete payload.employee_id_number;
+        delete payload.profile_picture_url;
+        delete payload.role_id;
+        delete payload.role_name;
+        delete payload.manager_id;
+        delete payload.manager_name;
 
         const request = (targetId > 0)
           ? this.http.put(`${this.baseUrl}/user/${targetId}`, payload, { headers: this.auth.getAuthHeaders() })
@@ -289,7 +338,7 @@ export class Users implements OnInit, OnDestroy {
     this.locationCity = user.locationCity || '';
     this.locationWorkModel = user.locationWorkModel || 'HQ';
     this.locationDeskCode = user.locationDeskCode || '';
-    this.isActive = user.is_active ?? true;
+    this.isActive = user.is_active ?? user.isActive ?? false;
     this.managerId = user.manager_id || null;
     this.managerSearchText = user.manager_name || '';
     this.filterManagerAutocomplete();
@@ -301,7 +350,7 @@ export class Users implements OnInit, OnDestroy {
 
     if (matchedUser.is_active) {
       if (!confirm('Archive this operational directory node?')) return;
-      this.http.put(`${this.baseUrl}/user/${id}`, { ...matchedUser, is_active: false }, { headers: this.auth.getAuthHeaders() })
+      this.http.put(`${this.baseUrl}/user/${id}`, { ...matchedUser, isActive: false }, { headers: this.auth.getAuthHeaders() })
         .subscribe(() => { this.triggerToastAlert('Node archived.'); this.loadUsers(); });
     } else {
       if (!confirm('Permanently purge this structural system footprint?')) return;

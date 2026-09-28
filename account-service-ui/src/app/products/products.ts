@@ -37,7 +37,7 @@ export interface AgileProductNode {
   ]
 })
 export class Products implements OnInit {
-  baseUrl = environment.apiBaseUrl;
+  baseUrl = environment.apiBaseUrlM;
 
   public productsRefresh$ = new BehaviorSubject<void>(undefined);
   products$: Observable<AgileProductNode[]> | undefined;

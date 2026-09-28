@@ -45,6 +45,9 @@ export interface UserAccountNode {
   username?: string;
   email?: string;
   role?: string;
+  profilePictureUrl?: string | null;
+  employeeIdPrefix?: string | null;
+  employeeIdNumber?: string | number | null;
 }
 
 
@@ -163,7 +166,7 @@ export interface SprintItem {
 })
 export class Projects implements OnInit {
 
-  baseUrl = environment.apiBaseUrl;
+  baseUrl = environment.apiBaseUrlM;
 
   public projectsRefresh$ =
     new BehaviorSubject<void>(undefined);
@@ -184,6 +187,8 @@ export class Projects implements OnInit {
 
   systemProducts: CoreProductNode[] = [];
 
+  private currentProjectsCache: StrategicInitiative[] = [];
+
 
   /* ============================================================
      SINGLE GLOBAL SEARCH
@@ -201,6 +206,11 @@ export class Projects implements OnInit {
     | 'sprints' = 'projects';
 
   public activeProjectFilterCode = '';
+
+  public activeProjectFilterId:
+    number | null = null;
+
+  public sprintLoadError = '';
 
   public sprintTimelineFilter:
     | 'ALL'
@@ -256,6 +266,9 @@ export class Projects implements OnInit {
     Array<{
       id: number;
       name: string;
+      email: string;
+      employeeCode: string;
+      profilePictureUrl?: string | null;
       isFromTeam: boolean;
       teamName?: string;
     }> = [];
@@ -376,14 +389,17 @@ Math: any;
               }
             );
 
-          this.buildGlobalSprintsMatrix(
-            processedProjects
-          );
+          this.currentProjectsCache =
+            processedProjects;
+
+          this.refreshSprintProjectNames();
+          this.loadSprintsBackground();
 
           return processedProjects;
 
         })
       );
+
   }
 
 
@@ -464,13 +480,29 @@ Math: any;
       [...this.globalSprintsCollection];
 
 
-    if (this.activeProjectFilterCode) {
+    if (this.activeProjectFilterId != null) {
 
       list =
         list.filter(
           sprint =>
-            sprint.projectCode ===
-            this.activeProjectFilterCode
+            Number(sprint.project_id) ===
+            Number(this.activeProjectFilterId)
+        );
+
+    } else if (this.activeProjectFilterCode) {
+
+      const filterCode =
+        this.activeProjectFilterCode
+          .trim()
+          .toLowerCase();
+
+      list =
+        list.filter(
+          sprint =>
+            String(sprint.projectCode || '')
+              .trim()
+              .toLowerCase() ===
+            filterCode
         );
 
     }
@@ -664,6 +696,7 @@ Math: any;
 
     if (mode === 'projects') {
       this.activeProjectFilterCode = '';
+      this.activeProjectFilterId = null;
     }
 
     this.clearSelectedDetails();
@@ -673,17 +706,31 @@ Math: any;
 
 
   public switchToSprintsForProject(
-    projectCode: string
+    projectCode: string,
+    projectId?: number
   ): void {
 
     this.activeProjectFilterCode =
       projectCode || '';
+
+    this.activeProjectFilterId =
+      projectId != null
+        ? Number(projectId)
+        : null;
 
     this.sprintTimelineFilter =
       'ALL';
 
     this.dashboardViewMode =
       'sprints';
+
+    // Refresh from the project-specific endpoint so the selected
+    // project's persisted sprint rows are always the source of truth.
+    if (this.activeProjectFilterId) {
+      this.loadSprintsBackground(
+        this.activeProjectFilterId
+      );
+    }
 
     this.clearSelectedDetails();
 
@@ -695,6 +742,9 @@ Math: any;
 
     this.activeProjectFilterCode =
       '';
+
+    this.activeProjectFilterId =
+      null;
 
     this.cdr.detectChanges();
   }
@@ -852,11 +902,21 @@ Math: any;
 
     this.chipUserObjects = [];
 
+    this.projectForm.associatedUserIds = [];
+
+    this.projectForm.associatedTeamIds = [];
+
     this.activeBuilderStep = 1;
 
     this.isComposerOpen = true;
 
     this.calculateAgileMetrics();
+
+    /*
+     * Explicitly load the current users/teams when the composer opens.
+     * This avoids a race with page-level background loading.
+     */
+    this.loadComposerResources();
 
     this.cdr.detectChanges();
   }
@@ -866,234 +926,34 @@ Math: any;
     project: StrategicInitiative
   ): void {
 
-    this.projectForm =
-      { ...project };
+    this.projectForm = {
+      ...project,
+      associatedTeamIds: [],
+      associatedUserIds: []
+    };
 
-    this.activeBuilderStep =
-      1;
+    this.selectedUsers = [];
 
-    this.isComposerOpen =
-      true;
+    this.selectedTeamIds = [];
+
+    this.chipUserObjects = [];
+
+    this.activeBuilderStep = 1;
+
+    this.isComposerOpen = true;
 
     this.calculateAgileMetrics();
 
-
     if (project.id) {
-
-      this.isLoadingResources =
-        true;
-
-      forkJoin({
-
-        individuals:
-          this.http.get<any>(
-            `${this.baseUrl}/project-individuals/${project.id}`,
-            {
-              headers:
-                this.auth.getAuthHeaders()
-            }
-          ).pipe(
-            catchError(() =>
-              of([])
-            )
-          ),
-
-        teams:
-          this.http.get<any>(
-            `${this.baseUrl}/project-teams/${project.id}`,
-            {
-              headers:
-                this.auth.getAuthHeaders()
-            }
-          ).pipe(
-            catchError(() =>
-              of([])
-            )
-          )
-
-      })
-      .pipe(
-
-        finalize(() => {
-
-          this.isLoadingResources =
-            false;
-
-          this.rebuildChipsMatrix();
-
-          this.cdr.detectChanges();
-
-        })
-
-      )
-      .subscribe({
-
-        next: (
-          result: {
-            individuals: any;
-            teams: any;
-          }
-        ) => {
-
-          let individualRecords =
-            result.individuals?.data ||
-            result.individuals ||
-            [];
-
-          if (
-            individualRecords &&
-            !Array.isArray(
-              individualRecords
-            ) &&
-            typeof individualRecords ===
-            'object'
-          ) {
-
-            individualRecords =
-              individualRecords.individuals ||
-              individualRecords.users ||
-              Object.values(
-                individualRecords
-              );
-
-          }
-
-          if (
-            !Array.isArray(
-              individualRecords
-            )
-          ) {
-            individualRecords = [];
-          }
-
-
-          let teamRecords =
-            result.teams?.data ||
-            result.teams ||
-            [];
-
-          if (
-            teamRecords &&
-            !Array.isArray(
-              teamRecords
-            ) &&
-            typeof teamRecords ===
-            'object'
-          ) {
-
-            teamRecords =
-              teamRecords.teams ||
-              teamRecords.groups ||
-              Object.values(
-                teamRecords
-              );
-
-          }
-
-          if (
-            !Array.isArray(
-              teamRecords
-            )
-          ) {
-            teamRecords = [];
-          }
-
-
-          this.selectedUsers =
-            individualRecords
-              .map(
-                (item: any) =>
-                  Number(
-                    item.user_id ||
-                    item.id ||
-                    0
-                  )
-              )
-              .filter(
-                (id: number) =>
-                  id > 0
-              );
-
-
-          this.projectForm
-            .associatedUserIds =
-            [
-              ...this.selectedUsers
-            ];
-
-
-          this.selectedTeamIds =
-            teamRecords
-              .map(
-                (item: any) =>
-                  this.safeToString(
-                    item.team_id ||
-                    item.id ||
-                    item
-                  )
-              )
-              .filter(
-                (id: string) =>
-                  id.length > 0
-              );
-
-
-          this.projectForm
-            .associatedTeamIds =
-            [
-              ...this.selectedTeamIds
-            ];
-
-        },
-
-        error: () => {
-
-          this.selectedUsers =
-            project.associatedUserIds
-              ? [
-                ...project.associatedUserIds
-              ].map(Number)
-              : [];
-
-          this.selectedTeamIds =
-            project.associatedTeamIds
-              ? [
-                ...project.associatedTeamIds
-              ].map(
-                id =>
-                  this.safeToString(id)
-              )
-              : [];
-
-        }
-
-      });
-
+      this.loadComposerResources(
+        Number(project.id),
+        project
+      );
     } else {
-
-      this.selectedUsers =
-        project.associatedUserIds
-          ? [
-            ...project.associatedUserIds
-          ].map(Number)
-          : [];
-
-      this.selectedTeamIds =
-        project.associatedTeamIds
-          ? [
-            ...project.associatedTeamIds
-          ].map(
-            id =>
-              this.safeToString(id)
-          )
-          : [];
-
-      this.rebuildChipsMatrix();
-
-      this.cdr.detectChanges();
-
+      this.loadComposerResources();
     }
 
+    this.cdr.detectChanges();
   }
 
 
@@ -1533,180 +1393,175 @@ Math: any;
     this.isSaving =
       true;
 
+    const isExistingProject =
+      !!this.projectForm.id;
+
     const body = {
-
       ...this.projectForm,
-
-      associatedTeamIds:
-        this.selectedTeamIds,
-
-      associatedUserIds:
-        this.selectedUsers,
-
-      previewStartDate:
-        this.previewStartDate,
-
-      previewActivationType:
-        this.previewActivationType
-
+      associatedTeamIds: this.selectedTeamIds
+        .map(id => Number(id))
+        .filter(id => Number.isFinite(id) && id > 0),
+      associatedUserIds: this.selectedUsers
+        .map(id => Number(id))
+        .filter(id => Number.isFinite(id) && id > 0),
+      previewStartDate: this.previewStartDate,
+      previewActivationType: this.previewActivationType
     };
 
-
-    const request$ =
-      this.projectForm.id
-
-        ? this.http.put(
+    const request$ = isExistingProject
+      ? this.http.put(
           `${this.baseUrl}/projects/${this.projectForm.id}`,
           body,
-          {
-            headers:
-              this.auth.getAuthHeaders()
-          }
+          { headers: this.auth.getAuthHeaders() }
         )
-
-        : this.http.post(
+      : this.http.post(
           `${this.baseUrl}/projects/create`,
           body,
-          {
-            headers:
-              this.auth.getAuthHeaders()
-          }
+          { headers: this.auth.getAuthHeaders() }
         );
-
 
     request$
       .pipe(
+        switchMap((projectRes: any) => {
 
-        switchMap(
-          (projectRes: any) => {
+          const responseData =
+            projectRes?.data ||
+            projectRes;
 
-            const responseData =
-              projectRes?.data ||
-              projectRes;
+          const confirmedProjectId = Number(
+            this.projectForm.id ||
+            responseData?.id ||
+            responseData?.project_id
+          );
 
-            const confirmedProjectId =
-              this.projectForm.id ||
-              responseData?.id ||
-              responseData?.project_id;
+          if (
+            !Number.isFinite(confirmedProjectId) ||
+            confirmedProjectId <= 0
+          ) {
+            throw new Error(
+              'Could not resolve project ID.'
+            );
+          }
 
-            if (
-              !confirmedProjectId
-            ) {
+          const numericTeamIds =
+            this.selectedTeamIds
+              .map(id => Number(id))
+              .filter(id => Number.isFinite(id) && id > 0);
 
-              throw new Error(
-                'Could not resolve project ID.'
+          const numericUserIds =
+            this.selectedUsers
+              .map(id => Number(id))
+              .filter(id => Number.isFinite(id) && id > 0);
+
+          const requests: Record<string, any> = {
+
+            teamsSync:
+              this.http.post(
+                `${this.baseUrl}/project-teams/sync`,
+                {
+                  project_id: confirmedProjectId,
+                  team_ids: numericTeamIds
+                },
+                {
+                  headers: this.auth.getAuthHeaders()
+                }
+              ),
+
+            individualsSync:
+              this.http.post(
+                `${this.baseUrl}/project-individuals/sync`,
+                {
+                  project_id: confirmedProjectId,
+                  user_account_ids: numericUserIds
+                },
+                {
+                  headers: this.auth.getAuthHeaders()
+                }
+              )
+
+          };
+
+          /*
+           * The supplied Sprint API creates individual sprints with
+           * POST /sprints/create. There is no sprint sync endpoint.
+           * Generated sprints are therefore created only for new projects.
+           */
+          if (
+            !isExistingProject &&
+            this.calculatedSprintsPreview.length > 0
+          ) {
+
+            const sprintRequests =
+              this.calculatedSprintsPreview.map(
+                (sprint: any) =>
+                  this.http.post(
+                    `${this.baseUrl}/sprints/create`,
+                    {
+                      project_id: confirmedProjectId,
+                      sprint_number:
+                        Number(sprint.sprint_number) || 1,
+                      name:
+                        String(
+                          sprint.name ||
+                          `Sprint ${sprint.sprint_number}`
+                        ),
+                      status:
+                        this.toBackendSprintStatus(
+                          sprint.status
+                        ),
+                      start_date:
+                        sprint.scheduled_start_date,
+                      end_date:
+                        sprint.scheduled_end_date,
+                      scheduled_start_date:
+                        sprint.scheduled_start_date,
+                      scheduled_end_date:
+                        sprint.scheduled_end_date,
+                      duration_weeks:
+                        Number(sprint.duration_weeks) || 2,
+                      target_velocity:
+                        Number(sprint.target_velocity) || 0,
+                      activation_type:
+                        this.toBackendActivationType(
+                          sprint.activation_type
+                        )
+                    },
+                    {
+                      headers:
+                        this.auth.getAuthHeaders()
+                    }
+                  )
               );
 
-            }
+            requests['sprintsCreate'] =
+              forkJoin(sprintRequests);
 
-
-            const initializedSprintsPayload =
-              this.calculatedSprintsPreview
-                .map(
-                  sprint => ({
-
-                    ...sprint,
-
-                    project_id:
-                      Number(
-                        confirmedProjectId
-                      ),
-
-                    user_id:
-                      this.projectForm
-                        .user_id || 1
-
-                  })
-                );
-
-
-            const numericTeamIds =
-              this.selectedTeamIds
-                .map(
-                  id =>
-                    Number(id)
-                )
-                .filter(
-                  id =>
-                    !isNaN(id)
-                );
-
-
-            return forkJoin({
-
-              
-              teamsSync:
-
-                this.http.post(
-                  `${this.baseUrl}/project-teams/sync`,
-                  {
-                    project_id:
-                      Number(
-                        confirmedProjectId
-                      ),
-
-                    team_ids:
-                      numericTeamIds
-                  },
-                  {
-                    headers:
-                      this.auth.getAuthHeaders()
-                  }
-                ),
-
-
-              individualsSync:
-
-                this.http.post(
-                  `${this.baseUrl}/project-individuals/sync`,
-                  {
-                    project_id:
-                      Number(
-                        confirmedProjectId
-                      ),
-
-                    user_account_ids:
-                      this.selectedUsers
-                  },
-                  {
-                    headers:
-                      this.auth.getAuthHeaders()
-                  }
-                )
-
-            });
-
+          } else {
+            requests['sprintsCreate'] = of([]);
           }
-        ),
 
+          return forkJoin(requests);
+
+        }),
         finalize(() => {
-
-          this.isSaving =
-            false;
-
+          this.isSaving = false;
           this.cdr.detectChanges();
-
         })
-
       )
       .subscribe({
 
         next: () => {
-
-          this.isComposerOpen =
-            false;
-
+          this.isComposerOpen = false;
+          this.sprintLoadError = '';
           this.projectsRefresh$.next();
-
         },
 
         error: err => {
-
           console.error(
             'Failed saving project:',
-            err
+            err,
+            err?.error
           );
-
         }
 
       });
@@ -1762,192 +1617,397 @@ Math: any;
     projects: StrategicInitiative[]
   ): void {
 
-    const combinedSprints:
-      SprintItem[] = [];
+    this.currentProjectsCache =
+      projects;
 
-
-    projects.forEach(
-      (proj, index) => {
-
-        const durationWeeks =
-          proj.sprint_duration_weeks ||
-          2;
-
-        const sprintCount =
-          proj.computed_sprint_count ||
-          3;
-
-
-        let seedDate =
-          new Date();
-
-        seedDate.setDate(
-          seedDate.getDate() -
-          (
-            index *
-            12
-          )
-        );
-
-
-        for (
-          let i = 1;
-          i <= sprintCount;
-          i++
-        ) {
-
-          const endDate =
-            new Date(
-              seedDate
-            );
-
-          endDate.setDate(
-            endDate.getDate() +
-            (
-              durationWeeks *
-              7
-            ) -
-            1
-          );
-
-
-          let status:
-            | 'CURRENT'
-            | 'PLANNED'
-            | 'COMPLETED' =
-            'PLANNED';
-
-
-          const now =
-            new Date();
-
-
-          if (
-            now >= seedDate &&
-            now <= endDate
-          ) {
-
-            status =
-              'CURRENT';
-
-          } else if (
-            now > endDate
-          ) {
-
-            status =
-              'COMPLETED';
-
-          }
-
-
-          const targetVel =
-            Math.round(
-              proj.target_velocity ||
-              30
-            );
-
-
-          const completedVel =
-            status ===
-            'COMPLETED'
-
-              ? targetVel
-
-              : status ===
-                'CURRENT'
-
-                ? Math.round(
-                  targetVel *
-                  0.65
-                )
-
-                : 0;
-
-
-          combinedSprints.push({
-
-            id:
-              `${proj.project_code || 'PRJ'}-S${i}-${1000 + i}`,
-
-            project_id:
-              proj.id,
-
-            projectCode:
-              proj.project_code ||
-              'PRJ',
-
-            projectName:
-              proj.name,
-
-            sprint_number:
-              i,
-
-            name:
-              `${proj.project_code || 'PRJ'} - Sprint ${i}`,
-
-            status,
-
-            scheduled_start_date:
-              seedDate
-                .toISOString()
-                .split('T')[0],
-
-            scheduled_end_date:
-              endDate
-                .toISOString()
-                .split('T')[0],
-
-            duration_weeks:
-              durationWeeks,
-
-            target_velocity:
-              targetVel,
-
-            completedPoints:
-              completedVel,
-
-            activation_type:
-              'AUTOMATIC'
-
-          });
-
-
-          const nextStart =
-            new Date(
-              endDate
-            );
-
-          nextStart.setDate(
-            nextStart.getDate() +
-            1
-          );
-
-          seedDate =
-            nextStart;
-
-        }
-
-      }
-    );
-
-
-    this.globalSprintsCollection =
-      combinedSprints;
+    this.refreshSprintProjectNames();
 
   }
 
 
-  /* ============================================================
-     SPRINT OPERATIONS
-  ============================================================ */
+  loadSprintsBackground(
+    projectId?: number
+  ): void {
+
+    this.sprintLoadError = '';
+
+    const url =
+      projectId != null
+        ? `${this.baseUrl}/sprints?project_id=${Number(projectId)}`
+        : `${this.baseUrl}/sprints`;
+
+    this.http.get<any>(
+      url,
+      {
+        headers:
+          this.auth.getAuthHeaders()
+      }
+    )
+    .pipe(
+      switchMap((res: any) => {
+
+        const primaryRows =
+          this.extractApiArray(
+            res
+          );
+
+        if (primaryRows.length > 0 || projectId != null) {
+          return of(primaryRows);
+        }
+
+        // If the collection endpoint returns an empty/unknown shape,
+        // load each project's persisted sprint rows explicitly.
+        const projectIds =
+          this.currentProjectsCache
+            .map(project =>
+              Number(project.id)
+            )
+            .filter(id =>
+              Number.isFinite(id) &&
+              id > 0
+            );
+
+        if (!projectIds.length) {
+          return of([]);
+        }
+
+        return forkJoin(
+          projectIds.map(id =>
+            this.http.get<any>(
+              `${this.baseUrl}/sprints?project_id=${id}`,
+              {
+                headers:
+                  this.auth.getAuthHeaders()
+              }
+            )
+            .pipe(
+              map((projectRes: any) =>
+                this.extractApiArray(
+                  projectRes
+                )
+              ),
+              catchError(err => {
+                console.error(
+                  `Failed loading sprints for project ${id}:`,
+                  err,
+                  err?.error
+                );
+                return of([]);
+              })
+            )
+          )
+        ).pipe(
+          map((rows: any[][]) =>
+            rows.flat()
+          )
+        );
+
+      }),
+      catchError(err => {
+
+        this.sprintLoadError =
+          err?.error?.msg ||
+          err?.error?.message ||
+          'Unable to load sprints.';
+
+        console.error(
+          'Failed loading sprints:',
+          err,
+          err?.error
+        );
+
+        return of([]);
+      })
+    )
+    .subscribe((raw: any[]) => {
+
+      this.globalSprintsCollection =
+        (Array.isArray(raw) ? raw : [])
+          .map((item: any) =>
+            this.normalizeSprint(item)
+          )
+          .filter(
+            (
+              item: SprintItem | null
+            ): item is SprintItem =>
+              !!item
+          );
+
+      this.refreshSprintProjectNames();
+
+      // When this call was made for a project, keep the active
+      // project filter tied to its numeric id.
+      if (projectId != null) {
+        this.activeProjectFilterId =
+          Number(projectId);
+
+        const project =
+          this.currentProjectsCache.find(
+            item =>
+              Number(item.id) ===
+              Number(projectId)
+          );
+
+        if (project) {
+          this.activeProjectFilterCode =
+            project.project_code || '';
+        }
+      }
+
+      this.cdr.detectChanges();
+
+    });
+
+  }
+
+
+  private extractApiArray(
+    response: any
+  ): any[] {
+
+    const candidates = [
+      response,
+      response?.data,
+      response?.users,
+      response?.data?.users,
+      response?.teams,
+      response?.data?.teams,
+      response?.members,
+      response?.data?.members,
+      response?.individuals,
+      response?.data?.individuals,
+      response?.teamIds,
+      response?.data?.teamIds,
+      response?.sprints,
+      response?.data?.sprints,
+      response?.data?.data,
+      response?.result,
+      response?.result?.data
+    ];
+
+    for (const candidate of candidates) {
+      if (Array.isArray(candidate)) {
+        return candidate;
+      }
+    }
+
+    return [];
+
+  }
+
+  private normalizeSprintStatus(
+    status: any
+  ): SprintItem['status'] {
+
+    const value = String(
+      status || 'PLANNED'
+    )
+      .trim()
+      .toUpperCase();
+
+    switch (value) {
+      case 'ACTIVE':
+      case 'CURRENT':
+        return 'CURRENT';
+      case 'PAUSED':
+      case 'ON_HOLD':
+        return 'ON_HOLD';
+      case 'COMPLETED':
+        return 'COMPLETED';
+      case 'PLANNED':
+      default:
+        return 'PLANNED';
+    }
+
+  }
+
+
+  private toBackendSprintStatus(
+    status: any
+  ): 'PLANNED' | 'ACTIVE' | 'COMPLETED' | 'PAUSED' {
+
+    switch (
+      this.normalizeSprintStatus(status)
+    ) {
+      case 'CURRENT':
+        return 'ACTIVE';
+      case 'ON_HOLD':
+        return 'PAUSED';
+      case 'COMPLETED':
+        return 'COMPLETED';
+      case 'PLANNED':
+      default:
+        return 'PLANNED';
+    }
+
+  }
+
+
+  private toBackendActivationType(
+    activationType: any
+  ): 'AUTOMATIC' | 'MANUAL' {
+
+    return String(
+      activationType || 'AUTOMATIC'
+    )
+      .trim()
+      .toUpperCase() === 'MANUAL'
+      ? 'MANUAL'
+      : 'AUTOMATIC';
+
+  }
+
+
+  private normalizeSprint(
+    item: any
+  ): SprintItem | null {
+
+    if (!item) {
+      return null;
+    }
+
+    const projectId =
+      item?.project_id ??
+      item?.projectId;
+
+    return {
+
+      id:
+        item?.id ??
+        item?.sprint_id,
+
+      project_id:
+        projectId != null
+          ? Number(projectId)
+          : undefined,
+
+      projectCode:
+        String(
+          item?.projectCode ??
+          item?.project_code ??
+          item?.project?.project_code ??
+          'PRJ'
+        ),
+
+      projectName:
+        String(
+          item?.projectName ??
+          item?.project_name ??
+          item?.project?.name ??
+          'Project'
+        ),
+
+      sprint_number:
+        Number(
+          item?.sprint_number ??
+          item?.sprintNumber ??
+          1
+        ),
+
+      name:
+        String(
+          item?.name ??
+          item?.sprint_name ??
+          ''
+        ),
+
+      status:
+        this.normalizeSprintStatus(
+          item?.status
+        ),
+
+      scheduled_start_date:
+        String(
+          item?.scheduled_start_date ??
+          item?.scheduledStartDate ??
+          item?.start_date ??
+          item?.startDate ??
+          ''
+        ),
+
+      scheduled_end_date:
+        String(
+          item?.scheduled_end_date ??
+          item?.scheduledEndDate ??
+          item?.end_date ??
+          item?.endDate ??
+          ''
+        ),
+
+      duration_weeks:
+        Number(
+          item?.duration_weeks ??
+          item?.durationWeeks ??
+          2
+        ),
+
+      target_velocity:
+        Number(
+          item?.target_velocity ??
+          item?.targetVelocity ??
+          0
+        ),
+
+      completedPoints:
+        Number(
+          item?.completedPoints ??
+          item?.completed_points ??
+          0
+        ),
+
+      activation_type:
+        this.toBackendActivationType(
+          item?.activation_type ??
+          item?.activationType
+        ),
+
+      description:
+        item?.description
+
+    };
+
+  }
+
+
+  private refreshSprintProjectNames(): void {
+
+    const projects =
+      this.currentProjectsCache || [];
+
+    this.globalSprintsCollection =
+      this.globalSprintsCollection.map(
+        sprint => {
+
+          const project =
+            projects.find(
+              item =>
+                Number(item.id) ===
+                Number(sprint.project_id)
+            );
+
+          return {
+            ...sprint,
+            projectCode:
+              project?.project_code ||
+              sprint.projectCode ||
+              'PRJ',
+            projectName:
+              project?.name ||
+              sprint.projectName ||
+              'Project'
+          };
+
+        }
+      );
+
+  }
+
 
   public getSprintProgress(
     sprint: SprintItem
   ): number {
 
-    if (
-      !sprint.target_velocity
-    ) {
+    if (!sprint.target_velocity) {
       return 0;
     }
 
@@ -1959,16 +2019,12 @@ Math: any;
             0
           ) /
           sprint.target_velocity
-        ) *
-        100
+        ) * 100
       );
 
     return Math.min(
       100,
-      Math.max(
-        0,
-        pct
-      )
+      Math.max(0, pct)
     );
 
   }
@@ -1978,29 +2034,75 @@ Math: any;
     sprint: SprintItem
   ): void {
 
-    sprint.status =
-      'CURRENT';
+    if (!sprint.id) {
+      return;
+    }
+
+    const previousStatus =
+      sprint.status;
+
+    const payload = {
+      name:
+        sprint.name,
+      status:
+        'ACTIVE',
+      start_date:
+        sprint.scheduled_start_date,
+      end_date:
+        sprint.scheduled_end_date,
+      scheduled_start_date:
+        sprint.scheduled_start_date,
+      scheduled_end_date:
+        sprint.scheduled_end_date,
+      activation_type:
+        this.toBackendActivationType(
+          sprint.activation_type
+        ),
+      is_current:
+        true
+    };
 
     this.http.put(
-      `${this.baseUrl}/sprints/${sprint.id}/start`,
-      {
-        status:
-          'CURRENT'
-      },
+      `${this.baseUrl}/sprints/${sprint.id}`,
+      payload,
       {
         headers:
           this.auth.getAuthHeaders()
       }
     )
-    .pipe(
-      catchError(() =>
-        of(null)
-      )
-    )
-    .subscribe(
-      () =>
-        this.cdr.detectChanges()
-    );
+    .subscribe({
+
+      next: (res: any) => {
+
+        const updated =
+          this.normalizeSprint(
+            res?.data || res
+          );
+
+        sprint.status =
+          updated?.status || 'CURRENT';
+
+        this.closeSprintDetails();
+        this.loadSprintsBackground();
+
+      },
+
+      error: err => {
+
+        sprint.status =
+          previousStatus;
+
+        console.error(
+          'Failed starting sprint:',
+          err,
+          err?.error
+        );
+
+        this.cdr.detectChanges();
+
+      }
+
+    });
 
   }
 
@@ -2009,32 +2111,84 @@ Math: any;
     sprint: SprintItem
   ): void {
 
-    sprint.status =
-      'COMPLETED';
+    if (!sprint.id) {
+      return;
+    }
 
-    sprint.completedPoints =
-      sprint.target_velocity;
+    const previousStatus =
+      sprint.status;
+
+    const previousCompletedPoints =
+      sprint.completedPoints;
+
+    const payload = {
+      name:
+        sprint.name,
+      status:
+        'COMPLETED',
+      start_date:
+        sprint.scheduled_start_date,
+      end_date:
+        sprint.scheduled_end_date,
+      scheduled_start_date:
+        sprint.scheduled_start_date,
+      scheduled_end_date:
+        sprint.scheduled_end_date,
+      activation_type:
+        this.toBackendActivationType(
+          sprint.activation_type
+        ),
+      is_current:
+        false
+    };
 
     this.http.put(
-      `${this.baseUrl}/sprints/${sprint.id}/complete`,
-      {
-        status:
-          'COMPLETED'
-      },
+      `${this.baseUrl}/sprints/${sprint.id}`,
+      payload,
       {
         headers:
           this.auth.getAuthHeaders()
       }
     )
-    .pipe(
-      catchError(() =>
-        of(null)
-      )
-    )
-    .subscribe(
-      () =>
-        this.cdr.detectChanges()
-    );
+    .subscribe({
+
+      next: (res: any) => {
+
+        const updated =
+          this.normalizeSprint(
+            res?.data || res
+          );
+
+        sprint.status =
+          updated?.status || 'COMPLETED';
+
+        sprint.completedPoints =
+          sprint.target_velocity;
+
+        this.closeSprintDetails();
+        this.loadSprintsBackground();
+
+      },
+
+      error: err => {
+
+        sprint.status =
+          previousStatus;
+
+        sprint.completedPoints =
+          previousCompletedPoints;
+
+        console.error(
+          'Failed completing sprint:',
+          err,
+          err?.error
+        );
+
+        this.cdr.detectChanges();
+
+      }
+
+    });
 
   }
 
@@ -2046,15 +2200,22 @@ Math: any;
 
     this.sprintForm = {
 
-      name: '',
+      name:
+        '',
 
       projectCode:
         this.activeProjectFilterCode ||
         'PRJ',
 
+      project_id:
+        this.currentProjectsCache.find(
+          project =>
+            project.project_code ===
+            this.activeProjectFilterCode
+        )?.id,
+
       sprint_number:
-        this.globalSprintsCollection
-          .length + 1,
+        this.getNextSprintNumber(),
 
       target_velocity:
         30,
@@ -2077,15 +2238,46 @@ Math: any;
           .split('T')[0],
 
       status:
-        'PLANNED'
+        'PLANNED',
+
+      activation_type:
+        this.previewActivationType
 
     };
-
 
     this.isSprintModalOpen =
       true;
 
     this.cdr.detectChanges();
+
+  }
+
+
+  private getNextSprintNumber(): number {
+
+    const projectCode =
+      this.activeProjectFilterCode;
+
+    const projectSprints =
+      projectCode
+        ? this.globalSprintsCollection.filter(
+            sprint =>
+              sprint.projectCode ===
+              projectCode
+          )
+        : this.globalSprintsCollection;
+
+    if (!projectSprints.length) {
+      return 1;
+    }
+
+    return Math.max(
+      ...projectSprints.map(
+        sprint =>
+          Number(sprint.sprint_number) || 0
+      )
+    ) + 1;
+
   }
 
 
@@ -2096,137 +2288,127 @@ Math: any;
     this.editingSprintId =
       sprint.id;
 
-    this.sprintForm =
-      {
-        ...sprint
-      };
+    this.sprintForm = {
+      ...sprint,
+      status: sprint.status,
+      activation_type: sprint.activation_type
+    };
 
     this.isSprintModalOpen =
       true;
 
     this.cdr.detectChanges();
+
   }
 
 
   public saveSprintModal(): void {
 
-    if (
-      !this.sprintForm.name
-    ) {
+    if (!this.sprintForm.name?.trim()) {
       return;
     }
 
+    const projectId =
+      Number(
+        this.sprintForm.project_id ??
+        this.projectForm?.id ??
+        this.currentProjectsCache.find(
+          project =>
+            project.project_code ===
+            this.sprintForm.projectCode
+        )?.id
+      );
 
     if (
-      this.editingSprintId
+      !Number.isFinite(projectId) ||
+      projectId <= 0
     ) {
-
-      const matchIndex =
-        this.globalSprintsCollection
-          .findIndex(
-            sprint =>
-              sprint.id ===
-              this.editingSprintId
-          );
-
-
-      if (
-        matchIndex > -1
-      ) {
-
-        this.globalSprintsCollection[
-          matchIndex
-        ] = {
-
-          ...this.globalSprintsCollection[
-            matchIndex
-          ],
-
-          ...this.sprintForm
-
-        } as SprintItem;
-
-      }
-
-    } else {
-
-      const newSprint:
-        SprintItem = {
-
-        id:
-          `SPR-${Date.now()}`,
-
-        projectCode:
-          this.sprintForm
-            .projectCode ||
-          'PRJ',
-
-        projectName:
-          'Strategic Initiative Workspace',
-
-        sprint_number:
-          Number(
-            this.sprintForm
-              .sprint_number
-          ) || 1,
-
-        name:
-          this.sprintForm.name,
-
-        status:
-          (
-            this.sprintForm
-              .status as any
-          ) ||
-          'PLANNED',
-
-        scheduled_start_date:
-          this.sprintForm
-            .scheduled_start_date ||
-          new Date()
-            .toISOString()
-            .split('T')[0],
-
-        scheduled_end_date:
-          this.sprintForm
-            .scheduled_end_date ||
-          new Date()
-            .toISOString()
-            .split('T')[0],
-
-        duration_weeks:
-          Number(
-            this.sprintForm
-              .duration_weeks
-          ) || 2,
-
-        target_velocity:
-          Number(
-            this.sprintForm
-              .target_velocity
-          ) || 30,
-
-        completedPoints:
-          0,
-
-        activation_type:
-          'AUTOMATIC'
-
-      };
-
-
-      this.globalSprintsCollection
-        .unshift(
-          newSprint
-        );
-
+      console.error(
+        'Cannot save sprint: project ID could not be resolved.'
+      );
+      return;
     }
 
+    const status =
+      this.toBackendSprintStatus(
+        this.sprintForm.status ||
+        'PLANNED'
+      );
 
-    this.isSprintModalOpen =
-      false;
+    const activationType =
+      this.toBackendActivationType(
+        this.sprintForm.activation_type ||
+        'AUTOMATIC'
+      );
 
-    this.cdr.detectChanges();
+    const payload: any = {
+      project_id: projectId,
+      name:
+        this.sprintForm.name.trim(),
+      sprint_number:
+        Number(this.sprintForm.sprint_number) || 1,
+      status,
+      start_date:
+        this.sprintForm.scheduled_start_date,
+      end_date:
+        this.sprintForm.scheduled_end_date,
+      scheduled_start_date:
+        this.sprintForm.scheduled_start_date,
+      scheduled_end_date:
+        this.sprintForm.scheduled_end_date,
+      duration_weeks:
+        Number(this.sprintForm.duration_weeks) || 2,
+      target_velocity:
+        Number(this.sprintForm.target_velocity) || 0,
+      activation_type:
+        activationType
+    };
+
+    const request$ =
+      this.editingSprintId
+        ? this.http.put(
+            `${this.baseUrl}/sprints/${this.editingSprintId}`,
+            payload,
+            {
+              headers:
+                this.auth.getAuthHeaders()
+            }
+          )
+        : this.http.post(
+            `${this.baseUrl}/sprints/create`,
+            payload,
+            {
+              headers:
+                this.auth.getAuthHeaders()
+            }
+          );
+
+    request$
+      .subscribe({
+
+        next: (res: any) => {
+
+          this.isSprintModalOpen =
+            false;
+
+          this.loadSprintsBackground(
+            projectId
+          );
+
+          this.cdr.detectChanges();
+
+        },
+
+        error: err => {
+          console.error(
+            'Failed saving sprint:',
+            err,
+            err?.error
+          );
+        }
+
+      });
+
   }
 
 
@@ -2340,7 +2522,7 @@ Math: any;
   private loadUsersBackground(): void {
 
     this.http.get<any>(
-      `${this.baseUrl}/user`,
+      `${this.baseUrl}/users`,
       {
         headers:
           this.auth.getAuthHeaders()
@@ -2350,17 +2532,21 @@ Math: any;
 
       next: res => {
 
-        const users =
-          res?.data ||
-          res ||
-          [];
-
         this.organizationPersonnel =
-          users;
+          this.extractApiArray(res)
+            .map((user: any) =>
+              this.normalizeUser(user)
+            )
+            .filter((user: UserAccountNode) =>
+              Number.isFinite(Number(user.id)) &&
+              Number(user.id) > 0
+            );
 
         this.usersSubject$.next(
-          users
+          this.organizationPersonnel
         );
+
+        this.hydrateTeamMembersFromUsers();
 
         this.rebuildChipsMatrix();
 
@@ -2370,7 +2556,7 @@ Math: any;
 
       error: err =>
         console.error(
-          'Failed loading users:',
+          'Failed loading users from /users:',
           err
         )
 
@@ -2385,6 +2571,10 @@ Math: any;
 
   private loadTeamsBackground(): void {
 
+    /*
+     * GET /api/teams already returns the team collection.
+     * Do not fan out into /team-members for the project selector.
+     */
     this.http.get<any>(
       `${this.baseUrl}/teams`,
       {
@@ -2392,110 +2582,19 @@ Math: any;
           this.auth.getAuthHeaders()
       }
     )
-    .pipe(
-
-      switchMap(
-        (res: any) => {
-
-          const teams =
-            res?.data ||
-            res ||
-            [];
-
-          if (
-            teams.length === 0
-          ) {
-            return of(
-              [] as FunctionalTeamNode[]
-            );
-          }
-
-
-          const requests =
-            teams.map(
-              (team: any) =>
-
-                this.http.get<any>(
-                  `${this.baseUrl}/team-members/team/${team.id}`,
-                  {
-                    headers:
-                      this.auth.getAuthHeaders()
-                  }
-                )
-                .pipe(
-
-                  map(
-                    (memberRes: any) => {
-
-                      const resData =
-                        memberRes?.data ||
-                        memberRes;
-
-                      const membersList =
-                        Array.isArray(
-                          resData
-                        )
-                          ? resData
-                          : (
-                            resData?.individuals ||
-                            resData?.members ||
-                            []
-                          );
-
-
-                      return {
-
-                        ...team,
-
-                        members:
-                          membersList,
-
-                        membersCount:
-                          membersList.length,
-
-                        isLoadingMembers:
-                          false
-
-                      } as FunctionalTeamNode;
-
-                    }
-                  ),
-
-                  catchError(
-                    () =>
-                      of({
-                        ...team,
-                        members: [],
-                        membersCount: 0,
-                        isLoadingMembers:
-                          false
-                      } as FunctionalTeamNode)
-                  )
-
-                )
-
-            );
-
-
-          return forkJoin(
-            requests
-          );
-
-        }
-      ),
-
-      map(
-        enrichedTeams =>
-          enrichedTeams as FunctionalTeamNode[]
-      )
-
-    )
     .subscribe({
 
-      next: enrichedTeams => {
+      next: res => {
+
+        const teams =
+          this.extractApiArray(res);
 
         this.liveActiveTeams =
-          enrichedTeams;
+          teams.map((team: any) =>
+            this.normalizeTeam(team)
+          );
+
+        this.hydrateTeamMembersFromUsers();
 
         this.rebuildChipsMatrix();
 
@@ -2505,11 +2604,456 @@ Math: any;
 
       error: err =>
         console.error(
-          'Failed loading teams:',
+          'Failed loading teams from /teams:',
           err
         )
 
     });
+
+  }
+
+
+  /* ============================================================
+     PROJECT COMPOSER RESOURCES
+  ============================================================ */
+
+  private loadComposerResources(
+    projectId?: number,
+    project?: StrategicInitiative
+  ): void {
+
+    this.isLoadingResources = true;
+
+    const users$ =
+      this.http.get<any>(
+        `${this.baseUrl}/users`,
+        {
+          headers:
+            this.auth.getAuthHeaders()
+        }
+      )
+      .pipe(
+        map((res: any) => ({
+          ok: true,
+          rows: this.extractApiArray(res)
+        })),
+        catchError(err => {
+
+          console.error(
+            'Failed loading composer users:',
+            err,
+            err?.error
+          );
+
+          return of({
+            ok: false,
+            rows: [] as any[]
+          });
+
+        })
+      );
+
+    const teams$ =
+      this.http.get<any>(
+        `${this.baseUrl}/teams`,
+        {
+          headers:
+            this.auth.getAuthHeaders()
+        }
+      )
+      .pipe(
+        map((res: any) => ({
+          ok: true,
+          rows: this.extractApiArray(res)
+        })),
+        catchError(err => {
+
+          console.error(
+            'Failed loading composer teams:',
+            err,
+            err?.error
+          );
+
+          return of({
+            ok: false,
+            rows: [] as any[]
+          });
+
+        })
+      );
+
+    const individuals$ =
+      projectId != null
+        ? this.http.get<any>(
+            `${this.baseUrl}/project-individuals/${projectId}`,
+            {
+              headers:
+                this.auth.getAuthHeaders()
+            }
+          )
+          .pipe(
+            map((res: any) => ({
+              ok: true,
+              rows: this.extractApiArray(res)
+            })),
+            catchError(err => {
+
+              console.error(
+                `Failed loading project ${projectId} users:`,
+                err,
+                err?.error
+              );
+
+              return of({
+                ok: false,
+                rows: [] as any[]
+              });
+
+            })
+          )
+        : of({
+            ok: true,
+            rows: [] as any[]
+          });
+
+    const projectTeams$ =
+      projectId != null
+        ? this.http.get<any>(
+            `${this.baseUrl}/project-teams/${projectId}`,
+            {
+              headers:
+                this.auth.getAuthHeaders()
+            }
+          )
+          .pipe(
+            map((res: any) => ({
+              ok: true,
+              rows: this.extractApiArray(res)
+            })),
+            catchError(err => {
+
+              console.error(
+                `Failed loading project ${projectId} teams:`,
+                err,
+                err?.error
+              );
+
+              return of({
+                ok: false,
+                rows: [] as any[]
+              });
+
+            })
+          )
+        : of({
+            ok: true,
+            rows: [] as any[]
+          });
+
+    forkJoin({
+      users: users$,
+      teams: teams$,
+      individuals: individuals$,
+      projectTeams: projectTeams$
+    })
+    .pipe(
+      finalize(() => {
+
+        this.isLoadingResources = false;
+
+        this.hydrateTeamMembersFromUsers();
+
+        this.rebuildChipsMatrix();
+
+        this.cdr.detectChanges();
+
+      })
+    )
+    .subscribe((result: any) => {
+
+      /*
+       * Canonical user list for the composer and the user-select dialog.
+       */
+      if (result.users.ok) {
+
+        this.organizationPersonnel =
+          result.users.rows
+            .map((user: any) =>
+              this.normalizeUser(user)
+            )
+            .filter((user: UserAccountNode) =>
+              Number.isFinite(Number(user.id)) &&
+              Number(user.id) > 0
+            );
+
+        this.usersSubject$.next(
+          this.organizationPersonnel
+        );
+
+      }
+
+      if (result.teams.ok) {
+
+        this.liveActiveTeams =
+          result.teams.rows
+            .map((team: any) =>
+              this.normalizeTeam(team)
+            );
+
+      }
+
+      if (projectId != null) {
+
+        const fallbackUserIds =
+          Array.isArray(project?.associatedUserIds)
+            ? project!.associatedUserIds
+                .map(Number)
+                .filter(id =>
+                  Number.isFinite(id) &&
+                  id > 0
+                )
+            : [];
+
+        const fallbackTeamIds =
+          Array.isArray(project?.associatedTeamIds)
+            ? project!.associatedTeamIds
+                .map(id =>
+                  this.safeToString(id)
+                )
+                .filter(Boolean)
+            : [];
+
+        if (result.individuals.ok) {
+
+          this.selectedUsers =
+            result.individuals.rows
+              .map((item: any) =>
+                Number(
+                  item?.user_account_id ??
+                  item?.userAccountId ??
+                  item?.user_id ??
+                  item?.userId ??
+                  item?.id ??
+                  0
+                )
+              )
+              .filter((id: number) =>
+                Number.isFinite(id) &&
+                id > 0
+              );
+
+        } else {
+
+          this.selectedUsers =
+            [...fallbackUserIds];
+
+        }
+
+        if (result.projectTeams.ok) {
+
+          this.selectedTeamIds =
+            result.projectTeams.rows
+              .map((item: any) =>
+                this.safeToString(
+                  item?.team_id ??
+                  item?.teamId ??
+                  item?.id ??
+                  item
+                )
+              )
+              .filter(Boolean);
+
+        } else {
+
+          this.selectedTeamIds =
+            [...fallbackTeamIds];
+
+        }
+
+        this.projectForm.associatedUserIds =
+          [...this.selectedUsers];
+
+        this.projectForm.associatedTeamIds =
+          [...this.selectedTeamIds];
+
+      }
+
+      this.hydrateTeamMembersFromUsers();
+
+      this.rebuildChipsMatrix();
+
+      this.cdr.detectChanges();
+
+    });
+
+  }
+
+
+  private normalizeUser(
+    user: any
+  ): UserAccountNode {
+
+    return {
+      id:
+        Number(
+          user?.id ??
+          user?.user_id ??
+          user?.userId ??
+          0
+        ),
+
+      name:
+        user?.name ||
+        user?.username ||
+        user?.displayName ||
+        user?.email ||
+        'Unknown User',
+
+      username:
+        user?.username,
+
+      email:
+        user?.email ||
+        'No email available',
+
+      role:
+        user?.role ||
+        user?.role_name ||
+        user?.roleName,
+
+      profilePictureUrl:
+        user?.profilePictureUrl ??
+        user?.profile_picture_url ??
+        user?.avatarUrl ??
+        user?.avatar_url ??
+        null,
+
+      employeeIdPrefix:
+        user?.employeeIdPrefix ??
+        user?.employee_id_prefix ??
+        null,
+
+      employeeIdNumber:
+        user?.employeeIdNumber ??
+        user?.employee_id_number ??
+        null
+    };
+
+  }
+
+
+  private normalizeTeam(
+    team: any
+  ): FunctionalTeamNode {
+
+    const rawMembers =
+      Array.isArray(team?.members)
+        ? team.members
+        : Array.isArray(team?.teamMembers)
+          ? team.teamMembers
+          : Array.isArray(team?.team_members)
+            ? team.team_members
+            : Array.isArray(team?.memberIds)
+              ? team.memberIds
+              : [];
+
+    const members =
+      rawMembers
+        .map((member: any) =>
+          this.normalizeTeamMember(member)
+        )
+        .filter((member: UserAccountNode) =>
+          Number.isFinite(Number(member.id)) &&
+          Number(member.id) > 0
+        );
+
+    return {
+      ...team,
+
+      id:
+        team?.id ??
+        team?.team_id ??
+        team?.teamId,
+
+      name:
+        team?.name ||
+        team?.team_name ||
+        'Unnamed Team',
+
+      members,
+
+      membersCount:
+        members.length,
+
+      isLoadingMembers:
+        false
+    };
+
+  }
+
+
+  private normalizeTeamMember(
+    member: any
+  ): UserAccountNode {
+
+    const rawUser =
+      member?.user ||
+      member?.member ||
+      {};
+
+    const id =
+      Number(
+        member?.id ??
+        member?.user_id ??
+        member?.userId ??
+        member?.memberId ??
+        rawUser?.id ??
+        0
+      );
+
+    const matchedUser =
+      this.organizationPersonnel.find(
+        user =>
+          Number(user.id) === id
+      );
+
+    const merged =
+      {
+        ...(matchedUser || {}),
+        ...(typeof rawUser === 'object'
+          ? rawUser
+          : {}),
+        ...member
+      };
+
+    return this.normalizeUser({
+      ...matchedUser,
+      ...merged,
+      id
+    });
+
+  }
+
+
+  private hydrateTeamMembersFromUsers(): void {
+
+    if (!this.liveActiveTeams.length) {
+      return;
+    }
+
+    this.liveActiveTeams =
+      this.liveActiveTeams.map(
+        team => ({
+          ...team,
+          members:
+            (team.members || [])
+              .map((member: any) =>
+                this.normalizeTeamMember(member)
+              ),
+          membersCount:
+            (team.members || []).length
+        })
+      );
 
   }
 
@@ -2706,150 +3250,115 @@ Math: any;
         {
           id: number;
           name: string;
+          email: string;
+          employeeCode: string;
+          profilePictureUrl?: string | null;
           isFromTeam: boolean;
           teamName?: string;
         }
       >();
 
-
     this.liveActiveTeams
-      .forEach(
-        team => {
+      .forEach(team => {
 
-          if (!team) {
-            return;
-          }
-
-          const cleanTeamId =
-            this.safeToString(
-              team.id
-            );
-
-
-          if (
-            this.selectedTeamIds
-              .includes(
-                cleanTeamId
-              ) &&
-            Array.isArray(
-              team.members
-            )
-          ) {
-
-            team.members
-              .forEach(
-                (member: any) => {
-
-                  if (!member) {
-                    return;
-                  }
-
-
-                  const rawId =
-                    member.id ||
-                    member.userId ||
-                    member.user_id;
-
-                  const cleanId =
-                    Number(
-                      rawId
-                    );
-
-
-                  if (
-                    !isNaN(cleanId) &&
-                    cleanId > 0
-                  ) {
-
-                    temporaryChipsMap
-                      .set(
-                        cleanId,
-                        {
-
-                          id:
-                            cleanId,
-
-                          name:
-                            member.name ||
-                            member.username ||
-                            member.displayName ||
-                            member.email ||
-                            `User ${cleanId}`,
-
-                          isFromTeam:
-                            true,
-
-                          teamName:
-                            team.name ||
-                            'Team Member'
-
-                        }
-                      );
-
-                  }
-
-                }
-              );
-
-          }
-
+        if (!team) {
+          return;
         }
-      );
 
+        const cleanTeamId =
+          this.safeToString(team.id);
 
-    this.selectedUsers
-      .forEach(
-        id => {
+        if (
+          this.selectedTeamIds.includes(cleanTeamId) &&
+          Array.isArray(team.members)
+        ) {
 
-          const cleanId =
-            Number(id);
+          team.members.forEach((member: any) => {
 
-          if (
-            isNaN(cleanId) ||
-            cleanId <= 0 ||
-            temporaryChipsMap
-              .has(cleanId)
-          ) {
-            return;
-          }
-
-
-          const match =
-            this.organizationPersonnel
-              .find(
-                user =>
-                  Number(user.id) ===
-                  cleanId
+            const cleanId =
+              Number(
+                member?.id ??
+                member?.user_id ??
+                member?.userId ??
+                member?.memberId ??
+                0
               );
 
+            if (
+              !Number.isFinite(cleanId) ||
+              cleanId <= 0
+            ) {
+              return;
+            }
 
-          temporaryChipsMap
-            .set(
+            const identity =
+              this.getUserIdentity(
+                cleanId,
+                member
+              );
+
+            temporaryChipsMap.set(
               cleanId,
               {
-
-                id:
-                  cleanId,
-
-                name:
-                  match
-                    ? (
-                      match.name ||
-                      match.username ||
-                      match.email ||
-                      `User ${cleanId}`
-                    )
-                    : `User ${cleanId}`,
-
-                isFromTeam:
-                  false
-
+                id: cleanId,
+                name: identity.name,
+                email: identity.email,
+                employeeCode: identity.employeeCode,
+                profilePictureUrl:
+                  identity.profilePictureUrl,
+                isFromTeam: true,
+                teamName:
+                  team.name ||
+                  'Team Member'
               }
             );
 
-        }
-      );
+          });
 
+        }
+
+      });
+
+    this.selectedUsers
+      .forEach(id => {
+
+        const cleanId =
+          Number(id);
+
+        if (
+          !Number.isFinite(cleanId) ||
+          cleanId <= 0
+        ) {
+          return;
+        }
+
+        const existing =
+          temporaryChipsMap.get(
+            cleanId
+          );
+
+        const identity =
+          this.getUserIdentity(
+            cleanId
+          );
+
+        temporaryChipsMap.set(
+          cleanId,
+          {
+            id: cleanId,
+            name: identity.name,
+            email: identity.email,
+            employeeCode: identity.employeeCode,
+            profilePictureUrl:
+              identity.profilePictureUrl,
+            isFromTeam:
+              existing?.isFromTeam ?? false,
+            teamName:
+              existing?.teamName
+          }
+        );
+
+      });
 
     this.chipUserObjects =
       Array.from(
@@ -2857,6 +3366,160 @@ Math: any;
       );
 
   }
+
+
+  private getUserIdentity(
+    userId: number,
+    fallbackUser?: any
+  ): {
+    name: string;
+    email: string;
+    employeeCode: string;
+    profilePictureUrl?: string | null;
+  } {
+
+    const selectedUser =
+      this.organizationPersonnel.find(
+        user =>
+          Number(user.id) ===
+          Number(userId)
+      );
+
+    const merged =
+      this.normalizeUser({
+        ...(selectedUser || {}),
+        ...(fallbackUser || {}),
+        id: userId
+      });
+
+    return {
+      name:
+        merged.name ||
+        `User ${userId}`,
+
+      email:
+        merged.email ||
+        'No email available',
+
+      employeeCode:
+        this.getUserEmployeeCode(
+          merged
+        ),
+
+      profilePictureUrl:
+        merged.profilePictureUrl
+    };
+
+  }
+
+
+  public getUserEmployeeCode(
+    user: UserAccountNode | any
+  ): string {
+
+    const prefix =
+      user?.employeeIdPrefix ??
+      user?.employee_id_prefix ??
+      '';
+
+    const number =
+      user?.employeeIdNumber ??
+      user?.employee_id_number ??
+      '';
+
+    if (!prefix && !number) {
+      return 'No employee code';
+    }
+
+    if (prefix && number) {
+      return `${prefix}//${number}`;
+    }
+
+    return String(prefix || number);
+
+  }
+
+
+  public getInitials(
+    name: string
+  ): string {
+
+    const value =
+      (name || '')
+        .trim();
+
+    if (!value) {
+      return '?';
+    }
+
+    const parts =
+      value.split(/\s+/)
+        .filter(Boolean);
+
+    if (parts.length >= 2) {
+      return (
+        `${parts[0][0]}${parts[parts.length - 1][0]}`
+      ).toUpperCase();
+    }
+
+    return parts[0][0].toUpperCase();
+
+  }
+
+
+  public hasUserAvatar(
+    user: any
+  ): boolean {
+
+    return !!(
+      user?.profilePictureUrl ??
+      user?.profile_picture_url ??
+      user?.avatarUrl ??
+      user?.avatar_url
+    );
+
+  }
+
+
+  public getUserAvatar(
+    user: any
+  ): string {
+
+    const path =
+      String(
+        user?.profilePictureUrl ??
+        user?.profile_picture_url ??
+        user?.avatarUrl ??
+        user?.avatar_url ??
+        ''
+      ).trim();
+
+    if (!path) {
+      return '';
+    }
+
+    if (
+      path.startsWith('data:') ||
+      path.startsWith('http://') ||
+      path.startsWith('https://')
+    ) {
+      return path;
+    }
+
+    const cleanPath =
+      path.replace(/^\/+/, '');
+
+    const cleanBase =
+      this.baseUrl.endsWith('/')
+        ? this.baseUrl.slice(0, -1)
+        : this.baseUrl;
+
+    return `${cleanBase}/${cleanPath}`;
+
+  }
+
+
+
 
 
   /* ============================================================

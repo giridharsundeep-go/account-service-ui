@@ -2,10 +2,16 @@
 
   <div class="container">
 
-    <!-- 🔥 LOGO -->
-    <div class="logo">
-      <h1>Greatley <span>Poshley</span></h1>
-    </div>
+    <!-- BRAND -->
+    <header class="brand">
+      <img
+        src="assets/images/greatley-poshley.svg"
+        alt="Greatley Poshley"
+        class="brand-logo"
+      />
+
+      <div class="brand-name">Greatley Poshley</div>
+    </header>
 
     <!-- 🧾 LOGIN CARD -->
     <div class="login-card">
@@ -56,7 +62,7 @@
         </div>
 
         <!-- LOGIN -->
-        <button mat-stroked-button class="gp-button" style="color: white;" type="submit">
+        <button mat-raised-button class="continue-button" type="submit">
           Continue
         </button>
 
@@ -65,7 +71,7 @@
       <div class="divider-text">Don't have an account?</div>
 
       <!-- CREATE -->
-      <button mat-stroked-button class="gp-button-light" style="color: white;" (click)="goToCreateAccount()">
+      <button class="create-account-button" (click)="goToCreateAccount()">
         Create an Account
       </button>
 

@@ -10,7 +10,7 @@
 
       <label class="project-switcher">
         <span class="sr-only">Project</span>
-        <select
+        <select class="material-select"
           [ngModel]="selectedProjectId()"
           (ngModelChange)="onProjectChange($event)">
           <option *ngFor="let project of projects()" [ngValue]="project.id">
@@ -75,7 +75,7 @@
 
       <label class="filter-control">
         <span>Team</span>
-        <select
+        <select class="material-select"
           [ngModel]="selectedTeamFilter()"
           (ngModelChange)="onTeamFilterChange($event)">
           <option [ngValue]="'ALL'">All teams</option>
@@ -85,7 +85,7 @@
 
       <label class="filter-control">
         <span>Sprint</span>
-        <select
+        <select class="material-select"
           [ngModel]="selectedSprintFilter()"
           (ngModelChange)="selectedSprintFilter.set($event)">
           <option [ngValue]="'ALL'">All sprint cycles</option>
@@ -97,7 +97,7 @@
 
       <label class="filter-control">
         <span>Assignee</span>
-        <select
+        <select class="material-select"
           [ngModel]="selectedAssigneeFilter()"
           (ngModelChange)="selectedAssigneeFilter.set($event)">
           <option [ngValue]="'ALL'">All assignees</option>
@@ -107,7 +107,7 @@
 
       <label class="filter-control">
         <span>Priority</span>
-        <select
+        <select class="material-select"
           [ngModel]="selectedPriorityFilter()"
           (ngModelChange)="selectedPriorityFilter.set($event)">
           <option [ngValue]="'ALL'">All priorities</option>
@@ -117,7 +117,7 @@
 
       <label class="filter-control">
         <span>Status</span>
-        <select
+        <select class="material-select"
           [ngModel]="selectedStatusFilter()"
           (ngModelChange)="selectedStatusFilter.set($event)">
           <option [ngValue]="'ALL'">All statuses</option>
@@ -136,7 +136,7 @@
 
     <label>
       <span>Status</span>
-      <select (change)="bulkUpdateStatus($any($event.target).value)">
+      <select class="material-select" (change)="bulkUpdateStatus($any($event.target).value)">
         <option value="">Change status</option>
         <option *ngFor="let status of statusPipeline" [value]="status">{{ status }}</option>
       </select>
@@ -144,7 +144,7 @@
 
     <label>
       <span>Sprint</span>
-      <select (change)="bulkMoveSprint(+$any($event.target).value)">
+      <select class="material-select" (change)="bulkMoveSprint(+$any($event.target).value)">
         <option value="">Move to sprint</option>
         <option *ngFor="let sprint of projectSprints()" [value]="sprint.id">{{ sprint.name }}</option>
       </select>
@@ -177,7 +177,7 @@
                 {{ group.sprint.startDate | date:'mediumDate' }} –
                 {{ group.sprint.endDate | date:'mediumDate' }}
               </span>
-              <span class="status-chip" [ngClass]="statusClass(group.sprint.status || 'FUTURE')">
+              <span class="status-chip mat-status" [ngClass]="statusClass(group.sprint.status || 'FUTURE')">
                 {{ group.sprint.status || 'FUTURE' }}
               </span>
             </div>
@@ -190,7 +190,7 @@
           </span>
 
           <button
-            class="outline-button"
+            class="outline-button mat-action-button"
             *ngIf="group.sprint.status === 'FUTURE' && group.sprint.id !== 0"
             type="button"
             (click)="startSprint(group.sprint)">
@@ -198,7 +198,7 @@
           </button>
 
           <button
-            class="outline-button"
+            class="outline-button mat-action-button"
             *ngIf="group.sprint.status === 'ACTIVE' && group.sprint.id !== 0"
             type="button"
             (click)="completeSprint(group.sprint)">
@@ -209,9 +209,9 @@
         </div>
       </header>
 
-      <div class="structure-table" *ngIf="isSprintExpanded(group.sprint.id)">
+      <div class="structure-table mat-work-table" *ngIf="isSprintExpanded(group.sprint.id)">
 
-        <div class="table-head">
+        <div class="table-head mat-table-header">
           <span></span>
           <span></span>
           <span>Work item</span>
@@ -222,7 +222,7 @@
         </div>
 
         <div
-          class="work-row epic-row"
+          class="work-row mat-table-row epic-row"
           *ngFor="let epic of group.epics"
           cdkDrag
           [cdkDragData]="epic">
@@ -235,7 +235,7 @@
           </button>
 
           <input
-            class="row-check"
+            class="row-check mat-checkbox-control"
             type="checkbox"
             [checked]="isItemSelected('EPIC', epic.id)"
             (change)="toggleItemSelection('EPIC', epic.id)" />
@@ -251,19 +251,19 @@
 
           <div>
             <span class="type-chip epic">EPIC</span>
-            <span class="row-status" [ngClass]="statusClass(epic.status)">
+            <span class="row-status mat-status" [ngClass]="statusClass(epic.status)">
               {{ epic.status }}
             </span>
           </div>
 
-          <div class="person-cell">
+          <div class="person-cell mat-person">
             <span class="avatar">
               {{ getUserInitials(userMap().get(toNumber(epic.assignee_user_id))?.name || 'Unassigned') }}
             </span>
             <span>{{ userMap().get(toNumber(epic.assignee_user_id))?.name || 'Unassigned' }}</span>
           </div>
 
-          <div class="person-cell">
+          <div class="person-cell mat-person">
             <span class="avatar muted-avatar">
               {{ getUserInitials(userMap().get(toNumber(epic.reporter_user_id))?.name || 'Unassigned') }}
             </span>
@@ -271,7 +271,7 @@
           </div>
 
           <div class="row-actions">
-            <button class="mini-button" type="button" (click)="openCreateStory(epic)">+ Story</button>
+            <button class="mini-button mat-action-button" type="button" (click)="openCreateStory(epic)">+ Story</button>
             <button class="icon-button small" type="button" title="Edit" (click)="openEditEpic(epic)">✎</button>
           </div>
         </div>
@@ -280,7 +280,7 @@
           <ng-container *ngIf="epic.expanded">
 
             <div
-              class="work-row story-row"
+              class="work-row mat-table-row story-row"
               *ngFor="let story of epic.stories || []">
 
               <button
@@ -291,7 +291,7 @@
               </button>
 
               <input
-                class="row-check"
+                class="row-check mat-checkbox-control"
                 type="checkbox"
                 [checked]="isItemSelected('STORY', story.id)"
                 (change)="toggleItemSelection('STORY', story.id)" />
@@ -306,19 +306,19 @@
 
               <div>
                 <span class="type-chip story">STORY</span>
-                <span class="row-status" [ngClass]="statusClass(story.status)">
+                <span class="row-status mat-status" [ngClass]="statusClass(story.status)">
                   {{ story.status }}
                 </span>
               </div>
 
-              <div class="person-cell">
+              <div class="person-cell mat-person">
                 <span class="avatar">
                   {{ getUserInitials(userMap().get(toNumber(story.assignee_user_id))?.name || 'Unassigned') }}
                 </span>
                 <span>{{ userMap().get(toNumber(story.assignee_user_id))?.name || 'Unassigned' }}</span>
               </div>
 
-              <div class="person-cell">
+              <div class="person-cell mat-person">
                 <span class="avatar muted-avatar">
                   {{ getUserInitials(userMap().get(toNumber(story.reporter_user_id))?.name || 'Unassigned') }}
                 </span>
@@ -326,7 +326,7 @@
               </div>
 
               <div class="row-actions">
-                <button class="mini-button" type="button" (click)="openCreateTask(story)">+ Task</button>
+                <button class="mini-button mat-action-button" type="button" (click)="openCreateTask(story)">+ Task</button>
                 <button class="icon-button small" type="button" title="Edit" (click)="openEditStory(story)">✎</button>
               </div>
             </div>
@@ -334,12 +334,12 @@
             <ng-container *ngFor="let story of epic.stories || []">
               <ng-container *ngIf="story.expanded">
 
-                <div class="work-row task-row" *ngFor="let task of story.tasks || []">
+                <div class="work-row mat-table-row task-row" *ngFor="let task of story.tasks || []">
 
                   <span class="tree-spacer"></span>
 
                   <input
-                    class="row-check"
+                    class="row-check mat-checkbox-control"
                     type="checkbox"
                     [checked]="isItemSelected('TASK', task.id)"
                     (change)="toggleItemSelection('TASK', task.id)" />
@@ -354,19 +354,19 @@
 
                   <div>
                     <span class="type-chip task">TASK</span>
-                    <span class="row-status" [ngClass]="statusClass(task.status)">
+                    <span class="row-status mat-status" [ngClass]="statusClass(task.status)">
                       {{ task.status }}
                     </span>
                   </div>
 
-                  <div class="person-cell">
+                  <div class="person-cell mat-person">
                     <span class="avatar">
                       {{ getUserInitials(userMap().get(toNumber(task.assignee_user_id))?.name || 'Unassigned') }}
                     </span>
                     <span>{{ userMap().get(toNumber(task.assignee_user_id))?.name || 'Unassigned' }}</span>
                   </div>
 
-                  <div class="person-cell">
+                  <div class="person-cell mat-person">
                     <span class="avatar muted-avatar">
                       {{ getUserInitials(userMap().get(toNumber(task.reporter_user_id))?.name || 'Unassigned') }}
                     </span>
@@ -418,7 +418,7 @@
     <div class="kanban-grid">
       <section class="kanban-column" *ngFor="let status of statusPipeline">
         <header class="kanban-column-header">
-          <span class="row-status" [ngClass]="statusClass(status)">{{ status }}</span>
+          <span class="row-status mat-status" [ngClass]="statusClass(status)">{{ status }}</span>
           <strong>{{ (kanbanItemsByStatus()[status] || []).length }}</strong>
         </header>
 
@@ -505,11 +505,27 @@
                   <button type="button" (click)="insertEditorLink()">Link</button>
                 </div>
                 <div
-                  class="rich-editor"
+                  class="rich-editor mat-editor-control"
                   contenteditable="true"
                   [attr.contenteditable]="!isReadOnly()"
                   [innerHTML]="currentEpic.description || ''"
                   (input)="currentEpic.description = $any($event.target).innerHTML">
+                </div>
+
+                <div class="related-section">
+                  <div class="section-title">
+                    <span>Stories</span>
+                    <strong>{{ currentEpic.stories?.length || 0 }}</strong>
+                  </div>
+                  <div class="related-list" *ngIf="currentEpic.stories?.length; else noEpicStories">
+                    <button class="related-item mat-related-item" *ngFor="let story of currentEpic.stories; trackBy: trackByStoryId" type="button" (click)="openViewStory(story)">
+                      <span class="type-chip story">STORY</span>
+                      <span>#{{ story.id }}</span>
+                      <strong>{{ story.title }}</strong>
+                      <span class="row-status mat-status" [ngClass]="statusClass(story.status)">{{ story.status }}</span>
+                    </button>
+                  </div>
+                  <ng-template #noEpicStories><div class="empty-inline">No stories linked to this epic.</div></ng-template>
                 </div>
 
                 <div class="inline-details">
@@ -529,33 +545,58 @@
                   <h3>Details</h3>
 
                   <label class="field-label">Status</label>
-                  <select class="edit-select" [(ngModel)]="currentEpic.status" [disabled]="isReadOnly()">
-                    <option *ngFor="let status of statusPipeline" [value]="status">{{ status }}</option>
-                  </select>
+                  <mat-select class="edit-select" [(ngModel)]="currentEpic.status" [disabled]="isReadOnly()" panelClass="work-status-panel">
+                    <mat-select-trigger>
+                      <span class="row-status mat-status" [ngClass]="statusClass(currentEpic.status)">{{ currentEpic.status || 'BACKLOG' }}</span>
+                    </mat-select-trigger>
+                    <mat-option *ngFor="let status of statusPipeline" [value]="status">
+                      <span class="row-status mat-status" [ngClass]="statusClass(status)">{{ status }}</span>
+                    </mat-option>
+                  </mat-select>
 
                   <label class="field-label">Assignee</label>
-                  <select class="edit-select" [(ngModel)]="currentEpic.assignee_user_id" [disabled]="isReadOnly()">
-                    <option [ngValue]="null">Unassigned</option>
-                    <option *ngFor="let user of users()" [ngValue]="user.id">{{ user.name }}</option>
-                  </select>
+                  <mat-select class="edit-select" [(ngModel)]="currentEpic.assignee_user_id" [disabled]="isReadOnly()" panelClass="person-select-panel">
+                    <mat-select-trigger>
+                      <span class="person-cell mat-person">
+                        <span class="avatar">{{ getUserInitials(userMap().get(toNumber(currentEpic.assignee_user_id))?.name || 'Unassigned') }}</span>
+                        <span>{{ userMap().get(toNumber(currentEpic.assignee_user_id))?.name || 'Unassigned' }}</span>
+                      </span>
+                    </mat-select-trigger>
+                    <mat-option [value]="null">
+                      <span class="person-cell mat-person"><span class="avatar muted-avatar">U</span><span>Unassigned</span></span>
+                    </mat-option>
+                    <mat-option *ngFor="let user of users(); trackBy: trackByUserId" [value]="user.id">
+                      <span class="person-cell mat-person"><span class="avatar">{{ getUserInitials(user.name) }}</span><span>{{ user.name }}</span></span>
+                    </mat-option>
+                  </mat-select>
 
                   <label class="field-label">Reporter</label>
-                  <select class="edit-select" [(ngModel)]="currentEpic.reporter_user_id" [disabled]="isReadOnly()">
-                    <option [ngValue]="null">Unassigned</option>
-                    <option *ngFor="let user of users()" [ngValue]="user.id">{{ user.name }}</option>
-                  </select>
+                  <mat-select class="edit-select" [(ngModel)]="currentEpic.reporter_user_id" [disabled]="isReadOnly()" panelClass="person-select-panel">
+                    <mat-select-trigger>
+                      <span class="person-cell mat-person">
+                        <span class="avatar">{{ getUserInitials(userMap().get(toNumber(currentEpic.reporter_user_id))?.name || 'Unassigned') }}</span>
+                        <span>{{ userMap().get(toNumber(currentEpic.reporter_user_id))?.name || 'Unassigned' }}</span>
+                      </span>
+                    </mat-select-trigger>
+                    <mat-option [value]="null">
+                      <span class="person-cell mat-person"><span class="avatar muted-avatar">U</span><span>Unassigned</span></span>
+                    </mat-option>
+                    <mat-option *ngFor="let user of users(); trackBy: trackByUserId" [value]="user.id">
+                      <span class="person-cell mat-person"><span class="avatar">{{ getUserInitials(user.name) }}</span><span>{{ user.name }}</span></span>
+                    </mat-option>
+                  </mat-select>
 
                   <label class="field-label">Sprint</label>
-                  <select class="edit-select" [(ngModel)]="currentEpic.sprint_id" [disabled]="isReadOnly()">
-                    <option [ngValue]="null">No sprint</option>
-                    <option *ngFor="let sprint of projectSprints()" [ngValue]="sprint.id">{{ sprint.name }}</option>
-                  </select>
+                  <mat-select class="edit-select" [(ngModel)]="currentEpic.sprint_id" [disabled]="isReadOnly()">
+                    <mat-option [value]="null">No sprint</mat-option>
+                    <mat-option *ngFor="let sprint of projectSprints()" [value]="sprint.id">{{ sprint.name }}</mat-option>
+                  </mat-select>
 
                   <label class="field-label">Team</label>
-                  <select class="edit-select" [(ngModel)]="currentEpic.team_id" [disabled]="isReadOnly()">
-                    <option [ngValue]="null">No team</option>
-                    <option *ngFor="let team of teams()" [ngValue]="team.id">{{ team.name }}</option>
-                  </select>
+                  <mat-select class="edit-select" [(ngModel)]="currentEpic.team_id" [disabled]="isReadOnly()">
+                    <mat-option [value]="null">No team</mat-option>
+                    <mat-option *ngFor="let team of teams()" [value]="team.id">{{ team.name }}</mat-option>
+                  </mat-select>
                 </div>
 
                 <div class="side-section">
@@ -575,9 +616,9 @@
         </div>
 
         <footer class="modal-footer">
-          <button class="outline-button" type="button" (click)="closeModal()">Cancel</button>
-          <button class="outline-button" *ngIf="isReadOnly()" type="button" (click)="enableEditMode()">Edit</button>
-          <button class="primary-action" *ngIf="!isReadOnly()" type="button" (click)="saveEpic()">
+          <button class="outline-button mat-action-button" type="button" (click)="closeModal()">Cancel</button>
+          <button class="outline-button mat-action-button" *ngIf="isReadOnly()" type="button" (click)="enableEditMode()">Edit</button>
+          <button class="primary-action mat-primary-button" *ngIf="!isReadOnly()" type="button" (click)="saveEpic()">
             {{ drawerMode() === 'CREATE' ? 'Create Epic' : 'Save changes' }}
           </button>
         </footer>
@@ -616,7 +657,7 @@
                   <button type="button" (click)="insertEditorLink()">Link</button>
                 </div>
                 <div
-                  class="rich-editor"
+                  class="rich-editor mat-editor-control"
                   contenteditable="true"
                   [attr.contenteditable]="!isReadOnly()"
                   [innerHTML]="currentStory.description || ''"
@@ -629,11 +670,11 @@
                     <strong>{{ currentStory.tasks?.length || 0 }}</strong>
                   </div>
                   <div class="related-list" *ngIf="currentStory.tasks?.length; else noStoryTasks">
-                    <button class="related-item" *ngFor="let task of currentStory.tasks" type="button" (click)="openViewTask(task)">
+                    <button class="related-item mat-related-item" *ngFor="let task of currentStory.tasks" type="button" (click)="openViewTask(task)">
                       <span class="type-chip task">TASK</span>
                       <span>#{{ task.id }}</span>
                       <strong>{{ task.title }}</strong>
-                      <span class="row-status" [ngClass]="statusClass(task.status)">{{ task.status }}</span>
+                      <span class="row-status mat-status" [ngClass]="statusClass(task.status)">{{ task.status }}</span>
                     </button>
                   </div>
                   <ng-template #noStoryTasks><div class="empty-inline">No tasks linked to this story.</div></ng-template>
@@ -645,7 +686,7 @@
                     <strong>{{ currentStory.issues?.length || 0 }}</strong>
                   </div>
                   <div class="related-list" *ngIf="currentStory.issues?.length; else noStoryIssues">
-                    <button class="related-item" *ngFor="let issue of currentStory.issues" type="button" (click)="openViewIssue(issue)">
+                    <button class="related-item mat-related-item" *ngFor="let issue of currentStory.issues" type="button" (click)="openViewIssue(issue)">
                       <span class="type-chip issue">ISSUE</span>
                       <span>{{ issue.issueCode || issue.issue_code || ('#' + issue.id) }}</span>
                       <strong>{{ issue.title }}</strong>
@@ -660,49 +701,50 @@
                   <h3>Details</h3>
 
                   <label class="field-label">Status</label>
-                  <select class="edit-select" [(ngModel)]="currentStory.status" [disabled]="isReadOnly()">
-                    <option *ngFor="let status of statusPipeline" [value]="status">{{ status }}</option>
-                  </select>
+                  <mat-select class="edit-select" [(ngModel)]="currentStory.status" [disabled]="isReadOnly()" panelClass="work-status-panel">
+                    <mat-select-trigger><span class="row-status mat-status" [ngClass]="statusClass(currentStory.status)">{{ currentStory.status || 'BACKLOG' }}</span></mat-select-trigger>
+                    <mat-option *ngFor="let status of statusPipeline" [value]="status"><span class="row-status mat-status" [ngClass]="statusClass(status)">{{ status }}</span></mat-option>
+                  </mat-select>
 
                   <label class="field-label">Priority</label>
-                  <select class="edit-select" [(ngModel)]="currentStory.priority" [disabled]="isReadOnly()">
-                    <option *ngFor="let priority of priorities" [value]="priority">{{ priority }}</option>
-                  </select>
+                  <mat-select class="edit-select" [(ngModel)]="currentStory.priority" [disabled]="isReadOnly()">
+                    <mat-option *ngFor="let priority of priorities" [value]="priority">{{ priority }}</mat-option>
+                  </mat-select>
 
                   <label class="field-label">Story points</label>
-                  <input class="edit-input" type="number" min="0" [(ngModel)]="currentStory.story_points" [disabled]="isReadOnly()" />
+                  <input class="edit-input mat-input-control" type="number" min="0" [(ngModel)]="currentStory.story_points" [disabled]="isReadOnly()" />
 
                   <label class="field-label">Epic</label>
-                  <select class="edit-select" [(ngModel)]="currentStory.epic_id" [disabled]="isReadOnly()">
-                    <option [ngValue]="null">No parent Epic</option>
-                    <option *ngFor="let epic of storyModalEpics()" [ngValue]="epic.id">
-                      {{ epic.epic_code }} — {{ epic.name }}
-                    </option>
-                  </select>
+                  <mat-select class="edit-select" [(ngModel)]="currentStory.epic_id" [disabled]="isReadOnly()">
+                    <mat-option [value]="null">No parent Epic</mat-option>
+                    <mat-option *ngFor="let epic of storyModalEpics()" [value]="epic.id">{{ epic.epic_code }} — {{ epic.name }}</mat-option>
+                  </mat-select>
 
                   <label class="field-label">Sprint</label>
-                  <select class="edit-select" [(ngModel)]="currentStory.sprint_id" [disabled]="isReadOnly()">
-                    <option [ngValue]="null">No sprint</option>
-                    <option *ngFor="let sprint of projectSprints()" [ngValue]="sprint.id">{{ sprint.name }}</option>
-                  </select>
+                  <mat-select class="edit-select" [(ngModel)]="currentStory.sprint_id" [disabled]="isReadOnly()">
+                    <mat-option [value]="null">No sprint</mat-option>
+                    <mat-option *ngFor="let sprint of projectSprints()" [value]="sprint.id">{{ sprint.name }}</mat-option>
+                  </mat-select>
 
                   <label class="field-label">Assignee</label>
-                  <select class="edit-select" [(ngModel)]="currentStory.assignee_user_id" [disabled]="isReadOnly()">
-                    <option [ngValue]="null">Unassigned</option>
-                    <option *ngFor="let user of users()" [ngValue]="user.id">{{ user.name }}</option>
-                  </select>
+                  <mat-select class="edit-select" [(ngModel)]="currentStory.assignee_user_id" [disabled]="isReadOnly()" panelClass="person-select-panel">
+                    <mat-select-trigger><span class="person-cell mat-person"><span class="avatar">{{ getUserInitials(userMap().get(toNumber(currentStory.assignee_user_id))?.name || 'Unassigned') }}</span><span>{{ userMap().get(toNumber(currentStory.assignee_user_id))?.name || 'Unassigned' }}</span></span></mat-select-trigger>
+                    <mat-option [value]="null"><span class="person-cell mat-person"><span class="avatar muted-avatar">U</span><span>Unassigned</span></span></mat-option>
+                    <mat-option *ngFor="let user of users(); trackBy: trackByUserId" [value]="user.id"><span class="person-cell mat-person"><span class="avatar">{{ getUserInitials(user.name) }}</span><span>{{ user.name }}</span></span></mat-option>
+                  </mat-select>
 
                   <label class="field-label">Reporter</label>
-                  <select class="edit-select" [(ngModel)]="currentStory.reporter_user_id" [disabled]="isReadOnly()">
-                    <option [ngValue]="null">Unassigned</option>
-                    <option *ngFor="let user of users()" [ngValue]="user.id">{{ user.name }}</option>
-                  </select>
+                  <mat-select class="edit-select" [(ngModel)]="currentStory.reporter_user_id" [disabled]="isReadOnly()" panelClass="person-select-panel">
+                    <mat-select-trigger><span class="person-cell mat-person"><span class="avatar">{{ getUserInitials(userMap().get(toNumber(currentStory.reporter_user_id))?.name || 'Unassigned') }}</span><span>{{ userMap().get(toNumber(currentStory.reporter_user_id))?.name || 'Unassigned' }}</span></span></mat-select-trigger>
+                    <mat-option [value]="null"><span class="person-cell mat-person"><span class="avatar muted-avatar">U</span><span>Unassigned</span></span></mat-option>
+                    <mat-option *ngFor="let user of users(); trackBy: trackByUserId" [value]="user.id"><span class="person-cell mat-person"><span class="avatar">{{ getUserInitials(user.name) }}</span><span>{{ user.name }}</span></span></mat-option>
+                  </mat-select>
 
                   <label class="field-label">Team</label>
-                  <select class="edit-select" [(ngModel)]="currentStory.team_id" [disabled]="isReadOnly()">
-                    <option [ngValue]="null">No team</option>
-                    <option *ngFor="let team of teams()" [ngValue]="team.id">{{ team.name }}</option>
-                  </select>
+                  <mat-select class="edit-select" [(ngModel)]="currentStory.team_id" [disabled]="isReadOnly()">
+                    <mat-option [value]="null">No team</mat-option>
+                    <mat-option *ngFor="let team of teams()" [value]="team.id">{{ team.name }}</mat-option>
+                  </mat-select>
                 </div>
 
                 <div class="side-section">
@@ -726,9 +768,9 @@
         </div>
 
         <footer class="modal-footer">
-          <button class="outline-button" type="button" (click)="closeModal()">Cancel</button>
-          <button class="outline-button" *ngIf="isReadOnly()" type="button" (click)="enableEditMode()">Edit</button>
-          <button class="primary-action" *ngIf="!isReadOnly()" type="button" (click)="saveStory()">
+          <button class="outline-button mat-action-button" type="button" (click)="closeModal()">Cancel</button>
+          <button class="outline-button mat-action-button" *ngIf="isReadOnly()" type="button" (click)="enableEditMode()">Edit</button>
+          <button class="primary-action mat-primary-button" *ngIf="!isReadOnly()" type="button" (click)="saveStory()">
             {{ drawerMode() === 'CREATE' ? 'Create Story' : 'Save changes' }}
           </button>
         </footer>
@@ -767,7 +809,7 @@
                   <button type="button" (click)="insertEditorLink()">Link</button>
                 </div>
                 <div
-                  class="rich-editor"
+                  class="rich-editor mat-editor-control"
                   contenteditable="true"
                   [attr.contenteditable]="!isReadOnly()"
                   [innerHTML]="currentTask.description || ''"
@@ -777,7 +819,7 @@
                 <div class="related-section">
                   <div class="section-title"><span>Issues</span><strong>{{ currentTask.issues?.length || 0 }}</strong></div>
                   <div class="related-list" *ngIf="currentTask.issues?.length; else noTaskIssues">
-                    <button class="related-item" *ngFor="let issue of currentTask.issues" type="button" (click)="openViewIssue(issue)">
+                    <button class="related-item mat-related-item" *ngFor="let issue of currentTask.issues" type="button" (click)="openViewIssue(issue)">
                       <span class="type-chip issue">ISSUE</span>
                       <span>{{ issue.issueCode || issue.issue_code || ('#' + issue.id) }}</span>
                       <strong>{{ issue.title }}</strong>
@@ -792,46 +834,47 @@
                   <h3>Details</h3>
 
                   <label class="field-label">Status</label>
-                  <select class="edit-select" [(ngModel)]="currentTask.status" [disabled]="isReadOnly()">
-                    <option *ngFor="let status of statusPipeline" [value]="status">{{ status }}</option>
-                  </select>
+                  <mat-select class="edit-select" [(ngModel)]="currentTask.status" [disabled]="isReadOnly()" panelClass="work-status-panel">
+                    <mat-select-trigger><span class="row-status mat-status" [ngClass]="statusClass(currentTask.status)">{{ currentTask.status || 'BACKLOG' }}</span></mat-select-trigger>
+                    <mat-option *ngFor="let status of statusPipeline" [value]="status"><span class="row-status mat-status" [ngClass]="statusClass(status)">{{ status }}</span></mat-option>
+                  </mat-select>
 
                   <label class="field-label">Priority</label>
-                  <select class="edit-select" [(ngModel)]="currentTask.priority" [disabled]="isReadOnly()">
-                    <option *ngFor="let priority of priorities" [value]="priority">{{ priority }}</option>
-                  </select>
+                  <mat-select class="edit-select" [(ngModel)]="currentTask.priority" [disabled]="isReadOnly()">
+                    <mat-option *ngFor="let priority of priorities" [value]="priority">{{ priority }}</mat-option>
+                  </mat-select>
 
                   <label class="field-label">Parent Story</label>
-                  <select class="edit-select" [(ngModel)]="currentTask.story_id" [disabled]="isReadOnly()">
-                    <option [ngValue]="null">No parent story</option>
-                    <option *ngFor="let story of availableStories()" [ngValue]="story.id">
-                      #{{ story.id }} — {{ story.title }}
-                    </option>
-                  </select>
+                  <mat-select class="edit-select" [(ngModel)]="currentTask.story_id" [disabled]="isReadOnly()">
+                    <mat-option [value]="null">No parent story</mat-option>
+                    <mat-option *ngFor="let story of availableStories()" [value]="story.id">#{{ story.id }} — {{ story.title }}</mat-option>
+                  </mat-select>
 
                   <label class="field-label">Sprint</label>
-                  <select class="edit-select" [(ngModel)]="currentTask.sprint_id" [disabled]="isReadOnly()">
-                    <option [ngValue]="null">No sprint</option>
-                    <option *ngFor="let sprint of projectSprints()" [ngValue]="sprint.id">{{ sprint.name }}</option>
-                  </select>
+                  <mat-select class="edit-select" [(ngModel)]="currentTask.sprint_id" [disabled]="isReadOnly()">
+                    <mat-option [value]="null">No sprint</mat-option>
+                    <mat-option *ngFor="let sprint of projectSprints()" [value]="sprint.id">{{ sprint.name }}</mat-option>
+                  </mat-select>
 
                   <label class="field-label">Assignee</label>
-                  <select class="edit-select" [(ngModel)]="currentTask.assignee_user_id" [disabled]="isReadOnly()">
-                    <option [ngValue]="null">Unassigned</option>
-                    <option *ngFor="let user of users()" [ngValue]="user.id">{{ user.name }}</option>
-                  </select>
+                  <mat-select class="edit-select" [(ngModel)]="currentTask.assignee_user_id" [disabled]="isReadOnly()" panelClass="person-select-panel">
+                    <mat-select-trigger><span class="person-cell mat-person"><span class="avatar">{{ getUserInitials(userMap().get(toNumber(currentTask.assignee_user_id))?.name || 'Unassigned') }}</span><span>{{ userMap().get(toNumber(currentTask.assignee_user_id))?.name || 'Unassigned' }}</span></span></mat-select-trigger>
+                    <mat-option [value]="null"><span class="person-cell mat-person"><span class="avatar muted-avatar">U</span><span>Unassigned</span></span></mat-option>
+                    <mat-option *ngFor="let user of users(); trackBy: trackByUserId" [value]="user.id"><span class="person-cell mat-person"><span class="avatar">{{ getUserInitials(user.name) }}</span><span>{{ user.name }}</span></span></mat-option>
+                  </mat-select>
 
                   <label class="field-label">Reporter</label>
-                  <select class="edit-select" [(ngModel)]="currentTask.reporter_user_id" [disabled]="isReadOnly()">
-                    <option [ngValue]="null">Unassigned</option>
-                    <option *ngFor="let user of users()" [ngValue]="user.id">{{ user.name }}</option>
-                  </select>
+                  <mat-select class="edit-select" [(ngModel)]="currentTask.reporter_user_id" [disabled]="isReadOnly()" panelClass="person-select-panel">
+                    <mat-select-trigger><span class="person-cell mat-person"><span class="avatar">{{ getUserInitials(userMap().get(toNumber(currentTask.reporter_user_id))?.name || 'Unassigned') }}</span><span>{{ userMap().get(toNumber(currentTask.reporter_user_id))?.name || 'Unassigned' }}</span></span></mat-select-trigger>
+                    <mat-option [value]="null"><span class="person-cell mat-person"><span class="avatar muted-avatar">U</span><span>Unassigned</span></span></mat-option>
+                    <mat-option *ngFor="let user of users(); trackBy: trackByUserId" [value]="user.id"><span class="person-cell mat-person"><span class="avatar">{{ getUserInitials(user.name) }}</span><span>{{ user.name }}</span></span></mat-option>
+                  </mat-select>
 
                   <label class="field-label">Team</label>
-                  <select class="edit-select" [(ngModel)]="currentTask.team_id" [disabled]="isReadOnly()">
-                    <option [ngValue]="null">No team</option>
-                    <option *ngFor="let team of teams()" [ngValue]="team.id">{{ team.name }}</option>
-                  </select>
+                  <mat-select class="edit-select" [(ngModel)]="currentTask.team_id" [disabled]="isReadOnly()">
+                    <mat-option [value]="null">No team</mat-option>
+                    <mat-option *ngFor="let team of teams()" [value]="team.id">{{ team.name }}</mat-option>
+                  </mat-select>
                 </div>
 
                 <div class="side-section">
@@ -852,9 +895,9 @@
         </div>
 
         <footer class="modal-footer">
-          <button class="outline-button" type="button" (click)="closeModal()">Cancel</button>
-          <button class="outline-button" *ngIf="isReadOnly()" type="button" (click)="enableEditMode()">Edit</button>
-          <button class="primary-action" *ngIf="!isReadOnly()" type="button" (click)="saveTask()">
+          <button class="outline-button mat-action-button" type="button" (click)="closeModal()">Cancel</button>
+          <button class="outline-button mat-action-button" *ngIf="isReadOnly()" type="button" (click)="enableEditMode()">Edit</button>
+          <button class="primary-action mat-primary-button" *ngIf="!isReadOnly()" type="button" (click)="saveTask()">
             {{ drawerMode() === 'CREATE' ? 'Create Task' : 'Save changes' }}
           </button>
         </footer>
@@ -881,7 +924,7 @@
             <strong>{{ getTestCaseCode(testCase) }}</strong>
             <span>{{ testCase.title || testCase.name || 'Untitled test case' }}</span>
           </div>
-          <span class="row-status" [ngClass]="statusClass(testCase.executionStatus || 'UNEXECUTED')">
+          <span class="row-status mat-status" [ngClass]="statusClass(testCase.executionStatus || 'UNEXECUTED')">
             {{ testCase.executionStatus || 'UNEXECUTED' }}
           </span>
         </div>
@@ -893,7 +936,7 @@
       </div>
 
       <footer>
-        <button class="outline-button" type="button" (click)="closeTestCasesPopup()">Close</button>
+        <button class="outline-button mat-action-button" type="button" (click)="closeTestCasesPopup()">Close</button>
       </footer>
     </section>
   </div>

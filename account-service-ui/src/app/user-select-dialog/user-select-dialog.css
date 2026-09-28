@@ -1,18 +1,405 @@
-.gp-button {
-  display: inline-flex;
+/* ==========================================================================
+   GREATLEY POSHLEY — USER SELECT DIALOG
+   Clean Angular Material dialog styling
+   ========================================================================== */
+
+:host {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Keep the Material dialog surface tight to the custom dialog content. */
+:host ::ng-deep .mat-mdc-dialog-container {
+  padding: 0 !important;
+}
+
+:host ::ng-deep .mat-mdc-dialog-surface {
+  width: min(860px, 96vw) !important;
+  max-width: none !important;
+  max-height: 88vh !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border-radius: 18px !important;
+  background: #ffffff !important;
+  box-shadow:
+    0 20px 55px rgba(17, 24, 39, .18),
+    0 5px 16px rgba(17, 24, 39, .08) !important;
+}
+
+.dialog-container {
+  width: 100%;
+  height: min(760px, 78vh);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  background: #ffffff;
+  color: #111827;
+  font-family: Inter, Arial, sans-serif;
+}
+
+/* --------------------------------------------------------------------------
+   HEADER / SEARCH
+   -------------------------------------------------------------------------- */
+
+.dialog-title {
+  flex: 0 0 auto;
+  margin: 0 !important;
+  padding: 22px 24px 12px !important;
+  color: #111827;
+  font-size: 21px;
+  line-height: 28px;
+  font-weight: 650;
+  letter-spacing: -.2px;
+}
+
+.search-wrapper {
+  flex: 0 0 auto;
+  padding: 0 24px 15px;
+}
+
+.search-field {
+  width: 100%;
+}
+
+:host ::ng-deep .search-field .mat-mdc-text-field-wrapper {
+  min-height: 46px !important;
+  border-radius: 23px !important;
+  background: #ffffff !important;
+}
+
+:host ::ng-deep .search-field .mat-mdc-form-field-flex {
+  min-height: 46px;
+  border-radius: 23px;
+}
+
+:host ::ng-deep .search-field .mdc-notched-outline,
+:host ::ng-deep .search-field .mdc-notched-outline__leading,
+:host ::ng-deep .search-field .mdc-notched-outline__notch,
+:host ::ng-deep .search-field .mdc-notched-outline__trailing {
+  border-color: #d9dde2 !important;
+}
+
+:host ::ng-deep .search-field:hover .mdc-notched-outline,
+:host ::ng-deep .search-field:hover .mdc-notched-outline__leading,
+:host ::ng-deep .search-field:hover .mdc-notched-outline__notch,
+:host ::ng-deep .search-field:hover .mdc-notched-outline__trailing {
+  border-color: #b9c0c8 !important;
+}
+
+:host ::ng-deep .search-field.mat-focused .mdc-notched-outline,
+:host ::ng-deep .search-field.mat-focused .mdc-notched-outline__leading,
+:host ::ng-deep .search-field.mat-focused .mdc-notched-outline__notch,
+:host ::ng-deep .search-field.mat-focused .mdc-notched-outline__trailing {
+  border-color: #007cc1 !important;
+  border-width: 2px !important;
+}
+
+:host ::ng-deep .search-field .mat-mdc-floating-label {
+  color: #7a818a !important;
+}
+
+:host ::ng-deep .search-field.mat-focused .mat-mdc-floating-label {
+  color: #007cc1 !important;
+}
+
+:host ::ng-deep .search-field input {
+  color: #111827 !important;
+  font-size: 13px !important;
+}
+
+:host ::ng-deep .search-field input::placeholder {
+  color: #8a919a !important;
+}
+
+:host ::ng-deep .search-field .mat-mdc-form-field-subscript-wrapper {
+  display: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   LIST
+   -------------------------------------------------------------------------- */
+
+.dialog-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto !important;
+  padding: 0 24px 18px !important;
+  margin: 0 !important;
+  border-top: 1px solid #edf0f2;
+  border-bottom: 1px solid #edf0f2;
+  background: #ffffff;
+}
+
+.dialog-content::-webkit-scrollbar {
+  width: 7px;
+}
+
+.dialog-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dialog-content::-webkit-scrollbar-thumb {
+  border-radius: 7px;
+  background: #c9ced4;
+}
+
+.dialog-content::-webkit-scrollbar-thumb:hover {
+  background: #b1b8c0;
+}
+
+.users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 0;
+}
+
+.user-row {
+  min-width: 0;
+  width: 100%;
+  min-height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 11px 13px;
+  box-sizing: border-box;
+  border: 1px solid #e2e5e8;
+  border-radius: 14px;
+  background: #ffffff;
+  cursor: pointer;
+  transition:
+    border-color .15s ease,
+    background-color .15s ease,
+    box-shadow .15s ease;
+}
+
+.user-row:hover {
+  border-color: #b9d9ea;
+  background: #f8fcfe;
+  box-shadow: 0 1px 3px rgba(17, 24, 39, .05);
+}
+
+.user-row.selected {
+  border-color: #007cc1;
+  background: #f2faff;
+  box-shadow: 0 0 0 1px rgba(0, 124, 193, .08);
+}
+
+.user-left {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.styled-checkbox {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: #007cc1;
+}
+
+.avatar {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  flex: 0 0 44px;
+  overflow: hidden;
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 0 28px;
-  height: 48px;
-  font-size: 14px;
-  font-weight: 600;
-  border-radius: 8px;
-  cursor: pointer;
-  box-sizing: border-box;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  border: none;
-  letter-spacing: -0.01em;
-  position: relative;
+  border-radius: 50%;
+  background: #eef8fd;
+  color: #007cc1;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.user-details {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  max-width: 100%;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #111827;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 650;
+}
+
+.user-email {
+  max-width: 100%;
+  margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #737983;
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.user-employee-code {
+  max-width: 100%;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #007cc1;
+  font-size: 10px;
+  line-height: 14px;
+  font-weight: 650;
+  letter-spacing: .025em;
+}
+
+.selected-indicator {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  flex: 0 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #007cc1;
+  color: #ffffff;
+  font-size: 14px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+/* --------------------------------------------------------------------------
+   STATES / ACTIONS
+   -------------------------------------------------------------------------- */
+
+.dialog-state,
+.empty-state {
+  padding: 56px 20px;
+  text-align: center;
+  color: #737983;
+  font-size: 13px;
+}
+
+.dialog-state.error {
+  color: #b42318;
+}
+
+.dialog-actions {
+  flex: 0 0 auto;
+  min-height: 76px;
+  padding: 13px 24px !important;
+  margin: 0 !important;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  background: #ffffff;
+}
+
+.selection-counter {
+  color: #737983;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gp-button {
+  min-width: 140px;
+  height: 46px;
+  padding: 0 22px;
+  border-radius: 23px !important;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 600;
+  box-sizing: border-box;
+}
+
+.gp-primary {
+  border-color: #007cc1 !important;
+  background: #007cc1 !important;
+  color: #ffffff !important;
+}
+
+.gp-primary:hover {
+  border-color: #006da8 !important;
+  background: #006da8 !important;
+}
+
+.gp-cancel {
+  border: 1px solid #c7ccd2 !important;
+  background: #ffffff !important;
+  color: #374151 !important;
+}
+
+.gp-cancel:hover {
+  background: #f8fafc !important;
+  border-color: #aeb5bd !important;
+}
+
+@media (max-width: 640px) {
+  :host ::ng-deep .mat-mdc-dialog-surface {
+    width: 100% !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+  }
+
+  .dialog-container {
+    height: 100vh;
+  }
+
+  .dialog-title,
+  .search-wrapper,
+  .dialog-content,
+  .dialog-actions {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  .user-row {
+    min-height: 64px;
+    padding: 10px;
+  }
+
+  .dialog-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .selection-counter {
+    text-align: center;
+  }
+
+  .action-buttons {
+    width: 100%;
+  }
+
+  .gp-button {
+    flex: 1 1 0;
+    min-width: 0;
+  }
 }

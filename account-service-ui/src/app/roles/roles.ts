@@ -25,7 +25,7 @@ import { MatInputModule } from '@angular/material/input';
   styleUrls: ['./roles.css']
 })
 export class Roles implements OnInit {
-  baseUrl = environment.apiBaseUrl;
+  baseUrl = environment.apiBaseUrlM;
 
   roles$: Observable<any[]> | undefined;
 
@@ -64,7 +64,7 @@ export class Roles implements OnInit {
 
     const request = this.editingRoleId
       ? this.http.put(`${this.baseUrl}/roles/${this.editingRoleId}`, payload, { headers: this.auth.getAuthHeaders() })
-      : this.http.post(`${this.baseUrl}/roles/create`, payload, { headers: this.auth.getAuthHeaders() });
+      : this.http.post(`${this.baseUrl}/roles`, payload, { headers: this.auth.getAuthHeaders() });
 
     request.subscribe({
       next: () => {

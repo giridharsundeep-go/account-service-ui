@@ -4,222 +4,528 @@
     <header class="saas-header">
         <div class="header-title-block">
             <h2>Teams Management</h2>
-            <p class="header-subtitle">Create distinct workspace teams, manage permissions, and assign cross-functional members.</p>
+            <p class="header-subtitle">
+                Create workspace teams and assign users.
+            </p>
         </div>
 
         <div class="header-actions" *ngIf="editingTeamId === null">
-            <button mat-stroked-button class="gp-button gp-primary header-wide-btn"
+            <button
+                type="button"
+                mat-stroked-button
+                class="gp-button gp-primary header-wide-btn"
                 (click)="resetForm(); editingTeamId = 0">
-                <span class="btn-indicator-pulse"></span> Create New Team
+
+                <span class="btn-indicator-pulse"></span>
+                Create New Team
             </button>
         </div>
     </header>
 
-    <!-- INLINE CONTEXT FORM BLOCK -->
-    <div class="inline-form-container" *ngIf="editingTeamId !== null">
+    <!-- CREATE / UPDATE TEAM -->
+    <div
+        class="inline-form-container"
+        *ngIf="editingTeamId !== null">
+
         <div class="inline-form-card">
+
             <div class="inline-form-header">
-                <h3>{{ editingTeamId ? 'Modify Workspace Team' : 'Configure New Team Profile' }}</h3>
-                <p>Define teams and populate initial core members.</p>
+
+                <h3>
+                    {{
+                        editingTeamId
+                            ? 'Modify Workspace Team'
+                            : 'Configure New Team Profile'
+                    }}
+                </h3>
+
+                <p>
+                    Define the team and select its users.
+                </p>
+
             </div>
 
             <div class="inline-form-body">
+
                 <div class="form-grid-two-col">
-                    <mat-form-field appearance="outline" class="saas-form-field">
-                        <mat-label>Team Name</mat-label>
-                        <input matInput [(ngModel)]="name" placeholder="e.g., Senior Engineering Squad" />
+
+                    <mat-form-field
+                        appearance="outline"
+                        class="saas-form-field">
+
+                        <mat-label>
+                            Team Name
+                        </mat-label>
+
+                        <input
+                            matInput
+                            [(ngModel)]="name"
+                            placeholder="e.g. Senior Engineering Squad" />
+
                     </mat-form-field>
 
-                    <mat-form-field appearance="outline" class="saas-form-field">
-                        <mat-label>Team Purpose / Description</mat-label>
-                        <textarea matInput rows="1" [(ngModel)]="description"
-                            placeholder="Describe scope responsibilities..."></textarea>
+                    <mat-form-field
+                        appearance="outline"
+                        class="saas-form-field">
+
+                        <mat-label>
+                            Team Purpose / Description
+                        </mat-label>
+
+                        <textarea
+                            matInput
+                            rows="1"
+                            [(ngModel)]="description"
+                            placeholder="Describe team scope...">
+                        </textarea>
+
                     </mat-form-field>
+
                 </div>
 
-                <!-- MEMBERS SELECTION -->
+                <!-- MEMBERS -->
                 <div class="saas-members-section">
+
                     <div class="section-flex-header">
+
                         <div class="section-flex-titles">
-                            <h4>Assigned Members</h4>
-                            <p class="meta-desc">Users provisioned to this functional team</p>
+
+                            <h4>
+                                Assigned Members
+                            </h4>
+
+                            <p class="meta-desc">
+                                Users assigned to this team
+                            </p>
+
                         </div>
-                        <button type="button" mat-stroked-button
+
+                        <button
+                            type="button"
+                            mat-stroked-button
                             class="gp-button gp-primary add-members-btn form-action-fixed-btn"
                             (click)="openUserSelectModal()">
+
                             + Add Members
+
                         </button>
+
                     </div>
 
                     <div class="saas-chips-box">
-                        <span *ngIf="chipUserObjects.length === 0" class="blank-info-text">
-                            No active workspace members assigned yet.
+
+                        <span
+                            *ngIf="chipUserObjects.length === 0"
+                            class="blank-info-text">
+                            No users assigned yet.
                         </span>
-                        <mat-chip-set>
-                            <mat-chip-row *ngFor="let user of chipUserObjects" (removed)="removeUserChip(user.id)"
-                                class="saas-custom-chip">
-                                {{ user.name }}
-                                <button matChipRemove class="chip-remove-x">&times;</button>
-                            </mat-chip-row>
-                        </mat-chip-set>
-                    </div>
-                </div>
-            </div>
 
-            <div class="inline-form-footer">
-                <button mat-stroked-button class="gp-button gp-action form-action-fixed-btn" (click)="saveTeam()"
-                    [disabled]="loading || !name.trim()">
-                    <ng-container *ngIf="loading">Saving Changes...</ng-container>
-                    <ng-container *ngIf="!loading">
-                        {{ editingTeamId ? 'Update Configurations' : 'Finalize & Build Team' }}
-                    </ng-container>
-                </button>
+                        <div class="selected-user-list">
+                            <div
+                                class="selected-user-pill"
+                                *ngFor="let user of chipUserObjects">
 
-                <button mat-stroked-button class="gp-button gp-cancel form-action-fixed-btn" (click)="resetForm()">
-                    Discard
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODERN SAAS GRID WORKSPACE CONTAINER -->
-    <main class="dashboard-workspace">
-
-        <div class="workspace-filter-header">
-            <div class="workspace-badge-legend">
-                <span class="legend-indicator"></span> Active Operational Clusters
-            </div>
-            <div class="workspace-search-input-frame">
-                <span class="search-lens"></span>
-                <input type="text" [(ngModel)]="searchTerm" placeholder="Filter workspace teams..." />
-            </div>
-        </div>
-
-        <!-- CARDS SYSTEM ROW LAYER (BASIC INFO ONLY) -->
-        <div class="saas-team-grid-layout" *ngIf="teams$ | async as teams">
-            <ng-container *ngIf="filterTeams(teams).length > 0; else emptyCardsFallback">
-
-                <article class="team-saas-card" 
-                         *ngFor="let team of filterTeams(teams)" 
-                         (click)="openTeamDetails(team)"
-                         [class.is-selected]="selectedTeam?.id === team.id">
-
-                    <div class="card-main-details" *ngIf="{ list: team.members || team.users || team.team_members || [] } as roster">
-                        <div class="card-upper-row">
-                            <div class="badge-title-group">
-                                <div class="title-meta">
-                                    <h4>{{ team.name }}</h4>
-                                    <div class="badge-row-container">
-                                        <span class="badge-count-pill">{{ roster.list.length }} Stationed Personnel</span>
-                                        <span class="badge-status-pill active" *ngIf="roster.list.length > 0">Operational</span>
-                                        <span class="badge-status-pill idle" *ngIf="roster.list.length === 0">Vacant</span>
-                                    </div>
+                                <div class="selected-user-avatar" aria-hidden="true">
+                                    <img
+                                        *ngIf="user.profilePictureUrl"
+                                        [src]="getAvatarDisplaySrc(user)"
+                                        [alt]="user.name" />
+                                    <span *ngIf="!user.profilePictureUrl">
+                                        {{ getInitials(user.name) }}
+                                    </span>
                                 </div>
-                            </div>
 
-                            <div class="card-action-menu">
-                                <button class="gp-action-trigger edit-trigger" (click)="$event.stopPropagation(); editTeam(team)">Modify</button>
-                                <button class="gp-action-trigger delete-trigger" (click)="$event.stopPropagation(); deleteTeam(team.id)">Purge</button>
+                                <div class="selected-user-copy">
+                                    <span class="selected-user-name">
+                                        {{ user.name }}
+                                    </span>
+                                    <span class="selected-user-email">
+                                        {{ user.email }}
+                                    </span>
+
+                                    <span class="selected-user-employee-code">
+                                        {{
+                                            (user.employeeIdPrefix && user.employeeIdNumber)
+                                                ? user.employeeIdPrefix + '//' + user.employeeIdNumber
+                                                : (user.employeeIdPrefix || user.employeeIdNumber || 'No employee code')
+                                        }}
+                                    </span>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    class="selected-user-remove"
+                                    [attr.aria-label]="'Remove ' + user.name"
+                                    (click)="removeUserChip(user.id)">
+                                    &times;
+                                </button>
                             </div>
                         </div>
 
-                        <p class="team-body-description">
-                            {{ team.description || 'No descriptive contextual scope documentation configured for this workspace team.' }}
-                        </p>
                     </div>
+
+                </div>
+
+            </div>
+
+            <div class="inline-form-footer">
+
+                <button
+                    type="button"
+                    mat-stroked-button
+                    class="gp-button gp-action form-action-fixed-btn"
+                    (click)="saveTeam()"
+                    [disabled]="loading || !name.trim()">
+
+                    <ng-container *ngIf="loading">
+                        Saving Changes...
+                    </ng-container>
+
+                    <ng-container *ngIf="!loading">
+                        {{
+                            editingTeamId
+                                ? 'Update Team'
+                                : 'Create Team'
+                        }}
+                    </ng-container>
+
+                </button>
+
+                <button
+                    type="button"
+                    mat-stroked-button
+                    class="gp-button gp-cancel form-action-fixed-btn"
+                    (click)="resetForm()">
+
+                    Cancel
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- TEAM WORKSPACE -->
+    <main class="dashboard-workspace">
+
+        <div class="workspace-filter-header">
+
+            <div class="workspace-badge-legend">
+                <span class="legend-indicator"></span>
+                Teams
+            </div>
+
+            <div class="workspace-search-input-frame">
+
+                <span class="search-lens"></span>
+
+                <input
+                    type="text"
+                    [(ngModel)]="searchTerm"
+                    placeholder="Search teams..." />
+
+            </div>
+
+        </div>
+
+        <div
+            class="saas-team-grid-layout"
+            *ngIf="teams$ | async as teams">
+
+            <ng-container
+                *ngIf="
+                    filterTeams(teams).length > 0;
+                    else emptyCardsFallback
+                ">
+
+                <article
+                    class="team-saas-card"
+                    *ngFor="
+                        let team of filterTeams(teams);
+                        trackBy: trackTeam
+                    "
+                    (click)="openTeamDetails(team)"
+                    [class.is-selected]="
+                        selectedTeam?.id === team.id
+                    ">
+
+                    <div class="card-main-details">
+
+                        <div class="card-upper-row">
+
+                            <div class="badge-title-group">
+
+                                <div class="title-meta">
+
+                                    <h4>
+                                        {{ team.name }}
+                                    </h4>
+
+
+
+                                </div>
+
+                            </div>
+
+                            <div class="card-action-menu">
+
+                                <button
+                                    type="button"
+                                    class="gp-action-trigger edit-trigger"
+                                    (click)="
+                                        $event.stopPropagation();
+                                        editTeam(team)
+                                    ">
+
+                                    Modify
+
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="gp-action-trigger delete-trigger"
+                                    (click)="
+                                        $event.stopPropagation();
+                                        deleteTeam(team.id)
+                                    ">
+
+                                    Delete
+
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                        <p class="team-body-description">
+                            {{
+                                team.description ||
+                                'No description configured for this team.'
+                            }}
+                        </p>
+
+                    </div>
+
                 </article>
 
             </ng-container>
 
             <ng-template #emptyCardsFallback>
+
                 <div class="saas-empty-state">
-                    <div class="empty-vector">🔎</div>
-                    <h4>No active groups discovered</h4>
-                    <p>Refine your lookup criteria or begin assembling a new operations cluster.</p>
+
+                    <div class="empty-vector">
+                        🔎
+                    </div>
+
+                    <h4>
+                        No teams found
+                    </h4>
+
+                    <p>
+                        Create a team or change your search.
+                    </p>
+
                 </div>
+
             </ng-template>
+
         </div>
+
     </main>
 
-    <!-- SLIDEOUT SIDE INFOPANEL DRAWER CONTAINER (ALL DETAILED TEAM INFO) -->
-    <div class="side-panel-overlay" *ngIf="selectedTeam" (click)="closeTeamDetails()"></div>
-    
-    <aside class="side-info-panel" [class.panel-open]="selectedTeam" *ngIf="selectedTeam">
-        <ng-container *ngIf="{ list: selectedTeam.members || selectedTeam.users || selectedTeam.team_members || [] } as panelRoster">
-            
-            <div class="panel-header">
-                <div class="panel-header-title">
-                    <h3>{{ selectedTeam.name }}</h3>
-                    <p>Complete structural architecture data metrics</p>
-                </div>
-                <button class="panel-close-btn" (click)="closeTeamDetails()">&times;</button>
-            </div>
+    <!-- TEAM DETAILS -->
+    <div
+        class="side-panel-overlay"
+        *ngIf="selectedTeam"
+        (click)="closeTeamDetails()">
+    </div>
 
-            <div class="panel-scroll-content">
-                <!-- METRIC GRID INTEL -->
-                <div class="panel-section-title">Operational Summary</div>
-                <div class="team-intel-grid">
-                    <div class="intel-stat-block">
-                        <span class="intel-label">Primary Allocation</span>
-                        <span class="intel-val">{{ getDominantRole(panelRoster.list) }}</span>
-                    </div>
-                    <div class="intel-stat-block">
-                        <span class="intel-label">Diversity Distribution</span>
-                        <span class="intel-val">{{ getUniqueRolesCount(panelRoster.list) }} Unique Track(s)</span>
-                    </div>
-                </div>
+    <aside
+        class="side-info-panel"
+        [class.panel-open]="!!selectedTeam"
+        *ngIf="selectedTeam">
 
-                <!-- SCOPE DESCRIPTION -->
-                <div class="panel-section-title">Contextual Scope</div>
-                <p class="panel-description-text">
-                    {{ selectedTeam.description || 'No descriptive contextual scope documentation configured for this workspace team.' }}
+        <div class="panel-header">
+
+            <div class="panel-header-title">
+
+                <h3>
+                    {{ selectedTeam.name }}
+                </h3>
+
+                <p>
+                    Team details and assigned users
                 </p>
 
-                <!-- STATIONED PERSONNEL SELECTION -->
-                <div class="panel-section-title">
-                    Stationed Personnel Allocation ({{ panelRoster.list.length }})
+            </div>
+
+            <button
+                type="button"
+                class="panel-close-btn"
+                (click)="closeTeamDetails()">
+
+                &times;
+
+            </button>
+
+        </div>
+
+        <div class="panel-scroll-content">
+
+            <div class="panel-section-title">
+                Team Summary
+            </div>
+
+            <div class="team-intel-grid">
+
+                <div class="intel-stat-block">
+                    <span class="intel-label">Members</span>
+                    <span class="intel-val">
+                        {{ getTeamMembers(selectedTeam).length }}
+                    </span>
                 </div>
 
-                <p class="no-seats-hint" *ngIf="panelRoster.list.length === 0">
-                    No active workspace personnel attached to this operations pool.
-                </p>
+                <div class="intel-stat-block">
+                    <span class="intel-label">Status</span>
+                    <span class="intel-val">
+                        {{ getTeamMembers(selectedTeam).length > 0 ? 'Operational' : 'No Members' }}
+                    </span>
+                </div>
 
-                <!-- INTERACTIVE ROSTER MAP -->
-                <ul class="roster-interactive-list" *ngIf="panelRoster.list.length > 0">
-                    <li *ngFor="let memberRef of panelRoster.list" class="roster-member-item">
-                        <div class="member-identity-block">
-                            <div class="mini-avatar">
-                                {{ ($any(memberRef).name || $any(memberRef).user?.name || $any(memberRef).username || 'U').charAt(0) }}
-                            </div>
-                            <div class="identity-text">
-                                <span class="m-name">
-                                    {{ $any(memberRef).name || $any(memberRef).user?.name || $any(memberRef).username || 'Unknown User' }}
-                                </span>
-                                <span class="m-role">
-                                    {{ $any(memberRef).role_name || $any(memberRef).user?.role_name || 'Workspace Staff' }}
-                                </span>
-                            </div>
-                        </div>
-                        <button class="btn-remove-member-inline" title="Revoke Member Workspace Seats"
-                            (click)="removeMemberFromTeamInline(selectedTeam.id, $any(memberRef).id || $any(memberRef).user_id || $any(memberRef).user?.id)">
-                            &times;
-                        </button>
-                    </li>
-                </ul>
             </div>
 
-            <!-- FAST INLINE COUPLING ACCELERATOR -->
-            <div class="panel-fixed-footer">
-                <select #quickUserSelect class="saas-mini-dropdown"
-                    (change)="addMemberToTeamInline(selectedTeam.id, +quickUserSelect.value); quickUserSelect.value = ''">
-                    <option value="" disabled selected>Fast Deploy Member...</option>
-                    <option *ngFor="let candidate of getUnassignedCandidates(panelRoster.list)"
-                        [value]="candidate.id || candidate.user_id">
-                        + {{ candidate.name || candidate.username }}
-                    </option>
-                </select>
+            <div class="panel-section-title">
+                Description
             </div>
 
-        </ng-container>
+            <p class="panel-description-text">
+
+                {{
+                    selectedTeam.description ||
+                    'No description configured for this team.'
+                }}
+
+            </p>
+
+            <div class="team-detail-meta-grid">
+
+                <div class="team-detail-meta-item">
+                    <span class="team-detail-meta-label">Team ID</span>
+                    <span class="team-detail-meta-value">#{{ selectedTeam.id }}</span>
+                </div>
+
+                <div class="team-detail-meta-item" *ngIf="selectedTeam.createdAt">
+                    <span class="team-detail-meta-label">Created</span>
+                    <span class="team-detail-meta-value">{{ selectedTeam.createdAt | date:'medium' }}</span>
+                </div>
+
+                <div class="team-detail-meta-item">
+                    <span class="team-detail-meta-label">Members</span>
+                    <span class="team-detail-meta-value">{{ getTeamMembers(selectedTeam).length }}</span>
+                </div>
+
+                <div class="team-detail-meta-item">
+                    <span class="team-detail-meta-label">Status</span>
+                    <span class="team-detail-meta-value">
+                        {{ getTeamMembers(selectedTeam).length > 0 ? 'Operational' : 'No Members' }}
+                    </span>
+                </div>
+
+            </div>
+
+            <div class="panel-section-title">
+
+                Team Members
+                ({{
+                    getTeamMembers(selectedTeam).length
+                }})
+
+            </div>
+
+            <p
+                class="no-seats-hint"
+                *ngIf="
+                    getTeamMembers(selectedTeam).length === 0
+                ">
+
+                No users assigned to this team.
+
+            </p>
+
+            <div
+                class="team-member-chip-list"
+                *ngIf="getTeamMembers(selectedTeam).length > 0
+                ">
+
+                <div
+                    *ngFor="let member of getTeamMembers(selectedTeam)"
+                    class="team-member-chip">
+
+                    <div class="team-member-chip-avatar" aria-hidden="true">
+
+                        <img
+                            *ngIf="getMemberAvatar(member)"
+                            [src]="getMemberAvatarDisplaySrc(member)"
+                            [alt]="getMemberName(member)" />
+
+                        <span *ngIf="!getMemberAvatar(member)">
+                            {{ getInitials(getMemberName(member)) }}
+                        </span>
+
+                    </div>
+
+                    <div class="team-member-chip-copy">
+
+                        <span class="team-member-chip-name">
+                            {{ getMemberName(member) }}
+                        </span>
+
+                        <span class="team-member-chip-email">
+                            {{ getMemberEmail(member) }}
+                        </span>
+
+                        <span class="team-member-chip-employee-code">
+                            {{ getMemberEmployeeCode(member) }}
+                        </span>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        class="team-member-chip-remove"
+                        title="Remove member from team"
+                        [attr.aria-label]="'Remove ' + getMemberName(member)"
+                        (click)="
+                            $event.stopPropagation();
+                            removeMemberFromTeamInline(
+                                selectedTeam.id,
+                                getMemberId(member)
+                            )
+                        ">
+                        &times;
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ADD / UPDATE MEMBERS -->
+        <div class="panel-fixed-footer">
+
+            <button
+                type="button"
+                class="gp-button gp-primary panel-add-members-btn"
+                (click)="openTeamMemberManager(selectedTeam)">
+                + Add Members
+            </button>
+
+        </div>
+
     </aside>
+
 </div>

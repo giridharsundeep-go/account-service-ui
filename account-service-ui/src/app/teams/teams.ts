@@ -4,18 +4,50 @@ import { environment } from '../../environment';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-import { map, Observable, BehaviorSubject, combineLatest, forkJoin, of } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import {
+  Observable,
+  BehaviorSubject,
+  of
+} from 'rxjs';
+
+import {
+  catchError,
+  map,
+  switchMap
+} from 'rxjs/operators';
+
 import { AuthService } from '../auth.service';
 
-// Angular Material Imports
+// Angular Material
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatChipsModule } from '@angular/material/chips';
-import { UserSelectDialog } from '../user-select-dialog/user-select-dialog';
+
+import {
+  UserSelectDialog,
+  UserPayload
+} from '../user-select-dialog/user-select-dialog';
+
+interface TeamMemberView {
+  id: number;
+  name: string;
+  email: string;
+  profilePictureUrl?: string | null;
+  employeeIdPrefix?: string | null;
+  employeeIdNumber?: string | number | null;
+  role_name?: string | null;
+}
+
+interface TeamView {
+  id: number;
+  name: string;
+  description: string;
+  createdAt?: string | null;
+  members: TeamMemberView[];
+}
 
 @Component({
   selector: 'app-teams',
@@ -34,398 +66,1189 @@ import { UserSelectDialog } from '../user-select-dialog/user-select-dialog';
   styleUrls: ['./teams.css']
 })
 export class Teams implements OnInit {
-  baseUrl = environment.apiBaseUrl;
 
-  private teamsRefresh$ = new BehaviorSubject<void>(undefined);
-  private usersSubject$ = new BehaviorSubject<any[]>([]);
-  
-  teams$: Observable<any[]> | undefined;
-  allUsers: any[] = []; 
+  baseUrl = environment.apiBaseUrlM;
+
+  private teamsRefresh$ =
+    new BehaviorSubject<void>(undefined);
+
+
+  teams$: Observable<TeamView[]> = of([]);
+
+  allUsers: UserPayload[] = [];
 
   name = '';
   description = '';
-  
+
+  // User IDs sent to POST/PUT /api/teams
   selectedUsers: number[] = [];
-  chipUserObjects: any[] = []; 
+
+  // Display-only chip objects
+  chipUserObjects: UserPayload[] = [];
 
   editingTeamId: number | null = null;
+
   searchTerm = '';
+
   loading = false;
 
-  private originalTeamState: { name: string; description: string; userIds: number[] } | null = null;
+  selectedTeam: TeamView | null = null;
 
   constructor(
     private http: HttpClient,
     private auth: AuthService,
     private dialog: MatDialog,
     private cdr: ChangeDetectorRef
-  ) { }
+  ) {}
 
-  ngOnInit() {
+  // ============================================================
+  // INITIAL LOAD
+  // ============================================================
+
+  ngOnInit(): void {
+
     this.loadUsersBackground();
 
-    this.teams$ = combineLatest([
-      this.teamsRefresh$,
-      this.usersSubject$
-    ]).pipe(
-      switchMap(() => {
-        return this.http.get<any>(`${this.baseUrl}/teams`, { headers: this.auth.getAuthHeaders() });
+    /*
+     * GET /api/teams returns:
+     *
+     * {
+     *   data: [
+     *     {
+     *       id,
+     *       name,
+     *       description,
+     *       createdAt,
+     *       members: [ User, User, User ]
+     *     }
+     *   ],
+     *   message,
+     *   success
+     * }
+     *
+     * Member identity data is hydrated from the same /api/users list.
+     */
+    this.teams$ = this.teamsRefresh$.pipe(
+      switchMap(() =>
+        this.http.get<any>(
+          `${this.baseUrl}/teams`,
+          {
+            headers: this.auth.getAuthHeaders()
+          }
+        )
+      ),
+
+      map((res: any) => {
+
+        const teams =
+          Array.isArray(res?.data)
+            ? res.data
+            : [];
+
+        return teams.map((team: any) =>
+          this.normalizeTeam(team)
+        );
       }),
-      switchMap((res: any) => {
-        const rawTeamsArray = res?.data || [];
-        
-        if (rawTeamsArray.length === 0) {
-          return of([]); 
-        }
 
-        const teamRosterRequests = rawTeamsArray.map((team: any) => 
-          this.http.get<any>(`${this.baseUrl}/team-members/team/${team.id}`, { headers: this.auth.getAuthHeaders() }).pipe(
-            map((rosterRes: any) => {
-              const rawMembers = rosterRes?.data || [];
-              
-              team.members = rawMembers.map((m: any) => {
-                const targetId = Number(m.user_id || m.id || m);
-                const foundProfile = this.allUsers.find(u => Number(u.id || u.user_id) === targetId);
-                
-                return foundProfile 
-                  ? { ...foundProfile, id: targetId, user_id: targetId } 
-                  : { id: targetId, user_id: targetId, name: m.name || m.username || `User ID: ${targetId}` };
-              });
+      catchError((error) => {
 
-              return team;
-            })
-          )
+        console.error(
+          'Failed to load teams:',
+          error
         );
 
-        return forkJoin(teamRosterRequests) as Observable<any[]>;
+        return of([] as TeamView[]);
       })
     );
   }
 
-  filterTeams(teams: any[] | null): any[] {
-    if (!teams) return [];
-    if (!this.searchTerm.trim()) return teams;
-    
-    const term = this.searchTerm.toLowerCase().trim();
-    return teams.filter(team => 
-      team.name?.toLowerCase().includes(term) || 
-      team.description?.toLowerCase().includes(term)
-    );
+  // ============================================================
+  // SEARCH
+  // ============================================================
+
+  filterTeams(teams: TeamView[] | null): TeamView[] {
+
+    if (!teams) {
+      return [];
+    }
+
+    const term =
+      this.searchTerm
+        .trim()
+        .toLowerCase();
+
+    if (!term) {
+      return teams;
+    }
+
+    return teams.filter((team: TeamView) => {
+
+      const teamMatches =
+        (team?.name || '')
+          .toLowerCase()
+          .includes(term) ||
+        (team?.description || '')
+          .toLowerCase()
+          .includes(term);
+
+      const memberMatches =
+        this.getTeamMembers(team).some(
+          (member: TeamMemberView) =>
+            this.getMemberName(member)
+              .toLowerCase()
+              .includes(term) ||
+            this.getMemberEmail(member)
+              .toLowerCase()
+              .includes(term)
+        );
+
+      return teamMatches || memberMatches;
+    });
   }
 
-  refreshTeamsList() {
+  // ============================================================
+  // REFRESH
+  // ============================================================
+
+  refreshTeamsList(): void {
     this.teamsRefresh$.next();
   }
 
-  loadUsersBackground() {
-    this.http.get<any>(`${this.baseUrl}/user`, {
-      headers: this.auth.getAuthHeaders()
-    }).subscribe({
-      next: (res) => {
-        const users = res?.data || [];
-        this.allUsers = users;
-        this.usersSubject$.next(users);
-        
-        if (this.selectedUsers.length > 0) {
-          this.rebuildChipsFromSelectedUsers();
-        }
+  // ============================================================
+  // USERS
+  // ============================================================
+
+  loadUsersBackground(): void {
+
+    /*
+     * User picker source of truth:
+     * GET /api/users
+     *
+     * The API should return safe user fields only. The frontend
+     * normalizes both camelCase and snake_case responses.
+     */
+    this.http.get<any>(
+      `${this.baseUrl}/users`,
+      {
+        headers: this.auth.getAuthHeaders()
+      }
+    ).subscribe({
+      next: (res: any) => {
+
+        const rawUsers =
+          Array.isArray(res?.data)
+            ? res.data
+            : Array.isArray(res)
+              ? res
+              : [];
+
+        this.allUsers =
+          rawUsers.map((user: any) =>
+            this.normalizeUser(user)
+          );
+
+
+        this.rebuildChipsFromSelectedUsers();
+
+        /*
+         * Re-fetch teams after users are loaded so team membership IDs
+         * can always be hydrated with name/email/avatar/employee code.
+         */
+        this.refreshTeamsList();
+
         this.cdr.markForCheck();
       },
-      error: (err) => console.error('Failed to pre-cache master user roster listing:', err)
+
+      error: (error) => {
+
+        console.error(
+          'Failed to load users:',
+          error
+        );
+      }
     });
   }
 
-  getDominantRole(members: any[]): string {
-    if (!members || members.length === 0) return 'None Configured';
-    const counts: { [key: string]: number } = {};
-    members.forEach(m => {
-      const role = m.role_name || m.user?.role_name || 'Staff';
-      counts[role] = (counts[role] || 0) + 1;
-    });
-    
-    return Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
-  }
-
-  getUniqueRolesCount(members: any[]): number {
-    if (!members || members.length === 0) return 0;
-    const distinctRoles = new Set(members.map(m => m.role_name || m.user?.role_name || 'Staff'));
-    return distinctRoles.size;
-  }
-
-  getUnassignedCandidates(currentTeamMembers: any[]): any[] {
-    const assignedIds = new Set((currentTeamMembers || []).map(m => Number(m.id || m.user_id)));
-    return this.allUsers.filter(u => !assignedIds.has(Number(u.id || u.user_id)));
-  }
-
-  editTeam(team: any) {
-    this.name = team.name;
-    this.description = team.description || '';
-    this.editingTeamId = team.id;
-    this.loading = true;
-    
-    this.selectedUsers = [];
-    this.chipUserObjects = [];
-
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    // 1. Immediately cache whatever member info is already sitting in the stream layout cards
-    const structuralMembersList = team.members || team.users || team.team_members || [];
-    if (Array.isArray(structuralMembersList) && structuralMembersList.length > 0) {
-      this.selectedUsers = structuralMembersList.map((m: any) => Number(m.user_id || m.id));
-      this.chipUserObjects = structuralMembersList.map((m: any) => ({
-        id: Number(m.user_id || m.id),
-        name: m.name || m.username || m.user?.name || `User ID: ${m.user_id || m.id}`
-      }));
-    }
-
-    // Initialize immediate state safety layer to avoid null failures if saved instantly
-    this.originalTeamState = {
-      name: team.name,
-      description: team.description || '',
-      userIds: [...this.selectedUsers]
+  private normalizeUser(user: any): UserPayload {
+    return {
+      id: Number(
+        user?.id ??
+        user?.user_id
+      ),
+      name:
+        user?.name ||
+        user?.username ||
+        user?.email ||
+        'Unknown User',
+      email:
+        user?.email ||
+        'No email available',
+      profilePictureUrl:
+        user?.profilePictureUrl ??
+        user?.profile_picture_url ??
+        null,
+      employeeIdPrefix:
+        user?.employeeIdPrefix ??
+        user?.employee_id_prefix ??
+        null,
+      employeeIdNumber:
+        user?.employeeIdNumber ??
+        user?.employee_id_number ??
+        null
     };
-
-    this.cdr.detectChanges();
-
-    // 2. Fetch fresh server values to guarantee precise sync arrays
-    this.http.get<any>(`${this.baseUrl}/team-members/team/${team.id}`, {
-      headers: this.auth.getAuthHeaders()
-    }).subscribe({
-      next: (res) => {
-        const membersList = res?.data || [];
-        this.selectedUsers = membersList.map((m: any) => Number(m.user_id || m.id));
-        
-        // Re-write matching current active storage maps
-        this.originalTeamState = {
-          name: team.name,
-          description: team.description || '',
-          userIds: [...this.selectedUsers]
-        };
-
-        this.rebuildChipsFromSelectedUsers();
-        this.loading = false;
-        this.cdr.markForCheck();
-      },
-      error: (err) => {
-        console.error('Failed to look up assigned team members from backend:', err);
-        this.loading = false;
-        this.cdr.markForCheck();
-      }
-    });
   }
 
-  private rebuildChipsFromSelectedUsers() {
-    this.chipUserObjects = this.selectedUsers.map(id => {
-      const match = this.allUsers.find(u => 
-        Number(u.id) === Number(id) || Number(u.user_id) === Number(id)
+  private normalizeTeam(team: any): TeamView {
+    const rawMembers =
+      Array.isArray(team?.members)
+        ? team.members
+        : Array.isArray(team?.teamMembers)
+          ? team.teamMembers
+          : Array.isArray(team?.team_members)
+            ? team.team_members
+            : Array.isArray(team?.memberIds)
+              ? team.memberIds
+              : [];
+
+    return {
+      id: Number(team?.id),
+      name: team?.name ?? '',
+      description: team?.description ?? '',
+      createdAt:
+        team?.createdAt ??
+        team?.created_at ??
+        null,
+      members:
+        rawMembers
+          .map((member: any) =>
+            this.normalizeMember(member)
+          )
+          .map((member: TeamMemberView) =>
+            this.enrichMemberFromUsers(member)
+          )
+          .filter((member: TeamMemberView) =>
+            Number.isFinite(member.id) && member.id > 0
+          )
+    };
+  }
+
+  private normalizeMember(member: any): TeamMemberView {
+    const source =
+      member?.user ??
+      member;
+
+    const rawId =
+      member?.user_id ??
+      member?.userId ??
+      member?.memberId ??
+      source?.id ??
+      source?.user_id ??
+      member?.id;
+
+    return {
+      id: Number(rawId),
+      name:
+        source?.name ||
+        source?.username ||
+        source?.email ||
+        'Unknown User',
+      email:
+        source?.email ||
+        'No email available',
+      profilePictureUrl:
+        source?.profilePictureUrl ??
+        source?.profile_picture_url ??
+        null,
+      employeeIdPrefix:
+        source?.employeeIdPrefix ??
+        source?.employee_id_prefix ??
+        null,
+      employeeIdNumber:
+        source?.employeeIdNumber ??
+        source?.employee_id_number ??
+        null,
+      role_name:
+        source?.role_name ??
+        source?.role?.name ??
+        member?.role_name ??
+        member?.role?.name ??
+        null
+    };
+  }
+
+  private enrichMemberFromUsers(member: TeamMemberView): TeamMemberView {
+    const knownUser =
+      this.findKnownUser(member.id);
+
+    if (!knownUser) {
+      return member;
+    }
+
+    return {
+      ...member,
+      name:
+        member.name &&
+        member.name !== 'Unknown User'
+          ? member.name
+          : knownUser.name,
+      email:
+        member.email &&
+        member.email !== 'No email available'
+          ? member.email
+          : knownUser.email,
+      profilePictureUrl:
+        member.profilePictureUrl ??
+        knownUser.profilePictureUrl ??
+        null,
+      employeeIdPrefix:
+        member.employeeIdPrefix ??
+        knownUser.employeeIdPrefix ??
+        null,
+      employeeIdNumber:
+        member.employeeIdNumber ??
+        knownUser.employeeIdNumber ??
+        null
+    };
+  }
+
+  trackTeam(index: number, team: TeamView): number {
+    return Number(
+      team?.id ??
+      index
+    );
+  }
+
+  // ============================================================
+  // TEAM MEMBER HELPERS
+  // ============================================================
+
+  getTeamMembers(team: TeamView | null): TeamMemberView[] {
+
+    if (!Array.isArray(team?.members)) {
+      return [];
+    }
+
+    return team!.members
+      .map((member: TeamMemberView) =>
+        this.enrichMemberFromUsers(member)
       );
-      
-      return {
-        id: id,
-        name: match ? (match.name || match.username || match.first_name || `User ${id}`) : `User ID: ${id}`
-      };
+  }
+
+  getMemberId(member: any): number {
+
+    return Number(
+      member?.id ??
+      member?.user_id ??
+      member?.user?.id
+    );
+  }
+
+  getMemberName(member: any): string {
+
+    return (
+      member?.name ||
+      member?.user?.name ||
+      member?.username ||
+      member?.email ||
+      'Unknown User'
+    );
+  }
+
+  getMemberEmail(member: any): string {
+
+    return (
+      member?.email ||
+      member?.user?.email ||
+      'No email available'
+    );
+  }
+
+  getMemberEmployeeCode(member: any): string {
+    const prefix =
+      member?.employeeIdPrefix ??
+      member?.employee_id_prefix ??
+      member?.user?.employeeIdPrefix ??
+      member?.user?.employee_id_prefix ??
+      '';
+
+    const number =
+      member?.employeeIdNumber ??
+      member?.employee_id_number ??
+      member?.user?.employeeIdNumber ??
+      member?.user?.employee_id_number ??
+      '';
+
+    if (!prefix && !number) {
+      return 'No employee code';
+    }
+
+    if (prefix && number) {
+      return `${prefix}//${number}`;
+    }
+
+    return String(prefix || number);
+  }
+
+  getMemberAvatar(member: any): string | null {
+
+    return (
+      member?.profilePictureUrl ??
+      member?.profile_picture_url ??
+      member?.user?.profilePictureUrl ??
+      member?.user?.profile_picture_url ??
+      null
+    );
+  }
+
+  getMemberAvatarDisplaySrc(member: any): string {
+    return this.resolveAvatarUrl(
+      this.getMemberAvatar(member)
+    );
+  }
+
+  getAvatarDisplaySrc(user: UserPayload): string {
+    return this.resolveAvatarUrl(
+      user?.profilePictureUrl ?? null
+    );
+  }
+
+  private resolveAvatarUrl(path: string | null): string {
+    if (!path) {
+      return '';
+    }
+
+    if (path.startsWith('data:') || path.startsWith('http://') || path.startsWith('https://')) {
+      return path;
+    }
+
+    const cleanPath = path
+      .trim()
+      .replace(/^\/+/, '');
+
+    const cleanBase = this.baseUrl.endsWith('/')
+      ? this.baseUrl.slice(0, -1)
+      : this.baseUrl;
+
+    return `${cleanBase}/${cleanPath}`;
+  }
+
+  getInitials(name: string): string {
+
+    if (!name?.trim()) {
+      return '?';
+    }
+
+    const parts =
+      name
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+
+    if (parts.length >= 2) {
+      return (
+        parts[0][0] +
+        parts[parts.length - 1][0]
+      ).toUpperCase();
+    }
+
+    return parts[0][0].toUpperCase();
+  }
+
+  getMemberRole(member: any): string {
+
+    return (
+      member?.role_name ||
+      member?.role?.name ||
+      member?.user?.role_name ||
+      member?.user?.role?.name ||
+      'Workspace Staff'
+    );
+  }
+
+  getDominantRole(members: TeamMemberView[]): string {
+
+    if (!members?.length) {
+      return 'None Configured';
+    }
+
+    const counts: {
+      [key: string]: number
+    } = {};
+
+    members.forEach((member: TeamMemberView) => {
+
+      const role =
+        this.getMemberRole(member);
+
+      counts[role] =
+        (counts[role] || 0) + 1;
     });
+
+    return Object.keys(counts)
+      .reduce((a, b) =>
+        counts[a] > counts[b]
+          ? a
+          : b
+      );
+  }
+
+  getUniqueRolesCount(members: TeamMemberView[]): number {
+
+    if (!members?.length) {
+      return 0;
+    }
+
+    return new Set(
+      members.map(
+        (member: TeamMemberView) =>
+          this.getMemberRole(member)
+      )
+    ).size;
+  }
+
+  getUnassignedCandidates(
+    currentTeamMembers: TeamMemberView[]
+  ): UserPayload[] {
+
+    const assignedIds =
+      new Set(
+        (currentTeamMembers || [])
+          .map((member: TeamMemberView) =>
+            this.getMemberId(member)
+          )
+          .filter((id: number) =>
+            Number.isFinite(id) && id > 0
+          )
+      );
+
+    return this.allUsers.filter(
+      (user: UserPayload) =>
+        !assignedIds.has(
+          Number(user?.id)
+        )
+    );
+  }
+
+  // ============================================================
+  // EDIT TEAM
+  // ============================================================
+
+  editTeam(team: TeamView): void {
+
+    this.name =
+      team?.name || '';
+
+    this.description =
+      team?.description || '';
+
+    this.editingTeamId =
+      Number(team?.id);
+
+    const members =
+      this.getTeamMembers(team);
+
+    this.selectedUsers =
+      members
+        .map((member: TeamMemberView) =>
+          this.getMemberId(member)
+        )
+        .filter((id: number) =>
+          Number.isFinite(id) && id > 0
+        );
+
+    this.rebuildChipsFromSelectedUsers();
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+
     this.cdr.markForCheck();
   }
 
-  addMemberToTeamInline(teamId: number, userId: number) {
-    if (!userId) return;
+  // ============================================================
+  // MEMBER SELECT DIALOG
+  // ============================================================
 
-    this.http.post(`${this.baseUrl}/team-members/create`, {
-      team_id: teamId,
-      user_ids: [userId]
-    }, {
-      headers: this.auth.getAuthHeaders()
-    }).subscribe({
-      next: () => {
-        this.refreshTeamsList();
-        if (this.editingTeamId === teamId && !this.selectedUsers.includes(userId)) {
-          this.selectedUsers = [...this.selectedUsers, userId];
-          this.rebuildChipsFromSelectedUsers();
-        }
-      },
-      error: (err) => console.error('Failed to provision inline member seat:', err)
-    });
-  }
+  openUserSelectModal(): void {
 
-  removeMemberFromTeamInline(teamId: number, userId: number) {
-    if (!confirm('Revoke access privileges for this team member?')) return;
-
-    this.http.request('delete', `${this.baseUrl}/team-members`, {
-      body: { team_id: teamId, user_ids: [userId] },
-      headers: this.auth.getAuthHeaders()
-    }).subscribe({
-      next: () => {
-        this.refreshTeamsList();
-        if (this.editingTeamId === teamId) {
-          this.selectedUsers = this.selectedUsers.filter(id => id !== userId);
-          this.rebuildChipsFromSelectedUsers();
-        }
-      },
-      error: (err) => console.error('Failed to revoke member seat privilege:', err)
-    });
-  }
-
-  openUserSelectModal() {
-    const dialogRef = this.dialog.open(UserSelectDialog, {
-      width: '1000px',
-      data: {
-        users: this.allUsers,
-        currentSelection: this.selectedUsers
-      }
-    });
-
-    dialogRef.afterClosed().subscribe((result: number[] | undefined) => {
-      if (result !== undefined) {
-        this.selectedUsers = result.map(id => Number(id));
+    this.openUserSelectionDialog(
+      this.selectedUsers,
+      (ids: number[]) => {
+        this.selectedUsers = ids;
         this.rebuildChipsFromSelectedUsers();
       }
+    );
+  }
+
+  openTeamMemberManager(
+    team: TeamView | null
+  ): void {
+
+    if (!team) {
+      return;
+    }
+
+    const currentIds =
+      this.getTeamMembers(team)
+        .map((member: TeamMemberView) =>
+          this.getMemberId(member)
+        )
+        .filter((id: number) =>
+          Number.isFinite(id) && id > 0
+        );
+
+    this.openUserSelectionDialog(
+      currentIds,
+      (ids: number[]) => {
+        this.updateTeamMembers(
+          team,
+          ids
+        );
+      }
+    );
+  }
+
+  private openUserSelectionDialog(
+    currentSelection: number[],
+    onSelected: (ids: number[]) => void
+  ): void {
+
+    const currentIds =
+      new Set(
+        currentSelection.map(
+          (id: number) => Number(id)
+        )
+      );
+
+    const usersForDialog = [
+      ...this.allUsers,
+      ...currentSelection
+        .map((id: number) =>
+          this.findKnownUser(id)
+        )
+        .filter(
+          (user): user is UserPayload =>
+            !!user
+        )
+    ].filter(
+      (user: UserPayload, index: number, collection: UserPayload[]) =>
+        collection.findIndex(
+          (candidate: UserPayload) =>
+            Number(candidate.id) ===
+            Number(user.id)
+        ) === index
+    );
+
+    const dialogRef =
+      this.dialog.open(
+        UserSelectDialog,
+        {
+          width: '860px',
+          maxWidth: '92vw',
+          data: {
+            users: usersForDialog,
+            currentSelection: [...currentIds]
+          }
+        }
+      );
+
+    dialogRef
+      .afterClosed()
+      .subscribe(
+        (result: number[] | undefined) => {
+
+          if (!Array.isArray(result)) {
+            return;
+          }
+
+          onSelected(
+            [...new Set(
+              result.map(
+                (id: number) =>
+                  Number(id)
+              )
+            )].filter(
+              (id: number) =>
+                Number.isFinite(id) &&
+                id > 0
+            )
+          );
+        }
+      );
+  }
+
+  private findKnownUser(
+    id: number
+  ): UserPayload | null {
+
+    return (
+      this.allUsers.find(
+        (user: UserPayload) =>
+          Number(user.id) === Number(id)
+      ) ??
+      null
+    );
+  }
+
+  // ============================================================
+  // REBUILD CHIPS
+  // ============================================================
+
+  private rebuildChipsFromSelectedUsers(): void {
+
+    this.chipUserObjects =
+      this.selectedUsers
+        .map((id: number) =>
+          this.findKnownUser(id)
+        )
+        .filter(
+          (user): user is UserPayload =>
+            !!user
+        );
+
+    this.cdr.markForCheck();
+  }
+
+  removeUserChip(userId: number): void {
+
+    this.selectedUsers =
+      this.selectedUsers.filter(
+        (id: number) =>
+          Number(id) !== Number(userId)
+      );
+
+    this.rebuildChipsFromSelectedUsers();
+  }
+
+  // ============================================================
+  // CREATE / UPDATE
+  //
+  // ONE REQUEST CONTAINS:
+  // Team fields + memberIds
+  //
+  // Backend updates teams + team_members in ONE transaction.
+  // ============================================================
+
+  saveTeam(): void {
+
+    const trimmedName =
+      this.name.trim();
+
+    if (!trimmedName) {
+      return;
+    }
+
+    this.loading = true;
+
+    const payload =
+      this.buildTeamPayload(
+        this.selectedUsers
+      );
+
+    const headers =
+      this.auth.getAuthHeaders();
+
+    // UPDATE
+    if (
+      this.editingTeamId !== null &&
+      this.editingTeamId > 0
+    ) {
+
+      this.http.put<any>(
+        `${this.baseUrl}/teams/${this.editingTeamId}`,
+        payload,
+        { headers }
+      ).subscribe({
+
+        next: (res: any) => {
+          this.handleSuccessfulTeamSave(res);
+        },
+
+        error: (error) => {
+
+          console.error(
+            'Failed to update team:',
+            error
+          );
+
+          this.loading = false;
+          this.cdr.markForCheck();
+        }
+      });
+
+      return;
+    }
+
+    // CREATE
+    this.http.post<any>(
+      `${this.baseUrl}/teams`,
+      payload,
+      { headers }
+    ).subscribe({
+
+      next: (res: any) => {
+        this.handleSuccessfulTeamSave(res);
+      },
+
+      error: (error) => {
+
+        console.error(
+          'Failed to create team:',
+          error
+        );
+
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
     });
   }
 
-  removeUserChip(userId: number) {
-    this.selectedUsers = this.selectedUsers.filter(id => Number(id) !== Number(userId));
-    this.chipUserObjects = this.chipUserObjects.filter(obj => Number(obj.id) !== Number(userId));
-    this.cdr.markForCheck();
+  private buildTeamPayload(
+    memberIds: number[]
+  ): any {
+
+    return {
+      name: this.name.trim(),
+      description: this.description.trim(),
+      memberIds: [
+        ...new Set(
+          memberIds
+            .map((id: number) =>
+              Number(id)
+            )
+            .filter((id: number) =>
+              Number.isFinite(id) &&
+              id > 0
+            )
+        )
+      ]
+    };
   }
 
-  // Property to store the team being actively previewed
-selectedTeam: any = null;
+  private handleSuccessfulTeamSave(
+    res: any
+  ): void {
 
-// Opens the detail drawer panel when a card gets clicked
-openTeamDetails(team: any): void {
-  this.selectedTeam = team;
-}
+    this.loading = false;
 
-// Closes the drawer panel layout cleanly
-closeTeamDetails(): void {
-  this.selectedTeam = null;
-}
-
-  
-  saveTeam() {
-    if (!this.name.trim()) return;
-    this.loading = true; // Turn loader ON
-    this.cdr.markForCheck();
-
-    const metadataPayload = { name: this.name.trim(), description: this.description.trim() };
-
-    if (this.editingTeamId && this.editingTeamId > 0) {
-      const hasMetadataChanged = !this.originalTeamState ||
-        this.originalTeamState.name !== metadataPayload.name ||
-        this.originalTeamState.description !== metadataPayload.description;
-
-      if (!hasMetadataChanged) {
-        this.syncTeamMembers(this.editingTeamId);
-      } else {
-        this.http.put(`${this.baseUrl}/teams/${this.editingTeamId}`, metadataPayload, { headers: this.auth.getAuthHeaders() })
-          .subscribe({
-            next: () => {
-              this.syncTeamMembers(this.editingTeamId!);
-            },
-            error: (err) => {
-              console.error('Failed to update team metadata records:', err);
-              this.loading = false; // Guard error fallback
-              this.cdr.markForCheck();
-            }
-          });
-      }
-    } else {
-      this.http.post<any>(`${this.baseUrl}/teams/create`, metadataPayload, { headers: this.auth.getAuthHeaders() })
-        .subscribe({
-          next: (res: any) => {
-            const targetTeamId = res?.data?.id;
-            this.syncTeamMembers(targetTeamId);
-          },
-          error: (err) => {
-            console.error('Failed to build new team records:', err);
-            this.loading = false; // Guard error fallback
-            this.cdr.markForCheck();
-          }
-        });
-    }
-  }
-  private syncTeamMembers(teamId: number) {
-    if (this.originalTeamState && this.editingTeamId && this.editingTeamId > 0) {
-      const originalIds = this.originalTeamState.userIds || [];
-      const addedUsers = this.selectedUsers.filter(id => !originalIds.includes(id));
-      const removedUsers = originalIds.filter(id => !this.selectedUsers.includes(id));
-
-      const syncRequests: Observable<any>[] = [];
-
-      if (addedUsers.length > 0) {
-        syncRequests.push(
-          this.http.post(`${this.baseUrl}/team-members/create`, {
-            team_id: teamId,
-            user_ids: addedUsers
-          }, { headers: this.auth.getAuthHeaders() })
-        );
-      }
-
-      if (removedUsers.length > 0) {
-        syncRequests.push(
-          this.http.request('delete', `${this.baseUrl}/team-members`, {
-            body: { team_id: teamId, user_ids: removedUsers },
-            headers: this.auth.getAuthHeaders()
-          })
-        );
-      }
-
-      if (syncRequests.length === 0) {
-        this.completeSaveWorkflow();
-        return;
-      }
-
-      forkJoin(syncRequests).subscribe({
-        next: () => this.completeSaveWorkflow(),
-        error: (err) => this.handleSyncError(err) // This drops the button loader if child sync fails
-      });
-    } else {
-      if (this.selectedUsers.length === 0) {
-        this.completeSaveWorkflow();
-        return;
-      }
-      
-      this.http.post(`${this.baseUrl}/team-members/create`, {
-        team_id: teamId,
-        user_ids: this.selectedUsers
-      }, { headers: this.auth.getAuthHeaders() }).subscribe({
-        next: () => this.completeSaveWorkflow(),
-        error: (err) => this.handleSyncError(err)
-      });
-    }
-  }
-
-  private completeSaveWorkflow() {
     this.resetForm();
     this.refreshTeamsList();
-    this.loading = false;
     this.cdr.markForCheck();
   }
 
-  private handleSyncError(err: any) {
-    console.error('Failed to update team membership sync grids:', err);
-    this.loading = false;
-    this.cdr.markForCheck();
+  // ============================================================
+  // INLINE MEMBER ADD / UPDATE
+  // ============================================================
+
+  addMemberToTeamInline(
+    teamId: number,
+    userId: number
+  ): void {
+
+    if (!userId || !this.selectedTeam) {
+      return;
+    }
+
+    if (
+      Number(this.selectedTeam.id) !==
+      Number(teamId)
+    ) {
+      return;
+    }
+
+    const currentIds =
+      this.getTeamMembers(
+        this.selectedTeam
+      )
+        .map((member: TeamMemberView) =>
+          this.getMemberId(member)
+        )
+        .filter((id: number) =>
+          Number.isFinite(id) &&
+          id > 0
+        );
+
+    if (
+      currentIds.includes(
+        Number(userId)
+      )
+    ) {
+      return;
+    }
+
+    this.updateTeamMembersInline(
+      this.selectedTeam,
+      [
+        ...currentIds,
+        Number(userId)
+      ]
+    );
   }
 
-  deleteTeam(id: number) {
-    if (!confirm('Are you sure you want to delete this team?')) return;
-    this.http.delete(`${this.baseUrl}/teams/${id}`, {
-      headers: this.auth.getAuthHeaders()
-    }).subscribe(() => {
-      this.refreshTeamsList();
-      if (this.editingTeamId === id) this.resetForm();
+  private updateTeamMembersInline(
+    team: TeamView,
+    memberIds: number[]
+  ): void {
+
+    const payload =
+      this.buildTeamPayload(
+        memberIds
+      );
+
+    this.loading = true;
+
+    this.http.put<any>(
+      `${this.baseUrl}/teams/${team.id}`,
+      payload,
+      {
+        headers:
+          this.auth.getAuthHeaders()
+      }
+    ).subscribe({
+
+      next: (res: any) => {
+
+        const updatedTeam =
+          res?.data
+            ? this.normalizeTeam(res.data)
+            : null;
+
+        if (updatedTeam) {
+          this.selectedTeam =
+            updatedTeam;
+        }
+
+        this.loading = false;
+        this.refreshTeamsList();
+        this.cdr.markForCheck();
+      },
+
+      error: (error) => {
+
+        console.error(
+          'Failed to update team members:',
+          error
+        );
+
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
     });
   }
 
-  resetForm() {
+  // ============================================================
+  // INLINE MEMBER REMOVE
+  // ============================================================
+
+  removeMemberFromTeamInline(
+    teamId: number,
+    userId: number
+  ): void {
+
+    if (!this.selectedTeam) {
+      return;
+    }
+
+    if (
+      Number(this.selectedTeam.id) !==
+      Number(teamId)
+    ) {
+      return;
+    }
+
+    if (
+      !confirm(
+        'Remove this user from the team?'
+      )
+    ) {
+      return;
+    }
+
+    const remainingIds =
+      this.getTeamMembers(
+        this.selectedTeam
+      )
+        .map((member: TeamMemberView) =>
+          this.getMemberId(member)
+        )
+        .filter((id: number) =>
+          Number.isFinite(id) &&
+          id > 0 &&
+          Number(id) !== Number(userId)
+        );
+
+    this.updateTeamMembersInline(
+      this.selectedTeam,
+      remainingIds
+    );
+  }
+
+  // ============================================================
+  // TEAM MEMBER MANAGER
+  // ============================================================
+
+  private updateTeamMembers(
+    team: TeamView,
+    memberIds: number[]
+  ): void {
+
+    const payload =
+      this.buildTeamPayload(
+        memberIds
+      );
+
+    this.loading = true;
+
+    this.http.put<any>(
+      `${this.baseUrl}/teams/${team.id}`,
+      payload,
+      {
+        headers:
+          this.auth.getAuthHeaders()
+      }
+    ).subscribe({
+
+      next: (res: any) => {
+
+        const updatedTeam =
+          res?.data
+            ? this.normalizeTeam(res.data)
+            : null;
+
+        if (updatedTeam) {
+          this.selectedTeam =
+            updatedTeam;
+        }
+
+        this.loading = false;
+        this.refreshTeamsList();
+        this.cdr.markForCheck();
+      },
+
+      error: (error) => {
+
+        console.error(
+          'Failed to update team members:',
+          error
+        );
+
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  // ============================================================
+  // TEAM DETAILS
+  // ============================================================
+
+  openTeamDetails(
+    team: TeamView
+  ): void {
+
+    this.selectedTeam = team;
+    this.cdr.markForCheck();
+  }
+
+  closeTeamDetails(): void {
+
+    this.selectedTeam = null;
+    this.cdr.markForCheck();
+  }
+
+  // ============================================================
+  // DELETE
+  // ============================================================
+
+  deleteTeam(id: number): void {
+
+    if (
+      !confirm(
+        'Are you sure you want to delete this team?'
+      )
+    ) {
+      return;
+    }
+
+    this.loading = true;
+
+    this.http.delete<any>(
+      `${this.baseUrl}/teams/${id}`,
+      {
+        headers:
+          this.auth.getAuthHeaders()
+      }
+    ).subscribe({
+
+      next: () => {
+
+        this.loading = false;
+
+        this.refreshTeamsList();
+
+        if (
+          this.editingTeamId === id
+        ) {
+          this.resetForm();
+        }
+
+        if (
+          Number(this.selectedTeam?.id) ===
+          Number(id)
+        ) {
+          this.closeTeamDetails();
+        }
+
+        this.cdr.markForCheck();
+      },
+
+      error: (error) => {
+
+        console.error(
+          'Failed to delete team:',
+          error
+        );
+
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  // ============================================================
+  // COMPLETE SAVE
+  // ============================================================
+
+  private completeSaveWorkflow(): void {
+
+    this.resetForm();
+
+    this.refreshTeamsList();
+
+    this.loading = false;
+
+    this.cdr.markForCheck();
+  }
+
+  // ============================================================
+  // RESET
+  // ============================================================
+
+  resetForm(): void {
+
     this.name = '';
+
     this.description = '';
+
     this.selectedUsers = [];
+
     this.chipUserObjects = [];
+
     this.editingTeamId = null;
-    this.originalTeamState = null;
+
+    this.selectedTeam = null;
+
     this.cdr.markForCheck();
   }
 }
