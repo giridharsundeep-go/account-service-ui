@@ -383,7 +383,7 @@ button:disabled {
     minmax(250px, auto);
   align-items: center;
   gap: 18px;
-  padding: 12px 12px 12px 0;
+  padding: 20px;
   background: #fff;
   border-bottom: 1px solid #dadce0;
   transition:
@@ -2119,7 +2119,7 @@ textarea,
 .running-row-color,
 .planned-row-color,
 .completed-row-color {
-  background: #007cc1;
+  background: #ffffff;
 }
 
 .row-identity {

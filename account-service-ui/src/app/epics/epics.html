@@ -9,7 +9,6 @@
       </div>
 
       <label class="project-switcher">
-        <span class="sr-only">Project</span>
         <select class="material-select"
           [ngModel]="selectedProjectId()"
           (ngModelChange)="onProjectChange($event)">
@@ -27,8 +26,8 @@
         <input
           [ngModel]="searchTerm()"
           (ngModelChange)="searchTerm.set($event)"
-          placeholder="Search epics, stories, tasks..."
-          aria-label="Search epics, stories and tasks" />
+          placeholder="Search epics, stories, tasks, issues..."
+          aria-label="Search epics, stories, tasks and issues" />
         <kbd>/</kbd>
       </label>
     </div>
@@ -41,17 +40,43 @@
   <!-- ========================= SEARCH-STYLE NAVIGATION ========================= -->
   <nav class="google-results-nav" aria-label="Workspace navigation">
     <div class="google-nav-inner">
-      <div class="google-nav-tabs">
+      <div class="google-nav-tabs work-mode-tabs">
         <button type="button" class="google-nav-tab"
-          [class.active]="activeTab() === 'TREE'"
-          (click)="activeTab.set('TREE')">
-          Structure
+          [class.active]="workItemMode() === 'EPICS' && activeTab() === 'TREE'"
+          (click)="setWorkItemMode('EPICS')">
+          Epics
         </button>
+
+        <button type="button" class="google-nav-tab"
+          [class.active]="workItemMode() === 'STORIES' && activeTab() === 'TREE'"
+          (click)="setWorkItemMode('STORIES')">
+          Stories
+        </button>
+
+        <button type="button" class="google-nav-tab"
+          [class.active]="workItemMode() === 'TASKS' && activeTab() === 'TREE'"
+          (click)="setWorkItemMode('TASKS')">
+          Tasks
+        </button>
+
+        <button type="button" class="google-nav-tab"
+          [class.active]="workItemMode() === 'ALL' && activeTab() === 'TREE'"
+          (click)="setWorkItemMode('ALL')">
+          All
+        </button>
+
+        <button type="button" class="google-nav-tab issues-nav-tab"
+          [class.active]="workItemMode() === 'ISSUES' && activeTab() === 'TREE'"
+          (click)="setWorkItemMode('ISSUES')">
+          Issues
+        </button>
+
         <button type="button" class="google-nav-tab"
           [class.active]="activeTab() === 'KANBAN'"
           (click)="activeTab.set('KANBAN')">
           Board
         </button>
+
         <button type="button" class="google-nav-tab"
           [class.active]="showFilters()"
           (click)="showFilters.set(!showFilters())">
@@ -59,10 +84,12 @@
         </button>
       </div>
       <div class="google-nav-tools">
-        <span class="google-results-count">{{ hierarchyTree().length }} epics</span>
+        <span class="google-results-count" *ngIf="workItemMode() !== 'ISSUES'">{{ hierarchyTree().length }} epics</span>
+        <span class="google-results-count issue-count-chip" *ngIf="workItemMode() === 'ISSUES'">{{ projectIssues().length }} issues</span>
         <button class="google-nav-icon" type="button" title="Import CSV" (click)="csvFileInput.click()">↑</button>
         <button class="google-nav-icon" type="button" title="Export CSV" (click)="exportToCSV()">↓</button>
-        <button class="google-create" type="button" (click)="openCreateEpic()">＋ Epic</button>
+        <button class="google-create" type="button" *ngIf="workItemMode() !== 'ISSUES'" (click)="openCreateEpic()">＋ Epic</button>
+        <button class="google-create issue-create-button" type="button" *ngIf="workItemMode() === 'ISSUES'" (click)="openCreateIssue()">＋ Issue</button>
       </div>
     </div>
   </nav>
@@ -154,10 +181,424 @@
     <button class="icon-button small" type="button" (click)="clearSelection()">×</button>
   </section>
 
-  <!-- ========================= STRUCTURE VIEW ========================= -->
-  <main class="workspace" *ngIf="activeTab() === 'TREE'">
+  <!-- ========================= WORK ITEM DIRECTORY ========================= -->
+  <main class="workspace workspace-directory" *ngIf="activeTab() === 'TREE'">
 
-    <section class="sprint-section" *ngFor="let group of sprintTreeGroups()">
+    <!-- EPIC MODE -->
+    <ng-container *ngIf="workItemMode() === 'EPICS'">
+      <section class="sprint-section directory-section" *ngFor="let group of epicDirectoryGroups()">
+        <header class="directory-sprint-header">
+          <div class="directory-sprint-title">
+            <div class="directory-sprint-icon">↻</div>
+            <div>
+              <div class="directory-eyebrow">SPRINT</div>
+              <h2>{{ group.sprint.name }}</h2>
+              <span *ngIf="group.sprint.startDate" class="directory-sprint-dates">
+                {{ group.sprint.startDate | date:'mediumDate' }} –
+                {{ group.sprint.endDate | date:'mediumDate' }}
+              </span>
+            </div>
+          </div>
+
+          <div class="directory-sprint-summary">
+            <span class="count-label">{{ group.items.length }} epics</span>
+            <span class="directory-summary-copy">
+              {{ group.items.reduce((sum, item) => sum + item.storyCount, 0) }} stories
+            </span>
+            <button class="outline-button sprint-progress-button" type="button"
+              (click)="openSprintProgress(group.sprint); $event.stopPropagation()">
+              View progress
+            </button>
+          </div>
+        </header>
+
+        <div class="directory-list">
+          <article class="epic-directory-row" *ngFor="let item of group.items; trackBy: trackByDirectoryEpic"
+            (click)="openViewEpic(item.epic)">
+
+            <div class="directory-leading-mark epic-mark">E</div>
+
+            <div class="directory-primary">
+              <div class="directory-kicker">
+                <span class="directory-code">{{ item.epic.epic_code }}</span>
+                <span class="status-chip mat-status" [ngClass]="statusClass(item.epic.status)">
+                  {{ item.epic.status }}
+                </span>
+              </div>
+
+              <button class="directory-title" type="button"
+                (click)="openViewEpic(item.epic); $event.stopPropagation()"
+                title="Quick view">
+                {{ item.epic.name }}
+              </button>
+
+              <p class="directory-description" *ngIf="item.epic.description">
+                {{ item.epic.description }}
+              </p>
+              <div class="directory-issue-pills" *ngIf="item.epic.issues?.length">
+                <button class="directory-issue-pill"
+                  *ngFor="let issue of item.epic.issues"
+                  type="button"
+                  [class.blocker]="isBlockingIssue(issue)"
+                  (click)="openViewIssue(issue); $event.stopPropagation()">
+                  {{ issue.issueCode || issue.issue_code || ('#' + issue.id) }}
+                  <span>{{ issue.title }}</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="directory-metrics">
+              <div>
+                <strong>{{ item.completedStoryCount }}/{{ item.storyCount }}</strong>
+                <span>Stories done</span>
+              </div>
+              <div>
+                <strong>{{ item.completedTaskCount }}/{{ item.taskCount }}</strong>
+                <span>Tasks done</span>
+              </div>
+              <div>
+                <strong>{{ item.points }}</strong>
+                <span>Points</span>
+              </div>
+              <div class="blocker-metric" *ngIf="getBlockingIssueCount(item.epic.issues)">
+                <strong>{{ getBlockingIssueCount(item.epic.issues) }}</strong>
+                <span>Blocked by</span>
+                <small [title]="'Issues / bugs: ' + getBlockingIssueCodes(item.epic.issues)">issues / bugs</small>
+              </div>
+            </div>
+
+            <div class="directory-person">
+              <span class="avatar">
+                {{ getUserInitials(userMap().get(toNumber(item.epic.assignee_user_id))?.name || 'Unassigned') }}
+              </span>
+              <div>
+                <span class="directory-person-label">Assignee</span>
+                <strong>{{ userMap().get(toNumber(item.epic.assignee_user_id))?.name || 'Unassigned' }}</strong>
+              </div>
+            </div>
+
+            <div class="directory-person reporter-person">
+              <span class="avatar muted-avatar">
+                {{ getUserInitials(userMap().get(toNumber(item.epic.reporter_user_id))?.name || 'Unassigned') }}
+              </span>
+              <div>
+                <span class="directory-person-label">Reporter</span>
+                <strong>{{ userMap().get(toNumber(item.epic.reporter_user_id))?.name || 'Unassigned' }}</strong>
+              </div>
+            </div>
+
+            <div class="directory-actions">
+              <span class="quick-view-hint">Quick view</span>
+              <button class="icon-button small" type="button" title="Quick view"
+                (click)="openViewEpic(item.epic); $event.stopPropagation()">↗</button>
+              <button class="icon-button small" type="button" title="Edit"
+                (click)="openEditEpic(item.epic); $event.stopPropagation()">✎</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="directory-empty" *ngIf="!epicDirectoryGroups().length">
+        <div class="empty-icon">E</div>
+        <strong>No epics found</strong>
+        <span>Try a different project, sprint, search term, or filter.</span>
+      </section>
+    </ng-container>
+
+    <!-- STORY MODE -->
+    <ng-container *ngIf="workItemMode() === 'STORIES'">
+      <section class="sprint-section directory-section" *ngFor="let group of storyDirectoryGroups()">
+        <header class="directory-sprint-header">
+          <div class="directory-sprint-title">
+            <div class="directory-sprint-icon">S</div>
+            <div>
+              <div class="directory-eyebrow">SPRINT</div>
+              <h2>{{ group.sprint.name }}</h2>
+            </div>
+          </div>
+          <div class="directory-sprint-summary">
+            <span class="count-label">{{ group.items.length }} stories</span>
+            <button class="outline-button sprint-progress-button" type="button"
+              (click)="openSprintProgress(group.sprint); $event.stopPropagation()">
+              View progress
+            </button>
+          </div>
+        </header>
+
+        <div class="directory-list">
+          <article class="epic-directory-row story-directory-row"
+            *ngFor="let item of group.items; trackBy: trackByDirectoryStory"
+            (click)="openViewStory(item.story)">
+
+            <div class="directory-leading-mark story-mark">S</div>
+
+            <div class="directory-primary">
+              <div class="directory-kicker">
+                <span class="directory-code">{{ item.epicCode }}</span>
+                <span class="directory-parent">{{ item.epicName }}</span>
+                <span class="status-chip mat-status" [ngClass]="statusClass(item.story.status)">
+                  {{ item.story.status }}
+                </span>
+              </div>
+              <button class="directory-title" type="button"
+                (click)="openViewStory(item.story); $event.stopPropagation()">
+                {{ item.story.title }}
+              </button>
+              <div class="directory-issue-pills" *ngIf="item.story.issues?.length">
+                <button class="directory-issue-pill"
+                  *ngFor="let issue of item.story.issues"
+                  type="button"
+                  [class.blocker]="isBlockingIssue(issue)"
+                  (click)="openViewIssue(issue); $event.stopPropagation()">
+                  {{ issue.issueCode || issue.issue_code || ('#' + issue.id) }}
+                  <span>{{ issue.title }}</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="directory-metrics story-metrics">
+              <div>
+                <strong>{{ item.story.story_points || 0 }}</strong>
+                <span>Points</span>
+              </div>
+              <div>
+                <strong>{{ item.completedTaskCount }}/{{ item.taskCount }}</strong>
+                <span>Tasks done</span>
+              </div>
+              <div class="blocker-metric" *ngIf="getBlockingIssueCount(item.story.issues)">
+                <strong>{{ getBlockingIssueCount(item.story.issues) }}</strong>
+                <span>Blocked by</span>
+                <small [title]="'Issues / bugs: ' + getBlockingIssueCodes(item.story.issues)">issues / bugs</small>
+              </div>
+            </div>
+
+            <div class="directory-person">
+              <span class="avatar">
+                {{ getUserInitials(userMap().get(toNumber(item.story.assignee_user_id))?.name || 'Unassigned') }}
+              </span>
+              <div>
+                <span class="directory-person-label">Assignee</span>
+                <strong>{{ userMap().get(toNumber(item.story.assignee_user_id))?.name || 'Unassigned' }}</strong>
+              </div>
+            </div>
+
+            <div class="directory-person reporter-person">
+              <span class="avatar muted-avatar">
+                {{ getUserInitials(userMap().get(toNumber(item.story.reporter_user_id))?.name || 'Unassigned') }}
+              </span>
+              <div>
+                <span class="directory-person-label">Reporter</span>
+                <strong>{{ userMap().get(toNumber(item.story.reporter_user_id))?.name || 'Unassigned' }}</strong>
+              </div>
+            </div>
+
+            <div class="directory-actions">
+              <button class="icon-button small" type="button" title="Open"
+                (click)="openViewStory(item.story); $event.stopPropagation()">↗</button>
+              <button class="icon-button small" type="button" title="Edit"
+                (click)="openEditStory(item.story); $event.stopPropagation()">✎</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="directory-empty" *ngIf="!storyDirectoryGroups().length">
+        <div class="empty-icon">S</div>
+        <strong>No stories found</strong>
+        <span>Try a different project, sprint, search term, or filter.</span>
+      </section>
+    </ng-container>
+
+    <!-- TASK MODE -->
+    <ng-container *ngIf="workItemMode() === 'TASKS'">
+      <section class="sprint-section directory-section" *ngFor="let group of taskDirectoryGroups()">
+        <header class="directory-sprint-header">
+          <div class="directory-sprint-title">
+            <div class="directory-sprint-icon">T</div>
+            <div>
+              <div class="directory-eyebrow">SPRINT</div>
+              <h2>{{ group.sprint.name }}</h2>
+            </div>
+          </div>
+          <div class="directory-sprint-summary">
+            <span class="count-label">{{ group.items.length }} tasks</span>
+            <button class="outline-button sprint-progress-button" type="button"
+              (click)="openSprintProgress(group.sprint); $event.stopPropagation()">
+              View progress
+            </button>
+          </div>
+        </header>
+
+        <div class="directory-list">
+          <article class="epic-directory-row task-directory-row"
+            *ngFor="let item of group.items; trackBy: trackByDirectoryTask"
+            (click)="openViewTask(item.task)">
+
+            <div class="directory-leading-mark task-mark">T</div>
+
+            <div class="directory-primary">
+              <div class="directory-kicker">
+                <span class="directory-parent">{{ item.epicName }}</span>
+                <span class="directory-parent">› {{ item.storyTitle }}</span>
+                <span class="status-chip mat-status" [ngClass]="statusClass(item.task.status)">
+                  {{ item.task.status }}
+                </span>
+              </div>
+              <button class="directory-title" type="button"
+                (click)="openViewTask(item.task); $event.stopPropagation()">
+                {{ item.task.title }}
+              </button>
+              <div class="directory-issue-pills" *ngIf="item.task.issues?.length">
+                <button class="directory-issue-pill"
+                  *ngFor="let issue of item.task.issues"
+                  type="button"
+                  [class.blocker]="isBlockingIssue(issue)"
+                  (click)="openViewIssue(issue); $event.stopPropagation()">
+                  {{ issue.issueCode || issue.issue_code || ('#' + issue.id) }}
+                  <span>{{ issue.title }}</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="directory-metrics story-metrics">
+              <div>
+                <strong>{{ item.task.priority || 'MEDIUM' }}</strong>
+                <span>Priority</span>
+              </div>
+              <div class="blocker-metric" *ngIf="getBlockingIssueCount(item.task.issues)">
+                <strong>{{ getBlockingIssueCount(item.task.issues) }}</strong>
+                <span>Blocked by</span>
+                <small [title]="'Issues / bugs: ' + getBlockingIssueCodes(item.task.issues)">issues / bugs</small>
+              </div>
+            </div>
+
+            <div class="directory-person">
+              <span class="avatar">
+                {{ getUserInitials(userMap().get(toNumber(item.task.assignee_user_id))?.name || 'Unassigned') }}
+              </span>
+              <div>
+                <span class="directory-person-label">Assignee</span>
+                <strong>{{ userMap().get(toNumber(item.task.assignee_user_id))?.name || 'Unassigned' }}</strong>
+              </div>
+            </div>
+
+            <div class="directory-person reporter-person">
+              <span class="avatar muted-avatar">
+                {{ getUserInitials(userMap().get(toNumber(item.task.reporter_user_id))?.name || 'Unassigned') }}
+              </span>
+              <div>
+                <span class="directory-person-label">Reporter</span>
+                <strong>{{ userMap().get(toNumber(item.task.reporter_user_id))?.name || 'Unassigned' }}</strong>
+              </div>
+            </div>
+
+            <div class="directory-actions">
+              <button class="icon-button small" type="button" title="Open"
+                (click)="openViewTask(item.task); $event.stopPropagation()">↗</button>
+              <button class="icon-button small" type="button" title="Edit"
+                (click)="openEditTask(item.task); $event.stopPropagation()">✎</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="directory-empty" *ngIf="!taskDirectoryGroups().length">
+        <div class="empty-icon">T</div>
+        <strong>No tasks found</strong>
+        <span>Try a different project, sprint, search term, or filter.</span>
+      </section>
+    </ng-container>
+
+
+    <!-- ISSUES MODE -->
+    <ng-container *ngIf="workItemMode() === 'ISSUES'">
+      <section class="issue-table-section">
+        <div class="issue-table mat-work-table">
+          <div class="issue-table-head">
+            <span>Issue</span>
+            <span>Status</span>
+            <span>Sprint</span>
+            <span>Linked work</span>
+            <span>Assignee</span>
+            <span>Reporter</span>
+            <span>Actions</span>
+          </div>
+
+          <div
+            class="issue-table-row"
+            *ngFor="let issue of issueTableItems(); trackBy: trackByIssueId"
+            (click)="openViewIssue(issue)">
+
+            <div class="issue-table-primary">
+              <div class="issue-table-kicker">
+                <span class="issue-code">{{ issue.issue_code || issue.issueCode || ('#' + issue.id) }}</span>
+                <span class="type-chip issue">ISSUE</span>
+                <span class="issue-blocker-label" *ngIf="isBlockingIssue(issue)">BLOCKER</span>
+              </div>
+              <button class="issue-table-title" type="button"
+                (click)="openViewIssue(issue); $event.stopPropagation()">
+                {{ issue.title }}
+              </button>
+            </div>
+
+            <div class="issue-table-status">
+              <span class="status-chip mat-status" [ngClass]="statusClass(issue.status)">
+                {{ issue.status }}
+              </span>
+            </div>
+
+            <div class="issue-table-sprint">
+              <span>{{ getIssueListSprintName(issue) }}</span>
+            </div>
+
+            <div class="issue-table-links">
+              <span class="directory-link-chip directory-link-epic"
+                *ngFor="let id of getIssueLinkedIds(issue, 'EPIC')">
+                <span>EPIC</span> {{ getIssueLinkedEpicNames({ epicIds: [id] }) }}
+              </span>
+              <span class="directory-link-chip directory-link-story"
+                *ngFor="let id of getIssueLinkedIds(issue, 'STORY')">
+                <span>STORY</span> {{ getIssueLinkedStoryNames({ storyIds: [id] }) }}
+              </span>
+              <span class="directory-link-chip directory-link-task"
+                *ngFor="let id of getIssueLinkedIds(issue, 'TASK')">
+                <span>TASK</span> {{ getIssueLinkedTaskNames({ taskIds: [id] }) }}
+              </span>
+              <span class="directory-unlinked" *ngIf="!getIssueLinkSummary(issue)">Unlinked</span>
+            </div>
+
+            <div class="person-cell mat-person issue-table-person">
+              <span class="avatar">{{ getUserInitials(getUserName(issue.assignee_user_id)) }}</span>
+              <span>{{ getUserName(issue.assignee_user_id) }}</span>
+            </div>
+
+            <div class="person-cell mat-person issue-table-person">
+              <span class="avatar muted-avatar">{{ getUserInitials(getUserName(issue.reporter_user_id)) }}</span>
+              <span>{{ getUserName(issue.reporter_user_id) }}</span>
+            </div>
+
+            <div class="directory-actions issue-table-actions">
+              <button class="icon-button small" type="button" title="Open issue"
+                (click)="openViewIssue(issue); $event.stopPropagation()">↗</button>
+              <button class="icon-button small" type="button" title="Edit issue"
+                (click)="openEditIssue(issue); $event.stopPropagation()">✎</button>
+            </div>
+          </div>
+
+          <section class="directory-empty issue-table-empty" *ngIf="!issueTableItems().length">
+            <div class="empty-icon">!</div>
+            <strong>No issues found</strong>
+            <span>Create an issue or change the project, sprint, status, assignee, reporter, or search filters.</span>
+            <button class="primary-action" type="button" (click)="openCreateIssue()">Create issue</button>
+          </section>
+        </div>
+      </section>
+    </ng-container>
+
+    <!-- ALL MODE: existing complete sprint hierarchy -->
+    <ng-container *ngIf="workItemMode() === 'ALL'">
+      <section class="sprint-section" *ngFor="let group of sprintTreeGroups()">
+
       <header class="sprint-header">
         <div class="sprint-header-main">
           <button
@@ -189,6 +630,11 @@
             {{ group.totalPoints }} / {{ group.sprint.capacity || 30 }} pts
           </span>
 
+          <button class="outline-button sprint-progress-button" type="button"
+            (click)="openSprintProgress(group.sprint); $event.stopPropagation()">
+            View progress
+          </button>
+
           <button
             class="outline-button mat-action-button"
             *ngIf="group.sprint.status === 'FUTURE' && group.sprint.id !== 0"
@@ -216,6 +662,8 @@
           <span></span>
           <span>Work item</span>
           <span>Type</span>
+          <span>Status</span>
+          <span>Priority</span>
           <span>Assignee</span>
           <span>Reporter</span>
           <span>Actions</span>
@@ -247,14 +695,42 @@
               <span class="item-code">{{ epic.epic_code }}</span>
               <strong>{{ epic.name }}</strong>
             </button>
+            <span class="work-progress-note">
+              {{ completedStoriesForEpic(epic) }} / {{ totalStoriesForEpic(epic) }} stories completed
+            </span>
+            <div class="all-hover-card" role="tooltip">
+              <div class="hover-card-kicker"><span class="type-chip epic">EPIC</span><span>{{ epic.epic_code }}</span></div>
+              <strong>{{ epic.name }}</strong>
+              <p *ngIf="epic.description">{{ epic.description }}</p>
+              <div class="hover-card-meta">
+                <span>Status <b>{{ epic.status }}</b></span>
+                <span>Stories <b>{{ totalStoriesForEpic(epic) }}</b></span>
+                <span>Issues <b>{{ epic.issues?.length || 0 }}</b></span>
+                <span *ngIf="getBlockingIssues(epic.issues).length">Blocked <b>{{ getBlockingIssues(epic.issues).length }}</b></span>
+              </div>
+              <div class="hover-card-people">
+                <span>Assignee: <b>{{ getUserName(epic.assignee_user_id) }}</b></span>
+                <span>Reporter: <b>{{ getUserName(epic.reporter_user_id) }}</b></span>
+              </div>
+            </div>
           </div>
 
-          <div>
+          <div class="type-status-cell">
             <span class="type-chip epic">EPIC</span>
+          </div>
+
+          <div class="table-status-cell">
             <span class="row-status mat-status" [ngClass]="statusClass(epic.status)">
               {{ epic.status }}
             </span>
+            <span class="blocked-by-badge compact" *ngIf="getBlockingIssues(epic.issues).length"
+              [title]="'Blocked by: ' + getBlockingIssueCodes(epic.issues)">
+              <span class="blocked-by-dot"></span>
+              {{ getBlockingIssues(epic.issues).length }} blocked-by issue{{ getBlockingIssues(epic.issues).length === 1 ? '' : 's' }}
+            </span>
           </div>
+
+          <div class="table-priority-cell">—</div>
 
           <div class="person-cell mat-person">
             <span class="avatar">
@@ -271,6 +747,11 @@
           </div>
 
           <div class="row-actions">
+            <button class="mini-button issue-view-button mat-action-button" type="button"
+              [disabled]="!(epic.issues?.length)"
+              (click)="viewIssuesForItem('EPIC', epic); $event.stopPropagation()">
+              Issues ({{ epic.issues?.length || 0 }})
+            </button>
             <button class="mini-button mat-action-button" type="button" (click)="openCreateStory(epic)">+ Story</button>
             <button class="icon-button small" type="button" title="Edit" (click)="openEditEpic(epic)">✎</button>
           </div>
@@ -302,12 +783,45 @@
                   <span class="item-code">#{{ story.id }}</span>
                   <strong>{{ story.title }}</strong>
                 </button>
+                <span class="work-progress-note">
+                  {{ completedTasksForStory(story) }} / {{ totalTasksForStory(story) }} tasks completed
+                </span>
+                <div class="all-hover-card" role="tooltip">
+                  <div class="hover-card-kicker"><span class="type-chip story">STORY</span><span>#{{ story.id }}</span></div>
+                  <strong>{{ story.title }}</strong>
+                  <p *ngIf="story.description">{{ story.description }}</p>
+                  <div class="hover-card-meta">
+                    <span>Status <b>{{ story.status }}</b></span>
+                    <span>Priority <b>{{ story.priority || 'MEDIUM' }}</b></span>
+                    <span>Tasks <b>{{ totalTasksForStory(story) }}</b></span>
+                    <span>Issues <b>{{ story.issues?.length || 0 }}</b></span>
+                    <span *ngIf="getBlockingIssues(story.issues).length">Blocked <b>{{ getBlockingIssues(story.issues).length }}</b></span>
+                  </div>
+                  <div class="hover-card-people">
+                    <span>Assignee: <b>{{ getUserName(story.assignee_user_id) }}</b></span>
+                    <span>Reporter: <b>{{ getUserName(story.reporter_user_id) }}</b></span>
+                  </div>
+                </div>
               </div>
 
-              <div>
+              <div class="type-status-cell">
                 <span class="type-chip story">STORY</span>
+              </div>
+
+              <div class="table-status-cell">
                 <span class="row-status mat-status" [ngClass]="statusClass(story.status)">
                   {{ story.status }}
+                </span>
+                <span class="blocked-by-badge compact" *ngIf="getBlockingIssues(story.issues).length"
+                  [title]="'Blocked by: ' + getBlockingIssueCodes(story.issues)">
+                  <span class="blocked-by-dot"></span>
+                  {{ getBlockingIssues(story.issues).length }} blocked-by issue{{ getBlockingIssues(story.issues).length === 1 ? '' : 's' }}
+                </span>
+              </div>
+
+              <div class="table-priority-cell">
+                <span class="priority-chip" [ngClass]="'priority-' + (story.priority || 'MEDIUM').toLowerCase()">
+                  {{ story.priority || 'MEDIUM' }}
                 </span>
               </div>
 
@@ -326,6 +840,11 @@
               </div>
 
               <div class="row-actions">
+                <button class="mini-button issue-view-button mat-action-button" type="button"
+                  [disabled]="!(story.issues?.length)"
+                  (click)="viewIssuesForItem('STORY', story); $event.stopPropagation()">
+                  Issues ({{ story.issues?.length || 0 }})
+                </button>
                 <button class="mini-button mat-action-button" type="button" (click)="openCreateTask(story)">+ Task</button>
                 <button class="icon-button small" type="button" title="Edit" (click)="openEditStory(story)">✎</button>
               </div>
@@ -350,12 +869,41 @@
                       <span class="item-code">#{{ task.id }}</span>
                       <strong>{{ task.title }}</strong>
                     </button>
+                    <div class="all-hover-card" role="tooltip">
+                      <div class="hover-card-kicker"><span class="type-chip task">TASK</span><span>#{{ task.id }}</span></div>
+                      <strong>{{ task.title }}</strong>
+                      <p *ngIf="task.description">{{ task.description }}</p>
+                      <div class="hover-card-meta">
+                        <span>Status <b>{{ task.status }}</b></span>
+                        <span>Priority <b>{{ task.priority || 'MEDIUM' }}</b></span>
+                        <span>Issues <b>{{ task.issues?.length || 0 }}</b></span>
+                        <span *ngIf="getBlockingIssues(task.issues).length">Blocked <b>{{ getBlockingIssues(task.issues).length }}</b></span>
+                      </div>
+                      <div class="hover-card-people">
+                        <span>Assignee: <b>{{ getUserName(task.assignee_user_id) }}</b></span>
+                        <span>Reporter: <b>{{ getUserName(task.reporter_user_id) }}</b></span>
+                      </div>
+                    </div>
                   </div>
 
-                  <div>
+                  <div class="type-status-cell task-type-cell">
                     <span class="type-chip task">TASK</span>
+                  </div>
+
+                  <div class="table-status-cell task-status-cell">
                     <span class="row-status mat-status" [ngClass]="statusClass(task.status)">
                       {{ task.status }}
+                    </span>
+                    <span class="blocked-by-badge compact" *ngIf="getBlockingIssues(task.issues).length"
+                      [title]="'Blocked by: ' + getBlockingIssueCodes(task.issues)">
+                      <span class="blocked-by-dot"></span>
+                      {{ getBlockingIssues(task.issues).length }} blocked-by issue{{ getBlockingIssues(task.issues).length === 1 ? '' : 's' }}
+                    </span>
+                  </div>
+
+                  <div class="table-priority-cell">
+                    <span class="priority-chip" [ngClass]="'priority-' + (task.priority || 'MEDIUM').toLowerCase()">
+                      {{ task.priority || 'MEDIUM' }}
                     </span>
                   </div>
 
@@ -374,6 +922,11 @@
                   </div>
 
                   <div class="row-actions">
+                    <button class="mini-button issue-view-button mat-action-button" type="button"
+                      [disabled]="!(task.issues?.length)"
+                      (click)="viewIssuesForItem('TASK', task); $event.stopPropagation()">
+                      Issues ({{ task.issues?.length || 0 }})
+                    </button>
                     <button class="icon-button small" type="button" title="Edit" (click)="openEditTask(task)">✎</button>
                   </div>
                 </div>
@@ -391,6 +944,7 @@
         <span>Create an Epic to start planning.</span>
       </div>
     </section>
+    </ng-container>
   </main>
 
   <!-- ========================= KANBAN VIEW ========================= -->
@@ -415,7 +969,7 @@
       </div>
     </div>
 
-    <div class="kanban-grid">
+    <div class="kanban-grid" cdkDropListGroup>
       <section class="kanban-column" *ngFor="let status of statusPipeline">
         <header class="kanban-column-header">
           <span class="row-status mat-status" [ngClass]="statusClass(status)">{{ status }}</span>
@@ -425,6 +979,7 @@
         <div
           class="kanban-list"
           cdkDropList
+          [id]="'kanban-' + status"
           [cdkDropListData]="kanbanItemsByStatus()[status]"
           (cdkDropListDropped)="onKanbanDrop($event, status)">
 
@@ -435,9 +990,26 @@
             [cdkDragData]="item">
 
             <div class="kanban-card-meta">
-              <span class="type-chip" [ngClass]="item.type.toLowerCase()">{{ item.type }}</span>
-              <span>{{ item.code }}</span>
-              <button class="icon-button small" type="button" (click)="openEditKanbanItem(item)">↗</button>
+              <span *ngIf="item.type === 'EPIC'" class="board-type-tag board-epic-tag">
+                EPIC
+              </span>
+
+              <span *ngIf="item.type === 'STORY'" class="board-type-tag board-work-type-tag">
+                STORY
+              </span>
+
+              <span *ngIf="item.type !== 'EPIC'" class="board-type-tag board-epic-tag board-parent-epic-tag"
+                [title]="item.parentEpicName || 'Parent Epic'">
+                EPIC · {{ item.parentEpicName || 'Parent Epic' }}
+              </span>
+
+              <span *ngIf="item.type === 'TASK'" class="board-type-tag board-task-story-tag"
+                [title]="item.parentStoryTitle || 'Parent Story'">
+                STORY · {{ item.parentStoryTitle || 'Parent Story' }}
+              </span>
+
+              <span class="kanban-card-code">{{ item.code }}</span>
+              <button class="icon-button small" type="button" (click)="openEditKanbanItem(item); $event.stopPropagation()">↗</button>
             </div>
 
             <button class="kanban-title" type="button" (click)="openEditKanbanItem(item)">
@@ -456,6 +1028,7 @@
                 type="button"
                 *ngFor="let issue of item.issues || []"
                 (click)="openViewIssue(issue); $event.stopPropagation()">
+                <span *ngIf="isBlockingIssue(issue)" class="board-blocker-label">BLOCKED BY</span>
                 {{ issue.issueCode || issue.issue_code || ('#' + issue.id) }}
               </button>
               <span class="link-pill test-link" *ngIf="item.testCases?.length">
@@ -468,6 +1041,134 @@
     </div>
   </main>
 
+  <!-- ========================= SPRINT PROGRESS ========================= -->
+  <div class="progress-backdrop" *ngIf="sprintProgressOpen()" (click)="closeSprintProgress()">
+    <section class="sprint-progress-dialog" role="dialog" aria-modal="true" (click)="$event.stopPropagation()"
+      *ngIf="sprintProgress() as progress">
+
+      <header class="progress-modal-header">
+        <div>
+          <span class="progress-eyebrow">SPRINT PROGRESS</span>
+          <h2>{{ progress.sprint.name }}</h2>
+          <div class="progress-header-meta">
+            <span *ngIf="progress.sprint.startDate">
+              {{ progress.sprint.startDate | date:'mediumDate' }} – {{ progress.sprint.endDate | date:'mediumDate' }}
+            </span>
+            <span class="status-chip mat-status" [ngClass]="statusClass(progress.sprint.status || 'FUTURE')">
+              {{ progress.sprint.status || 'FUTURE' }}
+            </span>
+          </div>
+        </div>
+        <button class="icon-button" type="button" title="Close" (click)="closeSprintProgress()">×</button>
+      </header>
+
+      <div class="progress-modal-body">
+        <section class="progress-overview">
+          <div class="progress-overview-main">
+            <div class="progress-ring-wrap">
+              <div class="progress-ring" [style.--progress]="progress.overallCompletionRate + '%'">
+                <div>
+                  <strong>{{ progress.overallCompletionRate }}%</strong>
+                  <span>Complete</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="progress-overview-copy">
+              <span class="progress-eyebrow">DELIVERY STATUS</span>
+              <h3>{{ progress.completedWorkItems }} of {{ progress.totalWorkItems }} work items completed</h3>
+              <p>
+                {{ progress.completedStoryPoints }} of {{ progress.totalStoryPoints }} story points are attached to completed stories.
+              </p>
+            </div>
+          </div>
+
+          <div class="progress-summary-grid">
+            <div class="progress-summary-card">
+              <span>Epics</span>
+              <strong>{{ progress.epics.total }}</strong>
+              <small>{{ progress.epics.completed }} completed</small>
+            </div>
+            <div class="progress-summary-card">
+              <span>Stories</span>
+              <strong>{{ progress.stories.total }}</strong>
+              <small>{{ progress.stories.completed }} completed</small>
+            </div>
+            <div class="progress-summary-card">
+              <span>Tasks</span>
+              <strong>{{ progress.tasks.total }}</strong>
+              <small>{{ progress.tasks.completed }} completed</small>
+            </div>
+            <div class="progress-summary-card">
+              <span>Story points</span>
+              <strong>{{ progress.totalStoryPoints }}</strong>
+              <small>{{ progress.completedStoryPoints }} completed</small>
+            </div>
+          </div>
+        </section>
+
+        <section class="progress-detail-grid">
+          <article class="progress-detail-card">
+            <header>
+              <div>
+                <span class="type-chip epic">EPIC</span>
+                <strong>Epic progress</strong>
+              </div>
+              <span class="progress-rate">{{ progress.epics.completionRate }}%</span>
+            </header>
+            <div class="progress-track"><span [style.width]="progress.epics.completionRate + '%'" class="progress-fill"></span></div>
+            <div class="progress-status-grid">
+              <div><span>Completed</span><strong>{{ progress.epics.completed }}</strong></div>
+              <div><span>In progress</span><strong>{{ progress.epics.inProgress }}</strong></div>
+              <div><span>Testing</span><strong>{{ progress.epics.testing }}</strong></div>
+              <div><span>Blocked</span><strong>{{ progress.epics.blocked }}</strong></div>
+              <div><span>Backlog</span><strong>{{ progress.epics.backlog }}</strong></div>
+              <div><span>To do</span><strong>{{ progress.epics.todo }}</strong></div>
+            </div>
+          </article>
+
+          <article class="progress-detail-card">
+            <header>
+              <div>
+                <span class="type-chip story">STORY</span>
+                <strong>Story progress</strong>
+              </div>
+              <span class="progress-rate">{{ progress.stories.completionRate }}%</span>
+            </header>
+            <div class="progress-track"><span [style.width]="progress.stories.completionRate + '%'" class="progress-fill"></span></div>
+            <div class="progress-status-grid">
+              <div><span>Completed</span><strong>{{ progress.stories.completed }}</strong></div>
+              <div><span>In progress</span><strong>{{ progress.stories.inProgress }}</strong></div>
+              <div><span>Testing</span><strong>{{ progress.stories.testing }}</strong></div>
+              <div><span>Blocked</span><strong>{{ progress.stories.blocked }}</strong></div>
+              <div><span>Backlog</span><strong>{{ progress.stories.backlog }}</strong></div>
+              <div><span>To do</span><strong>{{ progress.stories.todo }}</strong></div>
+            </div>
+          </article>
+
+          <article class="progress-detail-card">
+            <header>
+              <div>
+                <span class="type-chip task">TASK</span>
+                <strong>Task progress</strong>
+              </div>
+              <span class="progress-rate">{{ progress.tasks.completionRate }}%</span>
+            </header>
+            <div class="progress-track"><span [style.width]="progress.tasks.completionRate + '%'" class="progress-fill"></span></div>
+            <div class="progress-status-grid">
+              <div><span>Completed</span><strong>{{ progress.tasks.completed }}</strong></div>
+              <div><span>In progress</span><strong>{{ progress.tasks.inProgress }}</strong></div>
+              <div><span>Testing</span><strong>{{ progress.tasks.testing }}</strong></div>
+              <div><span>Blocked</span><strong>{{ progress.tasks.blocked }}</strong></div>
+              <div><span>Backlog</span><strong>{{ progress.tasks.backlog }}</strong></div>
+              <div><span>To do</span><strong>{{ progress.tasks.todo }}</strong></div>
+            </div>
+          </article>
+        </section>
+      </div>
+    </section>
+  </div>
+
   <!-- ========================= MODAL SHELL ========================= -->
   <div class="modal-backdrop" *ngIf="activeModal() !== 'NONE'" (click)="closeModal()">
     <section class="work-modal" (click)="$event.stopPropagation()">
@@ -478,6 +1179,7 @@
           <div>
             <span class="type-chip epic">EPIC</span>
             <span class="modal-code">{{ currentEpic.epic_code || 'NEW' }}</span>
+            <span class="modal-view-label" *ngIf="isReadOnly()">Quick view</span>
           </div>
           <button class="icon-button" type="button" (click)="closeModal()">×</button>
         </header>
@@ -528,10 +1230,38 @@
                   <ng-template #noEpicStories><div class="empty-inline">No stories linked to this epic.</div></ng-template>
                 </div>
 
+                <div class="related-section">
+                  <div class="section-title">
+                    <span>Issues &amp; blockers</span>
+                    <strong>{{ currentEpic.issues?.length || 0 }}</strong>
+                  </div>
+                  <div class="related-list" *ngIf="currentEpic.issues?.length; else noEpicIssues">
+                    <button class="related-item mat-related-item"
+                      *ngFor="let issue of currentEpic.issues"
+                      type="button"
+                      (click)="openViewIssue(issue)">
+                      <span class="type-chip issue">ISSUE</span>
+                      <span>{{ issue.issueCode || issue.issue_code || ('#' + issue.id) }}</span>
+                      <strong>{{ issue.title }}</strong>
+                      <span class="blocking-inline-chip" *ngIf="isBlockingIssue(issue)">BLOCKED BY</span>
+                      <span class="row-status mat-status" [ngClass]="statusClass(issue.status)">
+                        {{ issue.status }}
+                      </span>
+                    </button>
+                  </div>
+                  <ng-template #noEpicIssues>
+                    <div class="empty-inline">No issues linked directly to this epic.</div>
+                  </ng-template>
+                </div>
+
                 <div class="inline-details">
                   <div>
                     <span>Issues</span>
                     <strong>{{ currentEpic.issues?.length || 0 }}</strong>
+                  </div>
+                  <div>
+                    <span>Blocked by</span>
+                    <strong>{{ getBlockingIssues(currentEpic.issues).length }}</strong>
                   </div>
                   <div>
                     <span>Test cases</span>
@@ -544,6 +1274,14 @@
                 <div class="side-section">
                   <h3>Details</h3>
 
+                  <label class="field-label">Epic code</label>
+                  <input
+                    class="edit-input mat-input-control"
+                    [(ngModel)]="currentEpic.epic_code"
+                    [disabled]="isReadOnly()"
+                    maxlength="50"
+                    placeholder="e.g. EPIC-001" />
+
                   <label class="field-label">Status</label>
                   <mat-select class="edit-select" [(ngModel)]="currentEpic.status" [disabled]="isReadOnly()" panelClass="work-status-panel">
                     <mat-select-trigger>
@@ -553,38 +1291,88 @@
                       <span class="row-status mat-status" [ngClass]="statusClass(status)">{{ status }}</span>
                     </mat-option>
                   </mat-select>
-
                   <label class="field-label">Assignee</label>
-                  <mat-select class="edit-select" [(ngModel)]="currentEpic.assignee_user_id" [disabled]="isReadOnly()" panelClass="person-select-panel">
-                    <mat-select-trigger>
-                      <span class="person-cell mat-person">
-                        <span class="avatar">{{ getUserInitials(userMap().get(toNumber(currentEpic.assignee_user_id))?.name || 'Unassigned') }}</span>
-                        <span>{{ userMap().get(toNumber(currentEpic.assignee_user_id))?.name || 'Unassigned' }}</span>
+                  <div class="person-autocomplete">
+                    <div class="person-autocomplete-control" [class.is-disabled]="isReadOnly()">
+                      <span class="avatar person-input-avatar">
+                        {{ getUserInitials(userMap().get(toNumber(currentEpic.assignee_user_id))?.name || 'Unassigned') }}
                       </span>
-                    </mat-select-trigger>
-                    <mat-option [value]="null">
-                      <span class="person-cell mat-person"><span class="avatar muted-avatar">U</span><span>Unassigned</span></span>
-                    </mat-option>
-                    <mat-option *ngFor="let user of users(); trackBy: trackByUserId" [value]="user.id">
-                      <span class="person-cell mat-person"><span class="avatar">{{ getUserInitials(user.name) }}</span><span>{{ user.name }}</span></span>
-                    </mat-option>
-                  </mat-select>
+                      <input
+                        class="person-autocomplete-input"
+                        [value]="assigneeSearchTerm()"
+                        [disabled]="isReadOnly()"
+                        placeholder="Search assignee"
+                        autocomplete="off"
+                        (focus)="openPersonAutocomplete('ASSIGNEE')"
+                        (input)="onPersonSearch('ASSIGNEE', $any($event.target).value)"
+                        (blur)="closePersonAutocompleteLater()" />
+                      <button
+                        *ngIf="currentEpic.assignee_user_id != null && !isReadOnly()"
+                        class="person-clear-button"
+                        type="button"
+                        title="Clear assignee"
+                        (mousedown)="$event.preventDefault()"
+                        (click)="clearPerson('ASSIGNEE')">×</button>
+                    </div>
 
+                    <div class="person-autocomplete-panel"
+                      *ngIf="personAutocompleteOpen() === 'ASSIGNEE' && !isReadOnly()">
+                      <button
+                        *ngFor="let user of filteredAssigneeUsers(); trackBy: trackByUserId"
+                        class="person-suggestion"
+                        type="button"
+                        (mousedown)="$event.preventDefault()"
+                        (click)="selectPerson('ASSIGNEE', user)">
+                        <span class="avatar">{{ getUserInitials(user.name) }}</span>
+                        <span class="person-suggestion-copy">
+                          <strong>{{ user.name }}</strong>
+                          <small>{{ user.email || 'No email available' }}{{ userEmployeeCode(user) ? ' · ' + userEmployeeCode(user) : '' }}</small>
+                        </span>
+                      </button>
+                      <div class="person-autocomplete-empty" *ngIf="!filteredAssigneeUsers().length">No matching users</div>
+                    </div>
+                  </div>
                   <label class="field-label">Reporter</label>
-                  <mat-select class="edit-select" [(ngModel)]="currentEpic.reporter_user_id" [disabled]="isReadOnly()" panelClass="person-select-panel">
-                    <mat-select-trigger>
-                      <span class="person-cell mat-person">
-                        <span class="avatar">{{ getUserInitials(userMap().get(toNumber(currentEpic.reporter_user_id))?.name || 'Unassigned') }}</span>
-                        <span>{{ userMap().get(toNumber(currentEpic.reporter_user_id))?.name || 'Unassigned' }}</span>
+                  <div class="person-autocomplete">
+                    <div class="person-autocomplete-control" [class.is-disabled]="isReadOnly()">
+                      <span class="avatar person-input-avatar">
+                        {{ getUserInitials(userMap().get(toNumber(currentEpic.reporter_user_id))?.name || 'Unassigned') }}
                       </span>
-                    </mat-select-trigger>
-                    <mat-option [value]="null">
-                      <span class="person-cell mat-person"><span class="avatar muted-avatar">U</span><span>Unassigned</span></span>
-                    </mat-option>
-                    <mat-option *ngFor="let user of users(); trackBy: trackByUserId" [value]="user.id">
-                      <span class="person-cell mat-person"><span class="avatar">{{ getUserInitials(user.name) }}</span><span>{{ user.name }}</span></span>
-                    </mat-option>
-                  </mat-select>
+                      <input
+                        class="person-autocomplete-input"
+                        [value]="reporterSearchTerm()"
+                        [disabled]="isReadOnly()"
+                        placeholder="Search reporter"
+                        autocomplete="off"
+                        (focus)="openPersonAutocomplete('REPORTER')"
+                        (input)="onPersonSearch('REPORTER', $any($event.target).value)"
+                        (blur)="closePersonAutocompleteLater()" />
+                      <button
+                        *ngIf="currentEpic.reporter_user_id != null && !isReadOnly()"
+                        class="person-clear-button"
+                        type="button"
+                        title="Clear reporter"
+                        (mousedown)="$event.preventDefault()"
+                        (click)="clearPerson('REPORTER')">×</button>
+                    </div>
+
+                    <div class="person-autocomplete-panel"
+                      *ngIf="personAutocompleteOpen() === 'REPORTER' && !isReadOnly()">
+                      <button
+                        *ngFor="let user of filteredReporterUsers(); trackBy: trackByUserId"
+                        class="person-suggestion"
+                        type="button"
+                        (mousedown)="$event.preventDefault()"
+                        (click)="selectPerson('REPORTER', user)">
+                        <span class="avatar">{{ getUserInitials(user.name) }}</span>
+                        <span class="person-suggestion-copy">
+                          <strong>{{ user.name }}</strong>
+                          <small>{{ user.email || 'No email available' }}{{ userEmployeeCode(user) ? ' · ' + userEmployeeCode(user) : '' }}</small>
+                        </span>
+                      </button>
+                      <div class="person-autocomplete-empty" *ngIf="!filteredReporterUsers().length">No matching users</div>
+                    </div>
+                  </div>
 
                   <label class="field-label">Sprint</label>
                   <mat-select class="edit-select" [(ngModel)]="currentEpic.sprint_id" [disabled]="isReadOnly()">
@@ -592,11 +1380,6 @@
                     <mat-option *ngFor="let sprint of projectSprints()" [value]="sprint.id">{{ sprint.name }}</mat-option>
                   </mat-select>
 
-                  <label class="field-label">Team</label>
-                  <mat-select class="edit-select" [(ngModel)]="currentEpic.team_id" [disabled]="isReadOnly()">
-                    <mat-option [value]="null">No team</mat-option>
-                    <mat-option *ngFor="let team of teams()" [value]="team.id">{{ team.name }}</mat-option>
-                  </mat-select>
                 </div>
 
                 <div class="side-section">
@@ -615,12 +1398,24 @@
           </div>
         </div>
 
-        <footer class="modal-footer">
-          <button class="outline-button mat-action-button" type="button" (click)="closeModal()">Cancel</button>
-          <button class="outline-button mat-action-button" *ngIf="isReadOnly()" type="button" (click)="enableEditMode()">Edit</button>
-          <button class="primary-action mat-primary-button" *ngIf="!isReadOnly()" type="button" (click)="saveEpic()">
-            {{ drawerMode() === 'CREATE' ? 'Create Epic' : 'Save changes' }}
-          </button>
+        <footer class="modal-footer epic-modal-footer">
+          <div class="modal-footer-left">
+            <span class="modal-footer-note" *ngIf="isReadOnly()">Quick view only · Open the full workspace for the complete Epic page.</span>
+          </div>
+          <div class="modal-footer-actions">
+            <button class="outline-button mat-action-button" type="button" (click)="closeModal()">Close</button>
+            <button class="outline-button mat-action-button full-page-button"
+              *ngIf="isReadOnly()"
+              type="button"
+              (click)="openEpicSeparatePage()">
+              <span>View separate page</span>
+              <span aria-hidden="true">↗</span>
+            </button>
+            <button class="outline-button mat-action-button" *ngIf="isReadOnly()" type="button" (click)="enableEditMode()">Edit</button>
+            <button class="primary-action mat-primary-button" *ngIf="!isReadOnly()" type="button" (click)="saveEpic()">
+              {{ drawerMode() === 'CREATE' ? 'Create Epic' : 'Save changes' }}
+            </button>
+          </div>
         </footer>
       </ng-container>
 
@@ -690,6 +1485,7 @@
                       <span class="type-chip issue">ISSUE</span>
                       <span>{{ issue.issueCode || issue.issue_code || ('#' + issue.id) }}</span>
                       <strong>{{ issue.title }}</strong>
+                      <span class="blocking-inline-chip" *ngIf="isBlockingIssue(issue)">BLOCKED BY</span>
                     </button>
                   </div>
                   <ng-template #noStoryIssues><div class="empty-inline">No issues linked to this story.</div></ng-template>
@@ -725,26 +1521,89 @@
                     <mat-option [value]="null">No sprint</mat-option>
                     <mat-option *ngFor="let sprint of projectSprints()" [value]="sprint.id">{{ sprint.name }}</mat-option>
                   </mat-select>
-
                   <label class="field-label">Assignee</label>
-                  <mat-select class="edit-select" [(ngModel)]="currentStory.assignee_user_id" [disabled]="isReadOnly()" panelClass="person-select-panel">
-                    <mat-select-trigger><span class="person-cell mat-person"><span class="avatar">{{ getUserInitials(userMap().get(toNumber(currentStory.assignee_user_id))?.name || 'Unassigned') }}</span><span>{{ userMap().get(toNumber(currentStory.assignee_user_id))?.name || 'Unassigned' }}</span></span></mat-select-trigger>
-                    <mat-option [value]="null"><span class="person-cell mat-person"><span class="avatar muted-avatar">U</span><span>Unassigned</span></span></mat-option>
-                    <mat-option *ngFor="let user of users(); trackBy: trackByUserId" [value]="user.id"><span class="person-cell mat-person"><span class="avatar">{{ getUserInitials(user.name) }}</span><span>{{ user.name }}</span></span></mat-option>
-                  </mat-select>
+                  <div class="person-autocomplete">
+                    <div class="person-autocomplete-control" [class.is-disabled]="isReadOnly()">
+                      <span class="avatar person-input-avatar">
+                        {{ getUserInitials(userMap().get(toNumber(currentStory.assignee_user_id))?.name || 'Unassigned') }}
+                      </span>
+                      <input
+                        class="person-autocomplete-input"
+                        [value]="assigneeSearchTerm()"
+                        [disabled]="isReadOnly()"
+                        placeholder="Search assignee"
+                        autocomplete="off"
+                        (focus)="openPersonAutocomplete('ASSIGNEE')"
+                        (input)="onPersonSearch('ASSIGNEE', $any($event.target).value)"
+                        (blur)="closePersonAutocompleteLater()" />
+                      <button
+                        *ngIf="currentStory.assignee_user_id != null && !isReadOnly()"
+                        class="person-clear-button"
+                        type="button"
+                        title="Clear assignee"
+                        (mousedown)="$event.preventDefault()"
+                        (click)="clearPerson('ASSIGNEE')">×</button>
+                    </div>
 
+                    <div class="person-autocomplete-panel"
+                      *ngIf="personAutocompleteOpen() === 'ASSIGNEE' && !isReadOnly()">
+                      <button
+                        *ngFor="let user of filteredAssigneeUsers(); trackBy: trackByUserId"
+                        class="person-suggestion"
+                        type="button"
+                        (mousedown)="$event.preventDefault()"
+                        (click)="selectPerson('ASSIGNEE', user)">
+                        <span class="avatar">{{ getUserInitials(user.name) }}</span>
+                        <span class="person-suggestion-copy">
+                          <strong>{{ user.name }}</strong>
+                          <small>{{ user.email || 'No email available' }}{{ userEmployeeCode(user) ? ' · ' + userEmployeeCode(user) : '' }}</small>
+                        </span>
+                      </button>
+                      <div class="person-autocomplete-empty" *ngIf="!filteredAssigneeUsers().length">No matching users</div>
+                    </div>
+                  </div>
                   <label class="field-label">Reporter</label>
-                  <mat-select class="edit-select" [(ngModel)]="currentStory.reporter_user_id" [disabled]="isReadOnly()" panelClass="person-select-panel">
-                    <mat-select-trigger><span class="person-cell mat-person"><span class="avatar">{{ getUserInitials(userMap().get(toNumber(currentStory.reporter_user_id))?.name || 'Unassigned') }}</span><span>{{ userMap().get(toNumber(currentStory.reporter_user_id))?.name || 'Unassigned' }}</span></span></mat-select-trigger>
-                    <mat-option [value]="null"><span class="person-cell mat-person"><span class="avatar muted-avatar">U</span><span>Unassigned</span></span></mat-option>
-                    <mat-option *ngFor="let user of users(); trackBy: trackByUserId" [value]="user.id"><span class="person-cell mat-person"><span class="avatar">{{ getUserInitials(user.name) }}</span><span>{{ user.name }}</span></span></mat-option>
-                  </mat-select>
+                  <div class="person-autocomplete">
+                    <div class="person-autocomplete-control" [class.is-disabled]="isReadOnly()">
+                      <span class="avatar person-input-avatar">
+                        {{ getUserInitials(userMap().get(toNumber(currentStory.reporter_user_id))?.name || 'Unassigned') }}
+                      </span>
+                      <input
+                        class="person-autocomplete-input"
+                        [value]="reporterSearchTerm()"
+                        [disabled]="isReadOnly()"
+                        placeholder="Search reporter"
+                        autocomplete="off"
+                        (focus)="openPersonAutocomplete('REPORTER')"
+                        (input)="onPersonSearch('REPORTER', $any($event.target).value)"
+                        (blur)="closePersonAutocompleteLater()" />
+                      <button
+                        *ngIf="currentStory.reporter_user_id != null && !isReadOnly()"
+                        class="person-clear-button"
+                        type="button"
+                        title="Clear reporter"
+                        (mousedown)="$event.preventDefault()"
+                        (click)="clearPerson('REPORTER')">×</button>
+                    </div>
 
-                  <label class="field-label">Team</label>
-                  <mat-select class="edit-select" [(ngModel)]="currentStory.team_id" [disabled]="isReadOnly()">
-                    <mat-option [value]="null">No team</mat-option>
-                    <mat-option *ngFor="let team of teams()" [value]="team.id">{{ team.name }}</mat-option>
-                  </mat-select>
+                    <div class="person-autocomplete-panel"
+                      *ngIf="personAutocompleteOpen() === 'REPORTER' && !isReadOnly()">
+                      <button
+                        *ngFor="let user of filteredReporterUsers(); trackBy: trackByUserId"
+                        class="person-suggestion"
+                        type="button"
+                        (mousedown)="$event.preventDefault()"
+                        (click)="selectPerson('REPORTER', user)">
+                        <span class="avatar">{{ getUserInitials(user.name) }}</span>
+                        <span class="person-suggestion-copy">
+                          <strong>{{ user.name }}</strong>
+                          <small>{{ user.email || 'No email available' }}{{ userEmployeeCode(user) ? ' · ' + userEmployeeCode(user) : '' }}</small>
+                        </span>
+                      </button>
+                      <div class="person-autocomplete-empty" *ngIf="!filteredReporterUsers().length">No matching users</div>
+                    </div>
+                  </div>
+
                 </div>
 
                 <div class="side-section">
@@ -823,6 +1682,7 @@
                       <span class="type-chip issue">ISSUE</span>
                       <span>{{ issue.issueCode || issue.issue_code || ('#' + issue.id) }}</span>
                       <strong>{{ issue.title }}</strong>
+                      <span class="blocking-inline-chip" *ngIf="isBlockingIssue(issue)">BLOCKED BY</span>
                     </button>
                   </div>
                   <ng-template #noTaskIssues><div class="empty-inline">No issues linked to this task.</div></ng-template>
@@ -847,7 +1707,7 @@
                   <label class="field-label">Parent Story</label>
                   <mat-select class="edit-select" [(ngModel)]="currentTask.story_id" [disabled]="isReadOnly()">
                     <mat-option [value]="null">No parent story</mat-option>
-                    <mat-option *ngFor="let story of availableStories()" [value]="story.id">#{{ story.id }} — {{ story.title }}</mat-option>
+                    <mat-option *ngFor="let story of issueAvailableStories()" [value]="story.id">#{{ story.id }} — {{ story.title }}</mat-option>
                   </mat-select>
 
                   <label class="field-label">Sprint</label>
@@ -855,26 +1715,89 @@
                     <mat-option [value]="null">No sprint</mat-option>
                     <mat-option *ngFor="let sprint of projectSprints()" [value]="sprint.id">{{ sprint.name }}</mat-option>
                   </mat-select>
-
                   <label class="field-label">Assignee</label>
-                  <mat-select class="edit-select" [(ngModel)]="currentTask.assignee_user_id" [disabled]="isReadOnly()" panelClass="person-select-panel">
-                    <mat-select-trigger><span class="person-cell mat-person"><span class="avatar">{{ getUserInitials(userMap().get(toNumber(currentTask.assignee_user_id))?.name || 'Unassigned') }}</span><span>{{ userMap().get(toNumber(currentTask.assignee_user_id))?.name || 'Unassigned' }}</span></span></mat-select-trigger>
-                    <mat-option [value]="null"><span class="person-cell mat-person"><span class="avatar muted-avatar">U</span><span>Unassigned</span></span></mat-option>
-                    <mat-option *ngFor="let user of users(); trackBy: trackByUserId" [value]="user.id"><span class="person-cell mat-person"><span class="avatar">{{ getUserInitials(user.name) }}</span><span>{{ user.name }}</span></span></mat-option>
-                  </mat-select>
+                  <div class="person-autocomplete">
+                    <div class="person-autocomplete-control" [class.is-disabled]="isReadOnly()">
+                      <span class="avatar person-input-avatar">
+                        {{ getUserInitials(userMap().get(toNumber(currentTask.assignee_user_id))?.name || 'Unassigned') }}
+                      </span>
+                      <input
+                        class="person-autocomplete-input"
+                        [value]="assigneeSearchTerm()"
+                        [disabled]="isReadOnly()"
+                        placeholder="Search assignee"
+                        autocomplete="off"
+                        (focus)="openPersonAutocomplete('ASSIGNEE')"
+                        (input)="onPersonSearch('ASSIGNEE', $any($event.target).value)"
+                        (blur)="closePersonAutocompleteLater()" />
+                      <button
+                        *ngIf="currentTask.assignee_user_id != null && !isReadOnly()"
+                        class="person-clear-button"
+                        type="button"
+                        title="Clear assignee"
+                        (mousedown)="$event.preventDefault()"
+                        (click)="clearPerson('ASSIGNEE')">×</button>
+                    </div>
 
+                    <div class="person-autocomplete-panel"
+                      *ngIf="personAutocompleteOpen() === 'ASSIGNEE' && !isReadOnly()">
+                      <button
+                        *ngFor="let user of filteredAssigneeUsers(); trackBy: trackByUserId"
+                        class="person-suggestion"
+                        type="button"
+                        (mousedown)="$event.preventDefault()"
+                        (click)="selectPerson('ASSIGNEE', user)">
+                        <span class="avatar">{{ getUserInitials(user.name) }}</span>
+                        <span class="person-suggestion-copy">
+                          <strong>{{ user.name }}</strong>
+                          <small>{{ user.email || 'No email available' }}{{ userEmployeeCode(user) ? ' · ' + userEmployeeCode(user) : '' }}</small>
+                        </span>
+                      </button>
+                      <div class="person-autocomplete-empty" *ngIf="!filteredAssigneeUsers().length">No matching users</div>
+                    </div>
+                  </div>
                   <label class="field-label">Reporter</label>
-                  <mat-select class="edit-select" [(ngModel)]="currentTask.reporter_user_id" [disabled]="isReadOnly()" panelClass="person-select-panel">
-                    <mat-select-trigger><span class="person-cell mat-person"><span class="avatar">{{ getUserInitials(userMap().get(toNumber(currentTask.reporter_user_id))?.name || 'Unassigned') }}</span><span>{{ userMap().get(toNumber(currentTask.reporter_user_id))?.name || 'Unassigned' }}</span></span></mat-select-trigger>
-                    <mat-option [value]="null"><span class="person-cell mat-person"><span class="avatar muted-avatar">U</span><span>Unassigned</span></span></mat-option>
-                    <mat-option *ngFor="let user of users(); trackBy: trackByUserId" [value]="user.id"><span class="person-cell mat-person"><span class="avatar">{{ getUserInitials(user.name) }}</span><span>{{ user.name }}</span></span></mat-option>
-                  </mat-select>
+                  <div class="person-autocomplete">
+                    <div class="person-autocomplete-control" [class.is-disabled]="isReadOnly()">
+                      <span class="avatar person-input-avatar">
+                        {{ getUserInitials(userMap().get(toNumber(currentTask.reporter_user_id))?.name || 'Unassigned') }}
+                      </span>
+                      <input
+                        class="person-autocomplete-input"
+                        [value]="reporterSearchTerm()"
+                        [disabled]="isReadOnly()"
+                        placeholder="Search reporter"
+                        autocomplete="off"
+                        (focus)="openPersonAutocomplete('REPORTER')"
+                        (input)="onPersonSearch('REPORTER', $any($event.target).value)"
+                        (blur)="closePersonAutocompleteLater()" />
+                      <button
+                        *ngIf="currentTask.reporter_user_id != null && !isReadOnly()"
+                        class="person-clear-button"
+                        type="button"
+                        title="Clear reporter"
+                        (mousedown)="$event.preventDefault()"
+                        (click)="clearPerson('REPORTER')">×</button>
+                    </div>
 
-                  <label class="field-label">Team</label>
-                  <mat-select class="edit-select" [(ngModel)]="currentTask.team_id" [disabled]="isReadOnly()">
-                    <mat-option [value]="null">No team</mat-option>
-                    <mat-option *ngFor="let team of teams()" [value]="team.id">{{ team.name }}</mat-option>
-                  </mat-select>
+                    <div class="person-autocomplete-panel"
+                      *ngIf="personAutocompleteOpen() === 'REPORTER' && !isReadOnly()">
+                      <button
+                        *ngFor="let user of filteredReporterUsers(); trackBy: trackByUserId"
+                        class="person-suggestion"
+                        type="button"
+                        (mousedown)="$event.preventDefault()"
+                        (click)="selectPerson('REPORTER', user)">
+                        <span class="avatar">{{ getUserInitials(user.name) }}</span>
+                        <span class="person-suggestion-copy">
+                          <strong>{{ user.name }}</strong>
+                          <small>{{ user.email || 'No email available' }}{{ userEmployeeCode(user) ? ' · ' + userEmployeeCode(user) : '' }}</small>
+                        </span>
+                      </button>
+                      <div class="person-autocomplete-empty" *ngIf="!filteredReporterUsers().length">No matching users</div>
+                    </div>
+                  </div>
+
                 </div>
 
                 <div class="side-section">
@@ -900,6 +1823,322 @@
           <button class="primary-action mat-primary-button" *ngIf="!isReadOnly()" type="button" (click)="saveTask()">
             {{ drawerMode() === 'CREATE' ? 'Create Task' : 'Save changes' }}
           </button>
+        </footer>
+      </ng-container>
+
+      <!-- ISSUE -->
+      <ng-container *ngIf="activeModal() === 'ISSUE'">
+        <header class="modal-header issue-modal-header">
+          <div>
+            <span class="type-chip issue">ISSUE</span>
+            <span class="modal-code">{{ currentIssue.issue_code || currentIssue.issueCode || 'NEW ISSUE' }}</span>
+            <span class="issue-blocker-label" *ngIf="isBlockingIssue(currentIssue)">BLOCKS LINKED WORK</span>
+          </div>
+          <button class="icon-button" type="button" aria-label="Close" (click)="closeModal()">×</button>
+        </header>
+
+        <div class="modal-body">
+          <div class="modal-main">
+            <div class="breadcrumb-line">
+              Workspace <span>›</span> Issues <span>›</span>
+              {{ currentIssue.issue_code || currentIssue.issueCode || 'New Issue' }}
+            </div>
+
+            <div class="issue-modal-heading">
+              <div>
+                <span class="modal-eyebrow">DELIVERY IMPACT</span>
+                <h2>{{ currentIssue.title || 'Create Issue' }}</h2>
+              </div>
+              <span class="issue-impact-badge" *ngIf="isBlockingIssue(currentIssue)">
+                <span class="blocked-by-dot"></span>
+                BLOCKER
+              </span>
+            </div>
+
+            <div class="modal-grid-75">
+              <div>
+                <label class="field-label">Title</label>
+                <input
+                  class="edit-input title-input"
+                  [(ngModel)]="currentIssue.title"
+                  [disabled]="isReadOnly()"
+                  placeholder="Describe the issue or bug" />
+
+                <label class="field-label">Description</label>
+                <div class="rich-editor mat-editor-control issue-description-editor"
+                  contenteditable="true"
+                  [attr.contenteditable]="!isReadOnly()"
+                  [innerHTML]="currentIssue.description || ''"
+                  (input)="currentIssue.description = $any($event.target).innerHTML">
+                </div>
+
+                <section class="issue-linked-work-card">
+                  <div class="issue-linked-work-heading">
+                    <div>
+                      <span class="modal-eyebrow">SCOPE</span>
+                      <h3>Linked work</h3>
+                      <p>Connect this issue to the exact Epic, Story or Task it affects.</p>
+                    </div>
+                    <span class="count-label">
+                      {{ selectedIssueEpicIds().length + selectedIssueStoryIds().length + selectedIssueTaskIds().length }} links
+                    </span>
+                  </div>
+
+                  <div class="issue-link-grid">
+                    <div class="issue-link-field">
+                      <label class="field-label">Epics</label>
+                      <mat-select
+                        class="edit-select"
+                        multiple
+                        [ngModel]="selectedIssueEpicIds()"
+                        (ngModelChange)="onIssueEpicSelectChange($event)"
+                        [disabled]="isReadOnly()">
+                        <mat-option *ngFor="let epic of issueAvailableEpics()" [value]="epic.id">
+                          {{ epic.epic_code }} · {{ epic.name }}
+                        </mat-option>
+                      </mat-select>
+                    </div>
+
+                    <div class="issue-link-field">
+                      <label class="field-label">Stories</label>
+                      <mat-select
+                        class="edit-select"
+                        multiple
+                        [ngModel]="selectedIssueStoryIds()"
+                        (ngModelChange)="onIssueStorySelectChange($event)"
+                        [disabled]="isReadOnly()">
+                        <mat-option *ngFor="let story of issueAvailableStories()" [value]="story.id">
+                          #{{ story.id }} · {{ story.title }}
+                        </mat-option>
+                      </mat-select>
+                    </div>
+
+                    <div class="issue-link-field">
+                      <label class="field-label">Tasks</label>
+                      <mat-select
+                        class="edit-select"
+                        multiple
+                        [ngModel]="selectedIssueTaskIds()"
+                        (ngModelChange)="selectedIssueTaskIds.set($event)"
+                        [disabled]="isReadOnly()">
+                        <mat-option *ngFor="let task of issueAvailableTasks()" [value]="task.id">
+                          #{{ task.id }} · {{ task.title }}
+                        </mat-option>
+                      </mat-select>
+                    </div>
+                  </div>
+
+                  <div class="linked-chip-list"
+                    *ngIf="selectedIssueEpicIds().length || selectedIssueStoryIds().length || selectedIssueTaskIds().length">
+                    <span class="linked-work-chip linked-epic"
+                      *ngFor="let id of selectedIssueEpicIds()">
+                      <span>EPIC</span> {{ getIssueLinkedEpicNames({ epicIds: [id] }) }}
+                    </span>
+                    <span class="linked-work-chip linked-story"
+                      *ngFor="let id of selectedIssueStoryIds()">
+                      <span>STORY</span> {{ getIssueLinkedStoryNames({ storyIds: [id] }) }}
+                    </span>
+                    <span class="linked-work-chip linked-task"
+                      *ngFor="let id of selectedIssueTaskIds()">
+                      <span>TASK</span> {{ getIssueLinkedTaskNames({ taskIds: [id] }) }}
+                    </span>
+                  </div>
+                </section>
+              </div>
+
+              <aside class="modal-side">
+                <div class="side-section">
+                  <h3>Issue details</h3>
+
+                  <label class="field-label">Issue code</label>
+                  <input
+                    class="edit-input mat-input-control"
+                    [(ngModel)]="currentIssue.issue_code"
+                    [disabled]="isReadOnly()"
+                    maxlength="50"
+                    placeholder="ISSUE-1001" />
+
+                  <label class="field-label">Status</label>
+                  <mat-select
+                    class="edit-select"
+                    [(ngModel)]="currentIssue.status"
+                    [disabled]="isReadOnly()"
+                    panelClass="work-status-panel">
+                    <mat-select-trigger>
+                      <span class="row-status mat-status"
+                        [ngClass]="statusClass(currentIssue.status)">
+                        {{ currentIssue.status || 'OPEN' }}
+                      </span>
+                    </mat-select-trigger>
+                    <mat-option *ngFor="let status of statusPipeline" [value]="status">
+                      <span class="row-status mat-status" [ngClass]="statusClass(status)">{{ status }}</span>
+                    </mat-option>
+                  </mat-select>
+
+                  <label class="field-label">Sprint</label>
+                  <mat-select
+                    class="edit-select"
+                    [(ngModel)]="currentIssue.sprint_id"
+                    (ngModelChange)="onIssueSprintChange($event)"
+                    [disabled]="isReadOnly()">
+                    <mat-option [value]="null">No sprint</mat-option>
+                    <mat-option *ngFor="let sprint of projectSprints()" [value]="sprint.id">
+                      {{ sprint.name }}
+                    </mat-option>
+                  </mat-select>
+
+                  <div class="issue-blocking-control" [class.readonly]="isReadOnly()">
+                    <label class="issue-blocking-toggle">
+                      <input
+                        type="checkbox"
+                        [(ngModel)]="currentIssue.isBlocking"
+                        [disabled]="isReadOnly()" />
+                      <span>
+                        <strong>Blocks linked work</strong>
+                        <small>Mark this issue when the linked Epic, Story or Task cannot proceed because of it.</small>
+                      </span>
+                    </label>
+                  </div>
+
+                  <label class="field-label">Assignee</label>
+                  <div class="person-autocomplete">
+                    <div class="person-autocomplete-control" [class.is-disabled]="isReadOnly()">
+                      <span class="avatar person-input-avatar">
+                        {{ getUserInitials(getUserName(currentIssue.assignee_user_id)) }}
+                      </span>
+                      <input
+                        class="person-autocomplete-input"
+                        [value]="assigneeSearchTerm()"
+                        [disabled]="isReadOnly()"
+                        placeholder="Search assignee"
+                        autocomplete="off"
+                        (focus)="openPersonAutocomplete('ASSIGNEE')"
+                        (input)="onPersonSearch('ASSIGNEE', $any($event.target).value)"
+                        (blur)="closePersonAutocompleteLater()" />
+                      <button
+                        *ngIf="currentIssue.assignee_user_id != null && !isReadOnly()"
+                        class="person-clear-button"
+                        type="button"
+                        title="Clear assignee"
+                        (mousedown)="$event.preventDefault()"
+                        (click)="clearPerson('ASSIGNEE')">×</button>
+                    </div>
+
+                    <div class="person-autocomplete-panel"
+                      *ngIf="personAutocompleteOpen() === 'ASSIGNEE' && !isReadOnly()">
+                      <button
+                        *ngFor="let user of filteredAssigneeUsers(); trackBy: trackByUserId"
+                        class="person-suggestion"
+                        type="button"
+                        (mousedown)="$event.preventDefault()"
+                        (click)="selectPerson('ASSIGNEE', user)">
+                        <span class="avatar">{{ getUserInitials(user.name) }}</span>
+                        <span class="person-suggestion-copy">
+                          <strong>{{ user.name }}</strong>
+                          <small>{{ user.email || 'No email available' }}{{ userEmployeeCode(user) ? ' · ' + userEmployeeCode(user) : '' }}</small>
+                        </span>
+                      </button>
+                      <div class="person-autocomplete-empty" *ngIf="!filteredAssigneeUsers().length">
+                        No matching users
+                      </div>
+                    </div>
+                  </div>
+
+                  <label class="field-label">Reporter</label>
+                  <div class="person-autocomplete">
+                    <div class="person-autocomplete-control" [class.is-disabled]="isReadOnly()">
+                      <span class="avatar person-input-avatar">
+                        {{ getUserInitials(getUserName(currentIssue.reporter_user_id)) }}
+                      </span>
+                      <input
+                        class="person-autocomplete-input"
+                        [value]="reporterSearchTerm()"
+                        [disabled]="isReadOnly()"
+                        placeholder="Search reporter"
+                        autocomplete="off"
+                        (focus)="openPersonAutocomplete('REPORTER')"
+                        (input)="onPersonSearch('REPORTER', $any($event.target).value)"
+                        (blur)="closePersonAutocompleteLater()" />
+                      <button
+                        *ngIf="currentIssue.reporter_user_id != null && !isReadOnly()"
+                        class="person-clear-button"
+                        type="button"
+                        title="Clear reporter"
+                        (mousedown)="$event.preventDefault()"
+                        (click)="clearPerson('REPORTER')">×</button>
+                    </div>
+
+                    <div class="person-autocomplete-panel"
+                      *ngIf="personAutocompleteOpen() === 'REPORTER' && !isReadOnly()">
+                      <button
+                        *ngFor="let user of filteredReporterUsers(); trackBy: trackByUserId"
+                        class="person-suggestion"
+                        type="button"
+                        (mousedown)="$event.preventDefault()"
+                        (click)="selectPerson('REPORTER', user)">
+                        <span class="avatar">{{ getUserInitials(user.name) }}</span>
+                        <span class="person-suggestion-copy">
+                          <strong>{{ user.name }}</strong>
+                          <small>{{ user.email || 'No email available' }}{{ userEmployeeCode(user) ? ' · ' + userEmployeeCode(user) : '' }}</small>
+                        </span>
+                      </button>
+                      <div class="person-autocomplete-empty" *ngIf="!filteredReporterUsers().length">
+                        No matching users
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="side-section" *ngIf="!isReadOnly() || currentIssue.id">
+                  <h3>Impact</h3>
+                  <div class="issue-impact-summary">
+                    <div>
+                      <span>Linked work</span>
+                      <strong>{{ selectedIssueEpicIds().length + selectedIssueStoryIds().length + selectedIssueTaskIds().length }}</strong>
+                    </div>
+                    <div>
+                      <span>Blocker</span>
+                      <strong>{{ isBlockingIssue(currentIssue) ? 'Yes' : 'No' }}</strong>
+                    </div>
+                  </div>
+                </div>
+              </aside>
+            </div>
+          </div>
+        </div>
+
+        <footer class="modal-footer issue-modal-footer">
+          <div>
+            <button
+              class="danger-button"
+              *ngIf="currentIssue.id && !isReadOnly()"
+              type="button"
+              (click)="deleteIssue(currentIssue)">
+              Delete issue
+            </button>
+          </div>
+
+          <div class="modal-footer-actions">
+            <button class="outline-button mat-action-button" type="button" (click)="closeModal()">
+              {{ isReadOnly() ? 'Close' : 'Cancel' }}
+            </button>
+
+            <button
+              class="outline-button mat-action-button"
+              *ngIf="isReadOnly()"
+              type="button"
+              (click)="enableEditMode()">
+              Edit
+            </button>
+
+            <button
+              class="primary-action mat-primary-button"
+              *ngIf="!isReadOnly()"
+              type="button"
+              (click)="saveIssue()">
+              {{ drawerMode() === 'CREATE' ? 'Create Issue' : 'Save changes' }}
+            </button>
+          </div>
         </footer>
       </ng-container>
     </section>

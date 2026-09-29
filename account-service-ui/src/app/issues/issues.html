@@ -217,6 +217,9 @@
 
           <span class="result-group-meta">
             {{ epic.totalIssuesCount }} issue{{ epic.totalIssuesCount === 1 ? '' : 's' }}
+            <span class="hierarchy-blocker-summary" *ngIf="getBlockingIssues(epic.directIssues).length">
+              · {{ getBlockingIssues(epic.directIssues).length }} blocker{{ getBlockingIssues(epic.directIssues).length === 1 ? '' : 's' }}
+            </span>
           </span>
         </button>
 
@@ -247,6 +250,11 @@
 
                 <span class="issue-result-title">
                   {{ issue.title }}
+                </span>
+
+                <span class="blocking-pill" *ngIf="isBlockingIssue(issue)">
+                  <mat-icon>block</mat-icon>
+                  BLOCKED BY
                 </span>
 
                 <span
@@ -334,6 +342,13 @@
               <div class="task-result-header">
                 <span class="type-tag task-tag">TASK</span>
                 <span class="task-result-title">{{ task.title }}</span>
+                <span class="relationship-count" *ngIf="task.issues.length">
+                  {{ task.issues.length }} issue{{ task.issues.length === 1 ? '' : 's' }}
+                </span>
+                <span class="relationship-blocker-count" *ngIf="getBlockingIssues(task.issues).length">
+                  <mat-icon>block</mat-icon>
+                  {{ getBlockingIssues(task.issues).length }} blocker{{ getBlockingIssues(task.issues).length === 1 ? '' : 's' }}
+                </span>
               </div>
 
               <div
@@ -490,6 +505,16 @@
             </td>
           </ng-container>
 
+          <ng-container matColumnDef="impact">
+            <th mat-header-cell *matHeaderCellDef>Impact</th>
+            <td mat-cell *matCellDef="let issue">
+              <span class="impact-pill" [class.blocker]="isBlockingIssue(issue)">
+                <mat-icon>{{ isBlockingIssue(issue) ? 'block' : 'remove' }}</mat-icon>
+                {{ isBlockingIssue(issue) ? 'BLOCKER' : '—' }}
+              </span>
+            </td>
+          </ng-container>
+
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef>Actions</th>
             <td mat-cell *matCellDef="let issue" (click)="$event.stopPropagation()">
@@ -521,7 +546,7 @@
           </tr>
 
           <tr class="mat-row" *matNoDataRow>
-            <td class="mat-cell table-empty" colspan="9">
+            <td class="mat-cell table-empty" colspan="10">
               No issues found for the selected project or sprint.
             </td>
           </tr>
@@ -655,29 +680,88 @@
         <div class="form-row">
           <div class="field-group">
             <label>Assignee</label>
-            <mat-select
-              class="drawer-select"
-              [(ngModel)]="currentIssue.assignee_user_id"
-              name="assignee_user_id"
-              [disabled]="isReadOnly()">
-              <mat-option [value]="null">Unassigned</mat-option>
-              <mat-option *ngFor="let u of users()" [value]="u.id">
-                {{ u.name }}
-              </mat-option>
-            </mat-select>
+            <div class="person-autocomplete-field" (click)="$event.stopPropagation()">
+              <span class="person-field-avatar">
+                {{ getUserInitials(getUserDisplayName(currentIssue.assignee_user_id)) }}
+              </span>
+              <input
+                class="person-autocomplete-input"
+                type="text"
+                autocomplete="off"
+                [value]="assigneeSearchTerm()"
+                (input)="onAssigneeSearch($any($event.target).value)"
+                (focus)="assigneeAutocompleteOpen.set(true)"
+                [disabled]="isReadOnly()"
+                placeholder="Search name, email or employee code"
+                aria-label="Assignee">
+              <button
+                type="button"
+                class="person-clear"
+                *ngIf="currentIssue.assignee_user_id && !isReadOnly()"
+                (mousedown)="$event.preventDefault()"
+                (click)="clearAssignee()"
+                aria-label="Clear assignee">
+                <mat-icon>close</mat-icon>
+              </button>
+
+              <div class="person-autocomplete-panel" *ngIf="assigneeAutocompleteOpen() && !isReadOnly()">
+                <button type="button" class="person-option"
+                  *ngFor="let u of filteredAssigneeUsers()"
+                  (mousedown)="$event.preventDefault()"
+                  (click)="selectAssignee(u)">
+                  <span class="person-option-avatar">{{ getUserInitials(u.name || u.email) }}</span>
+                  <span class="person-option-copy">
+                    <strong>{{ u.name || u.full_name || u.email }}</strong>
+                    <span>{{ u.email || 'No email' }}</span>
+                    <small>{{ getUserEmployeeCode(u) }}</small>
+                  </span>
+                </button>
+                <div class="person-option-empty" *ngIf="!filteredAssigneeUsers().length">No matching users</div>
+              </div>
+            </div>
           </div>
 
           <div class="field-group">
             <label>Reporter</label>
-            <mat-select
-              class="drawer-select"
-              [(ngModel)]="currentIssue.reporter_user_id"
-              name="reporter_user_id"
-              [disabled]="isReadOnly()">
-              <mat-option *ngFor="let u of users()" [value]="u.id">
-                {{ u.name }}
-              </mat-option>
-            </mat-select>
+            <div class="person-autocomplete-field" (click)="$event.stopPropagation()">
+              <span class="person-field-avatar muted">
+                {{ getUserInitials(getUserDisplayName(currentIssue.reporter_user_id)) }}
+              </span>
+              <input
+                class="person-autocomplete-input"
+                type="text"
+                autocomplete="off"
+                [value]="reporterSearchTerm()"
+                (input)="onReporterSearch($any($event.target).value)"
+                (focus)="reporterAutocompleteOpen.set(true)"
+                [disabled]="isReadOnly()"
+                placeholder="Search name, email or employee code"
+                aria-label="Reporter">
+              <button
+                type="button"
+                class="person-clear"
+                *ngIf="currentIssue.reporter_user_id && !isReadOnly()"
+                (mousedown)="$event.preventDefault()"
+                (click)="clearReporter()"
+                aria-label="Clear reporter">
+                <mat-icon>close</mat-icon>
+              </button>
+
+              <div class="person-autocomplete-panel" *ngIf="reporterAutocompleteOpen() && !isReadOnly()">
+                <button type="button" class="person-option"
+                  *ngFor="let u of filteredReporterUsers()"
+                  (mousedown)="$event.preventDefault()"
+                  (click)="selectReporter(u)">
+                  <span class="person-option-avatar">{{ getUserInitials(u.name || u.email) }}</span>
+                  <span class="person-option-copy">
+                    <strong>{{ u.name || u.full_name || u.email }}</strong>
+                    <span>{{ u.email || 'No email' }}</span>
+                    <small>{{ getUserEmployeeCode(u) }}</small>
+                  </span>
+                </button>
+                <div class="person-option-empty" *ngIf="!filteredReporterUsers().length">No matching users</div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -720,6 +804,24 @@
             </mat-select>
           </div>
 
+          <div class="linked-impact-summary" *ngIf="selectedDrawerEpicIds().length || selectedDrawerStoryIds().length || selectedDrawerTaskIds().length">
+            <div class="linked-impact-title">
+              <mat-icon>account_tree</mat-icon>
+              <span>Linked delivery scope</span>
+            </div>
+            <div class="linked-impact-chips">
+              <span class="scope-chip epic" *ngFor="let id of selectedDrawerEpicIds()">
+                EPIC · {{ getLinkedEpicNamesFromIds([id]) }}
+              </span>
+              <span class="scope-chip story" *ngFor="let id of selectedDrawerStoryIds()">
+                STORY · {{ getLinkedStoryNamesFromIds([id]) }}
+              </span>
+              <span class="scope-chip task" *ngFor="let id of selectedDrawerTaskIds()">
+                TASK · {{ getLinkedTaskNamesFromIds([id]) }}
+              </span>
+            </div>
+          </div>
+
           <div class="field-group">
             <label>Tasks</label>
             <mat-select
@@ -734,6 +836,30 @@
               </mat-option>
             </mat-select>
           </div>
+        </section>
+
+        <section class="impact-panel">
+          <div class="impact-panel-main">
+            <span class="impact-icon" [class.active]="isBlockingIssue(currentIssue)">
+              <mat-icon>block</mat-icon>
+            </span>
+            <div>
+              <strong>Blocking impact</strong>
+              <p *ngIf="isBlockingIssue(currentIssue)">
+                This issue is marked as a blocker for the linked delivery work.
+              </p>
+              <p *ngIf="!isBlockingIssue(currentIssue)">
+                Mark this issue as a blocker when it prevents linked work from progressing.
+              </p>
+            </div>
+          </div>
+          <label class="blocking-toggle">
+            <input type="checkbox"
+              [(ngModel)]="currentIssue.isBlocking"
+              name="isBlocking"
+              [disabled]="isReadOnly()">
+            <span>Issue blocks linked work</span>
+          </label>
         </section>
 
         <div class="field-group">

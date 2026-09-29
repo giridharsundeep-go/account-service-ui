@@ -41,8 +41,13 @@ export class Viewer implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly platformId = inject(PLATFORM_ID);
 
-  readonly baseUrl = environment.apiBaseUrl;
-  readonly baseUrl2 = environment.apiBaseUrl2;
+  /**
+   * Use the same application API base as the Epics / Stories / Tasks workspace.
+   * apiBaseUrl points at the legacy/auth API in some environments, while
+   * apiBaseUrlM is the application CRUD API used by the current screens.
+   */
+  readonly baseUrl = environment.apiBaseUrlM || environment.apiBaseUrlM;
+  readonly baseUrl2 = environment.apiBaseUrlM || environment.apiBaseUrlM || environment.apiBaseUrlM;
 
   type: ViewerType | null = null;
   itemId: number | null = null;
@@ -87,6 +92,11 @@ export class Viewer implements OnInit {
   readonly statusOptions = [
     'BACKLOG', 'TODO', 'IN_PROGRESS', 'IN_REVIEW',
     'TESTING', 'COMPLETED', 'BLOCKED', 'CANCELLED'
+  ];
+
+  readonly issueStatusOptions = [
+    'OPEN', 'BACKLOG', 'TODO', 'IN_PROGRESS', 'IN_REVIEW',
+    'TESTING', 'RESOLVED', 'COMPLETED', 'CLOSED', 'BLOCKED'
   ];
 
   readonly priorityOptions = [
@@ -281,7 +291,7 @@ export class Viewer implements OnInit {
       case 'TASK':
         return `${this.baseUrl}/tasks/${this.itemId}`;
       case 'ISSUE':
-        return `${this.baseUrl2}/issues/${this.itemId}`;
+        return `${this.baseUrl2}/v1/issues/${this.itemId}`;
       default:
         return '';
     }
@@ -610,7 +620,7 @@ export class Viewer implements OnInit {
       this.http.get<any>(`${this.baseUrl}/tasks`, this.headers())
         .pipe(catchError(() => of(null))),
 
-      this.http.get<any>(`${this.baseUrl2}/issues`, this.headers())
+      this.http.get<any>(`${this.baseUrl2}/v1/issues`, this.headers())
         .pipe(catchError(() => of(null))),
 
       this.http.get<any>(`${this.baseUrl2}/testcases`, this.headers())
@@ -750,6 +760,12 @@ export class Viewer implements OnInit {
         );
       }
 
+      // Use the same issue propagation semantics as the Epics workspace:
+      // Epic issues include direct + descendant Story/Task issues;
+      // Story issues include direct + child Task issues;
+      // Task issues remain directly linked only.
+      this.issues = this.issuesForCurrentItem(currentId);
+
       // Resolve hierarchy from the correct collection.
       this.resolveReferencesFromCollections();
       this.autoPopulatePeople();
@@ -760,6 +776,188 @@ export class Viewer implements OnInit {
 
       this.cdr.markForCheck();
     });
+  }
+
+  private relationIds(item: any, type: 'EPIC' | 'STORY' | 'TASK'): number[] {
+    if (!item) return [];
+
+    const fieldPairs: Record<'EPIC' | 'STORY' | 'TASK', string[]> = {
+      EPIC: ['epicId', 'epic_id', 'epic'] ,
+      STORY: ['storyId', 'story_id', 'story'],
+      TASK: ['taskId', 'task_id', 'task']
+    };
+
+    const ids: number[] = [];
+    for (const key of fieldPairs[type]) {
+      const value = item?.[key];
+      const id = typeof value === 'object'
+        ? this.firstNumericId(value?.id, value?.[`${key}_id`])
+        : this.firstNumericId(value);
+      if (id > 0) ids.push(id);
+    }
+
+    const pluralKey = type === 'EPIC' ? 'epicIds' : type === 'STORY' ? 'storyIds' : 'taskIds';
+    for (const value of (Array.isArray(item?.[pluralKey]) ? item[pluralKey] : [])) {
+      const id = this.firstNumericId(value);
+      if (id > 0) ids.push(id);
+    }
+
+    for (const allocation of (Array.isArray(item?.allocations) ? item.allocations : [])) {
+      const allocationType = String(
+        allocation?.allocatableType ?? allocation?.allocatable_type ?? ''
+      ).toUpperCase();
+      if (allocationType !== type) continue;
+
+      const id = this.firstNumericId(
+        allocation?.allocatableId,
+        allocation?.allocatable_id,
+        allocation?.allocatable?.id
+      );
+      if (id > 0) ids.push(id);
+    }
+
+    return [...new Set(ids)];
+  }
+
+  private issuesForCurrentItem(currentId: number): any[] {
+    const source = this.issues || [];
+    if (!currentId || !this.type) return [];
+
+    if (this.type === 'ISSUE') return [];
+
+    const issueMatches = (issue: any): boolean => {
+      const epicIds = new Set(this.relationIds(issue, 'EPIC'));
+      const storyIds = new Set(this.relationIds(issue, 'STORY'));
+      const taskIds = new Set(this.relationIds(issue, 'TASK'));
+
+      if (this.type === 'EPIC') {
+        if (epicIds.has(currentId)) return true;
+
+        const storyIdsForEpic = new Set(
+          (this.childStories || [])
+            .map(story => this.firstNumericId(story?.id, story?.story_id, story?.storyId))
+            .filter(id => id > 0)
+        );
+        const taskIdsForEpic = new Set(
+          (this.childTasks || [])
+            .map(task => this.firstNumericId(task?.id, task?.task_id, task?.taskId))
+            .filter(id => id > 0)
+        );
+
+        return [...storyIds].some(id => storyIdsForEpic.has(id)) ||
+          [...taskIds].some(id => taskIdsForEpic.has(id));
+      }
+
+      if (this.type === 'STORY') {
+        if (storyIds.has(currentId)) return true;
+
+        const taskIdsForStory = new Set(
+          (this.childTasks || [])
+            .map(task => this.firstNumericId(task?.id, task?.task_id, task?.taskId))
+            .filter(id => id > 0)
+        );
+        return [...taskIds].some(id => taskIdsForStory.has(id));
+      }
+
+      return taskIds.has(currentId);
+    };
+
+    return source.filter(issueMatches);
+  }
+
+  public isBlockingIssue(item: any): boolean {
+    return Boolean(
+      item?.isBlocking ??
+      item?.is_blocking ??
+      item?.blocking ??
+      item?.blocksLinkedWork ??
+      item?.blocks_linked_work
+    );
+  }
+
+  public getBlockingIssues(items: any[] | null | undefined): any[] {
+    return (items || []).filter(item => this.isBlockingIssue(item));
+  }
+
+  public getBlockingIssueCodes(items: any[] | null | undefined): string {
+    return this.getBlockingIssues(items)
+      .map(item =>
+        item?.issueCode ||
+        item?.issue_code ||
+        item?.code ||
+        `#${item?.id}`
+      )
+      .join(', ');
+  }
+
+  public isCurrentItemBlocking(): boolean {
+    return this.type === 'ISSUE' && this.isBlockingIssue(this.currentItem);
+  }
+
+  public currentItemBlockingCount(): number {
+    return this.getBlockingIssues(this.issues).length;
+  }
+
+  public issueLinkedWork(): Array<{
+    type: 'EPIC' | 'STORY' | 'TASK';
+    id: number;
+    code: string;
+    title: string;
+  }> {
+    if (this.type !== 'ISSUE') return [];
+
+    const result: Array<{
+      type: 'EPIC' | 'STORY' | 'TASK';
+      id: number;
+      code: string;
+      title: string;
+    }> = [];
+
+    const add = (type: 'EPIC' | 'STORY' | 'TASK', id: number) => {
+      if (!id || result.some(item => item.type === type && item.id === id)) return;
+
+      const collections = {
+        EPIC: this.projectEpics,
+        STORY: this.projectStories.length ? this.projectStories : this.stories,
+        TASK: this.projectTasks.length ? this.projectTasks : this.tasks
+      };
+
+      const item = (collections[type] || []).find(candidate =>
+        this.firstNumericId(candidate?.id, candidate?.[`${type.toLowerCase()}_id`], candidate?.[`${type.toLowerCase()}Id`]) === id
+      );
+
+      result.push({
+        type,
+        id,
+        code:
+          type === 'EPIC'
+            ? item?.epic_code || item?.epicCode || `EPIC-${id}`
+            : type === 'STORY'
+              ? item?.story_code || item?.storyCode || `STORY-${id}`
+              : item?.task_code || item?.taskCode || `TASK-${id}`,
+        title:
+          item?.title ||
+          item?.name ||
+          item?.summary ||
+          `${type} #${id}`
+      });
+    };
+
+    for (const id of this.relationIds(this.currentItem, 'EPIC')) add('EPIC', id);
+    for (const id of this.relationIds(this.currentItem, 'STORY')) add('STORY', id);
+    for (const id of this.relationIds(this.currentItem, 'TASK')) add('TASK', id);
+
+    // Nested relation objects are a useful fallback when only expanded
+    // allocations are returned by the API.
+    add('EPIC', this.firstNumericId(this.currentItem?.epic?.id, this.currentItem?.epic_id, this.currentItem?.epicId));
+    add('STORY', this.firstNumericId(this.currentItem?.story?.id, this.currentItem?.story_id, this.currentItem?.storyId));
+    add('TASK', this.firstNumericId(this.currentItem?.task?.id, this.currentItem?.task_id, this.currentItem?.taskId));
+
+    return result;
+  }
+
+  public issueLinkedWorkCount(): number {
+    return this.issueLinkedWork().length;
   }
 
   private normaliseEditSource(): void {

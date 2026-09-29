@@ -33,11 +33,12 @@
 
       <!-- BRAND -->
       <div class="brand">
-        <img
+        <h2 style="font-size: 20px;">Greatley Poshley</h2>
+        <!--img
           src="assets/images/greatley-poshley.svg"
           alt="Greatley Poshley"
           style="width:44px;height:44px;object-fit:contain;display:block;margin-right:10px;"
-        />
+        /-->
 
         <div style="display:flex;flex-direction:column;justify-content:center;line-height:1;">
          
@@ -542,18 +543,6 @@
             </svg>
 
 
-            <!-- ISSUES -->
-            <svg
-              *ngIf="item.icon === 'issues'"
-              viewBox="0 0 24 24">
-
-              <path d="M12 3l9 17H3z"></path>
-              <path d="M12 9v5"></path>
-              <path d="M12 17v1"></path>
-
-            </svg>
-
-
             <!-- TESTS -->
             <svg
               *ngIf="item.icon === 'tests'"
@@ -812,12 +801,6 @@
           <app-epics
             *ngIf="activeMenu === 'epics'">
           </app-epics>
-
-
-          <app-issues
-            *ngIf="activeMenu === 'issues'">
-          </app-issues>
-
 
           <app-testcases
             *ngIf="activeMenu === 'test-cases'">

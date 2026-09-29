@@ -285,6 +285,8 @@ export class Projects implements OnInit {
   public globalSprintsCollection:
     SprintItem[] = [];
 
+  private sprintLoadSequence = 0;
+
   public isSprintModalOpen = false;
 
   public editingSprintId:
@@ -697,6 +699,13 @@ Math: any;
     if (mode === 'projects') {
       this.activeProjectFilterCode = '';
       this.activeProjectFilterId = null;
+    } else {
+      // The top-level Sprints view must always represent the
+      // complete sprint collection, not the last project filter.
+      this.activeProjectFilterCode = '';
+      this.activeProjectFilterId = null;
+      this.sprintTimelineFilter = 'ALL';
+      this.loadSprintsBackground();
     }
 
     this.clearSelectedDetails();
@@ -714,7 +723,7 @@ Math: any;
       projectCode || '';
 
     this.activeProjectFilterId =
-      projectId != null
+      projectId != null && Number.isFinite(Number(projectId))
         ? Number(projectId)
         : null;
 
@@ -724,12 +733,15 @@ Math: any;
     this.dashboardViewMode =
       'sprints';
 
-    // Refresh from the project-specific endpoint so the selected
-    // project's persisted sprint rows are always the source of truth.
-    if (this.activeProjectFilterId) {
+    // Always reload from the selected project's endpoint. This avoids
+    // showing the previous project's cached sprint collection.
+    if (this.activeProjectFilterId != null) {
       this.loadSprintsBackground(
         this.activeProjectFilterId
       );
+    } else {
+      // Keep compatibility with callers that only provide a project code.
+      this.loadSprintsBackground();
     }
 
     this.clearSelectedDetails();
@@ -745,6 +757,10 @@ Math: any;
 
     this.activeProjectFilterId =
       null;
+
+    // Reload the full collection after leaving a project-specific
+    // sprint view. Otherwise global view can retain only that project's rows.
+    this.loadSprintsBackground();
 
     this.cdr.detectChanges();
   }
@@ -1431,7 +1447,8 @@ Math: any;
           const confirmedProjectId = Number(
             this.projectForm.id ||
             responseData?.id ||
-            responseData?.project_id
+            responseData?.project_id ||
+            responseData?.projectId
           );
 
           if (
@@ -1477,68 +1494,32 @@ Math: any;
                 {
                   headers: this.auth.getAuthHeaders()
                 }
+              ),
+
+            /*
+             * Sprints belong to the project, so project save must also
+             * persist the generated sprint preview through the sprint APIs.
+             *
+             * CREATE:
+             *   POST /sprints/create for every generated sprint.
+             *
+             * EDIT:
+             *   GET /sprints?project_id={id}, then reconcile by
+             *   sprint_number using PUT /sprints/{id} for existing planned
+             *   sprints, POST /sprints/create for new ones, and DELETE
+             *   /sprints/{id} for planned sprints removed from the preview.
+             *
+             * ACTIVE/COMPLETED/PAUSED sprints are intentionally preserved;
+             * they represent delivery history/state and should not be
+             * replaced by a newly calculated preview.
+             */
+            sprintsSync:
+              this.saveProjectSprints(
+                confirmedProjectId,
+                isExistingProject
               )
 
           };
-
-          /*
-           * The supplied Sprint API creates individual sprints with
-           * POST /sprints/create. There is no sprint sync endpoint.
-           * Generated sprints are therefore created only for new projects.
-           */
-          if (
-            !isExistingProject &&
-            this.calculatedSprintsPreview.length > 0
-          ) {
-
-            const sprintRequests =
-              this.calculatedSprintsPreview.map(
-                (sprint: any) =>
-                  this.http.post(
-                    `${this.baseUrl}/sprints/create`,
-                    {
-                      project_id: confirmedProjectId,
-                      sprint_number:
-                        Number(sprint.sprint_number) || 1,
-                      name:
-                        String(
-                          sprint.name ||
-                          `Sprint ${sprint.sprint_number}`
-                        ),
-                      status:
-                        this.toBackendSprintStatus(
-                          sprint.status
-                        ),
-                      start_date:
-                        sprint.scheduled_start_date,
-                      end_date:
-                        sprint.scheduled_end_date,
-                      scheduled_start_date:
-                        sprint.scheduled_start_date,
-                      scheduled_end_date:
-                        sprint.scheduled_end_date,
-                      duration_weeks:
-                        Number(sprint.duration_weeks) || 2,
-                      target_velocity:
-                        Number(sprint.target_velocity) || 0,
-                      activation_type:
-                        this.toBackendActivationType(
-                          sprint.activation_type
-                        )
-                    },
-                    {
-                      headers:
-                        this.auth.getAuthHeaders()
-                    }
-                  )
-              );
-
-            requests['sprintsCreate'] =
-              forkJoin(sprintRequests);
-
-          } else {
-            requests['sprintsCreate'] = of([]);
-          }
 
           return forkJoin(requests);
 
@@ -1565,6 +1546,248 @@ Math: any;
         }
 
       });
+
+  }
+
+
+  private buildSprintPersistencePayload(
+    projectId: number,
+    sprint: any
+  ): Record<string, any> {
+
+    return {
+      project_id: projectId,
+      sprint_number:
+        Number(sprint?.sprint_number) || 1,
+      name:
+        String(
+          sprint?.name ||
+          `Sprint ${sprint?.sprint_number || 1}`
+        ).trim(),
+      status:
+        this.toBackendSprintStatus(
+          sprint?.status ||
+          'PLANNED'
+        ),
+      start_date:
+        sprint?.scheduled_start_date ||
+        sprint?.scheduledStartDate ||
+        sprint?.start_date ||
+        sprint?.startDate ||
+        null,
+      end_date:
+        sprint?.scheduled_end_date ||
+        sprint?.scheduledEndDate ||
+        sprint?.end_date ||
+        sprint?.endDate ||
+        null,
+      scheduled_start_date:
+        sprint?.scheduled_start_date ||
+        sprint?.scheduledStartDate ||
+        sprint?.start_date ||
+        sprint?.startDate ||
+        null,
+      scheduled_end_date:
+        sprint?.scheduled_end_date ||
+        sprint?.scheduledEndDate ||
+        sprint?.end_date ||
+        sprint?.endDate ||
+        null,
+      duration_weeks:
+        Number(sprint?.duration_weeks) ||
+        Number(sprint?.durationWeeks) ||
+        2,
+      target_velocity:
+        Number(sprint?.target_velocity) ||
+        Number(sprint?.targetVelocity) ||
+        0,
+      activation_type:
+        this.toBackendActivationType(
+          sprint?.activation_type ??
+          sprint?.activationType
+        )
+    };
+
+  }
+
+
+  private saveProjectSprints(
+    projectId: number,
+    isExistingProject: boolean
+  ): Observable<any> {
+
+    const previewSprints =
+      Array.isArray(this.calculatedSprintsPreview)
+        ? this.calculatedSprintsPreview
+            .filter((sprint: any) => !!sprint)
+        : [];
+
+    if (!isExistingProject) {
+
+      if (!previewSprints.length) {
+        return of([]);
+      }
+
+      const createRequests =
+        previewSprints.map((sprint: any) =>
+          this.http.post(
+            `${this.baseUrl}/sprints/create`,
+            this.buildSprintPersistencePayload(
+              projectId,
+              sprint
+            ),
+            {
+              headers: this.auth.getAuthHeaders()
+            }
+          )
+        );
+
+      return forkJoin(createRequests);
+    }
+
+    return this.http.get<any>(
+      `${this.baseUrl}/sprints?project_id=${projectId}`,
+      {
+        headers: this.auth.getAuthHeaders()
+      }
+    ).pipe(
+      map((response: any) =>
+        this.extractApiArray(response)
+          .map((item: any) =>
+            this.normalizeSprint(item)
+          )
+          .filter((sprint: SprintItem | null): sprint is SprintItem =>
+            !!sprint &&
+            sprint.id !== null &&
+            sprint.id !== undefined
+          )
+      ),
+      switchMap((existingSprints: SprintItem[]) => {
+
+        const existingByNumber =
+          new Map<number, SprintItem>();
+
+        existingSprints.forEach((sprint: SprintItem) => {
+          const number =
+            Number(sprint.sprint_number);
+
+          if (
+            Number.isFinite(number) &&
+            number > 0
+          ) {
+            existingByNumber.set(
+              number,
+              sprint
+            );
+          }
+        });
+
+        const requestedNumbers =
+          new Set<number>();
+
+        const operations: Observable<any>[] =
+          [];
+
+        previewSprints.forEach((sprint: any) => {
+
+          const sprintNumber =
+            Number(sprint?.sprint_number) || 1;
+
+          requestedNumbers.add(
+            sprintNumber
+          );
+
+          const existing =
+            existingByNumber.get(
+              sprintNumber
+            );
+
+          if (
+            existing &&
+            existing.id !== null &&
+            existing.id !== undefined
+          ) {
+
+            /*
+             * Preserve already-running/completed/paused sprints.
+             * Only PLANNED rows participate in project recalculation.
+             */
+            if (
+              existing.status !== 'PLANNED'
+            ) {
+              return;
+            }
+
+            operations.push(
+              this.http.put(
+                `${this.baseUrl}/sprints/${existing.id}`,
+                this.buildSprintPersistencePayload(
+                  projectId,
+                  sprint
+                ),
+                {
+                  headers:
+                    this.auth.getAuthHeaders()
+                }
+              )
+            );
+
+            return;
+          }
+
+          operations.push(
+            this.http.post(
+              `${this.baseUrl}/sprints/create`,
+              this.buildSprintPersistencePayload(
+                projectId,
+                sprint
+              ),
+              {
+                headers:
+                  this.auth.getAuthHeaders()
+              }
+            )
+          );
+
+        });
+
+        /*
+         * Remove only old planned sprints that no longer exist in the
+         * recalculated project preview. Historical/current sprints stay.
+         */
+        existingSprints.forEach((existing: SprintItem) => {
+
+          const sprintNumber =
+            Number(existing.sprint_number);
+
+          if (
+            existing.status === 'PLANNED' &&
+            Number.isFinite(sprintNumber) &&
+            !requestedNumbers.has(sprintNumber) &&
+            existing.id !== null &&
+            existing.id !== undefined
+          ) {
+
+            operations.push(
+              this.http.delete(
+                `${this.baseUrl}/sprints/${existing.id}`,
+                {
+                  headers:
+                    this.auth.getAuthHeaders()
+                }
+              )
+            );
+
+          }
+
+        });
+
+        return operations.length > 0
+          ? forkJoin(operations)
+          : of([]);
+
+      })
+    );
 
   }
 
@@ -1631,6 +1854,9 @@ Math: any;
 
     this.sprintLoadError = '';
 
+    const requestSequence =
+      ++this.sprintLoadSequence;
+
     const url =
       projectId != null
         ? `${this.baseUrl}/sprints?project_id=${Number(projectId)}`
@@ -1644,71 +1870,19 @@ Math: any;
       }
     )
     .pipe(
-      switchMap((res: any) => {
-
-        const primaryRows =
-          this.extractApiArray(
-            res
-          );
-
-        if (primaryRows.length > 0 || projectId != null) {
-          return of(primaryRows);
-        }
-
-        // If the collection endpoint returns an empty/unknown shape,
-        // load each project's persisted sprint rows explicitly.
-        const projectIds =
-          this.currentProjectsCache
-            .map(project =>
-              Number(project.id)
-            )
-            .filter(id =>
-              Number.isFinite(id) &&
-              id > 0
-            );
-
-        if (!projectIds.length) {
-          return of([]);
-        }
-
-        return forkJoin(
-          projectIds.map(id =>
-            this.http.get<any>(
-              `${this.baseUrl}/sprints?project_id=${id}`,
-              {
-                headers:
-                  this.auth.getAuthHeaders()
-              }
-            )
-            .pipe(
-              map((projectRes: any) =>
-                this.extractApiArray(
-                  projectRes
-                )
-              ),
-              catchError(err => {
-                console.error(
-                  `Failed loading sprints for project ${id}:`,
-                  err,
-                  err?.error
-                );
-                return of([]);
-              })
-            )
-          )
-        ).pipe(
-          map((rows: any[][]) =>
-            rows.flat()
-          )
-        );
-
-      }),
+      map((res: any) =>
+        this.extractApiArray(res)
+      ),
       catchError(err => {
 
-        this.sprintLoadError =
-          err?.error?.msg ||
-          err?.error?.message ||
-          'Unable to load sprints.';
+        // Never let an older request replace the result of a newer
+        // project/global sprint navigation action.
+        if (requestSequence === this.sprintLoadSequence) {
+          this.sprintLoadError =
+            err?.error?.message ||
+            err?.error?.msg ||
+            'Unable to load sprints.';
+        }
 
         console.error(
           'Failed loading sprints:',
@@ -1716,10 +1890,17 @@ Math: any;
           err?.error
         );
 
-        return of([]);
+        return of([] as any[]);
       })
     )
     .subscribe((raw: any[]) => {
+
+      // Ignore stale HTTP responses. This is important because the
+      // Projects page can trigger a global sprint load while the user
+      // immediately navigates into a project-specific sprint view.
+      if (requestSequence !== this.sprintLoadSequence) {
+        return;
+      }
 
       this.globalSprintsCollection =
         (Array.isArray(raw) ? raw : [])
@@ -1730,13 +1911,13 @@ Math: any;
             (
               item: SprintItem | null
             ): item is SprintItem =>
-              !!item
+              !!item &&
+              item.id !== null &&
+              item.id !== undefined
           );
 
       this.refreshSprintProjectNames();
 
-      // When this call was made for a project, keep the active
-      // project filter tied to its numeric id.
       if (projectId != null) {
         this.activeProjectFilterId =
           Number(projectId);
@@ -2083,7 +2264,9 @@ Math: any;
           updated?.status || 'CURRENT';
 
         this.closeSprintDetails();
-        this.loadSprintsBackground();
+        this.loadSprintsBackground(
+          this.activeProjectFilterId ?? undefined
+        );
 
       },
 
@@ -2166,7 +2349,9 @@ Math: any;
           sprint.target_velocity;
 
         this.closeSprintDetails();
-        this.loadSprintsBackground();
+        this.loadSprintsBackground(
+          this.activeProjectFilterId ?? undefined
+        );
 
       },
 
@@ -2392,7 +2577,9 @@ Math: any;
             false;
 
           this.loadSprintsBackground(
-            projectId
+            this.activeProjectFilterId != null
+              ? this.activeProjectFilterId
+              : projectId
           );
 
           this.cdr.detectChanges();

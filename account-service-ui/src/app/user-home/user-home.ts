@@ -118,11 +118,7 @@ export class UserHome implements OnInit {
       label: 'Epics & Backlogs',
       icon: 'epics'
     },
-    {
-      id: 'issues',
-      label: 'Issues',
-      icon: 'issues'
-    },
+    
     {
       id: 'test-cases',
       label: 'Test Cases',

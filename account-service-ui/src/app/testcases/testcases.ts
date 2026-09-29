@@ -164,8 +164,8 @@ export class Testcases implements OnInit {
   /*
    * KEEP EXISTING API CONFIGURATION
    */
-  baseUrl = environment.apiBaseUrl;
-  baseUrl2 = environment.apiBaseUrl2 || environment.apiBaseUrl;
+  readonly baseUrl = environment.apiBaseUrlM || environment.apiBaseUrl;
+  readonly baseUrl2 = environment.apiBaseUrlM || environment.apiBaseUrl2 || environment.apiBaseUrl;
 
 
   /* ============================================================
@@ -1150,7 +1150,7 @@ private finishAddingTestCases(
 
     this.http
       .get<any>(
-        `${this.baseUrl}/user`,
+        `${this.baseUrl}/users`,
         { headers }
       )
       .pipe(
@@ -2767,6 +2767,63 @@ private finishAddingTestCases(
       found?.name ||
       (id ? `Suite #${id}` : '-')
     );
+  }
+
+
+  getEpicDisplay(
+    tc: TestCase
+  ): string {
+
+    const direct = tc.epic;
+    if (direct && typeof direct === 'object') {
+      return direct.name || direct.title || (direct.epic_code ? `${direct.epic_code} — ${direct.name || ''}`.trim() : '') || '-';
+    }
+
+    const id = this.getEntityId(direct, tc.epicId || tc.epic_id);
+    const found = this.epics.find(item => String(item.id) === String(id));
+    return found?.epic_code && found?.name
+      ? `${found.epic_code} — ${found.name}`
+      : (found?.name || (id ? `Epic #${id}` : '—'));
+  }
+
+
+  getStoryDisplay(
+    tc: TestCase
+  ): string {
+
+    const direct = tc.story;
+    if (direct && typeof direct === 'object') {
+      return direct.title || direct.name || '-';
+    }
+
+    const id = this.getEntityId(direct, tc.storyId || tc.story_id);
+    const found = this.stories.find(item => String(item.id) === String(id));
+    return found?.title || found?.name || (id ? `Story #${id}` : '—');
+  }
+
+
+  getTaskDisplay(
+    tc: TestCase
+  ): string {
+
+    const direct = tc.task;
+    if (direct && typeof direct === 'object') {
+      return direct.title || direct.name || '-';
+    }
+
+    const id = this.getEntityId(direct, tc.taskId || tc.task_id);
+    const found = this.tasks.find(item => String(item.id) === String(id));
+    return found?.title || found?.name || (id ? `Task #${id}` : '—');
+  }
+
+
+  getTypeClass(
+    type?: string
+  ): string {
+
+    return String(type || 'Functional')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-');
   }
 
 

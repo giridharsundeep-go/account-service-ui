@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, ChangeDetectionStrategy, Pipe, PipeTransform, inject } from '@angular/core';
+import { Component, OnInit, HostListener, signal, computed, ChangeDetectionStrategy, Pipe, PipeTransform, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -80,6 +80,8 @@ export interface IssueRecord {
   epicIds?: number[];
   storyIds?: number[];
   taskIds?: number[];
+  isBlocking?: boolean;
+  is_blocking?: boolean;
 }
 
 @Component({
@@ -111,8 +113,8 @@ export class Issues implements OnInit {
   private http = inject(HttpClient);
   private auth = inject(AuthService);
 
-  baseUrl = environment.apiBaseUrl;
-  baseUrl2 = environment.apiBaseUrl2 || environment.apiBaseUrl;
+  baseUrl = environment.apiBaseUrlM;
+  baseUrl2 = environment.apiBaseUrlM
 
   viewMode = signal<'CARDS' | 'TABLE'>('CARDS');
 
@@ -134,7 +136,7 @@ export class Issues implements OnInit {
 
   collapsedEpicIds = signal<Set<number>>(new Set());
 
-  displayedColumns: string[] = ['code', 'title', 'status', 'epic', 'story', 'task', 'assignee', 'reporter', 'actions'];
+  displayedColumns: string[] = ['code', 'title', 'status', 'epic', 'story', 'task', 'assignee', 'reporter', 'impact', 'actions'];
 
   toastMessage = signal<string | null>(null);
 
@@ -147,6 +149,11 @@ export class Issues implements OnInit {
   selectedDrawerEpicIds = signal<number[]>([]);
   selectedDrawerStoryIds = signal<number[]>([]);
   selectedDrawerTaskIds = signal<number[]>([]);
+
+  assigneeSearchTerm = signal('');
+  reporterSearchTerm = signal('');
+  assigneeAutocompleteOpen = signal(false);
+  reporterAutocompleteOpen = signal(false);
 
   statusPipeline = ['OPEN', 'BACKLOG', 'TODO', 'IN_PROGRESS', 'TESTING', 'RESOLVED', 'COMPLETED', 'CLOSED', 'BLOCKED'];
 
@@ -237,6 +244,177 @@ export class Issues implements OnInit {
     if (!storyIds || storyIds.length === 0) return this.rawTasks();
     return this.rawTasks().filter(t => !t.storyId || storyIds.includes(Number(t.storyId)));
   });
+
+
+  private filterUsers(term: string, selectedId?: number | null): any[] {
+    const query = String(term || '').trim().toLowerCase();
+
+    return this.users()
+      .filter((user: any) => {
+        const id = Number(user?.id);
+        if (!query) return true;
+        if (selectedId && id === Number(selectedId)) return true;
+
+        const employeeCode =
+          user?.employeeId ??
+          user?.employee_id ??
+          (
+            user?.employeeIdPrefix || user?.employeeIdNumber
+              ? `${user.employeeIdPrefix ?? ''}${user.employeeIdNumber ?? ''}`
+              : ''
+          );
+
+        return [
+          user?.name,
+          user?.full_name,
+          user?.fullName,
+          user?.email,
+          employeeCode
+        ].some(value =>
+          String(value ?? '').toLowerCase().includes(query)
+        );
+      })
+      .slice(0, 8);
+  }
+
+  filteredAssigneeUsers = computed(() =>
+    this.filterUsers(
+      this.assigneeSearchTerm(),
+      this.currentIssue.assignee_user_id ?? this.currentIssue.assigneeUserId ?? null
+    )
+  );
+
+  filteredReporterUsers = computed(() =>
+    this.filterUsers(
+      this.reporterSearchTerm(),
+      this.currentIssue.reporter_user_id ?? this.currentIssue.reporterUserId ?? null
+    )
+  );
+
+  getUserInitials(userName: string): string {
+    const parts = String(userName || 'U').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return 'U';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  }
+
+  getUserEmployeeCode(user: any): string {
+    if (!user) return '';
+    const prefix = user?.employeeIdPrefix ?? user?.employee_id_prefix ?? '';
+    const number = user?.employeeIdNumber ?? user?.employee_id_number ?? '';
+    return prefix || number
+      ? `${prefix}${number}`
+      : (user?.employeeId ?? user?.employee_id ?? '');
+  }
+
+  getUserDisplayName(userId: number | null | undefined): string {
+    if (userId === null || userId === undefined) return 'Unassigned';
+    const user = this.userMap().get(Number(userId));
+    return user?.name || user?.full_name || user?.fullName || user?.email || 'Unassigned';
+  }
+
+  getBlockingIssues(issues: IssueRecord[] | undefined): IssueRecord[] {
+    return (issues || []).filter(issue =>
+      Boolean((issue as any)?.isBlocking ?? (issue as any)?.is_blocking)
+    );
+  }
+
+  isBlockingIssue(issue: Partial<IssueRecord> | IssueRecord | null | undefined): boolean {
+    return Boolean((issue as any)?.isBlocking ?? (issue as any)?.is_blocking);
+  }
+
+  getLinkedEpicNamesFromIds(ids: number[]): string {
+    return this.rawEpics()
+      .filter(e => ids.includes(Number(e.id)))
+      .map(e => e.title)
+      .join(', ') || '—';
+  }
+
+  getLinkedStoryNamesFromIds(ids: number[]): string {
+    return this.rawStories()
+      .filter(s => ids.includes(Number(s.id)))
+      .map(s => s.title)
+      .join(', ') || '—';
+  }
+
+  getLinkedTaskNamesFromIds(ids: number[]): string {
+    return this.rawTasks()
+      .filter(t => ids.includes(Number(t.id)))
+      .map(t => t.title)
+      .join(', ') || '—';
+  }
+
+  onAssigneeSearch(value: string): void {
+    this.assigneeSearchTerm.set(value);
+    this.assigneeAutocompleteOpen.set(true);
+
+    const exact = this.users().find((user: any) =>
+      String(user?.name || '').trim().toLowerCase() ===
+      String(value || '').trim().toLowerCase()
+    );
+
+    if (exact) {
+      this.selectAssignee(exact);
+    } else {
+      this.currentIssue.assignee_user_id = null;
+      this.currentIssue.assigneeUserId = null;
+    }
+  }
+
+  onReporterSearch(value: string): void {
+    this.reporterSearchTerm.set(value);
+    this.reporterAutocompleteOpen.set(true);
+
+    const exact = this.users().find((user: any) =>
+      String(user?.name || '').trim().toLowerCase() ===
+      String(value || '').trim().toLowerCase()
+    );
+
+    if (exact) {
+      this.selectReporter(exact);
+    } else {
+      this.currentIssue.reporter_user_id = null;
+      this.currentIssue.reporterUserId = null;
+    }
+  }
+
+  selectAssignee(user: any | null): void {
+    const id = user?.id != null ? Number(user.id) : null;
+    this.currentIssue.assignee_user_id = id;
+    this.currentIssue.assigneeUserId = id;
+    this.assigneeSearchTerm.set(
+      user ? (user.name || user.full_name || user.fullName || user.email || '') : ''
+    );
+    this.assigneeAutocompleteOpen.set(false);
+  }
+
+  selectReporter(user: any | null): void {
+    const id = user?.id != null ? Number(user.id) : null;
+    this.currentIssue.reporter_user_id = id;
+    this.currentIssue.reporterUserId = id;
+    this.reporterSearchTerm.set(
+      user ? (user.name || user.full_name || user.fullName || user.email || '') : ''
+    );
+    this.reporterAutocompleteOpen.set(false);
+  }
+
+  clearAssignee(): void {
+    this.selectAssignee(null);
+  }
+
+  clearReporter(): void {
+    this.selectReporter(null);
+  }
+
+  closePersonAutocompletes(): void {
+    this.assigneeAutocompleteOpen.set(false);
+    this.reporterAutocompleteOpen.set(false);
+  }
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.closePersonAutocompletes();
+  }
 
   filteredIssues = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
@@ -343,10 +521,13 @@ export class Issues implements OnInit {
   }
 
   fetchUsers() {
-    this.http.get<any>(`${this.baseUrl}/user`, { headers: this.auth.getAuthHeaders() })
+    this.http.get<any>(`${this.baseUrl}/users`, { headers: this.auth.getAuthHeaders() })
       .pipe(catchError(() => of([])))
       .subscribe(res => {
-        const raw = this.extractArray(res);
+        const raw = this.extractArray(res).map((u: any) => ({
+          ...u,
+          name: u?.name || u?.full_name || u?.fullName || u?.email || 'Unknown user'
+        }));
         this.users.set(raw);
         const mapObj = new Map<number, any>();
         raw.forEach((u: any) => mapObj.set(u.id, u));
@@ -451,6 +632,52 @@ export class Issues implements OnInit {
     });
   }
 
+
+  private normalizeIssue(raw: any): IssueRecord {
+    const allocations = Array.isArray(raw?.allocations)
+      ? raw.allocations.map((a: any) => ({
+          ...a,
+          allocatableType: String(a?.allocatableType ?? a?.allocatable_type ?? '').toUpperCase(),
+          allocatableId: Number(a?.allocatableId ?? a?.allocatable_id)
+        }))
+      : [];
+
+    const id = Number(raw?.id ?? raw?.issue_id ?? raw?.issueId);
+    const projectId = raw?.project?.id ?? raw?.project_id ?? raw?.projectId;
+    const sprintId = raw?.sprint?.id ?? raw?.sprint_id ?? raw?.sprintId;
+    const assigneeId = raw?.assignee?.id ?? raw?.assignee_user_id ?? raw?.assigneeUserId ?? null;
+    const reporterId = raw?.reporter?.id ?? raw?.reporter_user_id ?? raw?.reporterUserId ?? null;
+    const isBlocking = Boolean(raw?.isBlocking ?? raw?.is_blocking ?? false);
+
+    const epicIds = allocations.filter((a: IssueAllocation) => a.allocatableType === 'EPIC').map((a: IssueAllocation) => Number(a.allocatableId));
+    const storyIds = allocations.filter((a: IssueAllocation) => a.allocatableType === 'STORY').map((a: IssueAllocation) => Number(a.allocatableId));
+    const taskIds = allocations.filter((a: IssueAllocation) => a.allocatableType === 'TASK').map((a: IssueAllocation) => Number(a.allocatableId));
+
+    return {
+      ...raw,
+      id: Number.isFinite(id) ? id : raw?.id,
+      issue_code: raw?.issue_code ?? raw?.issueCode ?? raw?.code ?? '',
+      issueCode: raw?.issueCode ?? raw?.issue_code ?? raw?.code ?? '',
+      project_id: projectId != null ? Number(projectId) : undefined,
+      projectId: projectId != null ? Number(projectId) : undefined,
+      sprint_id: sprintId != null ? Number(sprintId) : null,
+      sprintId: sprintId != null ? Number(sprintId) : null,
+      assignee_user_id: assigneeId != null ? Number(assigneeId) : null,
+      assigneeUserId: assigneeId != null ? Number(assigneeId) : null,
+      reporter_user_id: reporterId != null ? Number(reporterId) : null,
+      reporterUserId: reporterId != null ? Number(reporterId) : null,
+      title: raw?.title ?? raw?.name ?? '',
+      description: raw?.description ?? '',
+      status: String(raw?.status ?? 'OPEN').toUpperCase(),
+      allocations,
+      epicIds: (raw?.epicIds ?? raw?.epic_ids ?? epicIds).map(Number),
+      storyIds: (raw?.storyIds ?? raw?.story_ids ?? storyIds).map(Number),
+      taskIds: (raw?.taskIds ?? raw?.task_ids ?? taskIds).map(Number),
+      isBlocking,
+      is_blocking: isBlocking
+    };
+  }
+
   loadAllIssues() {
     const projId = this.selectedProjectId();
     if (!projId) return;
@@ -462,7 +689,11 @@ export class Issues implements OnInit {
 
     this.http.get<any>(`${this.baseUrl2}/v1/issues`, { headers: this.auth.getAuthHeaders(), params })
       .pipe(catchError(() => of([])))
-      .subscribe(res => this.issuesList.set(this.extractArray(res)));
+      .subscribe(res => {
+        this.issuesList.set(
+          this.extractArray(res).map(raw => this.normalizeIssue(raw))
+        );
+      });
   }
 
   deleteIssue(id: number | undefined) {
@@ -511,8 +742,14 @@ export class Issues implements OnInit {
       status: 'OPEN',
       title: '',
       description: '',
+      isBlocking: false,
+      is_blocking: false,
       issue_code: `ISSUE-${Math.floor(1000 + Math.random() * 9000)}`
     };
+
+    this.assigneeSearchTerm.set('');
+    this.reporterSearchTerm.set('');
+    this.closePersonAutocompletes();
 
     this.drawerSprintId.set(sprintId);
     this.selectedDrawerEpicIds.set([]);
@@ -560,9 +797,15 @@ export class Issues implements OnInit {
     user_id: creatorId,
     userId: creatorId,
     creator_user_id: creatorId,
-    creatorUserId: creatorId
+    creatorUserId: creatorId,
+    isBlocking: Boolean((issue as any)?.isBlocking ?? (issue as any)?.is_blocking ?? false),
+    is_blocking: Boolean((issue as any)?.isBlocking ?? (issue as any)?.is_blocking ?? false)
   };
-  
+
+  this.assigneeSearchTerm.set(this.getUserDisplayName(assigneeId));
+  this.reporterSearchTerm.set(this.getUserDisplayName(reporterId));
+  this.closePersonAutocompletes();
+
   this.drawerSprintId.set(sId ? Number(sId) : null);
   this.selectedDrawerEpicIds.set(epicIds.length ? epicIds : issue.epicIds || []);
   this.selectedDrawerStoryIds.set(storyIds.length ? storyIds : issue.storyIds || []);
@@ -607,6 +850,8 @@ export class Issues implements OnInit {
       creatorUserId: currentUserId,
       assigneeUserId: assigneeId,
       reporterUserId: reporterId,
+      isBlocking: Boolean(this.currentIssue.isBlocking ?? this.currentIssue.is_blocking ?? false),
+      is_blocking: Boolean(this.currentIssue.isBlocking ?? this.currentIssue.is_blocking ?? false),
       epicIds,
       storyIds,
       taskIds,

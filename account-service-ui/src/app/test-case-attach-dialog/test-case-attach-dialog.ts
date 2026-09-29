@@ -18,7 +18,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 
 
@@ -121,7 +120,6 @@ export interface TestCaseAttachDialogData {
     MatCheckboxModule,
     MatInputModule,
     MatFormFieldModule,
-    MatIconModule,
     MatChipsModule
   ],
 
@@ -136,7 +134,7 @@ export interface TestCaseAttachDialogData {
       <div class="dialog-title">
 
         <div class="title-icon">
-          <mat-icon>playlist_add_check</mat-icon>
+          <span class="gp-dialog-icon">＋</span>
         </div>
 
         <div class="title-content">
@@ -163,7 +161,7 @@ export interface TestCaseAttachDialogData {
         aria-label="Close"
         class="close-button">
 
-        <mat-icon>close</mat-icon>
+        <span class="gp-dialog-icon">×</span>
 
       </button>
 
@@ -180,9 +178,7 @@ export interface TestCaseAttachDialogData {
 
       <div class="search-wrapper">
 
-        <mat-icon class="search-icon">
-          search
-        </mat-icon>
+        <span class="gp-dialog-icon" aria-hidden="true">⌕</span>
 
         <input
           type="text"
@@ -198,9 +194,7 @@ export interface TestCaseAttachDialogData {
           class="clear-search"
           (click)="searchTerm.set('')">
 
-          <mat-icon>
-            close
-          </mat-icon>
+          <span class="gp-dialog-icon" aria-hidden="true">×</span>
 
         </button>
 
@@ -239,9 +233,7 @@ export interface TestCaseAttachDialogData {
             class="toolbar-button"
             (click)="selectAll()">
 
-            <mat-icon>
-              select_all
-            </mat-icon>
+            <span class="gp-dialog-icon" aria-hidden="true">✓</span>
 
             Select All
 
@@ -254,9 +246,7 @@ export interface TestCaseAttachDialogData {
             class="toolbar-button"
             (click)="deselectAll()">
 
-            <mat-icon>
-              deselect
-            </mat-icon>
+            <span class="gp-dialog-icon" aria-hidden="true">↶</span>
 
             Clear All
 
@@ -342,13 +332,7 @@ export interface TestCaseAttachDialogData {
 
           <!-- Selected Indicator -->
 
-          <mat-icon
-            *ngIf="isSelectedId(tc.id)"
-            class="selected-icon">
-
-            check_circle
-
-          </mat-icon>
+          <span class="gp-dialog-icon" aria-hidden="true">✓</span>
 
         </div>
 
@@ -361,9 +345,7 @@ export interface TestCaseAttachDialogData {
 
           <div class="empty-icon">
 
-            <mat-icon>
-              search_off
-            </mat-icon>
+            <span class="gp-dialog-icon" aria-hidden="true">⌕</span>
 
           </div>
 
@@ -420,9 +402,7 @@ export interface TestCaseAttachDialogData {
           [disabled]="selectedIds().size === 0"
           (click)="confirmSelection()">
 
-          <mat-icon>
-            attach_file
-          </mat-icon>
+          <span class="gp-dialog-icon" aria-hidden="true">↗</span>
 
           Attach Selected
 
@@ -1163,6 +1143,35 @@ export interface TestCaseAttachDialogData {
       }
 
     }
+
+
+    :host { font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important; color: #111827; }
+    .dialog-header, .dialog-content, .dialog-actions { background: #fff !important; }
+    .dialog-header { border-bottom: 1px solid #eef1f4 !important; }
+    .title-icon { width: 42px !important; height: 42px !important; border-radius: 14px !important; background: #eef8fd !important; border: 1px solid #d6eaf5 !important; color: #006fae !important; }
+    .title-content h2 { font-weight: 700 !important; color: #111827 !important; }
+    .subtitle { color: #667085 !important; }
+    .search-wrapper { border: 1px solid #cfd5dc; background: #f8fafc; box-shadow: none !important; }
+    .search-wrapper:focus-within { border-color: #0788CC; box-shadow: 0 0 0 3px rgba(7,136,204,.10) !important; }
+    .selection-toolbar { border: 1px solid #eef1f4; background: #f8fafc; border-radius: 14px !important; }
+    .list-container { border: 1px solid #dfe3e8; border-radius: 14px !important; }
+    .list-item { border-bottom-color: #eef1f4 !important; }
+    .list-item:hover { background: #f7fbfe !important; }
+    .list-item.selected { background: #eaf5fb !important; }
+    .tc-code { color: #006fae !important; }
+    .tc-title { color: #111827 !important; }
+    .tc-description { color: #667085 !important; }
+    .priority-badge { border: 1px solid #fed7aa; background: #fff7ed; color: #c2410c; }
+    .selected-icon { color: #0788CC !important; }
+    .attach-button { background: rgb(0,124,193) !important; border-radius: 20px !important; }
+    .attach-button:hover:not(:disabled) { background: #006fae !important; }
+    .toolbar-button { color: #006fae !important; border-radius: 18px !important; }
+    .cancel-button { border: 1px solid #000 !important; border-radius: 20px !important; background: #fff !important; }
+    .cancel-button:hover { background: #eef8fd !important; border-color: #0788CC !important; color: #006fae !important; }
+    .title-icon .gp-dialog-icon { color: #006fae; font-size: 20px !important; }
+    .close-button .gp-dialog-icon { color: #667085; font-size: 22px !important; }
+    .search-icon.gp-dialog-icon { color: #667085; }
+    .gp-dialog-icon { width: 20px; height: 20px; display: inline-flex; align-items:center; justify-content:center; flex: 0 0 20px; font-family: Inter, system-ui, sans-serif !important; font-size: 18px !important; font-weight: 700; line-height: 1; color: currentColor; }
 
   `]
 })
