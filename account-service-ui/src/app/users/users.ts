@@ -208,28 +208,27 @@ export class Users implements OnInit, OnDestroy {
     // 5. Run the server operations silently in the background
     this.zone.runOutsideAngular(() => {
       const proceedWithSave = (finalImageUrl: string | null) => {
+        // Send the entity shape expected by the Spring Users API. The server
+        // derives orgId and creator from the authenticated request, so neither
+        // field is sent by the client. Role/manager are entity references.
         const payload: any = {
-          ...optimisticUser,
-          isActive: optimisticUser.is_active,
+          name: optimisticUser.name,
+          email: optimisticUser.email,
+          profilePictureUrl: finalImageUrl,
           employeeIdPrefix: optimisticUser.employee_id_prefix,
           employeeIdNumber: optimisticUser.employee_id_number,
-          profilePictureUrl: finalImageUrl,
-          roleId: optimisticUser.role_id,
-          managerId: optimisticUser.manager_id
+          locationCountry: optimisticUser.locationCountry,
+          locationState: optimisticUser.locationState,
+          locationCity: optimisticUser.locationCity,
+          locationWorkModel: optimisticUser.locationWorkModel,
+          locationDeskCode: optimisticUser.locationDeskCode,
+          isActive: optimisticUser.is_active,
+          role: optimisticUser.role_id ? { id: optimisticUser.role_id } : null,
+          manager: optimisticUser.manager_id ? { id: optimisticUser.manager_id } : null
         };
 
-        delete payload.id;
-        delete payload.is_active;
-        delete payload.employee_id_prefix;
-        delete payload.employee_id_number;
-        delete payload.profile_picture_url;
-        delete payload.role_id;
-        delete payload.role_name;
-        delete payload.manager_id;
-        delete payload.manager_name;
-
         const request = (targetId > 0)
-          ? this.http.put(`${this.baseUrl}/user/${targetId}`, payload, { headers: this.auth.getAuthHeaders() })
+          ? this.http.put(`${this.baseUrl}/users/${targetId}`, payload, { headers: this.auth.getAuthHeaders() })
           : this.http.post(`${this.baseUrl}/user/create`, payload, { headers: this.auth.getAuthHeaders() });
 
         request.subscribe({
@@ -350,11 +349,25 @@ export class Users implements OnInit, OnDestroy {
 
     if (matchedUser.is_active) {
       if (!confirm('Archive this operational directory node?')) return;
-      this.http.put(`${this.baseUrl}/user/${id}`, { ...matchedUser, isActive: false }, { headers: this.auth.getAuthHeaders() })
+      this.http.put(`${this.baseUrl}/users/${id}`, {
+          name: matchedUser.name,
+          email: matchedUser.email,
+          profilePictureUrl: matchedUser.profile_picture_url || null,
+          employeeIdPrefix: matchedUser.employee_id_prefix,
+          employeeIdNumber: matchedUser.employee_id_number,
+          locationCountry: matchedUser.locationCountry,
+          locationState: matchedUser.locationState,
+          locationCity: matchedUser.locationCity,
+          locationWorkModel: matchedUser.locationWorkModel,
+          locationDeskCode: matchedUser.locationDeskCode,
+          isActive: false,
+          role: matchedUser.role_id ? { id: matchedUser.role_id } : null,
+          manager: matchedUser.manager_id ? { id: matchedUser.manager_id } : null
+        }, { headers: this.auth.getAuthHeaders() })
         .subscribe(() => { this.triggerToastAlert('Node archived.'); this.loadUsers(); });
     } else {
       if (!confirm('Permanently purge this structural system footprint?')) return;
-      this.http.delete(`${this.baseUrl}/user/${id}`, { headers: this.auth.getAuthHeaders() })
+      this.http.delete(`${this.baseUrl}/users/${id}`, { headers: this.auth.getAuthHeaders() })
         .subscribe(() => { this.triggerToastAlert('Node purged completely.'); this.loadUsers(); });
     }
   }

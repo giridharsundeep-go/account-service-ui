@@ -8,18 +8,11 @@
 
     <div class="header-left">
 
-      <button
-        type="button"
-        class="brand-button"
-        (click)="setViewMode('projects')">
-
-        <span class="brand-title">
+       <span class="brand-title">
           Projects Directory
         </span>
 
-      </button>
-
-    </div>
+    </div >
 
 
     <!-- ONE SEARCH BAR FOR BOTH PROJECTS + SPRINTS -->
@@ -41,7 +34,7 @@
       <button
         *ngIf="globalSearchQuery"
         type="button"
-        class="search-clear"
+        mat-icon-button class="search-clear"
         (click)="clearGlobalSearch()"
         aria-label="Clear search">
 
@@ -58,7 +51,7 @@
 
       <button
         type="button"
-        class="header-switcher"
+        mat-button class="header-switcher"
         [class.active]="dashboardViewMode === 'projects'"
         (click)="setViewMode('projects')">
 
@@ -73,7 +66,7 @@
 
       <button
         type="button"
-        class="header-switcher"
+        mat-button class="header-switcher"
         [class.active]="dashboardViewMode === 'sprints'"
         (click)="setViewMode('sprints')">
 
@@ -93,7 +86,7 @@
       <button
         *ngIf="dashboardViewMode === 'projects'"
         type="button"
-        class="primary-button"
+        mat-flat-button color="primary" class="primary-button"
         (click)="initiateNewProject()">
 
         <mat-icon>
@@ -133,17 +126,36 @@
               Workspace
             </div>
 
-            <p>
+            <p style="color: black;">
                             Browse projects, delivery plans and sprint activity.
             </p>
 
           </div>
 
-          <div class="directory-summary">
+          <div class="project-directory-tools">
 
-            <span class="summary-dot"></span>
+            <div class="project-filter-tools" aria-label="Filter projects by product">
 
-            Project directory
+              <button
+                type="button"
+                mat-button class="filter-button"
+                [class.active]="selectedProductId === 'ALL'"
+                (click)="setProductFilter('ALL')">
+                All
+              </button>
+
+              <button
+                *ngFor="let product of systemProducts"
+                type="button"
+                mat-button class="filter-button"
+                [class.active]="selectedProductId === product.id"
+                (click)="setProductFilter(product.id)">
+                {{ product.name }}
+              </button>
+
+            </div>
+
+          
 
           </div>
 
@@ -154,190 +166,110 @@
           *ngIf="projects$ | async as projectsList; else loadingProjects">
 
           <div
-            class="directory-list"
+            class="directory-list projects-directory-list"
             *ngIf="
               getFilteredProjects(projectsList).length;
               else noProjects
             ">
 
+            <mat-card
+              class="project-card"
+              appearance="outlined"
+              *ngFor="let project of getFilteredProjects(projectsList)">
 
-            <!-- PROJECT ROW -->
+              <mat-card-header class="project-card-header">
+                
 
-            <article
-              class="directory-row project-row"
-              *ngFor="
-                let project of getFilteredProjects(projectsList)
-              ">
+                <mat-card-title>
+                  {{ project.name }}
+                </mat-card-title>
 
-              <div class="row-color project-color"></div>
+                <mat-card-subtitle>
+                  {{ project.project_code || 'PRJ' }}
+                </mat-card-subtitle>
 
+                <!--mat-chip-set class="project-status-chip-set" aria-label="Project status">
+                  <mat-chip
+                    class="project-status-chip"
+                    [class.active-status-chip]="project.status === 'ACTIVE'"
+                    [class.hold-status-chip]="project.status === 'ON_HOLD'"
+                    [class.archived-status-chip]="project.status === 'ARCHIVED'">
+                    {{ project.status }}
+                  </mat-chip>
+                </mat-chip-set-->
+              </mat-card-header>
 
-              <!-- PROJECT IDENTITY -->
+              <mat-card-content class="project-card-content">
+                <p class="project-description">
+                  {{
+                    project.description ||
+                    'No project description available.'
+                  }}
+                </p>
 
-              <button
-                type="button"
-                class="row-identity"
-                (click)="openProjectDetails(project)">
-
-                <span class="identity-icon">
-                  <mat-icon>
-                    folder
-                  </mat-icon>
-                </span>
-
-                <span class="identity-copy">
-
-                  <span class="row-code">
-                    {{ project.project_code || 'PRJ' }}
+                <div class="project-product">
+                  <mat-icon>inventory_2</mat-icon>
+                  <span>
+                    {{ getProductName(project.product_id) || 'No product' }}
                   </span>
+                </div>
 
-                  <strong>
-                    {{ project.name }}
-                  </strong>
+                <div class="project-metrics">
+                  <div class="project-metric">
+                    <span>Velocity</span>
+                    <strong>{{ project.target_velocity || 0 }} pts</strong>
+                  </div>
 
-                  <span class="row-description">
-                    {{
-                      project.description ||
-                      'No project description available.'
-                    }}
-                  </span>
+                  <div class="project-metric">
+                    <span>Backlog</span>
+                    <strong>{{ project.total_backlog_points || 0 }} pts</strong>
+                  </div>
+                </div>
+              </mat-card-content>
 
-                </span>
-
-              </button>
-
-
-              <!-- PRODUCT -->
-
-              <div class="row-column">
-
-                <span class="column-label">
-                  Product
-                </span>
-
-                <strong>
-                  {{ getProductName(project.product_id) }}
-                </strong>
-
-              </div>
-
-
-              <!-- VELOCITY -->
-
-              <div class="row-column compact-column">
-
-                <span class="column-label">
-                  Velocity
-                </span>
-
-                <strong>
-                  {{ project.target_velocity || 0 }}
-                  pts
-                </strong>
-
-              </div>
-
-
-              <!-- BACKLOG -->
-
-              <div class="row-column compact-column">
-
-                <span class="column-label">
-                  Backlog
-                </span>
-
-                <strong>
-                  {{ project.total_backlog_points || 0 }}
-                  pts
-                </strong>
-
-              </div>
-
-
-              <!-- STATUS -->
-
-              <div class="row-status-column">
-
-                <span
-                  class="status-pill"
-                  [class.active-status]="
-                    project.status === 'ACTIVE'
-                  "
-                  [class.hold-status]="
-                    project.status === 'ON_HOLD'
-                  "
-                  [class.archived-status]="
-                    project.status === 'ARCHIVED'
-                  ">
-
-                  <span class="status-dot"></span>
-
-                  {{ project.status }}
-
-                </span>
-
-              </div>
-
-
-              <!-- ACTIONS -->
-
-              <div class="row-actions">
-
+              <mat-card-actions class="project-card-actions">
                 <button
+                  mat-button
+                  color="primary"
                   type="button"
-                  class="row-action primary-row-action"
+                  class="project-sprints-button"
                   (click)="switchToSprintsForProject(project.project_code, project.id)">
-
-                  <mat-icon>
-                    view_week
-                  </mat-icon>
-
+                  <mat-icon>view_week</mat-icon>
                   View Sprints
-
                 </button>
 
+                <span class="project-card-action-spacer"></span>
 
                 <button
+                  mat-icon-button
                   type="button"
-                  class="icon-action"
+                  aria-label="View project"
                   title="View project"
                   (click)="openProjectDetails(project)">
-
-                  <mat-icon>
-                    visibility
-                  </mat-icon>
-
+                  <mat-icon>visibility</mat-icon>
                 </button>
 
-
                 <button
+                  mat-icon-button
                   type="button"
-                  class="icon-action"
+                  aria-label="Edit project"
                   title="Edit project"
                   (click)="loadProjectToComposer(project)">
-
-                  <mat-icon>
-                    edit
-                  </mat-icon>
-
+                  <mat-icon>edit</mat-icon>
                 </button>
-
 
                 <button
+                  mat-icon-button
                   type="button"
-                  class="icon-action danger-action"
+                  class="archive-project-button"
+                  aria-label="Archive project"
                   title="Archive project"
                   (click)="decommissionProject(project.id)">
-
-                  <mat-icon>
-                    archive
-                  </mat-icon>
-
+                  <mat-icon>archive</mat-icon>
                 </button>
+              </mat-card-actions>
 
-              </div>
-
-            </article>
+            </mat-card>
 
           </div>
 
@@ -376,7 +308,7 @@
 
             <button
               type="button"
-              class="filter-button"
+              mat-button class="filter-button"
               [class.active]="
                 sprintTimelineFilter === 'ALL'
               "
@@ -388,7 +320,7 @@
 
             <button
               type="button"
-              class="filter-button"
+              mat-button class="filter-button"
               [class.active]="
                 sprintTimelineFilter === 'CURRENT'
               "
@@ -400,7 +332,7 @@
 
             <button
               type="button"
-              class="filter-button"
+              mat-button class="filter-button"
               [class.active]="
                 sprintTimelineFilter === 'FUTURE'
               "
@@ -412,7 +344,7 @@
 
             <button
               type="button"
-              class="filter-button"
+              mat-button class="filter-button"
               [class.active]="
                 sprintTimelineFilter === 'COMPLETED'
               "
@@ -517,117 +449,53 @@
 
           <div class="directory-list">
 
-            <article
-              class="directory-row sprint-row"
-              *ngFor="
-                let sprint of getRunningSprints()
-              "
+            <mat-card
+              class="sprint-card running-pill"
+              appearance="outlined"
+              *ngFor="let sprint of getRunningSprints()"
               (click)="openSprintDetails(sprint)">
 
-              <div class="row-color running-row-color"></div>
+              <mat-card-header class="sprint-card-header">
+                
+                <mat-card-title>
+                  {{ sprint.name }}
+                </mat-card-title>
+                <mat-card-subtitle>
+                  {{ sprint.projectCode }} · Sprint {{ sprint.sprint_number }} · {{ sprint.projectName }}
+                </mat-card-subtitle>
+              </mat-card-header>
 
+              <mat-card-content class="sprint-card-content">
+                <p class="sprint-description">
+                  
+                </p>
+                <div class="sprint-card-meta">
+                  <div class="sprint-meta-item">
+                    <span>Start</span>
+                    <strong>{{ sprint.scheduled_start_date }}</strong>
+                  </div>
+                  <div class="sprint-meta-item">
+                    <span>End</span>
+                    <strong>{{ sprint.scheduled_end_date }}</strong>
+                  </div>
+                  <div class="sprint-meta-item">
+                    <span>Progress</span>
+                    <strong>{{ getSprintProgress(sprint) }}%</strong>
+                  </div>
+                 
+                </div>
+              </mat-card-content>
 
-              <div class="row-identity">
-
-                <span class="identity-icon sprint-running">
-                  <mat-icon>
-                    play_arrow
-                  </mat-icon>
-                </span>
-
-                <span class="identity-copy">
-
-                  <span class="row-code">
-                    {{ sprint.projectCode }}
-                    ·
-                    Sprint {{ sprint.sprint_number }}
-                  </span>
-
-                  <strong>
-                    {{ sprint.name }}
-                  </strong>
-
-                  <span class="row-description">
-                    {{ sprint.projectName }}
-                  </span>
-
-                </span>
-
-              </div>
-
-
-              <div class="row-column">
-
-                <span class="column-label">
-                  Start
-                </span>
-
-                <strong>
-                  {{ sprint.scheduled_start_date }}
-                </strong>
-
-              </div>
-
-
-              <div class="row-column">
-
-                <span class="column-label">
-                  End
-                </span>
-
-                <strong>
-                  {{ sprint.scheduled_end_date }}
-                </strong>
-
-              </div>
-
-
-              <div class="row-column compact-column">
-
-                <span class="column-label">
-                  Progress
-                </span>
-
-                <strong>
-                  {{ getSprintProgress(sprint) }}%
-                </strong>
-
-              </div>
-
-
-              <div class="row-status-column">
-
-                <span class="status-pill running-pill">
-
-                  <span class="status-dot"></span>
-
-                  Running
-
-                </span>
-
-              </div>
-
-
-              <div class="row-actions">
-
-                <button
-                  type="button"
-                  class="icon-action"
-                  title="View sprint"
-                  (click)="
-                    $event.stopPropagation();
-                    openSprintDetails(sprint)
-                  ">
-
-                  <mat-icon>
-                    chevron_right
-                  </mat-icon>
-
+              <mat-card-actions class="sprint-card-actions">
+                <button mat-button color="primary" type="button" (click)="$event.stopPropagation(); openSprintDetails(sprint)">
+                  VIEW SPRINT
                 </button>
-
-              </div>
-
-            </article>
+                <span class="material-action-spacer"></span>
+                <button mat-icon-button type="button" aria-label="View sprint" title="View sprint" (click)="$event.stopPropagation(); openSprintDetails(sprint)">
+                  <mat-icon>chevron_right</mat-icon>
+                </button>
+              </mat-card-actions>
+            </mat-card>
 
 
             <div
@@ -687,118 +555,53 @@
 
           <div class="directory-list">
 
-            <article
-              class="directory-row sprint-row"
-              *ngFor="
-                let sprint of getUpcomingSprints()
-              "
+            <mat-card
+              class="sprint-card planned-pill"
+              appearance="outlined"
+              *ngFor="let sprint of getUpcomingSprints()"
               (click)="openSprintDetails(sprint)">
 
-              <div class="row-color planned-row-color"></div>
+              <mat-card-header class="sprint-card-header">
+               
+                <mat-card-title>
+                  {{ sprint.name }}
+                </mat-card-title>
+                <mat-card-subtitle>
+                  {{ sprint.projectCode }} · Sprint {{ sprint.sprint_number }} · {{ sprint.projectName }}
+                </mat-card-subtitle>
+              </mat-card-header>
 
+              <mat-card-content class="sprint-card-content">
+                <p class="sprint-description">
+                  {{ sprint.description || 'No sprint description available.' }}
+                </p>
+                <div class="sprint-card-meta">
+                  <div class="sprint-meta-item">
+                    <span>Start</span>
+                    <strong>{{ sprint.scheduled_start_date }}</strong>
+                  </div>
+                  <div class="sprint-meta-item">
+                    <span>End</span>
+                    <strong>{{ sprint.scheduled_end_date }}</strong>
+                  </div>
+                  <div class="sprint-meta-item">
+                    <span>Velocity</span>
+                    <strong>{{ sprint.target_velocity || 0 }} pts</strong>
+                  </div>
+                 
+                </div>
+              </mat-card-content>
 
-              <div class="row-identity">
-
-                <span class="identity-icon sprint-planned">
-                  <mat-icon>
-                    schedule
-                  </mat-icon>
-                </span>
-
-                <span class="identity-copy">
-
-                  <span class="row-code">
-                    {{ sprint.projectCode }}
-                    ·
-                    Sprint {{ sprint.sprint_number }}
-                  </span>
-
-                  <strong>
-                    {{ sprint.name }}
-                  </strong>
-
-                  <span class="row-description">
-                    {{ sprint.projectName }}
-                  </span>
-
-                </span>
-
-              </div>
-
-
-              <div class="row-column">
-
-                <span class="column-label">
-                  Start
-                </span>
-
-                <strong>
-                  {{ sprint.scheduled_start_date }}
-                </strong>
-
-              </div>
-
-
-              <div class="row-column">
-
-                <span class="column-label">
-                  End
-                </span>
-
-                <strong>
-                  {{ sprint.scheduled_end_date }}
-                </strong>
-
-              </div>
-
-
-              <div class="row-column compact-column">
-
-                <span class="column-label">
-                  Velocity
-                </span>
-
-                <strong>
-                  {{ sprint.target_velocity || 0 }}
-                  pts
-                </strong>
-
-              </div>
-
-
-              <div class="row-status-column">
-
-                <span class="status-pill planned-pill">
-
-                  <span class="status-dot"></span>
-
-                  Planned
-
-                </span>
-
-              </div>
-
-
-              <div class="row-actions">
-
-                <button
-                  type="button"
-                  class="icon-action"
-                  title="View sprint"
-                  (click)="
-                    $event.stopPropagation();
-                    openSprintDetails(sprint)
-                  ">
-
-                  <mat-icon>
-                    chevron_right
-                  </mat-icon>
-
+              <mat-card-actions class="sprint-card-actions">
+                <button mat-button color="primary" type="button" (click)="$event.stopPropagation(); openSprintDetails(sprint)">
+                  VIEW SPRINT
                 </button>
-
-              </div>
-
-            </article>
+                <span class="material-action-spacer"></span>
+                <button mat-icon-button type="button" aria-label="View sprint" title="View sprint" (click)="$event.stopPropagation(); openSprintDetails(sprint)">
+                  <mat-icon>chevron_right</mat-icon>
+                </button>
+              </mat-card-actions>
+            </mat-card>
 
 
             <div
@@ -858,118 +661,57 @@
 
           <div class="directory-list">
 
-            <article
-              class="directory-row sprint-row"
-              *ngFor="
-                let sprint of getCompletedSprints()
-              "
+            <mat-card
+              class="sprint-card completed-pill"
+              appearance="outlined"
+              *ngFor="let sprint of getCompletedSprints()"
               (click)="openSprintDetails(sprint)">
 
-              <div class="row-color completed-row-color"></div>
+              <mat-card-header class="sprint-card-header">
+                <div mat-card-avatar class="sprint-card-avatar completed-pill-avatar">
+                  <mat-icon>check</mat-icon>
+                </div>
+                <mat-card-title>
+                  {{ sprint.name }}
+                </mat-card-title>
+                <mat-card-subtitle>
+                  {{ sprint.projectCode }} · Sprint {{ sprint.sprint_number }} · {{ sprint.projectName }}
+                </mat-card-subtitle>
+              </mat-card-header>
 
+              <mat-card-content class="sprint-card-content">
+                <p class="sprint-description">
+                  {{ sprint.description || 'No sprint description available.' }}
+                </p>
+                <div class="sprint-card-meta">
+                  <div class="sprint-meta-item">
+                    <span>Start</span>
+                    <strong>{{ sprint.scheduled_start_date }}</strong>
+                  </div>
+                  <div class="sprint-meta-item">
+                    <span>End</span>
+                    <strong>{{ sprint.scheduled_end_date }}</strong>
+                  </div>
+                  <div class="sprint-meta-item">
+                    <span>Delivered</span>
+                    <strong>{{ sprint.completedPoints || 0 }} pts</strong>
+                  </div>
+                  <mat-chip-set class="sprint-status-set" aria-label="Sprint status">
+                    <mat-chip class="sprint-status-chip completed-pill">Completed</mat-chip>
+                  </mat-chip-set>
+                </div>
+              </mat-card-content>
 
-              <div class="row-identity">
-
-                <span class="identity-icon sprint-completed">
-                  <mat-icon>
-                    check
-                  </mat-icon>
-                </span>
-
-                <span class="identity-copy">
-
-                  <span class="row-code">
-                    {{ sprint.projectCode }}
-                    ·
-                    Sprint {{ sprint.sprint_number }}
-                  </span>
-
-                  <strong>
-                    {{ sprint.name }}
-                  </strong>
-
-                  <span class="row-description">
-                    {{ sprint.projectName }}
-                  </span>
-
-                </span>
-
-              </div>
-
-
-              <div class="row-column">
-
-                <span class="column-label">
-                  Start
-                </span>
-
-                <strong>
-                  {{ sprint.scheduled_start_date }}
-                </strong>
-
-              </div>
-
-
-              <div class="row-column">
-
-                <span class="column-label">
-                  End
-                </span>
-
-                <strong>
-                  {{ sprint.scheduled_end_date }}
-                </strong>
-
-              </div>
-
-
-              <div class="row-column compact-column">
-
-                <span class="column-label">
-                  Delivered
-                </span>
-
-                <strong>
-                  {{ sprint.completedPoints || 0 }}
-                  pts
-                </strong>
-
-              </div>
-
-
-              <div class="row-status-column">
-
-                <span class="status-pill completed-pill">
-
-                  <span class="status-dot"></span>
-
-                  Completed
-
-                </span>
-
-              </div>
-
-
-              <div class="row-actions">
-
-                <button
-                  type="button"
-                  class="icon-action"
-                  title="View sprint"
-                  (click)="
-                    $event.stopPropagation();
-                    openSprintDetails(sprint)
-                  ">
-
-                  <mat-icon>
-                    chevron_right
-                  </mat-icon>
-
+              <mat-card-actions class="sprint-card-actions">
+                <button mat-button color="primary" type="button" (click)="$event.stopPropagation(); openSprintDetails(sprint)">
+                  VIEW SPRINT
                 </button>
-
-              </div>
-
-            </article>
+                <span class="material-action-spacer"></span>
+                <button mat-icon-button type="button" aria-label="View sprint" title="View sprint" (click)="$event.stopPropagation(); openSprintDetails(sprint)">
+                  <mat-icon>chevron_right</mat-icon>
+                </button>
+              </mat-card-actions>
+            </mat-card>
 
 
             <div
@@ -1002,8 +744,9 @@
     *ngIf="selectedProject"
     (click)="closeProjectDetails()">
 
-    <section
+    <mat-card
       class="detail-popup project-detail-popup"
+      appearance="outlined"
       role="dialog"
       aria-modal="true"
       (click)="$event.stopPropagation()">
@@ -1037,7 +780,7 @@
 
         <button
           type="button"
-          class="popup-close"
+          mat-icon-button class="popup-close"
           (click)="closeProjectDetails()">
 
           <mat-icon>
@@ -1189,7 +932,7 @@
 
         <button
           type="button"
-          class="secondary-button"
+          mat-stroked-button class="secondary-button"
           (click)="closeProjectDetails()">
 
           Close
@@ -1198,7 +941,7 @@
 
         <button
           type="button"
-          class="secondary-button"
+          mat-stroked-button class="secondary-button"
           (click)="
             switchToSprintsForProject(
               selectedProject.project_code,
@@ -1206,25 +949,17 @@
             )
           ">
 
-          <mat-icon>
-            view_week
-          </mat-icon>
-
           View Sprints
 
         </button>
 
         <button
           type="button"
-          class="primary-button"
+          mat-flat-button color="primary" class="primary-button"
           (click)="
             loadProjectToComposer(selectedProject);
             closeProjectDetails()
           ">
-
-          <mat-icon>
-            edit
-          </mat-icon>
 
           Edit Project
 
@@ -1232,7 +967,7 @@
 
       </footer>
 
-    </section>
+    </mat-card>
 
   </div>
 
@@ -1246,8 +981,9 @@
     *ngIf="selectedSprint"
     (click)="closeSprintDetails()">
 
-    <section
+    <mat-card
       class="detail-popup sprint-detail-popup"
+      appearance="outlined"
       role="dialog"
       aria-modal="true"
       (click)="$event.stopPropagation()">
@@ -1283,7 +1019,7 @@
 
         <button
           type="button"
-          class="popup-close"
+          mat-icon-button class="popup-close"
           (click)="closeSprintDetails()">
 
           <mat-icon>
@@ -1460,7 +1196,7 @@
 
         <button
           type="button"
-          class="secondary-button"
+          mat-stroked-button class="secondary-button"
           (click)="closeSprintDetails()">
 
           Close
@@ -1470,7 +1206,7 @@
 
         <button
           type="button"
-          class="secondary-button"
+          mat-stroked-button class="secondary-button"
           (click)="editSprint(selectedSprint)">
 
           <mat-icon>
@@ -1487,7 +1223,7 @@
             selectedSprint.status === 'PLANNED'
           "
           type="button"
-          class="primary-button"
+          mat-flat-button color="primary" class="primary-button"
           (click)="
             startSprint(selectedSprint)
           ">
@@ -1506,7 +1242,7 @@
             selectedSprint.status === 'CURRENT'
           "
           type="button"
-          class="primary-button"
+          mat-flat-button color="primary" class="primary-button"
           (click)="
             completeSprint(selectedSprint)
           ">
@@ -1521,7 +1257,7 @@
 
       </footer>
 
-    </section>
+    </mat-card>
 
   </div>
 
@@ -1589,8 +1325,9 @@
     *ngIf="isComposerOpen"
     (click)="closeComposerDrawer()">
 
-    <section
+    <mat-card
       class="composer-modal"
+      appearance="outlined"
       role="dialog"
       aria-modal="true"
       (click)="$event.stopPropagation()">
@@ -1603,6 +1340,12 @@
         <span></span>
       </div>
 
+      <mat-progress-bar
+        *ngIf="isSaving"
+        class="initiative-save-progress"
+        mode="indeterminate"
+        aria-label="Saving initiative and waiting for related APIs">
+      </mat-progress-bar>
 
       <header class="composer-header">
 
@@ -1631,7 +1374,7 @@
 
         <button
           type="button"
-          class="popup-close"
+          mat-icon-button class="popup-close"
           (click)="closeComposerDrawer()">
 
           <mat-icon>
@@ -1649,7 +1392,7 @@
 
         <button
           type="button"
-          class="step-tab"
+          mat-button class="step-tab"
           [class.active]="activeBuilderStep === 1"
           [class.completed]="activeBuilderStep > 1"
           (click)="setBuilderStep(1)">
@@ -1665,7 +1408,7 @@
 
         <button
           type="button"
-          class="step-tab"
+          mat-button class="step-tab"
           [class.active]="activeBuilderStep === 2"
           [class.completed]="activeBuilderStep > 2"
           (click)="setBuilderStep(2)">
@@ -1681,7 +1424,7 @@
 
         <button
           type="button"
-          class="step-tab"
+          mat-button class="step-tab"
           [class.active]="activeBuilderStep === 3"
           [class.completed]="activeBuilderStep > 3"
           (click)="setBuilderStep(3)">
@@ -1697,7 +1440,7 @@
 
         <button
           type="button"
-          class="step-tab"
+          mat-button class="step-tab"
           [class.active]="activeBuilderStep === 4"
           (click)="setBuilderStep(4)">
 
@@ -1988,7 +1731,7 @@
 
               <button
                 type="button"
-                class="secondary-button"
+                mat-stroked-button class="secondary-button"
                 (click)="openUserSelectionDialog()">
 
                 <mat-icon>
@@ -2425,7 +2168,7 @@
 
         <button
           type="button"
-          class="secondary-button"
+          mat-stroked-button class="secondary-button"
           [disabled]="
             activeBuilderStep === 1 ||
             isSaving
@@ -2441,7 +2184,7 @@
 
           <button
             type="button"
-            class="secondary-button"
+            mat-stroked-button class="secondary-button"
             [disabled]="isSaving"
             (click)="closeComposerDrawer()">
 
@@ -2455,7 +2198,8 @@
               activeBuilderStep < 4
             "
             type="button"
-            class="primary-button"
+            mat-flat-button color="primary" class="primary-button"
+            [disabled]="isSaving"
             (click)="nextBuilderStep()">
 
             Next Step
@@ -2472,7 +2216,7 @@
               activeBuilderStep === 4
             "
             type="button"
-            class="primary-button"
+            mat-flat-button color="primary" class="primary-button"
             [disabled]="isSaving"
             (click)="commitProjectToSystem()">
 
@@ -2500,7 +2244,7 @@
 
       </footer>
 
-    </section>
+    </mat-card>
 
   </div>
 

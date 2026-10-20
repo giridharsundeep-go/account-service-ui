@@ -2,36 +2,40 @@
   <header class="google-header">
     <div class="header-brand">
       <div>
-        
-        <h1 style="font-size: 20px;">Product registry and platform portfolio</h1>
+        <h1>Products</h1>
+        <p>Product registry and platform portfolio</p>
       </div>
     </div>
-    <button mat-flat-button class="primary-action" type="button" (click)="initiateNewProduct()">
-      <mat-icon>add</mat-icon><span>Create Product</span>
+
+    <div class="header-search">
+      <div class="search-shell">
+        <mat-icon class="search-icon">search</mat-icon>
+        <input
+          type="search"
+          [(ngModel)]="productLookupFilter"
+          placeholder="Search products"
+          aria-label="Search products"
+        />
+        <button
+          *ngIf="productLookupFilter"
+          class="search-clear"
+          type="button"
+          (click)="productLookupFilter=''"
+          aria-label="Clear search">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <button
+      mat-flat-button
+      class="primary-action"
+      type="button"
+      (click)="initiateNewProduct()">
+      <mat-icon>add</mat-icon>
+      <span>Create Product</span>
     </button>
   </header>
-
-  <section class="search-toolbar">
-    <div class="search-shell">
-      <mat-icon class="search-icon">search</mat-icon>
-      <input type="search" [(ngModel)]="productLookupFilter" placeholder="Search products" aria-label="Search products">
-      <button *ngIf="productLookupFilter" class="search-clear" type="button" (click)="productLookupFilter=''">
-        <mat-icon>close</mat-icon>
-      </button>
-    </div>
-    <button class="filter-button" type="button" [class.active]="filterPanelOpen" (click)="toggleFilters()">
-      <mat-icon>tune</mat-icon><span>Filters</span>
-    </button>
-    <div class="toolbar-spacer"></div>
-  </section>
-
-  <section class="filters-panel" *ngIf="filterPanelOpen">
-    <div class="filter-group">
-      <span class="filter-label">Registry</span>
-      <button class="filter-chip selected" type="button">All products</button>
-    </div>
-    <button class="clear-filters" type="button" (click)="clearFilters()">Clear filters</button>
-  </section>
 
   <div class="modal-backdrop" *ngIf="isComposerOpen" (click)="closeComposerDrawer()">
     <section class="product-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
@@ -76,29 +80,47 @@
   </div>
 
   <section class="directory">
-    <div class="directory-header">
-      <div><span class="directory-kicker">DIRECTORY</span><h2>Products</h2></div>
-    </div>
 
     <ng-container *ngIf="products$ | async as productsList; else loadingDashboard">
+
       <div class="product-grid" *ngIf="filterProducts(productsList).length; else emptyProducts">
-        <article class="product-card" *ngFor="let product of filterProducts(productsList); trackBy: trackProduct" (click)="loadProductToComposer(product)">
-          <div class="card-top">
-            <div class="product-avatar">{{ product.name?.charAt(0)?.toUpperCase() || 'P' }}</div>
-            <span class="product-state">ACTIVE</span>
-          </div>
-          <div class="product-content">
-            <h3>{{ product.name }}</h3>
-            <p>{{ product.description || 'No descriptive overview configured for this product.' }}</p>
-          </div>
-          <div class="card-footer">
-            <span class="open-label">Open product</span>
-            <button class="delete-button" type="button" aria-label="Delete Product" (click)="$event.stopPropagation(); archiveProductEntity(product.id)">
-              <mat-icon>delete_outline</mat-icon>
+        <mat-card
+          class="product-card"
+          appearance="outlined"
+          *ngFor="let product of filterProducts(productsList); trackBy: trackProduct">
+
+          <mat-card-header>
+            
+            <mat-card-title>{{ product.name }}</mat-card-title>
+            <mat-card-subtitle>Product</mat-card-subtitle>
+          </mat-card-header>
+
+          <mat-card-content>
+            <p>
+              {{ product.description || 'No descriptive overview configured for this product.' }}
+            </p>
+          </mat-card-content>
+
+          <mat-card-actions>
+            <button
+              mat-button
+              type="button"
+              (click)="loadProductToComposer(product)">
+              <mat-icon>edit</mat-icon>
+              EDIT
             </button>
-          </div>
-        </article>
+
+            <button
+              mat-button
+              type="button"
+              (click)="$event.stopPropagation(); archiveProductEntity(product.id)">
+              <mat-icon>archive</mat-icon>
+              ARCHIVE
+            </button>
+          </mat-card-actions>
+        </mat-card>
       </div>
+
       <ng-template #emptyProducts>
         <div class="empty-state">
           <div class="empty-icon"><mat-icon>inventory_2</mat-icon></div>

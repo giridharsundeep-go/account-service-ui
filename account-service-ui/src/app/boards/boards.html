@@ -1,0 +1,1188 @@
+<section class="boards-page">
+
+  <!-- PRODUCTS-STYLE HEADER -->
+  <header class="google-header boards-google-header google-one-topbar">
+    <div class="header-brand">
+      <div>
+        <h1>Boards</h1>
+        <p>Project boards and workflow</p>
+      </div>
+    </div>
+
+    <div class="header-search">
+      <div class="search-shell boards-search-shell">
+        <mat-icon class="search-icon">search</mat-icon>
+        <input [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)" type="search"
+          placeholder="Search boards" aria-label="Search boards" />
+        <button *ngIf="searchTerm()" class="search-clear" type="button" (click)="searchTerm.set('')"
+          aria-label="Clear search">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <button mat-flat-button class="primary-action" type="button" (click)="openCreateBoard()">
+      <mat-icon>add</mat-icon>
+      <span>Create Board</span>
+    </button>
+  </header>
+
+  <mat-progress-bar *ngIf="loading()" mode="indeterminate" class="top-progress"></mat-progress-bar>
+
+  <!-- BOARDS DIRECTORY -->
+  <section class="directory boards-directory google-one-directory" *ngIf="boardHome()">
+
+    <!-- PROJECT FILTER TABS — same interaction pattern as Projects -->
+    <div class="directory-heading board-project-filter-heading">
+      <div class="project-filter-tools" aria-label="Filter boards by project">
+        <button type="button" mat-button class="filter-button" [class.active]="selectedBoardProjectTab() === 'ALL'"
+          (click)="setBoardProjectFilter('ALL')">
+          All
+        </button>
+
+        <button *ngFor="let project of boardProjectTabs()" type="button" mat-button class="filter-button"
+          [class.active]="selectedBoardProjectTab() === project.id" (click)="setBoardProjectFilter(project.id)">
+          {{ project.name }}
+        </button>
+      </div>
+    </div>
+
+    <div class="board-grid product-grid" *ngIf="projectBoards().length; else noBoards">
+      <mat-card class="product-card board-card" appearance="outlined" *ngFor="let board of projectBoards()"
+        (click)="openBoardFromHome(board)">
+
+        <mat-card-header>
+          <mat-card-title>{{ board.name }}</mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content>
+          <div class="board-filter-block" *ngIf="boardFilterSummary(board).length; else noSavedFilters">
+            <span class="board-filter-label">FILTERS</span>
+            <div class="board-filter-list">
+              <span class="board-filter-chip" *ngFor="let filter of boardFilterSummary(board)"
+                [matTooltip]="filter.text">
+                <mat-icon>{{ filter.icon }}</mat-icon>
+                <span>{{ filter.label }}</span>
+              </span>
+            </div>
+          </div>
+          <ng-template #noSavedFilters>
+            <div class="board-filter-empty">
+              <mat-icon>filter_alt_off</mat-icon>
+              <span>No saved filters</span>
+            </div>
+          </ng-template>
+        </mat-card-content>
+
+        <mat-card-actions>
+          <button mat-button type="button" color="primary" (click)="openBoardFromHome(board); $event.stopPropagation()">
+            <mat-icon>open_in_new</mat-icon> OPEN
+          </button>
+          <button mat-button type="button" (click)="openEditBoardFor(board); $event.stopPropagation()">
+            <mat-icon>edit</mat-icon> EDIT
+          </button>
+        </mat-card-actions>
+      </mat-card>
+    </div>
+
+    <ng-template #noBoards>
+      <div class="empty-state">
+        <div class="empty-icon"><mat-icon>dashboard</mat-icon></div>
+        <h3>No boards found</h3>
+        <p>No boards match the current search or project filter. Create a new board to get started.</p>
+        <button class="primary-action" type="button" (click)="openCreateBoard()">
+          <mat-icon>add</mat-icon><span>Create Board</span>
+        </button>
+      </div>
+    </ng-template>
+  </section>
+
+  <!-- SELECTED BOARD WORKSPACE -->
+  <ng-container *ngIf="!boardHome()">
+    <div class="selected-board-toolbar">
+      <button mat-button (click)="backToBoards()"><mat-icon>arrow_back</mat-icon> Boards</button>
+      <span class="toolbar-divider"></span>
+      <div class="selected-board-name">
+        <span class="eyebrow">KANBAN BOARD</span>
+        <strong>{{ selectedBoard()?.name }}</strong>
+      </div>
+      <span class="toolbar-spacer"></span>
+      <mat-button-toggle-group [value]="activeView()" (change)="setView($event.value)" aria-label="Board view">
+        <mat-button-toggle value="BOARD"><mat-icon>view_kanban</mat-icon> Board</mat-button-toggle>
+        <mat-button-toggle value="ALL_ITEMS"><mat-icon>list</mat-icon> All items</mat-button-toggle>
+      </mat-button-toggle-group>
+      <button mat-stroked-button color="primary" (click)="toggleFilterPanel()"><mat-icon>tune</mat-icon>
+        Filters</button>
+      <button mat-stroked-button (click)="openEditBoard()"><mat-icon>edit</mat-icon> Edit</button>
+      <button mat-flat-button color="primary" (click)="startScrumBoardView()"><mat-icon>groups</mat-icon>
+        Scrum</button>
+    </div>
+
+    <!-- FILTER WORKSPACE -->
+    <mat-card class="filters-card" appearance="outlined" *ngIf="filterPanelOpen()">
+      <mat-card-header>
+        <mat-card-title>Refine your board</mat-card-title>
+        <mat-card-subtitle>Filters are applied instantly to the current view.</mat-card-subtitle>
+        <span class="toolbar-spacer"></span>
+        <button mat-button (click)="clearViewFilters()">Clear all</button>
+        <button mat-icon-button matTooltip="Close filters" (click)="toggleFilterPanel()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </mat-card-header>
+
+      <mat-card-content class="filter-grid">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Sprint</mat-label>
+          <mat-select [ngModel]="selectedSprintId()" (ngModelChange)="onSprintChange($event)"
+            (selectionChange)="autoSaveWorkItemField()">
+            <mat-option value="ALL">All sprints</mat-option>
+            <mat-option *ngFor="let sprint of projectSprints()" [value]="sprint.id">{{ sprint.name }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Team</mat-label>
+          <mat-select [ngModel]="selectedTeamFilter()"
+            (ngModelChange)="selectedTeamFilter.set($event); selectedTeamMemberId.set(null)"
+            (selectionChange)="autoSaveWorkItemField()">
+            <mat-option value="ALL">All teams</mat-option>
+            <mat-option *ngFor="let team of teams()" [value]="team.id">{{ team.name }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Type</mat-label>
+          <mat-select [ngModel]="selectedType()" (ngModelChange)="selectedType.set($event)"
+            (selectionChange)="autoSaveWorkItemField()">
+            <mat-option value="ALL">All types</mat-option>
+            <mat-option value="EPIC">Epics</mat-option>
+            <mat-option value="STORY">Stories</mat-option>
+            <mat-option value="TASK">Tasks</mat-option>
+            <mat-option value="ISSUE">Issues</mat-option>
+            <mat-option value="TEST_CASE">Test cases</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Priority</mat-label>
+          <mat-select [ngModel]="selectedPriorityFilter()" (ngModelChange)="selectedPriorityFilter.set($event)"
+            (selectionChange)="autoSaveWorkItemField()">
+            <mat-option value="ALL">All priorities</mat-option>
+            <mat-option *ngFor="let priority of priorities" [value]="priority">{{ priority }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Status</mat-label>
+          <mat-select [ngModel]="selectedStatusFilter()" (ngModelChange)="selectedStatusFilter.set($event)"
+            (selectionChange)="autoSaveWorkItemField()">
+            <mat-option value="ALL">All statuses</mat-option>
+            <mat-option *ngFor="let status of workItemStatuses(selectedType() === 'ALL' ? 'STORY' : selectedType())"
+              [value]="status.id">{{ status.label }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filter-wide">
+          <mat-label>Assignee search</mat-label>
+          <input matInput [ngModel]="assigneeQuery()" (ngModelChange)="onAssigneeAutocompleteInput($event)"
+            (focus)="assigneeAutocompleteOpen.set(true)" placeholder="Name, employee code or email" />
+          <mat-icon matSuffix>person_search</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filter-wide">
+          <mat-label>Reporter search</mat-label>
+          <input matInput [ngModel]="reporterQuery()" (ngModelChange)="onReporterAutocompleteInput($event)"
+            (focus)="reporterAutocompleteOpen.set(true)" placeholder="Name, employee code or email" />
+          <mat-icon matSuffix>person_search</mat-icon>
+        </mat-form-field>
+      </mat-card-content>
+
+      <div class="filter-suggestions" *ngIf="assigneeAutocompleteOpen()">
+        <button mat-button *ngFor="let user of filteredAssigneeUsers()"
+          (click)="selectAssigneeFilterUser(user); assigneeAutocompleteOpen.set(false)">
+          <span class="mini-avatar">{{ initials(user.id) }}</span>{{ user.name }}
+          <small>{{ user.employeeCode || user.email }}</small>
+        </button>
+        <button mat-button *ngIf="!filteredAssigneeUsers().length" disabled>No users found</button>
+      </div>
+
+      <div class="filter-suggestions" *ngIf="reporterAutocompleteOpen()">
+        <button mat-button *ngFor="let user of filteredReporterUsers()"
+          (click)="selectReporterFilterUser(user); reporterAutocompleteOpen.set(false)">
+          <span class="mini-avatar">{{ initials(user.id) }}</span>{{ user.name }}
+          <small>{{ user.employeeCode || user.email }}</small>
+        </button>
+        <button mat-button *ngIf="!filteredReporterUsers().length" disabled>No users found</button>
+      </div>
+    </mat-card>
+
+    <!-- ACTIVE FILTER CHIPS -->
+    <div class="active-filters"
+      *ngIf="selectedSprintId() !== 'ALL' || selectedTeamFilter() !== 'ALL' || selectedAssigneeFilter() !== 'ALL' || selectedReporterFilter() !== 'ALL' || selectedPriorityFilter() !== 'ALL' || selectedStatusFilter() !== 'ALL' || selectedType() !== 'ALL'">
+      <span class="active-filter-label">Active filters</span>
+      <mat-chip-set>
+        <mat-chip *ngIf="selectedSprintId() !== 'ALL'" removable (removed)="onSprintChange('ALL')">
+          Sprint: {{ projectSprints().find(s => s.id === selectedSprintId())?.name || selectedSprintId() }}
+          <mat-icon matChipRemove>cancel</mat-icon>
+        </mat-chip>
+        <mat-chip *ngIf="selectedTeamFilter() !== 'ALL'" removable (removed)="selectedTeamFilter.set('ALL')">
+          Team filter
+          <mat-icon matChipRemove>cancel</mat-icon>
+        </mat-chip>
+        <mat-chip *ngIf="selectedType() !== 'ALL'" removable (removed)="selectedType.set('ALL')">
+          Type: {{ selectedType() }}
+          <mat-icon matChipRemove>cancel</mat-icon>
+        </mat-chip>
+        <mat-chip *ngIf="selectedPriorityFilter() !== 'ALL'" removable (removed)="selectedPriorityFilter.set('ALL')">
+          Priority: {{ selectedPriorityFilter() }}
+          <mat-icon matChipRemove>cancel</mat-icon>
+        </mat-chip>
+        <mat-chip *ngIf="selectedStatusFilter() !== 'ALL'" removable (removed)="selectedStatusFilter.set('ALL')">
+          Status: {{ selectedStatusFilter() }}
+          <mat-icon matChipRemove>cancel</mat-icon>
+        </mat-chip>
+      </mat-chip-set>
+    </div>
+
+    <!-- MESSAGES -->
+    <div class="message-stack">
+      <mat-card class="message error" appearance="outlined" *ngIf="errorMessage()">
+        <mat-icon>error_outline</mat-icon>{{ errorMessage() }}
+      </mat-card>
+      <mat-card class="message success" appearance="outlined" *ngIf="successMessage()">
+        <mat-icon>check_circle</mat-icon>{{ successMessage() }}
+      </mat-card>
+    </div>
+
+    <!-- ASSIGNEE QUICK FILTER -->
+    <mat-card class="people-strip" appearance="outlined" *ngIf="activeView() === 'BOARD' && selectedBoard()">
+      <div class="people-strip-heading">
+        <div>
+          <span class="eyebrow">TEAM</span>
+          <strong>Who's working on this board?</strong>
+          <span>{{ boardAssignedMembers().length }} members · {{ boardScopedCards().length }} items</span>
+        </div>
+        <button mat-button *ngIf="selectedTeamMemberId() !== null" (click)="clearTeamMemberFilter()">Clear</button>
+      </div>
+
+      <mat-chip-set class="people-chips">
+        <mat-chip [highlighted]="selectedTeamMemberId() === null" (click)="clearTeamMemberFilter()">
+          <span class="mini-avatar">ALL</span>
+          Everyone
+          <b style="padding-left: 10px;">{{ boardScopedCards().length }}</b>
+        </mat-chip>
+        <mat-chip *ngFor="let user of boardAssignedMembers()" [highlighted]="selectedTeamMemberId() === user.id"
+          (click)="selectTeamMember(user.id)">
+          <span class="mini-avatar">{{ initials(user.id) }}</span>
+          {{ user.name }}
+          <b>{{ boardItemsForUser(user.id).length }}</b>
+        </mat-chip>
+      </mat-chip-set>
+    </mat-card>
+
+    <!-- ================================================================
+           BOARD VIEW
+           ================================================================ -->
+    <main class="workspace" *ngIf="activeView() === 'BOARD'">
+
+      <ng-container *ngIf="selectedBoard(); else boardEmpty">
+
+        <div class="board-workflow-heading">
+          <div class="board-workflow-title">
+            <span class="eyebrow">WORKFLOW</span>
+            <h1>{{ selectedBoard()?.name }}</h1>
+            <p>{{ visibleCount() }} items across {{ columns.length }} workflow stages</p>
+          </div>
+          <div class="board-workflow-actions work-item-create-actions">
+            <button mat-stroked-button type="button" (click)="openCreateWorkItem('EPIC')"><mat-icon>add</mat-icon>
+              Epic</button>
+            <button mat-stroked-button type="button" (click)="openCreateWorkItem('STORY')"><mat-icon>add</mat-icon>
+              Story</button>
+            <button mat-stroked-button type="button" (click)="openCreateWorkItem('TASK')"><mat-icon>add</mat-icon>
+              Task</button>
+            <button mat-stroked-button type="button" (click)="openCreateWorkItem('ISSUE')"><mat-icon>add</mat-icon>
+              Issue</button>
+            <button mat-stroked-button type="button" (click)="openCreateWorkItem('TEST_CASE')"><mat-icon>add</mat-icon>
+              Test case</button>
+            <button mat-stroked-button type="button" (click)="openEditBoard()"><mat-icon>tune</mat-icon>
+              Configure</button>
+            <button mat-stroked-button type="button" (click)="startScrumBoardView()"><mat-icon>fullscreen</mat-icon>
+              Focus mode</button>
+          </div>
+        </div>
+
+        <div class="kanban-board" cdkDropListGroup>
+          <section class="kanban-column" *ngFor="let column of columns">
+            <div class="column-header" [ngClass]="{
+                'backlog-header': column.id === 'BACKLOG',
+                'todo-header': column.id === 'TODO',
+                'progress-header': column.id === 'IN_PROGRESS',
+                'testing-header': column.id === 'TESTING',
+                'completed-header': column.id === 'COMPLETED',
+                'blocked-header': column.id === 'BLOCKED'
+              }">
+              <div class="column-title"><span class="status-dot"></span>
+                <h3>{{ column.label }}</h3>
+              </div>
+              <span class="item-count">{{ columnCount(column.id) }}</span>
+            </div>
+            <div class="column-content" cdkDropList [cdkDropListData]="columnCards()[column.id]"
+              [id]="'board-column-' + column.id" (cdkDropListDropped)="onKanbanDrop($event, column.id)">
+              <mat-card class="product-card kanban-work-item-card" appearance="outlined" cdkDrag [cdkDragData]="card"
+                *ngFor="let card of columnCards()[column.id]; trackBy: trackByCard" (click)="openBoardItem(card)">
+                <mat-card-header class="work-item-card-header minimal-work-item-header">
+                  <mat-card-title class="work-item-card-id">
+                    <a class="work-item-code-link" [href]="workItemHref(card)" target="_blank" rel="noopener noreferrer"
+                      (click)="$event.stopPropagation()"
+                      [attr.aria-label]="'Open ' + card.type + ' ID ' + card.id + ' in a new tab'">{{ card.id }}</a>
+                  </mat-card-title>
+                  <mat-card-title class="work-item-card-title" [title]="card.title">{{ card.title }}</mat-card-title>
+                </mat-card-header>
+                <mat-card-content class="minimal-work-item-content">
+                  <div class="parent-tags">
+                    <span *ngIf="card.type !== 'EPIC'" class="parent-tag epic-parent-tag"
+                      [title]="(card.parentEpicCode || 'EPIC') + ' · ' + (card.parentEpicName || 'Parent Epic')">
+                      {{ card.parentEpicCode || 'EPIC' }} · {{ card.parentEpicName || 'Parent Epic' }}
+                    </span>
+                    <span *ngIf="card.type === 'TASK'" class="parent-tag story-parent-tag"
+                      [title]="(card.parentStoryCode || 'STORY') + ' · ' + (card.parentStoryTitle || 'Parent Story')">
+                      {{ card.parentStoryCode || 'STORY' }} · {{ card.parentStoryTitle || 'Parent Story' }}
+                    </span>
+                  </div>
+                  <div class="work-item-metrics">
+                    <span class="work-item-metric story-points-metric" *ngIf="card.type !== 'TASK' || card.points">
+                      <mat-icon>speed</mat-icon><strong>{{ card.points || 0 }}</strong><span>points</span>
+                    </span>
+                    <span class="work-item-metric issue-count-metric"
+                      [title]="(card.issues?.length || 0) + ' linked issues'">
+                      <mat-icon>bug_report</mat-icon><strong>{{ card.issues?.length || 0 }}</strong><span>issues</span>
+                    </span>
+                  </div>
+                </mat-card-content>
+                <mat-card-actions class="minimal-work-item-actions">
+                  <button mat-button type="button" class="assignee-avatar-button" (click)="$event.stopPropagation()"
+                    [attr.aria-label]="'Assignee: ' + userName(card.assigneeId)">
+                    <span class="assignee-avatar" [class.unassigned-avatar]="!card.assigneeId">{{
+                      initials(card.assigneeId) }}</span>
+                    <span class="assignee-avatar-name">{{ userName(card.assigneeId) }}</span>
+                  </button>
+                </mat-card-actions>
+              </mat-card>
+              <div class="column-empty" *ngIf="!columnCards()[column.id]?.length">
+                <mat-icon>inbox</mat-icon><strong>Nothing here</strong><span>Drag work into this stage.</span>
+              </div>
+            </div>
+          </section>
+        </div>
+      </ng-container>
+
+      <ng-template #boardEmpty>
+        <mat-card class="empty-hero" appearance="outlined">
+          <div class="empty-hero-icon"><mat-icon>dashboard_customize</mat-icon></div>
+          <h2>Choose a board to get started</h2>
+          <p>Select an existing board from the sidebar or create a new workflow.</p>
+          <div>
+            <button mat-flat-button color="primary" (click)="openCreateBoard()">
+              <mat-icon>add</mat-icon> Create board
+            </button>
+          </div>
+        </mat-card>
+      </ng-template>
+
+    </main>
+
+    <!-- ================================================================
+           ALL ITEMS VIEW
+           ================================================================ -->
+    <main class="workspace all-items-workspace" *ngIf="activeView() === 'ALL_ITEMS'">
+
+      <div class="page-section-heading">
+        <div>
+          <span class="eyebrow">PROJECT WORKSPACE</span>
+          <h1>All work items</h1>
+          <p>{{ selectedProjectName() }} · {{ filteredCards().length }} items</p>
+        </div>
+        <div class="all-items-create-actions">
+          <button mat-stroked-button (click)="openCreateWorkItem('EPIC')" [disabled]="!selectedProjectId()">+
+            Epic</button>
+          <button mat-stroked-button (click)="openCreateWorkItem('STORY')" [disabled]="!selectedProjectId()">+
+            Story</button>
+          <button mat-stroked-button (click)="openCreateWorkItem('TASK')" [disabled]="!selectedProjectId()">+
+            Task</button>
+          <button mat-stroked-button (click)="openCreateWorkItem('ISSUE')" [disabled]="!selectedProjectId()">+
+            Issue</button>
+          <button mat-stroked-button (click)="openCreateWorkItem('TEST_CASE')" [disabled]="!selectedProjectId()">+ Test
+            case</button>
+        </div>
+      </div>
+
+      <mat-card class="items-table-card" appearance="outlined">
+        <div class="table-scroll">
+          <table mat-table [dataSource]="filteredCards()" class="items-table">
+
+            <ng-container matColumnDef="work">
+              <th mat-header-cell *matHeaderCellDef>Work item</th>
+              <td mat-cell *matCellDef="let card">
+                <div class="table-work">
+                  <span class="table-type-icon" [ngClass]="card.type.toLowerCase()">
+                    <mat-icon>{{ card.type === 'EPIC' ? 'category' : card.type === 'STORY' ? 'auto_stories' :
+                      'task_alt' }}</mat-icon>
+                  </span>
+                  <div>
+                    <strong>{{ card.title }}</strong>
+                    <span>{{ card.code }}</span>
+                  </div>
+                </div>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="type">
+              <th mat-header-cell *matHeaderCellDef>Type</th>
+              <td mat-cell *matCellDef="let card"><mat-chip>{{ card.type }}</mat-chip></td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td mat-cell *matCellDef="let card">
+                <span class="table-status" [ngClass]="normalizeStatus(card.status).toLowerCase()">
+                  {{ normalizeStatus(card.status).replace('_', ' ') }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="priority">
+              <th mat-header-cell *matHeaderCellDef>Priority</th>
+              <td mat-cell *matCellDef="let card">
+                <span *ngIf="card.priority" class="priority" [ngClass]="'priority-' + card.priority.toLowerCase()">{{
+                  card.priority }}</span>
+                <span *ngIf="!card.priority">—</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="assignee">
+              <th mat-header-cell *matHeaderCellDef>Assignee</th>
+              <td mat-cell *matCellDef="let card">
+                <span class="person-cell"><span class="mini-avatar">{{ initials(card.assigneeId) }}</span>{{
+                  userName(card.assigneeId) }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="sprint">
+              <th mat-header-cell *matHeaderCellDef>Sprint</th>
+              <td mat-cell *matCellDef="let card">{{ sprintName(card.sprintId) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let card">
+                <button mat-icon-button matTooltip="Open" (click)="openBoardItem(card); $event.stopPropagation()">
+                  <mat-icon>open_in_new</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="['work','type','status','priority','assignee','sprint','actions']">
+            </tr>
+            <tr mat-row
+              *matRowDef="let row; columns: ['work','type','status','priority','assignee','sprint','actions'];"
+              (click)="openBoardItem(row)"></tr>
+          </table>
+
+          <div class="table-empty" *ngIf="!filteredCards().length">
+            <mat-icon>search_off</mat-icon>
+            <h3>No work items found</h3>
+            <p>Try changing your filters or search.</p>
+          </div>
+        </div>
+      </mat-card>
+
+    </main>
+  </ng-container>
+
+  <!-- ================================================================
+       BOARD DIALOG
+       ================================================================ -->
+  <div class="material-overlay board-modal-backdrop" *ngIf="showCreateBoard() || showEditBoard()"
+    (click)="closeBoardDialog()">
+    <section class="product-modal board-product-modal" role="dialog" aria-modal="true"
+      (click)="$event.stopPropagation()">
+      <header class="modal-header">
+        <div>
+          <span class="modal-kicker">{{ showEditBoard() ? 'EDIT BOARD' : 'NEW BOARD' }}</span>
+          <h2>{{ showEditBoard() ? 'Update board' : 'Create board' }}</h2>
+          <p>Define the board information and its default filters.</p>
+        </div>
+        <button class="icon-button" type="button" (click)="closeBoardDialog()" aria-label="Close">
+          <mat-icon>close</mat-icon>
+        </button>
+      </header>
+
+      <div class="modal-body">
+        <div class="board-dialog-columns">
+          <section class="board-dialog-panel board-details-panel">
+            <div class="form-section">
+              <div class="section-accent"></div>
+              <div>
+                <h3>Board details</h3>
+                <p>Keep the board name and description clear and easy to identify.</p>
+              </div>
+            </div>
+            <div class="form-grid board-form-grid">
+              <mat-form-field appearance="outline" class="product-field">
+                <mat-label>Project</mat-label>
+                <mat-select [ngModel]="createProjectFilter()" (ngModelChange)="onCreateProjectFilterChange($event)"
+                  (selectionChange)="autoSaveWorkItemField()">
+                  <mat-option *ngFor="let project of projects()" [value]="project.id">{{ project.name }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="product-field">
+                <mat-label>Board Name</mat-label>
+                <input matInput [ngModel]="boardName()" (ngModelChange)="boardName.set($event)" name="boardName"
+                  required placeholder="e.g. Release readiness">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="product-field board-description-field">
+                <mat-label>Board Description</mat-label>
+                <textarea matInput [ngModel]="boardDescription()" (ngModelChange)="boardDescription.set($event)"
+                  name="boardDescription" rows="4" placeholder="Describe what this board is used for..."></textarea>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="product-field">
+                <mat-label>Status</mat-label>
+                <mat-select [ngModel]="boardStatus()" (ngModelChange)="boardStatus.set($event)"
+                  (selectionChange)="autoSaveWorkItemField()">
+                  <mat-option value="ACTIVE">Active</mat-option>
+                  <mat-option value="INACTIVE">Inactive</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </section>
+
+          <section class="board-dialog-panel board-filters-panel">
+            <div class="form-section board-filter-section">
+              <div class="section-accent"></div>
+              <div>
+                <h3>Board filters</h3>
+                <p>These filters define the board's default scope.</p>
+              </div>
+            </div>
+            <div class="form-grid board-form-grid">
+              <mat-form-field appearance="outline" class="product-field">
+                <mat-label>Team</mat-label>
+                <mat-select [ngModel]="createTeamFilter()" (ngModelChange)="createTeamFilter.set($event)"
+                  (selectionChange)="autoSaveWorkItemField()">
+                  <mat-option value="ALL">All teams</mat-option>
+                  <mat-option *ngFor="let team of teams()" [value]="team.id">{{ team.name }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="product-field">
+                <mat-label>Sprint</mat-label>
+                <mat-select [ngModel]="createSprintFilter()" (ngModelChange)="createSprintFilter.set($event)"
+                  (selectionChange)="autoSaveWorkItemField()">
+                  <mat-option value="ALL">All sprints</mat-option>
+                  <mat-option *ngFor="let sprint of projectSprints()" [value]="sprint.id">{{ sprint.name }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="product-field">
+                <mat-label>Priority</mat-label>
+                <mat-select [ngModel]="createPriorityFilter()" (ngModelChange)="createPriorityFilter.set($event)"
+                  (selectionChange)="autoSaveWorkItemField()">
+                  <mat-option value="ALL">All priorities</mat-option>
+                  <mat-option *ngFor="let priority of priorities" [value]="priority">{{ priority }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="product-field">
+                <mat-label>Status</mat-label>
+                <mat-select [ngModel]="createStatusFilter()" (ngModelChange)="createStatusFilter.set($event)"
+                  (selectionChange)="autoSaveWorkItemField()">
+                  <mat-option value="ALL">All statuses</mat-option>
+                  <mat-option *ngFor="let status of workItemStatuses('STORY')" [value]="status.id">{{ status.label
+                    }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="product-field">
+                <mat-label>Work Type</mat-label>
+                <mat-select [ngModel]="createTypeFilter()" (ngModelChange)="createTypeFilter.set($event)"
+                  (selectionChange)="autoSaveWorkItemField()">
+                  <mat-option value="ALL">All types</mat-option>
+                  <mat-option value="EPIC">Epic</mat-option>
+                  <mat-option value="STORY">Story</mat-option>
+                  <mat-option value="TASK">Task</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <footer class="modal-footer">
+        <button class="secondary-button" type="button" [disabled]="savingBoard()"
+          (click)="closeBoardDialog()">Cancel</button>
+        <button class="primary-action modal-save" type="button"
+          [disabled]="savingBoard() || !boardName().trim() || !createProjectFilter()" (click)="saveBoard()">
+          <mat-spinner diameter="18" *ngIf="savingBoard()"></mat-spinner>
+          <mat-icon *ngIf="!savingBoard()">{{ showEditBoard() ? 'save' : 'add' }}</mat-icon>
+          <span>{{ savingBoard() ? 'Saving...' : (showEditBoard() ? 'Update Board' : 'Create Board') }}</span>
+        </button>
+      </footer>
+    </section>
+  </div>
+
+  <!-- ================================================================
+       DAILY SCRUM
+       ================================================================ -->
+  <div class="material-overlay" *ngIf="showScrum()" (click)="closeScrum()">
+    <mat-card class="dialog-card scrum-dialog" appearance="outlined" (click)="$event.stopPropagation()">
+      <mat-card-header>
+        <div>
+          <span class="eyebrow">DAILY SCRUM</span>
+          <mat-card-title>{{ selectedBoard()?.name || selectedProjectName() }}</mat-card-title>
+          <mat-card-subtitle>{{ scrumItems().length }} unfinished items · {{ scrumParticipants().length }}
+            participants</mat-card-subtitle>
+        </div>
+        <span class="toolbar-spacer"></span>
+        <button mat-icon-button (click)="closeScrum()"><mat-icon>close</mat-icon></button>
+      </mat-card-header>
+
+      <mat-card-content>
+        <mat-chip-set class="scrum-people">
+          <mat-chip [highlighted]="scrumSelectedUserId() === null" (click)="selectScrumUser(null)">
+            <span class="mini-avatar">ALL</span> Everyone
+          </mat-chip>
+          <mat-chip *ngFor="let user of scrumParticipants()" [highlighted]="scrumSelectedUserId() === user.id"
+            (click)="selectScrumUser(user.id)">
+            <span class="mini-avatar">{{ initials(user.id) }}</span>{{ user.name }}
+          </mat-chip>
+        </mat-chip-set>
+
+        <mat-divider></mat-divider>
+
+        <div class="scrum-list">
+          <mat-card class="scrum-item-card" appearance="outlined" *ngFor="let card of scrumItems()"
+            (click)="openBoardItem(card); closeScrum()">
+            <mat-card-header>
+              <mat-card-title>{{ card.title }}</mat-card-title>
+              <mat-card-subtitle>{{ card.type }} · {{ card.code }}</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <span class="person-cell"><span class="mini-avatar">{{ initials(card.assigneeId) }}</span>{{
+                userName(card.assigneeId) }}</span>
+              <span class="table-status" [ngClass]="normalizeStatus(card.status).toLowerCase()">{{
+                normalizeStatus(card.status).replace('_',' ') }}</span>
+            </mat-card-content>
+          </mat-card>
+
+          <div class="dialog-empty" *ngIf="!scrumItems().length">
+            <mat-icon>task_alt</mat-icon>
+            <strong>Nothing to discuss</strong>
+            <span>No unfinished work for this participant.</span>
+          </div>
+        </div>
+      </mat-card-content>
+
+      <mat-card-actions>
+        <span class="toolbar-spacer"></span>
+        <button mat-stroked-button (click)="startScrumBoardView()">Open focus mode</button>
+        <button mat-button (click)="closeScrum()">Close</button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+
+  <!-- WORK ITEM VIEW / EDIT / CREATE -->
+  <div class="material-overlay work-item-overlay" *ngIf="boardItemModalOpen()" (click)="closeBoardItem()">
+    <mat-card class="dialog-card work-item-dialog product-card" appearance="outlined"
+      (click)="$event.stopPropagation()">
+      <ng-container *ngIf="selectedBoardItem() as card">
+        <mat-card-header class="work-item-dialog-header">
+          <div class="work-dialog-heading">
+            <div class="work-dialog-type">
+              <a class="work-item-id-pill work-item-dialog-id-link" [href]="workItemHref(card)" target="_blank"
+                rel="noopener noreferrer" (click)="$event.stopPropagation()"
+                [attr.aria-label]="'Open ' + card.type + ' ' + card.id + ' in a new tab'">{{ card.code || ('#' +
+                card.id) }}</a>
+              <span class="work-item-dialog-project">{{ selectedProjectName() }}<span
+                  *ngIf="(workItemDraft().sprintId ?? card.sprintId) != null"> · {{ sprintName(workItemDraft().sprintId
+                  ?? card.sprintId) }}</span></span>
+              <label class="work-item-explicit-label work-item-title-label">Title</label>
+              <textarea class="work-item-header-title-input" rows="2"
+                [ngModel]="workItemDraft().title"
+                (ngModelChange)="updateWorkItemDraft('title', $event)"
+                (blur)="autoSaveWorkItemField()"
+                [attr.aria-label]="'Edit ' + card.type + ' title'"
+                placeholder="Untitled work item"></textarea>
+            </div>
+          </div>
+          <span class="toolbar-spacer"></span>
+          <button mat-icon-button class="work-item-dialog-close" type="button" aria-label="Close work item"
+            (click)="closeBoardItem()"><mat-icon>close</mat-icon></button>
+        </mat-card-header>
+
+        <mat-card-content class="work-item-dialog-content">
+          <div class="work-item-sections">
+            <!-- SECTION 1: ITEM DETAILS -->
+            <section class="work-item-section-card item-details-section">
+                <label class="work-item-explicit-label work-item-description-label">Description</label>
+                <textarea class="work-item-description-input" rows="3"
+                  [ngModel]="workItemDraft().description"
+                  (ngModelChange)="updateWorkItemDraft('description', $event)"
+                  (blur)="autoSaveWorkItemField()"
+                  aria-label="Edit work item description"
+                  placeholder="Context, acceptance criteria or implementation notes"></textarea>
+            </section>
+
+            <!-- SECTION 2: STATUS AND METADATA -->
+            <section class="work-item-section-card metadata-section">
+              <div class="work-item-edit-grid metadata-edit-grid">
+                <div class="work-item-field">
+                  <label class="work-item-explicit-label">Status</label>
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                    <mat-select
+                      [ngModel]="card.type === 'TEST_CASE' ? workItemDraft().executionStatus : workItemDraft().status"
+                      (ngModelChange)="updateWorkItemDraft(card.type === 'TEST_CASE' ? 'executionStatus' : 'status',$event)"
+                      (selectionChange)="autoSaveWorkItemField()">
+                      <mat-option *ngFor="let status of workItemStatuses(card.type)" [value]="status.id">{{ status.label }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+
+                <div class="work-item-field" *ngIf="card.type !== 'EPIC'">
+                  <label class="work-item-explicit-label">Priority</label>
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                    <mat-select [ngModel]="workItemDraft().priority" (ngModelChange)="updateWorkItemDraft('priority',$event)"
+                      (selectionChange)="autoSaveWorkItemField()">
+                      <mat-option *ngFor="let priority of priorities" [value]="priority">{{ priority }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+
+                <div class="work-item-field" *ngIf="card.type === 'STORY' || card.type === 'TASK'">
+                  <label class="work-item-explicit-label">Story points</label>
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                    <input matInput type="number" min="0" [ngModel]="workItemDraft().points"
+                      (ngModelChange)="updateWorkItemDraft('points',$event)" (blur)="autoSaveWorkItemField()">
+                  </mat-form-field>
+                </div>
+
+                <div class="work-item-field">
+                  <label class="work-item-explicit-label">Sprint</label>
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                    <mat-select [ngModel]="workItemDraft().sprintId" (ngModelChange)="updateWorkItemDraft('sprintId',$event)"
+                      (selectionChange)="autoSaveWorkItemField()">
+                      <mat-option [value]="null">No sprint</mat-option>
+                      <mat-option *ngFor="let sprint of projectSprints()" [value]="sprint.id">{{ sprint.name }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+
+                <div class="work-item-field work-item-user-autocomplete">
+                  <label class="work-item-explicit-label">Assignee</label>
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="work-item-full-field">
+                    <input matInput [ngModel]="workItemAssigneeQuery()" (ngModelChange)="onWorkItemAssigneeInput($event)"
+                      placeholder="Type a name to search users">
+                    <button mat-icon-button matSuffix type="button" *ngIf="workItemDraft().assigneeId"
+                      (click)="clearWorkItemAssignee(); autoSaveWorkItemField()" aria-label="Clear assignee">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </mat-form-field>
+                  <div class="work-item-user-options" *ngIf="workItemAssigneeAutocompleteOpen()">
+                    <button type="button" *ngFor="let user of filteredWorkItemAssignees()" (click)="selectWorkItemAssignee(user)">
+                      <span class="mini-avatar">{{ initials(user.id) }}</span>
+                      <span class="work-item-user-name"><strong>{{ workItemUserName(user) }}</strong></span>
+                    </button>
+                    <div class="autocomplete-empty" *ngIf="!filteredWorkItemAssignees().length">No users match your search.</div>
+                  </div>
+                </div>
+
+                <div class="work-item-field work-item-user-autocomplete">
+                  <label class="work-item-explicit-label">Reporter</label>
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="work-item-full-field">
+                    <input matInput [ngModel]="workItemReporterQuery()" (ngModelChange)="onWorkItemReporterInput($event)"
+                      placeholder="Type a name to search users">
+                    <button mat-icon-button matSuffix type="button" *ngIf="workItemDraft().reporterId"
+                      (click)="clearWorkItemReporter(); autoSaveWorkItemField()" aria-label="Clear reporter">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </mat-form-field>
+                  <div class="work-item-user-options" *ngIf="workItemReporterAutocompleteOpen()">
+                    <button type="button" *ngFor="let user of filteredWorkItemReporters()" (click)="selectWorkItemReporter(user)">
+                      <span class="mini-avatar">{{ initials(user.id) }}</span>
+                      <span class="work-item-user-name"><strong>{{ workItemUserName(user) }}</strong></span>
+                    </button>
+                    <div class="autocomplete-empty" *ngIf="!filteredWorkItemReporters().length">No users match your search.</div>
+                  </div>
+                </div>
+
+                <div class="metadata-readonly-row"><span>Created</span><strong>{{ workItemDate(card, 'created') ? (workItemDate(card, 'created') | date:'medium') : '—' }}</strong></div>
+                <div class="metadata-readonly-row"><span>Updated</span><strong>{{ workItemDate(card, 'updated') ? (workItemDate(card, 'updated') | date:'medium') : '—' }}</strong></div>
+              </div>
+            </section>
+
+            <!-- SECTION 3: RELATIONSHIPS AND TEST CASES -->
+            <section class="work-item-section-card linked-section-full">
+              <div class="work-item-section-title-row">
+                <div>
+                  <h3>Linked items and tests</h3>
+                </div>
+              </div>
+
+              <div class="work-item-edit-grid linked-edit-grid" *ngIf="card.type === 'STORY'">
+                <div class="work-item-field">
+                  <label class="work-item-explicit-label">Parent Epic</label>
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                    <mat-select [ngModel]="workItemDraft().epicId" (ngModelChange)="updateWorkItemDraft('epicId',$event)" (selectionChange)="autoSaveWorkItemField()">
+                      <mat-option [value]="null">No parent Epic</mat-option>
+                      <mat-option *ngFor="let epic of epicOptions()" [value]="epic.id">{{ epic.code }} · {{ epic.title }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <div class="work-item-edit-grid linked-edit-grid" *ngIf="card.type === 'TASK'">
+                <div class="work-item-field">
+                  <label class="work-item-explicit-label">Parent Story</label>
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                    <mat-select [ngModel]="workItemDraft().storyId" (ngModelChange)="updateWorkItemDraft('storyId',$event)" (selectionChange)="autoSaveWorkItemField()">
+                      <mat-option [value]="null">No parent Story</mat-option>
+                      <mat-option *ngFor="let story of storyOptions()" [value]="story.id">{{ story.code }} · {{ story.title }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <div class="work-item-edit-grid linked-edit-grid" *ngIf="card.type === 'ISSUE'">
+                <div class="work-item-field">
+                  <label class="work-item-explicit-label">Linked Epics</label>
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                    <mat-select multiple [ngModel]="workItemDraft().epicIds" (ngModelChange)="updateWorkItemDraft('epicIds',$event)" (selectionChange)="autoSaveWorkItemField()">
+                      <mat-option *ngFor="let epic of epicOptions()" [value]="epic.id">{{ epic.code }} · {{ epic.title }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+                <div class="work-item-field">
+                  <label class="work-item-explicit-label">Linked Stories</label>
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                    <mat-select multiple [ngModel]="workItemDraft().storyIds" (ngModelChange)="updateWorkItemDraft('storyIds',$event)" (selectionChange)="autoSaveWorkItemField()">
+                      <mat-option *ngFor="let story of storyOptions()" [value]="story.id">{{ story.code }} · {{ story.title }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+                <div class="work-item-field">
+                  <label class="work-item-explicit-label">Linked Tasks</label>
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                    <mat-select multiple [ngModel]="workItemDraft().taskIds" (ngModelChange)="updateWorkItemDraft('taskIds',$event)" (selectionChange)="autoSaveWorkItemField()">
+                      <mat-option *ngFor="let task of taskOptions()" [value]="task.id">{{ task.code }} · {{ task.title }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+                <div class="work-item-field">
+                  <label class="work-item-explicit-label">Blocking issue</label>
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                    <mat-select [ngModel]="workItemDraft().isBlocking" (ngModelChange)="updateWorkItemDraft('isBlocking',$event)" (selectionChange)="autoSaveWorkItemField()">
+                      <mat-option [value]="false">No</mat-option><mat-option [value]="true">Yes</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <div class="work-item-edit-grid linked-edit-grid test-case-edit-grid" *ngIf="card.type === 'TEST_CASE'">
+                <div class="work-item-field">
+                  <label class="work-item-explicit-label">Parent Epic</label>
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                    <mat-select [ngModel]="workItemDraft().epicId" (ngModelChange)="updateWorkItemDraft('epicId',$event)" (selectionChange)="autoSaveWorkItemField()">
+                      <mat-option [value]="null">None</mat-option><mat-option *ngFor="let epic of epicOptions()" [value]="epic.id">{{ epic.code }} · {{ epic.title }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+                <div class="work-item-field">
+                  <label class="work-item-explicit-label">Parent Story</label>
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                    <mat-select [ngModel]="workItemDraft().storyId" (ngModelChange)="updateWorkItemDraft('storyId',$event)" (selectionChange)="autoSaveWorkItemField()">
+                      <mat-option [value]="null">None</mat-option><mat-option *ngFor="let story of storyOptions()" [value]="story.id">{{ story.code }} · {{ story.title }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+                <div class="work-item-field">
+                  <label class="work-item-explicit-label">Parent Task</label>
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                    <mat-select [ngModel]="workItemDraft().taskId" (ngModelChange)="updateWorkItemDraft('taskId',$event)" (selectionChange)="autoSaveWorkItemField()">
+                      <mat-option [value]="null">None</mat-option><mat-option *ngFor="let task of taskOptions()" [value]="task.id">{{ task.code }} · {{ task.title }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+                <div class="work-item-field">
+                  <label class="work-item-explicit-label">Preconditions</label>
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                    <textarea matInput rows="2" [ngModel]="workItemDraft().preconditions" (ngModelChange)="updateWorkItemDraft('preconditions',$event)" (blur)="autoSaveWorkItemField()"></textarea>
+                  </mat-form-field>
+                </div>
+                <div class="work-item-field">
+                  <label class="work-item-explicit-label">Test steps</label>
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                    <textarea matInput rows="3" [ngModel]="workItemDraft().steps" (ngModelChange)="updateWorkItemDraft('steps',$event)" (blur)="autoSaveWorkItemField()"></textarea>
+                  </mat-form-field>
+                </div>
+                <div class="work-item-field">
+                  <label class="work-item-explicit-label">Expected result</label>
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                    <textarea matInput rows="2" [ngModel]="workItemDraft().expectedResult" (ngModelChange)="updateWorkItemDraft('expectedResult',$event)" (blur)="autoSaveWorkItemField()"></textarea>
+                  </mat-form-field>
+                </div>
+                <div class="work-item-field">
+                  <label class="work-item-explicit-label">Actual result</label>
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                    <textarea matInput rows="2" [ngModel]="workItemDraft().actualResult" (ngModelChange)="updateWorkItemDraft('actualResult',$event)" (blur)="autoSaveWorkItemField()"></textarea>
+                  </mat-form-field>
+                </div>
+              </div>
+
+              <div class="linked-work-item-list linked-work-item-list-inline" *ngIf="linkedWorkItems(card).length; else noLinkedWorkItems">
+                <button class="linked-work-item" type="button" *ngFor="let linkedItem of linkedWorkItems(card)"
+                  (click)="openBoardItem(linkedItem)" [attr.aria-label]="'Open ' + linkedItem.code + ' ' + linkedItem.title">
+                  <span class="linked-type-icon" [ngClass]="'linked-type-' + linkedItem.type.toLowerCase()">
+                    <mat-icon>{{ workItemTypeIcon(linkedItem.type) }}</mat-icon>
+                  </span>
+                  <span class="linked-work-item-copy"><strong>{{ linkedItem.code }}</strong><span>{{ linkedItem.title }}</span></span>
+                  <span class="linked-status">{{ linkedItem.status }}</span>
+                  <mat-icon class="linked-open-icon">open_in_new</mat-icon>
+                </button>
+              </div>
+              <ng-template #noLinkedWorkItems>
+                <div class="linked-empty">No linked epics, stories, tasks or issues found.</div>
+              </ng-template>
+              <div class="work-item-tests-panel work-item-tests-panel-editor">
+                <div class="work-item-tests-copy"><span class="work-item-field-label">Associated test cases</span><strong>{{ card.testCases?.length || 0 }} tests</strong><small>Open the separate test inspector without leaving this editor.</small></div>
+                <button mat-stroked-button color="primary" type="button" (click)="openAssociatedTests()"><mat-icon>science</mat-icon> View tests</button>
+              </div>
+            </section>
+
+            <!-- SECTION 4: COMMENTS -->
+            <section class="work-item-section-card comments-section-full">
+              <div class="work-item-section-title-row">
+                <div>
+                  <div>
+                    <h3>Comments</h3>
+                    <p>Discussion and implementation notes</p>
+                  </div>
+                </div>
+              </div>
+              <div class="work-item-comments-list" *ngIf="workItemComments(card).length; else noWorkItemComments">
+                <article class="work-item-comment" *ngFor="let comment of workItemComments(card)"><span
+                    class="mini-avatar">{{ comment.authorId ? initials(comment.authorId) : 'C' }}</span>
+                  <div>
+                    <div class="work-item-comment-meta"><strong>{{ comment.authorName || comment.author_name ||
+                        comment.userName || comment.user_name || (comment.authorId ? userName(comment.authorId) :
+                        'Comment') }}</strong><time> {{ comment.createdAt || comment.created_at ? ((comment.createdAt ||
+                        comment.created_at) | date:'medium') : '' }}</time></div>
+                    <p>{{ comment.text || comment.comment || comment.body || comment.content || comment.message ||
+                      comment }}</p>
+                  </div>
+                </article>
+              </div>
+              <ng-template #noWorkItemComments>
+                <div class="comments-empty">No comments yet. Add the first comment below.</div>
+              </ng-template>
+              <div class="work-item-comment-composer">
+                <div class="work-item-comment-input-wrap">
+                  <label class="work-item-explicit-label" for="work-item-comment-input">Add a comment</label>
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic"
+                    class="work-item-full-field work-item-comment-field">
+                    <textarea id="work-item-comment-input" matInput rows="3"
+                      [ngModel]="workItemDraft().newComment"
+                      (ngModelChange)="updateWorkItemDraft('newComment',$event)"
+                      placeholder="Share an update or ask a question"></textarea>
+                  </mat-form-field>
+                </div>
+                <button mat-stroked-button color="primary" type="button"
+                  (click)="addWorkItemCommentToDraft(); autoSaveWorkItemField()"
+                  [disabled]="!workItemDraft().newComment"><mat-icon>add_comment</mat-icon> Add comment</button>
+              </div>
+            </section>
+          </div>
+        </mat-card-content>
+
+        <mat-card-actions class="work-item-dialog-actions">
+          <span class="toolbar-spacer"></span>
+          <button mat-button type="button" (click)="closeBoardItem()">
+            <mat-icon>close</mat-icon> {{ workItemModalMode() === 'CREATE' ? 'Cancel' : 'Close' }}
+          </button>
+          <button mat-flat-button color="primary" type="button" *ngIf="workItemModalMode() === 'CREATE'"
+            [disabled]="workItemSaving()" (click)="saveWorkItem()">
+            <mat-spinner *ngIf="workItemSaving()" diameter="18"></mat-spinner>
+            {{ workItemSaving() ? 'Creating…' : 'Create item' }}
+          </button>
+        </mat-card-actions>
+      </ng-container>
+    </mat-card>
+  </div>
+
+  <!-- SEPARATE TEST-CASE INSPECTOR -->
+  <div class="material-overlay associated-tests-overlay" *ngIf="associatedTestsOpen()"
+    (click)="associatedTestsOpen.set(false)">
+    <mat-card class="dialog-card associated-tests-dialog product-card" appearance="outlined"
+      (click)="$event.stopPropagation()">
+      <mat-card-header class="associated-tests-header">
+        <div><span class="eyebrow">TEST COVERAGE</span><mat-card-title>Associated test
+            cases</mat-card-title><mat-card-subtitle>{{ selectedBoardItem()?.code || ('#' + selectedBoardItem()?.id) }}
+            · {{ selectedBoardItem()?.title }}</mat-card-subtitle></div>
+        <span class="toolbar-spacer"></span><button mat-icon-button type="button" aria-label="Close test cases"
+          (click)="associatedTestsOpen.set(false)"><mat-icon>close</mat-icon></button>
+      </mat-card-header>
+      <mat-card-content class="associated-tests-content">
+        <div class="associated-test-row" *ngFor="let test of selectedBoardItem()?.testCases || []">
+          <span class="linked-type-icon linked-type-test_case"><mat-icon>science</mat-icon></span>
+          <div class="associated-test-copy"><strong>{{ test.testCaseCode || test.test_case_code || test.code || ('TC-' +
+              test.id) }}</strong><span>{{ test.title || test.name || 'Untitled test case' }}</span><small>{{
+              test.description || 'No description' }}</small></div>
+          <span class="linked-status">{{ test.executionStatus || test.execution_status || test.status || 'DRAFT'
+            }}</span>
+        </div>
+        <div class="dialog-empty" *ngIf="!(selectedBoardItem()?.testCases?.length)">
+          <mat-icon>science</mat-icon><strong>No associated test cases</strong><span>No tests are currently linked to
+            this work item.</span></div>
+      </mat-card-content>
+      <mat-card-actions class="work-item-dialog-actions"><span class="toolbar-spacer"></span><button mat-button
+          type="button" (click)="associatedTestsOpen.set(false)">Close</button></mat-card-actions>
+    </mat-card>
+  </div>
+
+
+  <!-- SPRINT PROGRESS SUMMARY -->
+  <div class="board-sprint-progress-backdrop" *ngIf="boardSprintProgressOpen()"
+    (click)="closeBoardSprintProgress()">
+    <mat-card class="board-sprint-progress-dialog" appearance="outlined" (click)="$event.stopPropagation()">
+      <header class="board-sprint-progress-header">
+        <div>
+          <span class="eyebrow">SPRINT ANALYTICS</span>
+          <h2>{{ boardSprintProgress()?.sprint?.name || 'Sprint progress' }}</h2>
+          <p>Delivery progress for the work items assigned to this sprint.</p>
+        </div>
+        <button mat-icon-button type="button" aria-label="Close sprint progress"
+          (click)="closeBoardSprintProgress()"><mat-icon>close</mat-icon></button>
+      </header>
+      <mat-card-content class="board-sprint-progress-body" *ngIf="boardSprintProgress() as progress">
+        <section class="board-sprint-progress-overall">
+          <div><span>Overall completion</span><strong>{{ progress.completionRate }}%</strong></div>
+          <mat-progress-bar mode="determinate" [value]="progress.completionRate"></mat-progress-bar>
+        </section>
+        <div class="board-sprint-progress-metrics">
+          <div><span>Completed items</span><strong>{{ progress.completedItems }} / {{ progress.totalItems }}</strong></div>
+          <div><span>Story points completed</span><strong>{{ progress.completedPoints }} / {{ progress.totalPoints }}</strong></div>
+          <div><span>Remaining items</span><strong>{{ progress.totalItems - progress.completedItems }}</strong></div>
+        </div>
+        <section class="board-sprint-status-breakdown">
+          <h3>Workflow breakdown</h3>
+          <div class="board-sprint-status-row" *ngFor="let column of columns">
+            <span>{{ column.label }}</span><strong>{{ progress.byStatus[column.id] || 0 }}</strong>
+            <div class="board-sprint-status-track"><span [style.width.%]="progress.totalItems ? (100 * (progress.byStatus[column.id] || 0) / progress.totalItems) : 0"></span></div>
+          </div>
+        </section>
+      </mat-card-content>
+      <footer class="board-sprint-progress-footer">
+        <button mat-flat-button color="primary" type="button" (click)="closeBoardSprintProgress()">Done</button>
+      </footer>
+    </mat-card>
+  </div>
+
+  <!-- FULLSCREEN BOARD — RELEASES KANBAN LAYOUT -->
+  <div class="focus-overlay" *ngIf="showScrumBoard()">
+    <div class="focus-shell">
+      <mat-toolbar class="focus-toolbar focus-toolbar-title-only">
+        <span class="focus-title"><strong>{{ selectedBoard()?.name || selectedProjectName() }}</strong></span>
+        <span class="toolbar-spacer"></span>
+        <div class="focus-create-actions" aria-label="Create work item">
+          <button mat-stroked-button type="button" (click)="openCreateWorkItem('EPIC')"><mat-icon>add</mat-icon> Epic</button>
+          <button mat-stroked-button type="button" (click)="openCreateWorkItem('STORY')"><mat-icon>add</mat-icon> Story</button>
+          <button mat-stroked-button type="button" (click)="openCreateWorkItem('TASK')"><mat-icon>add</mat-icon> Task</button>
+          <button mat-stroked-button type="button" (click)="openCreateWorkItem('ISSUE')"><mat-icon>add</mat-icon> Issue</button>
+          <button mat-stroked-button type="button" class="focus-sprint-progress-button"
+            (click)="openBoardSprintProgress()" [disabled]="!currentSprint()">
+            <mat-icon>analytics</mat-icon> Sprint progress
+          </button>
+        </div>
+        <button mat-icon-button type="button" class="focus-close-button" aria-label="Close board"
+          matTooltip="Close board" (click)="closeScrumBoardView()"><mat-icon>close</mat-icon></button>
+      </mat-toolbar>
+      <div class="focus-people" role="group" aria-label="Filter board items by assignee">
+        <mat-chip-set class="focus-people-chips" aria-label="Assignee filters">
+          <mat-chip class="focus-person-chip" [highlighted]="selectedTeamMemberId() === null"
+            (click)="clearTeamMemberFilter()">
+            <span class="mini-avatar">ALL</span><span>Everyone</span><b>{{ boardScopedCards().length }}</b>
+          </mat-chip>
+          <mat-chip class="focus-person-chip" *ngFor="let user of boardAssignedMembers()"
+            [highlighted]="selectedTeamMemberId() === user.id" (click)="selectTeamMember(user.id)">
+            <span class="mini-avatar">{{ initials(user.id) }}</span><span>{{ user.name }}</span>
+            <b>{{ boardItemsForUser(user.id).length }}</b>
+          </mat-chip>
+        </mat-chip-set>
+      </div>
+      <div class="kanban-board focus-kanban-board" cdkDropListGroup>
+        <section class="kanban-column" *ngFor="let column of columns">
+          <div class="column-header" [ngClass]="{
+              'backlog-header': column.id === 'BACKLOG',
+              'todo-header': column.id === 'TODO',
+              'progress-header': column.id === 'IN_PROGRESS',
+              'testing-header': column.id === 'TESTING',
+              'completed-header': column.id === 'COMPLETED',
+              'blocked-header': column.id === 'BLOCKED'
+            }">
+            <div class="column-title"><span class="status-dot"></span>
+              <h3>{{ column.label }}</h3>
+            </div>
+            <span class="item-count">{{ columnCount(column.id) }}</span>
+          </div>
+          <div class="column-content" cdkDropList [cdkDropListData]="columnCards()[column.id]"
+            [id]="'focus-column-' + column.id" (cdkDropListDropped)="onKanbanDrop($event, column.id)">
+            <mat-card class="product-card kanban-work-item-card" appearance="outlined" cdkDrag [cdkDragData]="card"
+              *ngFor="let card of columnCards()[column.id]; trackBy: trackByCard" (click)="openBoardItem(card)">
+              <mat-card-header class="work-item-card-header minimal-work-item-header">
+                <mat-card-title class="work-item-card-id">
+                  <a class="work-item-code-link" [href]="workItemHref(card)" target="_blank" rel="noopener noreferrer"
+                    (click)="$event.stopPropagation()"
+                    [attr.aria-label]="'Open ' + card.type + ' ID ' + card.id + ' in a new tab'">{{ card.id }}</a>
+                </mat-card-title>
+                <mat-card-title class="work-item-card-title" [title]="card.title">{{ card.title }}</mat-card-title>
+              </mat-card-header>
+              <mat-card-content class="minimal-work-item-content">
+                <div class="parent-tags">
+                  <span *ngIf="card.type !== 'EPIC'" class="parent-tag epic-parent-tag"
+                    [title]="(card.parentEpicCode || 'EPIC') + ' · ' + (card.parentEpicName || 'Parent Epic')">
+                    {{ card.parentEpicCode || 'EPIC' }} · {{ card.parentEpicName || 'Parent Epic' }}
+                  </span>
+                  <span *ngIf="card.type === 'TASK'" class="parent-tag story-parent-tag"
+                    [title]="(card.parentStoryCode || 'STORY') + ' · ' + (card.parentStoryTitle || 'Parent Story')">
+                    {{ card.parentStoryCode || 'STORY' }} · {{ card.parentStoryTitle || 'Parent Story' }}
+                  </span>
+                </div>
+                <div class="work-item-metrics">
+                  <span class="work-item-metric story-points-metric" *ngIf="card.type !== 'TASK' || card.points">
+                    <mat-icon>speed</mat-icon><strong>{{ card.points || 0 }}</strong><span>points</span>
+                  </span>
+                  <span class="work-item-metric issue-count-metric"
+                    [title]="(card.issues?.length || 0) + ' linked issues'">
+                    <mat-icon>bug_report</mat-icon><strong>{{ card.issues?.length || 0 }}</strong><span>issues</span>
+                  </span>
+                </div>
+              </mat-card-content>
+              <mat-card-actions class="minimal-work-item-actions">
+                <button mat-button type="button" class="assignee-avatar-button" (click)="$event.stopPropagation()"
+                  [attr.aria-label]="'Assignee: ' + userName(card.assigneeId)">
+                  <span class="assignee-avatar" [class.unassigned-avatar]="!card.assigneeId">{{
+                    initials(card.assigneeId) }}</span>
+                  <span class="assignee-avatar-name">{{ userName(card.assigneeId) }}</span>
+                </button>
+              </mat-card-actions>
+            </mat-card>
+            <div class="column-empty" *ngIf="!columnCards()[column.id]?.length">
+              <mat-icon>inbox</mat-icon><strong>Nothing here</strong><span>Drag work into this stage.</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</section>

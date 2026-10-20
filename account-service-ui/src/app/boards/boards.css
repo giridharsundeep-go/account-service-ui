@@ -1,0 +1,4294 @@
+
+:host {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  color: #111827;
+}
+
+.kanban-board {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(280px, 1fr);
+  gap: 18px;
+  width: 100%;
+  overflow-x: auto;
+  align-items: stretch;
+  padding: 4px 4px 16px;
+  box-sizing: border-box;
+  scrollbar-width: thin;
+}
+
+/* Each long Kanban column */
+.kanban-column {
+  min-width: 280px;
+  min-height: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 14px;
+  border: 0px solid #e5e7eb;
+  border-radius: 16px;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+/* Column heading */
+.column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 2px 14px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.column-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.column-title h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+}
+
+.status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.item-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  border-radius: 8px;
+  background: #e5e7eb;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 600;
+  box-sizing: border-box;
+}
+
+/* Status colours */
+.backlog-header {
+  border-color: #94a3b8;
+}
+.backlog-header .status-dot {
+  background: #64748b;
+}
+
+.todo-header {
+  border-color: #60a5fa;
+}
+.todo-header .status-dot {
+  background: #3b82f6;
+}
+
+.progress-header {
+  border-color: #a78bfa;
+}
+.progress-header .status-dot {
+  background: #8b5cf6;
+}
+
+.testing-header {
+  border-color: #fbbf24;
+}
+.testing-header .status-dot {
+  background: #f59e0b;
+}
+
+.completed-header {
+  border-color: #4ade80;
+}
+.completed-header .status-dot {
+  background: #22c55e;
+}
+
+.blocked-header {
+  border-color: #f87171;
+}
+.blocked-header .status-dot {
+  background: #ef4444;
+}
+
+/* Vertical stack of work-item cards */
+.column-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Work-item card: preserves your original design */
+.product-card {
+  min-height: 178px;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  border: 1px solid #d3d3d3;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #111827;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.product-card:hover {
+  border-color: rgb(0, 124, 193);
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.08);
+  transform: translateY(-2px);
+}
+
+.product-card mat-card-header {
+  padding: 0;
+}
+
+.product-card mat-card-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.35px;
+}
+
+.product-card mat-card-subtitle {
+  margin-top: 5px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.product-card mat-card-content {
+  flex: 1;
+  padding-top: 12px;
+}
+
+.product-card mat-card-content p {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #6b7280;
+  overflow-wrap: anywhere;
+}
+
+.product-card mat-card-content p strong {
+  color: #374151;
+  font-weight: 600;
+}
+
+.product-card mat-card-content .item-title {
+  margin-bottom: 12px;
+  color: #111827;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.product-card mat-card-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  margin: 8px 0 0;
+  padding: 8px 0 0;
+  border-top: 1px solid #f1f5f9;
+  min-width: 0;
+}
+
+.product-card mat-card-actions .assignee-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 7px;
+  min-width: 0;
+  max-width: calc(100% - 64px);
+  padding-inline: 4px;
+}
+
+.product-card mat-card-actions .assignee-name {
+  display: inline-block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-card mat-card-actions > button:last-child {
+  flex: 0 0 auto;
+}
+
+.product-card mat-card-actions button {
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.3px;
+}
+
+.blocked-reason {
+  margin-top: 12px !important;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #b91c1c !important;
+  font-size: 11px !important;
+}
+
+/* Responsive layout */
+@media (max-width: 768px) {
+  .kanban-board {
+    grid-auto-columns: minmax(270px, 85vw);
+    gap: 12px;
+  }
+
+  .kanban-column {
+    min-width: 270px;
+    min-height: 500px;
+    padding: 12px;
+  }
+}
+
+/* Boards application shell */
+:host { display:block; width:100%; min-width:0; }
+.boards-page { width:100%; min-width:0; padding:20px 24px 32px; color:#111827; background:#fff; box-sizing:border-box; font-family:Inter,Roboto,"Helvetica Neue",Arial,sans-serif; }
+.google-header { display:flex; align-items:center; gap:18px; padding:0 0 16px; border-bottom:1px solid #e5e7eb; margin-bottom:18px; }
+.header-brand { flex:0 0 auto; }
+.header-brand h1 { margin:0; font-size:22px; line-height:1.25; font-weight:650; letter-spacing:-.4px; }
+.header-brand p { margin:4px 0 0; color:#6b7280; font-size:12px; }
+.header-search { flex:1; min-width:180px; max-width:560px; margin-left:auto; }
+.search-shell { display:flex; align-items:center; gap:10px; min-height:40px; padding:0 12px; border:1px solid #d3d3d3; border-radius:10px; }
+.search-shell input { width:100%; min-width:0; border:0; outline:0; background:transparent; font:inherit; font-size:13px; }
+.search-icon { color:#6b7280; }
+.search-clear { border:0; background:transparent; cursor:pointer; color:#6b7280; }
+.primary-action { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:40px; padding:0 16px; border:0; border-radius:10px; color:#fff; background:#003aa5; font-size:13px; font-weight:600; cursor:pointer; }
+.top-progress { margin-top:-18px; }
+.directory { padding-top:4px; }
+.board-project-filter-heading { margin:0 0 16px; }
+.project-filter-tools { display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+.filter-button { min-height:34px; padding:0 14px; border-radius:17px; color:#374151; }
+.filter-button.active { background:#e8f0fe; color:#1967d2; font-weight:600; }
+.product-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:16px; }
+.board-card { min-height:170px; cursor:pointer; }
+.board-card mat-card-title { font-size:15px; font-weight:650; }
+.board-filter-label,.eyebrow { color:#6b7280; font-size:10px; font-weight:700; letter-spacing:.8px; }
+.board-filter-list { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.board-filter-chip { display:inline-flex; align-items:center; gap:4px; padding:5px 8px; border-radius:7px; background:#f3f4f6; color:#4b5563; font-size:11px; }
+.board-filter-chip mat-icon { width:14px; height:14px; font-size:14px; }
+.board-filter-empty { display:flex; align-items:center; gap:7px; color:#9ca3af; font-size:12px; padding:10px 0; }
+.empty-state { padding:56px 20px; text-align:center; color:#6b7280; }
+.empty-state h3 { margin:12px 0 6px; color:#111827; }
+.empty-state p { font-size:13px; }
+.empty-icon { color:#9ca3af; }
+.selected-board-toolbar { display:flex; align-items:center; flex-wrap:wrap; gap:12px; padding:0 0 18px; border-bottom:1px solid #e5e7eb; margin-bottom:18px; }
+.selected-board-name { display:flex; flex-direction:column; gap:3px; }
+.selected-board-name strong { font-size:15px; }
+.toolbar-spacer { flex:1 1 auto; }
+.toolbar-divider { height:26px; border-left:1px solid #e5e7eb; }
+.filters-card { margin-bottom:16px; }
+.filter-grid,.form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
+.filter-wide { min-width:220px; }
+.active-filters { display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin:8px 0 14px; }
+.active-filter-label { color:#6b7280; font-size:12px; font-weight:600; }
+.people-strip { margin:0 0 18px; padding:12px 16px; }
+.people-strip-heading { display:flex; align-items:center; gap:12px; justify-content:space-between; margin-bottom:8px; }
+.people-strip-heading>div { display:flex; align-items:center; flex-wrap:wrap; gap:10px; }
+.people-strip-heading strong { font-size:13px; }
+.people-strip-heading span:last-child { color:#6b7280; font-size:11px; }
+.people-chips,.focus-people-chips { display:flex; flex-wrap:wrap; gap:6px; }
+.mini-avatar { display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; flex:0 0 24px; border-radius:50%; background:#e8f0fe; color:#1967d2; font-size:9px; font-weight:700;padding: 10px; }
+.message-stack { display:grid; gap:8px; }
+.message { display:flex; align-items:center; gap:8px; padding:10px 12px; font-size:13px; }
+.message.error { color:#b91c1c; }
+.message.success { color:#166534; }
+.board-workflow-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; margin:0 0 14px; }
+.board-workflow-title h1 { margin:5px 0 3px; font-size:22px; font-weight:650; letter-spacing:-.4px; }
+.board-workflow-title p { margin:0; color:#6b7280; font-size:12px; }
+.board-workflow-actions { display:flex; gap:8px; }
+.column-header { border-bottom-width:2px; }
+.column-content { min-height:140px; }
+.product-card { cursor:grab; }
+.product-card:active { cursor:grabbing; }
+.product-card mat-card-header { display:block; }
+.product-card mat-card-content { margin:0; }
+.product-card mat-card-actions { margin-bottom:0; }
+.column-empty { display:flex; flex-direction:column; align-items:center; gap:6px; padding:30px 12px; color:#9ca3af; text-align:center; font-size:12px; }
+.column-empty mat-icon { color:#9ca3af; }
+.focus-overlay { position:fixed; inset:0; z-index:2000; display:flex; flex-direction:column; background:#fff; }
+.focus-shell { display:flex; flex-direction:column; width:100%; height:100%; min-height:0; padding:0 20px 14px; box-sizing:border-box; }
+.focus-toolbar { display:flex; flex:0 0 auto; gap:12px; min-height:58px; padding:0 4px; background:#fff; color:#111827; border-bottom:1px solid #e5e7eb; }
+.focus-title { font-size:18px; }
+.focus-close-button { margin-left:auto; }
+.focus-people { flex:0 0 auto; padding:12px 0; border-bottom:1px solid #e5e7eb; overflow-x:auto; }
+.focus-people-chips { flex-wrap:nowrap; width:max-content; min-width:100%; }
+.focus-person-chip { cursor:pointer; }
+.focus-kanban-board { flex:1 1 auto; min-height:0; }
+.focus-kanban-board .kanban-column { min-height:0; }
+.focus-kanban-board .column-content { overflow-y:auto; }
+.material-overlay { position:fixed; inset:0; z-index:2100; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(15,23,42,.48); }
+.dialog-card { width:min(920px,96vw); max-height:90vh; overflow:auto; background:#fff; }
+.board-dialog { width:min(760px,96vw); }
+.modal-backdrop, .material-overlay.board-modal-backdrop { position:fixed; inset:0; z-index:2200; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(15,23,42,.48); }
+.product-modal { width:min(760px,96vw); max-height:90vh; overflow:auto; background:#fff; border-radius:14px; box-shadow:0 24px 80px rgba(15,23,42,.25); }
+.modal-header,.modal-footer { display:flex; align-items:center; gap:12px; padding:16px 20px; }
+.modal-header { justify-content:space-between; border-bottom:1px solid #e5e7eb; }
+.modal-body { padding:20px; overflow:auto; }
+.modal-footer { justify-content:flex-end; border-top:1px solid #e5e7eb; }
+.secondary-button { min-height:38px; padding:0 14px; border:1px solid #d1d5db; border-radius:9px; background:#fff; cursor:pointer; }
+.form-section { display:flex; gap:12px; align-items:flex-start; margin:18px 0 12px; }
+.form-section h3 { margin:0 0 4px; font-size:14px; }
+.form-section p { margin:0; color:#6b7280; font-size:12px; }
+.section-accent { width:4px; min-height:34px; border-radius:4px; background:#0788cc; }
+.form-grid { margin-bottom:10px; }
+.filter-suggestions { position:relative; z-index:5; display:flex; flex-direction:column; max-height:220px; overflow:auto; padding:6px; background:#fff; border:1px solid #e5e7eb; border-radius:10px; box-shadow:0 8px 24px rgba(17,24,39,.08); }
+.filter-suggestions button { display:flex; align-items:center; gap:8px; justify-content:flex-start; }
+.filter-suggestions small { margin-left:auto; color:#6b7280; }
+.work-overview { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(240px,1fr); gap:16px; }
+.overview-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(100px,1fr)); gap:8px; margin-top:18px; }
+.overview-stats>div,.detail-card { padding:12px; }
+.overview-stats span,.person-detail span,.detail-line span { display:block; color:#6b7280; font-size:11px; }
+.overview-stats strong,.person-detail strong,.detail-line strong { display:block; margin-top:4px; font-size:12px; }
+.person-detail { display:flex; align-items:center; gap:10px; padding:10px 0; }
+.large-avatar { display:flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:50%; background:#e8f0fe; color:#1967d2; font-size:11px; font-weight:700; }
+.large-avatar.muted { background:#f3f4f6; color:#6b7280; }
+.detail-line { padding:8px 0; }
+.editor-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.editor-grid .full { grid-column:1/-1; }
+.large-description { white-space:pre-wrap; line-height:1.6; }
+.inline-status-card { padding:12px; }
+.work-dialog-heading { display:flex; flex-direction:column; gap:5px; }
+.work-dialog-type { display:flex; align-items:center; gap:8px; color:#6b7280; font-size:12px; }
+.dialog-empty { display:flex; flex-direction:column; align-items:center; gap:8px; padding:32px; color:#6b7280; }
+@media (max-width:768px) {
+  .boards-page { padding:14px; }
+  .google-header { align-items:stretch; flex-wrap:wrap; }
+  .header-search { order:3; flex:1 0 100%; max-width:none; }
+  .board-workflow-heading { align-items:flex-start; flex-direction:column; }
+  .board-workflow-actions { flex-wrap:wrap; }
+  .focus-shell { padding:0 10px 10px; }
+  .kanban-board { grid-auto-columns:minmax(270px,85vw); }
+  .work-overview { grid-template-columns:1fr; }
+  .editor-grid { grid-template-columns:1fr; }
+}
+
+.product-modal .modal-header h2 { margin:0; font-size:18px; font-weight:650; }
+.product-modal .modal-kicker { display:block; margin-bottom:4px; color:#6b7280; font-size:10px; font-weight:700; letter-spacing:.8px; }
+.product-modal .modal-body { max-height:calc(90vh - 140px); }
+.product-modal .board-description-field { grid-column:1/-1; }
+.page-section-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:18px 0 12px; }
+.items-table-card { overflow:hidden; }
+.table-scroll { width:100%; overflow:auto; }
+.items-table { width:100%; border-collapse:collapse; }
+.items-table th,.items-table td { padding:12px 14px; text-align:left; border-bottom:1px solid #e5e7eb; font-size:12px; }
+.items-table th { color:#6b7280; background:#f9fafb; font-weight:650; }
+.table-work { display:flex; flex-direction:column; gap:3px; }
+.table-work strong { color:#111827; font-size:12px; }
+.table-work small { color:#6b7280; font-size:11px; }
+.table-status { display:inline-flex; padding:4px 8px; border-radius:6px; background:#f3f4f6; font-size:11px; }
+.table-empty { padding:30px; text-align:center; color:#6b7280; }
+.table-type-icon { display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:7px; background:#e8f0fe; color:#1967d2; }
+
+
+/* Create/Edit Board: details and filters side by side */
+.board-product-modal {
+  width: min(1080px, 96vw);
+}
+.board-product-modal .modal-body {
+  max-height: calc(90vh - 140px);
+  overflow-y: auto;
+}
+.board-dialog-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  align-items: start;
+  gap: 24px;
+}
+.board-dialog-panel {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+}
+.board-dialog-panel .form-section {
+  margin: 0 0 16px;
+}
+.board-dialog-panel .board-form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px 12px;
+  margin-bottom: 0;
+}
+.board-dialog-panel .board-description-field {
+  grid-column: auto;
+}
+.board-dialog-panel .product-field {
+  width: 100%;
+}
+.board-dialog-panel .mat-mdc-form-field {
+  min-width: 0;
+}
+@media (max-width: 760px) {
+  .board-product-modal {
+    width: min(620px, 96vw);
+  }
+  .board-dialog-columns {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+  .board-dialog-panel {
+    padding: 12px;
+  }
+}
+
+/* Full-screen Kanban: keep all workflow stages in the viewport on desktop. */
+.focus-overlay,
+.focus-overlay * {
+  box-sizing: border-box;
+}
+
+.focus-overlay {
+  width: 100vw;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.focus-shell {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 16px 12px;
+}
+
+.focus-toolbar {
+  flex: 0 0 58px;
+  min-width: 0;
+}
+
+.focus-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.focus-people {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.focus-people-chips {
+  display: flex;
+  flex-wrap: nowrap;
+  width: max-content;
+  min-width: 100%;
+}
+
+/* Six stages share the available desktop width instead of forcing page overflow. */
+.focus-kanban-board {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-auto-flow: row;
+  grid-auto-columns: auto;
+  flex: 1 1 auto;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: 10px 2px 2px;
+  align-items: stretch;
+}
+
+.focus-kanban-board > .kanban-column {
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  padding: 8px;
+  gap: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: white;
+}
+
+.focus-kanban-board .column-header {
+  flex: 0 0 auto;
+  min-width: 0;
+  gap: 6px;
+  padding: 4px 2px 10px;
+}
+
+.focus-kanban-board .column-title {
+  min-width: 0;
+  gap: 6px;
+}
+
+.focus-kanban-board .column-title h3 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: clamp(11px, 0.85vw, 14px);
+}
+
+.focus-kanban-board .item-count {
+  flex: 0 0 auto;
+  min-width: 22px;
+  height: 22px;
+  font-size: 11px;
+}
+
+.focus-kanban-board .column-content {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  gap: 10px;
+  padding: 2px 2px 8px;
+  scrollbar-width: thin;
+}
+
+/* Apply one consistent card box model to every stage, including Testing. */
+.focus-kanban-board .kanban-column .product-card,
+.focus-kanban-board .kanban-column .product-card.mat-mdc-card {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: 178px;
+  height: auto;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid #d3d3d3;
+  border-radius: 14px;
+  background: #fff;
+  color: #111827;
+  box-shadow: none;
+  overflow: visible;
+  transform: none;
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.focus-kanban-board .kanban-column .product-card:hover {
+  border-color: rgb(0, 124, 193);
+  box-shadow: 0 8px 24px rgba(17, 24, 39, .08);
+  transform: translateY(-2px);
+}
+
+.focus-kanban-board .product-card .mat-mdc-card-header,
+.focus-kanban-board .product-card mat-card-header {
+  display: block;
+  min-width: 0;
+  padding: 0;
+}
+
+.focus-kanban-board .product-card .mat-mdc-card-title,
+.focus-kanban-board .product-card mat-card-title {
+  display: block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 700;
+  letter-spacing: .2px;
+}
+
+.focus-kanban-board .product-card .mat-mdc-card-subtitle,
+.focus-kanban-board .product-card mat-card-subtitle {
+  margin-top: 5px;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #6b7280;
+}
+
+.focus-kanban-board .product-card .mat-mdc-card-content,
+.focus-kanban-board .product-card mat-card-content {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: 12px 0 0;
+}
+
+.focus-kanban-board .product-card mat-card-content p {
+  margin: 0 0 8px;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #6b7280;
+}
+
+.focus-kanban-board .product-card mat-card-content .item-title {
+  margin-bottom: 12px;
+  color: #111827;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.focus-kanban-board .product-card mat-card-actions {
+  display: flex;
+  flex: 0 0 auto;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 36px;
+  margin: 8px 0 0;
+  padding: 8px 0 0;
+  border-top: 1px solid #f1f5f9;
+}
+
+.focus-kanban-board .product-card mat-card-actions button {
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: .3px;
+}
+
+.focus-kanban-board .cdk-drag-preview {
+  width: min(260px, 90vw) !important;
+  box-sizing: border-box;
+  border: 1px solid rgb(0, 124, 193);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(17, 24, 39, .18);
+}
+
+.focus-kanban-board .cdk-drag-placeholder {
+  min-height: 100px;
+  border: 1px dashed #94a3b8;
+  border-radius: 14px;
+  background: #eff6ff;
+  opacity: .7;
+}
+
+.focus-kanban-board .column-empty {
+  min-width: 0;
+  padding: 24px 6px;
+  overflow-wrap: anywhere;
+}
+
+/* Tablet/mobile: preserve usable card widths and allow horizontal Kanban scrolling. */
+@media (max-width: 1199px) {
+  .focus-shell {
+    padding: 0 12px 10px;
+  }
+
+  .focus-kanban-board {
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-columns: none;
+    grid-auto-columns: minmax(270px, 82vw);
+    gap: 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+  }
+
+  .focus-kanban-board > .kanban-column {
+    min-width: 270px;
+    width: auto;
+  }
+
+  .focus-kanban-board .column-title h3 {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 600px) {
+  .focus-shell {
+    padding: 0 8px 8px;
+  }
+
+  .focus-toolbar {
+    flex-basis: 52px;
+    min-height: 52px;
+  }
+
+  .focus-title {
+    font-size: 15px;
+  }
+
+  .focus-people {
+    padding: 8px 0;
+  }
+
+  .focus-kanban-board {
+    grid-auto-columns: minmax(260px, 88vw);
+    gap: 10px;
+    padding-top: 8px;
+  }
+
+  .focus-kanban-board > .kanban-column {
+    padding: 10px;
+  }
+}
+
+/* Keep the normal (non-full-screen) board responsive as well. */
+@media (min-width: 1200px) {
+  .workspace > .kanban-board {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-auto-flow: row;
+    grid-auto-columns: auto;
+    overflow-x: hidden;
+    gap: 12px;
+  }
+
+  .workspace > .kanban-board > .kanban-column {
+    min-width: 0;
+    padding: 10px;
+  }
+
+  .workspace > .kanban-board .column-content {
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 1199px) {
+  .workspace > .kanban-board {
+    grid-auto-columns: minmax(270px, 82vw);
+  }
+}
+
+
+/* Kanban item cards: title + ID, parent link, points and assignee avatar. */
+.kanban-item-card {
+  min-width: 0;
+}
+
+.kanban-item-card mat-card-header {
+  min-width: 0;
+}
+
+.kanban-item-card mat-card-title {
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: 1.4;
+}
+
+.kanban-item-card mat-card-subtitle {
+  margin-top: 4px;
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.kanban-item-card mat-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kanban-parent-tag,
+.kanban-points {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.kanban-parent-tag {
+  color: #4b5563;
+  overflow-wrap: anywhere;
+}
+
+.kanban-parent-tag mat-icon,
+.kanban-points mat-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  font-size: 16px;
+  line-height: 16px;
+}
+
+.kanban-points {
+  color: #374151;
+  font-weight: 600;
+}
+
+.kanban-points mat-icon {
+  color: #6b7280;
+}
+
+.kanban-item-card mat-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+
+.kanban-item-card .assignee-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 0;
+  max-width: 68%;
+  padding: 0 4px;
+  color: #374151;
+  font-size: 11px;
+  line-height: 30px;
+}
+
+.kanban-item-card .assignee-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #e8f2fb;
+  color: #075985;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.kanban-item-card .assignee-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .kanban-item-card mat-card-actions {
+    gap: 2px;
+  }
+  .kanban-item-card .assignee-action {
+    max-width: 62%;
+  }
+}
+
+.kanban-parent-row {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.kanban-type-tag {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: #eef2ff;
+  color: #3730a3;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .25px;
+  line-height: 1.3;
+}
+
+.kanban-parent-tag {
+  min-width: 0;
+  flex: 1 1 100%;
+}
+
+
+/* Minimal Scrum work-item card: ID + title, parent tags, and assignee only. */
+.kanban-work-item-card.minimal-work-item-card,
+.kanban-work-item-card {
+  min-width: 0;
+}
+.minimal-work-item-header {
+  display: flex !important;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  padding: 0 0 8px !important;
+  min-width: 0;
+}
+.minimal-work-item-header .mat-mdc-card-header-text {
+  display: contents;
+}
+.minimal-work-item-header .work-item-card-id {
+  order: 0;
+  margin: 0;
+  font-size: 11px !important;
+  line-height: 1.35;
+  font-weight: 650;
+}
+.minimal-work-item-header .work-item-card-title {
+  order: 1;
+  margin: 0;
+  width: 100%;
+  color: #202124;
+  font-size: 13px !important;
+  line-height: 1.45;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.work-item-code-link {
+  color: #003aa5;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 14px;
+}
+.work-item-code-link:hover { text-decoration: underline; }
+.minimal-work-item-content {
+  padding-top: 10px !important;
+  padding-bottom: 4px !important;
+}
+.parent-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-width: 0;
+}
+.parent-tag {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 4px 7px;
+  border-radius: 6px;
+  font-size: 10px;
+  line-height: 1.35;
+  font-weight: 650;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.epic-parent-tag { background: white; color: #003aa5;border: 1px solid rgb(202, 202, 202); border-radius: 20px; }
+.story-parent-tag { background: white; color: #003aa5;border: 1px solid rgb(202, 202, 202); border-radius: 20px; }
+.minimal-work-item-actions {
+  display: flex !important;
+  justify-content: flex-start !important;
+  align-items: center;
+  min-height: 36px !important;
+  margin: 6px 0 0 !important;
+  padding: 7px 0 0 !important;
+  border-top: 1px solid #f1f3f4;
+}
+.assignee-avatar-button {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 7px;
+  max-width: 100%;
+  min-height: 30px;
+  padding: 0 4px !important;
+  color: #3c4043 !important;
+  font-size: 11px;
+  font-weight: 550;
+}
+.assignee-avatar {
+  display: inline-flex;
+  flex: 0 0 24px;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 9px;
+  font-weight: 750;
+}
+.assignee-avatar.unassigned-avatar { background: #f3f4f6; color: #6b7280; }
+.assignee-avatar-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-left: 10px;
+}
+
+
+/* Parent hierarchy, story points, and linked-issue count on Kanban/Scrum cards. */
+.work-item-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  margin-top: 9px;
+  min-width: 0;
+}
+.work-item-metric {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 7px;
+  border: 1px solid #e8eaed;
+  border-radius: 6px;
+  background: #f8f9fa;
+  color: #5f6368;
+  font-size: 10px;
+  line-height: 1.2;
+}
+.work-item-metric mat-icon {
+  width: 13px;
+  height: 13px;
+  font-size: 13px;
+  line-height: 13px;
+}
+.work-item-metric strong { color: #202124; font-size: 11px; }
+.story-points-metric { background: #ffffff; border-color: #ffffff; color: #137333; }
+.issue-count-metric { background: #ffffff; border-color: #ffffff; color: #8a5b00; }
+
+/* =========================================
+   PEOPLE FILTER CHIPS
+========================================= */
+
+.people-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 0;
+  overflow: visible;
+}
+
+/* Individual member chip */
+.people-chips mat-chip {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+
+  height: 36px;
+  min-height: 36px;
+  padding: 0 12px !important;
+  margin: 0 !important;
+
+  border: 1px solid #dfe3e8;
+  border-radius: 20px !important;
+  background: #ffffff;
+  color: #344054;
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+/* Hover state */
+.people-chips mat-chip:hover {
+  background: #f5f8fc;
+  border-color: #9dbcf5;
+  box-shadow: 0 2px 5px rgb(16 24 40 / 7%);
+  transform: translateY(-1px);
+}
+
+/* Selected state — Angular Material highlighted */
+.people-chips mat-chip[highlighted] {
+  background: #eaf2ff !important;
+  border: 1px solid #8bb5ff !important;
+  color: #174ea6 !important;
+  box-shadow: inset 0 0 0 1px rgb(26 115 232 / 5%);
+}
+
+/* =========================================
+   MEMBER AVATAR
+========================================= */
+
+.people-chips .mini-avatar {
+  display: inline-flex;
+  flex: 0 0 24px;
+  align-items: center;
+  justify-content: center;
+
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+
+  background: #e8edf5;
+  color: #344054;
+
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  line-height: 1;
+
+  overflow: hidden;
+}
+
+/* Avatar inside a selected chip */
+.people-chips mat-chip[highlighted] .mini-avatar {
+  background: #1a73e8;
+  color: #ffffff;
+}
+
+/* ALL avatar */
+.people-chips mat-chip:first-child .mini-avatar {
+  background: #e8efff;
+  color: #1a56db;
+  font-size: 8px;
+}
+
+/* =========================================
+   MEMBER ITEM COUNT
+========================================= */
+
+.people-chips mat-chip b {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  margin-left: 2px;
+
+  border-radius: 11px;
+  background: #f0f2f5;
+  color: #667085;
+
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* Count for the selected member */
+.people-chips mat-chip[highlighted] b {
+  background: #d4e5ff;
+  color: #174ea6;
+}
+
+/* =========================================
+   ACCESSIBILITY
+========================================= */
+
+.people-chips mat-chip:focus-visible {
+  outline: 2px solid #1a73e8;
+  outline-offset: 2px;
+}
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 768px) {
+  .people-chips {
+    gap: 6px;
+  }
+
+  .people-chips mat-chip {
+    height: 32px;
+    min-height: 32px;
+    padding: 0 9px !important;
+    gap: 6px;
+    font-size: 11px;
+  }
+
+  .people-chips .mini-avatar {
+    flex-basis: 22px;
+    width: 22px;
+    height: 22px;
+  }
+
+  .people-chips mat-chip b {
+    min-width: 19px;
+    height: 19px;
+    font-size: 9px;
+  }
+}
+
+/* Work-item CRUD dialog — consistent with compact Kanban cards */
+.work-item-dialog { width: min(860px, 96vw); border: 1px solid #d3d3d3; border-radius: 16px; box-shadow: 0 22px 70px rgba(17,24,39,.20); }
+.work-item-dialog > mat-card-header { display:flex; align-items:flex-start; gap:14px; padding:20px 22px 16px; border-bottom:1px solid #edf0f4; background:linear-gradient(180deg,#fff 0%,#fbfdff 100%); }
+.work-item-dialog .work-dialog-heading { min-width:0; }
+.work-item-dialog .work-dialog-type mat-chip { min-height:24px; border:1px solid #cfe4f3; background:#eef8ff; color:#006fae; font-size:10px; font-weight:750; letter-spacing:.45px; }
+.work-item-dialog .work-dialog-type > span { color:#6b7280; font-size:11px; font-weight:650; }
+.work-item-dialog mat-card-title { margin:3px 0; font-size:19px; line-height:1.35; font-weight:700; color:#111827; }
+.work-item-dialog mat-card-subtitle { margin-top:4px; font-size:12px; color:#6b7280; }
+.work-item-dialog .work-dialog-content { padding:20px 22px; }
+.work-item-dialog .editor-grid { gap:14px; }
+.work-item-dialog .editor-grid mat-form-field { width:100%; min-width:0; }
+.work-item-dialog .editor-grid .full { grid-column:1 / -1; }
+.work-item-dialog mat-card-actions { display:flex; align-items:center; gap:8px; padding:12px 22px 18px; border-top:1px solid #edf0f4; }
+.work-item-dialog mat-card-actions button[mat-flat-button] { min-height:38px; border-radius:9px; background:#0788cc; box-shadow:none; }
+.work-item-dialog mat-card-actions button[mat-button] { border-radius:9px; }
+.work-item-create-actions { flex-wrap:wrap; justify-content:flex-end; }
+.work-item-create-actions button { border-color:#d3d3d3; border-radius:9px; font-size:12px; }
+.work-item-create-actions button:hover { border-color:#0788cc; background:#eef8ff; }
+.all-items-create-actions { display:flex; flex-wrap:wrap; gap:6px; }
+.all-items-create-actions button { border-radius:9px; font-size:12px; }
+@media (max-width:768px) { .work-item-dialog .work-dialog-content { padding:14px; } .work-item-dialog > mat-card-header { padding:16px; } .work-item-dialog mat-card-actions { padding:12px 16px; flex-wrap:wrap; } .work-item-create-actions { justify-content:flex-start; } }
+
+/* Work-item details: the same compact blue-accented language as Kanban cards. */
+.material-overlay.work-item-overlay,
+.material-overlay.associated-tests-overlay {
+  z-index: 2200;
+  padding: clamp(10px, 2vw, 24px);
+  overflow: auto;
+  align-items: center;
+}
+.material-overlay.associated-tests-overlay { z-index: 2300; }
+.work-item-dialog.product-card {
+  width: min(1180px, 96vw);
+  max-width: 1180px;
+  min-height: 0;
+  max-height: min(92vh, 980px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  border: 1px solid #d3d3d3;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 24px 80px rgba(15, 23, 42, .25);
+  cursor: default;
+  transform: none;
+}
+.work-item-dialog.product-card:hover { transform: none; border-color: #d3d3d3; box-shadow: 0 24px 80px rgba(15, 23, 42, .25); }
+.work-item-dialog-header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px 24px 18px;
+  border-bottom: 1px solid #e5e7eb;
+  background: linear-gradient(180deg, #fff 0%, #fbfdff 100%);
+}
+.work-item-dialog-header .mat-mdc-card-header-text { min-width: 0; }
+.work-item-dialog-header .mat-mdc-card-title { margin: 4px 0 5px; font-size: 19px; line-height: 1.35; font-weight: 650; overflow-wrap: anywhere; }
+.work-item-dialog-header .mat-mdc-card-subtitle { font-size: 12px; color: #6b7280; }
+.work-item-dialog-header .work-dialog-heading { min-width: 0; }
+.work-item-dialog-header .work-dialog-type { flex-wrap: wrap; }
+.work-item-dialog-id { color: #374151; font-size: 12px; font-weight: 700; }
+.work-item-mode-label { display: inline-flex; align-items: center; padding: 4px 7px; border-radius: 6px; background: #f3f4f6; color: #6b7280; font-size: 9px; font-weight: 750; letter-spacing: .65px; }
+.work-item-dialog-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 !important;
+}
+.work-item-two-column {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: stretch;
+  min-height: 420px;
+}
+.work-item-primary-panel,
+.work-item-metadata-panel { min-width: 0; padding: 22px 24px 26px; }
+.work-item-primary-panel { border-right: 1px solid #ffffff; }
+.work-item-metadata-panel { background: #ffffff; }
+.work-item-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
+.work-item-id-pill { display: inline-flex; align-items: center; border: 1px solid #dbeafe; border-radius: 7px; padding: 4px 4px; color: #1967d2; background: #eff6ff; font-size: 11px; font-weight: 700; }
+.work-item-view-title { margin: 0 0 22px; font-size: 19px; line-height: 1.45; font-weight: 650; letter-spacing: -.25px; overflow-wrap: anywhere; padding-top: 20px;}
+.work-item-description-block { padding-bottom: 20px; border-bottom: 1px solid #edf0f4; }
+.work-item-field-label { display: block; color: #6b7280; font-size: 10px; font-weight: 750; letter-spacing: .65px; text-transform: uppercase; }
+.work-item-description-block .large-description { margin: 8px 0 0; color: #000000; font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
+.work-item-linked-section { margin-top: 20px; }
+.work-item-linked-section .work-item-section-heading { margin-bottom: 10px; }
+.linked-count { display: inline-flex; align-items: center; justify-content: center; min-width: 23px; height: 23px; border-radius: 7px; background: #e5e7eb; color: #374151; font-size: 11px; font-weight: 700; }
+.linked-work-item-list { display: grid; gap: 7px; }
+.linked-work-item { display: flex; align-items: center; gap: 9px; width: 100%; min-width: 0; padding: 9px 10px; border: 0px solid #e5e7eb; border-radius: 9px; background: #fff; color: #111827; text-align: left; cursor: pointer; transition: border-color .16s ease, background .16s ease, box-shadow .16s ease; }
+.linked-work-item:hover { border-color: #003aa5; background: #f8fcff; box-shadow: 0 3px 10px rgba(17, 24, 39, .05); }
+.linked-type-icon { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 30px; width: 30px; height: 30px; border-radius: 8px; background: #e8f0fe; color: #1967d2; }
+.linked-type-icon mat-icon { width: 17px; height: 17px; font-size: 17px; }
+.linked-type-story { background: #f3e8ff; color: #7e22ce; }
+.linked-type-task { background: #e0f2fe; color: #0369a1; }
+.linked-type-issue { background: #fee2e2; color: #b91c1c; }
+.linked-work-item-copy { display: flex; flex: 1 1 auto; flex-direction: column; gap: 3px; min-width: 0; }
+.linked-work-item-copy strong { color: #1967d2; font-size: 11px; font-weight: 750; }
+.linked-work-item-copy span { overflow: hidden; color: #374151; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.linked-status { display: inline-flex; flex: 0 0 auto; padding: 4px 6px; border-radius: 6px; background: #f3f4f6; color: #4b5563; font-size: 9px; font-weight: 700; }
+.linked-open-icon { flex: 0 0 auto; width: 15px; height: 15px; font-size: 15px; color: #9ca3af; }
+.linked-empty { padding: 15px; border: 1px dashed #d1d5db; border-radius: 9px; color: #9ca3af; font-size: 12px; text-align: center; }
+.work-item-tests-panel { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 20px; padding: 14px; border: 1px solid #dbeafe; border-radius: 11px; background: #f5f9ff; }
+.work-item-tests-copy { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.work-item-tests-copy strong { font-size: 13px; color: #111827; }
+.work-item-tests-copy small { color: #6b7280; font-size: 11px; line-height: 1.45; }
+.work-item-tests-panel button { flex: 0 0 auto; white-space: nowrap; }
+.work-item-metadata-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin-bottom: 18px; }
+.metadata-tile { min-width: 0; padding: 11px 12px; border: 0px solid #e5e7eb; border-radius: 9px; background: #fff; }
+.metadata-tile > span, .metadata-person-row > div > span, .metadata-row > span, .metadata-readonly-row > span { display: block; color: #6b7280; font-size: 10px; font-weight: 650; letter-spacing: .15px; }
+.metadata-tile > strong { display: block; margin-top: 7px; font-size: 12px; font-weight: 750; overflow-wrap: anywhere; }
+.metadata-tile .metadata-status { display: inline-flex; max-width: 100%; padding: 4px 7px; border-radius: 6px; background: #e8f0fe; color: #1967d2; font-size: 10px; }
+.metadata-person-row { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid #e9edf2; }
+.metadata-person-row > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.metadata-person-row strong { font-size: 12px; font-weight: 700; overflow-wrap: anywhere; }
+.metadata-person-row small { color: #6b7280; font-size: 10px; overflow-wrap: anywhere; }
+.metadata-row, .metadata-readonly-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 11px 0; border-bottom: 1px solid #e9edf2; }
+.metadata-row strong, .metadata-readonly-row strong { max-width: 65%; color: #374151; font-size: 11px; font-weight: 650; text-align: right; overflow-wrap: anywhere; }
+.work-item-full-field { display: block; width: 100%; margin-bottom: 12px; }
+.work-item-editor-subsection { margin-top: 18px; padding-top: 16px; border-top: 1px solid #e5e7eb; }
+.work-item-editor-subsection h3 { margin: 0 0 12px; color: #374151; font-size: 12px; font-weight: 750; }
+.work-item-dialog-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 8px; margin: 0 !important; padding: 13px 24px !important; border-top: 1px solid #e5e7eb; background: #fff; }
+.associated-tests-dialog.product-card { width: min(760px, 94vw); min-height: 0; max-height: min(82vh, 760px); overflow: hidden; display: flex; flex-direction: column; padding: 0; border-radius: 14px; background: #fff; box-shadow: 0 24px 80px rgba(15, 23, 42, .25); cursor: default; }
+.associated-tests-dialog.product-card:hover { transform: none; border-color: #d3d3d3; box-shadow: 0 24px 80px rgba(15, 23, 42, .25); }
+.associated-tests-header { display: flex; align-items: flex-start; gap: 12px; padding: 20px 22px 16px; border-bottom: 1px solid #e5e7eb; }
+.associated-tests-header .mat-mdc-card-title { margin: 5px 0; font-size: 18px; font-weight: 650; }
+.associated-tests-header .mat-mdc-card-subtitle { font-size: 12px; color: #6b7280; }
+.associated-tests-content { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 14px 20px !important; }
+.associated-test-row { display: flex; align-items: center; gap: 11px; padding: 12px 4px; border-bottom: 1px solid #edf0f4; }
+.associated-test-copy { display: flex; flex: 1 1 auto; flex-direction: column; gap: 4px; min-width: 0; }
+.associated-test-copy strong { color: #1967d2; font-size: 11px; }
+.associated-test-copy span { color: #111827; font-size: 13px; font-weight: 650; overflow-wrap: anywhere; }
+.associated-test-copy small { color: #6b7280; font-size: 11px; overflow-wrap: anywhere; }
+@media (max-width: 800px) {
+  .work-item-dialog.product-card { width: min(680px, 96vw); max-height: 94vh; }
+  .work-item-two-column { grid-template-columns: minmax(0, 1fr); }
+  .work-item-primary-panel { border-right: 0; border-bottom: 1px solid #e5e7eb; }
+  .work-item-primary-panel, .work-item-metadata-panel { padding: 18px; }
+  .work-item-dialog-header { padding: 16px 18px; }
+  .work-item-dialog-actions { padding: 12px 18px !important; }
+}
+@media (max-width: 480px) {
+  .work-item-metadata-grid { grid-template-columns: 1fr 1fr; }
+  .work-item-tests-panel { align-items: flex-start; flex-direction: column; }
+  .linked-status { display: none; }
+  .metadata-row, .metadata-readonly-row { gap: 8px; }
+}
+
+
+/* Inline work-item editing: one field at a time, with the read view preserved. */
+.inline-field-block { min-width: 0; }
+.inline-field-display { display:flex; align-items:flex-start; gap:6px; }
+.inline-edit-trigger { width:28px !important; height:28px !important; line-height:28px !important; flex:0 0 28px; color:#6b7280; opacity:.55; }
+.inline-edit-trigger mat-icon { width:16px; height:16px; font-size:16px; }
+.inline-field-display:hover .inline-edit-trigger, .inline-field-block:hover > .inline-field-label-row .inline-edit-trigger { opacity:1; color:#003aa5; }
+.inline-field-label-row { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.inline-field-actions { display:flex; justify-content:flex-end; gap:6px; margin:4px 0 8px; }
+.inline-field-actions button { min-height:30px; line-height:30px; font-size:11px; }
+.inline-metadata-tile { min-width:0; }
+.inline-metadata-tile mat-form-field { display:block; width:100%; margin-top:7px; }
+.metadata-value-button { display:flex; align-items:center; justify-content:space-between; gap:7px; width:100%; min-width:0; padding:6px 0 0; border:0; background:transparent; color:#111827; text-align:left; cursor:pointer; }
+.metadata-value-button > strong { min-width:0; overflow-wrap:anywhere; }
+.metadata-value-button > mat-icon { flex:0 0 auto; width:15px; height:15px; font-size:15px; color:#9ca3af; }
+.metadata-value-button:hover > mat-icon { color:#003aa5; }
+.person-value-button { align-items:flex-start; flex-wrap:wrap; }
+.person-value-button small { flex:1 1 100%; color:#6b7280; font-size:10px; }
+.metadata-person-copy { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:5px; }
+.user-autocomplete-input { width:100%; min-height:36px; box-sizing:border-box; padding:8px 10px; border:1px solid #d1d5db; border-radius:8px; color:#111827; background:#fff; font:inherit; font-size:12px; outline:none; }
+.user-autocomplete-input:focus { border-color:#003aa5; box-shadow:0 0 0 2px rgba(0,124,193,.12); }
+.inline-user-suggestions { position:relative; z-index:5; display:flex; flex-direction:column; max-height:180px; overflow:auto; padding:4px; border:1px solid #e5e7eb; border-radius:9px; background:#fff; box-shadow:0 8px 24px rgba(15,23,42,.12); }
+.inline-user-suggestions button { display:flex; align-items:center; gap:8px; min-height:34px; padding:6px; border:0; border-radius:6px; background:#fff; text-align:left; cursor:pointer; font-size:11px; }
+.inline-user-suggestions button:hover { background:#f1f7ff; }
+.inline-user-suggestions small { margin-left:auto; color:#6b7280; font-size:10px; }
+.work-item-comments-section { padding:20px 24px 24px; border-top:1px solid #e5e7eb; background:#fff; }
+.work-item-comments-section .work-item-section-heading { margin-bottom:12px; }
+.work-item-comments-section h3 { margin:3px 0 0; color:#111827; font-size:15px; font-weight:650; }
+.work-item-comments-list { display:grid; gap:0; }
+.work-item-comment { display:flex; align-items:flex-start; gap:10px; padding:12px 0; border-bottom:1px solid #edf0f4; }
+.work-item-comment > div { flex:1 1 auto; min-width:0; }
+.work-item-comment strong { font-size:12px; }
+.work-item-comment small { margin-left:8px; color:#9ca3af; font-size:10px; }
+.work-item-comment p { margin:5px 0 0; color:#374151; font-size:12px; line-height:1.6; white-space:pre-wrap; overflow-wrap:anywhere; }
+.comments-empty { padding:16px; border:1px dashed #d1d5db; border-radius:9px; color:#6b7280; font-size:12px; }
+.comments-compose { display:flex; align-items:flex-end; gap:10px; margin-top:14px; }
+.comments-compose textarea { flex:1 1 auto; min-width:0; resize:vertical; padding:10px 12px; border:1px solid #d1d5db; border-radius:9px; font:inherit; font-size:12px; outline:none; }
+.comments-compose textarea:focus { border-color:#003aa5; box-shadow:0 0 0 2px rgba(0,124,193,.12); }
+.comments-compose button { flex:0 0 auto; white-space:nowrap; }
+@media (max-width:700px) { .work-item-comments-section { padding:18px; } .comments-compose { align-items:stretch; flex-direction:column; } .comments-compose button { align-self:flex-end; } }
+.create-user-autocomplete { position:relative; margin:4px 0 12px; }
+.create-user-autocomplete > label { display:block; margin:0 0 6px 2px; color:#6b7280; font-size:11px; font-weight:650; }
+.create-user-autocomplete .inline-user-suggestions { position:absolute; top:100%; left:0; right:0; }
+.inline-metadata-row { align-items:flex-start; }
+.inline-metadata-control { width:min(260px, 100%); }
+.inline-metadata-control mat-form-field { display:block; width:100%; }
+.inline-metadata-control .inline-field-actions { margin-bottom:0; }
+
+
+/* AUTOSAVE FIX — visible feedback and consistent field focus. */
+.work-item-autosave-status { display:flex; align-items:center; gap:8px; margin:0 22px 8px; padding:9px 12px; border:1px solid #d7e9f8; border-radius:8px; background:#f5faff; color:#075985; font-size:12px; line-height:1.4; }
+.work-item-autosave-status mat-icon { width:17px; height:17px; font-size:17px; flex:0 0 auto; }
+.work-item-dialog .inline-autosave-field.mat-focused .mdc-notched-outline__leading, .work-item-dialog .inline-autosave-field.mat-focused .mdc-notched-outline__notch, .work-item-dialog .inline-autosave-field.mat-focused .mdc-notched-outline__trailing { border-color:#003aa5 !important; }
+.work-item-dialog .work-item-edit-grid mat-form-field, .work-item-dialog .work-item-full-field { min-width:0; width:100%; }
+@media (max-width:640px) { .work-item-autosave-status { margin-left:12px; margin-right:12px; } }
+
+
+/* ================================================================
+   WORK ITEM CARD — corrected compact card layout
+   Header: linked item ID + title + close button
+   Body: four stacked sections, with responsive metadata grids
+   ================================================================ */
+.material-overlay.work-item-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(10px, 2vw, 24px);
+  overflow: auto;
+  background: rgba(15, 23, 42, .48);
+}
+.work-item-dialog.product-card {
+  display: flex;
+  flex-direction: column;
+  width: min(940px, 96vw);
+  max-width: 940px;
+  max-height: min(92vh, 1000px);
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #d3d3d3;
+  border-radius: 14px;
+  background: #fff;
+  color: #111827;
+  box-shadow: 0 24px 80px rgba(15, 23, 42, .24);
+  cursor: default;
+  transform: none;
+}
+.work-item-dialog.product-card:hover {
+  transform: none;
+  border-color: #d3d3d3;
+  box-shadow: 0 24px 80px rgba(15, 23, 42, .24);
+}
+.work-item-dialog-header {
+  display: flex !important;
+  flex: 0 0 auto;
+  align-items: center !important;
+  gap: 14px;
+  min-width: 0;
+  margin: 0;
+  padding: 16px 20px !important;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+}
+.work-item-dialog-header .mat-mdc-card-header-text { display: none; }
+.work-item-dialog-header .work-dialog-heading {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.work-item-dialog-header .work-dialog-type {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+.work-item-dialog-header .work-item-id-pill {
+  flex: 0 0 auto;
+  width: fit-content;
+  text-decoration: none;
+  line-height: 1.35;
+  transition: background .15s ease, border-color .15s ease;
+}
+.work-item-dialog-header .work-item-dialog-id-link:hover {
+  border-color: #93c5fd;
+  background: #dbeafe;
+  color: #174ea6;
+}
+.work-item-dialog-project {
+  min-width: 0;
+  color: #ce3737;
+  font-size: 14px;font-weight: bold;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.work-item-dialog-header .mat-mdc-card-title {
+  display: block;
+  min-width: 0;
+  margin: 0 !important;
+  color: #111827;
+  font-size: 17px !important;
+  font-weight: 650;
+  line-height: 1.4;
+  letter-spacing: -.2px;
+  overflow-wrap: anywhere;
+}
+.work-item-dialog-close {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  margin-left: auto;
+  border-radius: 9px;
+  color: #6b7280;
+}
+.work-item-dialog-close:hover { background: #f3f4f6; color: #111827; }
+.work-item-dialog-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 16px !important;
+  background: #ffffff;
+}
+.work-item-sections {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+.work-item-section-card {
+  display: block;
+  min-width: 0;
+  margin: 0;
+  padding: 16px 18px;
+  border: 1px solid #4e4e4e;
+  border-radius: 11px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .025);
+  box-sizing: border-box;
+}
+.work-item-section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  margin: 0 0 14px;
+  padding: 0 0 11px;
+  border-bottom: 1px solid #edf0f4;
+}
+.work-item-section-title-row > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.work-item-section-number {
+  display: inline-flex;
+  flex: 0 0 30px;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #e8f0fe;
+  color: #1967d2;
+  font-size: 10px;
+  font-weight: 750;
+}
+.work-item-section-title-row h3 {
+  margin: 0;
+  color: #111827;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.work-item-section-title-row p {
+  margin: 3px 0 0;
+  color: #6b7280;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.work-item-id-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 12px;
+  color: #6b7280;
+  font-size: 11px;
+}
+.work-item-id-line strong { color: #1967d2; font-weight: 750; }
+.work-item-type-badge {
+  display: inline-flex;
+  padding: 4px 7px;
+  border-radius: 6px;
+  background: #f3f4f6;
+  color: #4b5563;
+  font-size: 9px;
+  font-weight: 750;
+}
+.work-item-view-title {
+  margin: 0 0 14px;
+  padding: 0;
+  color: #111827;
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.work-item-description-block { min-width: 0; padding: 0; border: 0; }
+.work-item-description-block .large-description {
+  margin: 7px 0 0;
+  color: #000000;
+  font-size: 12px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.work-item-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 10px 12px;
+  min-width: 0;
+}
+.work-item-edit-grid > mat-form-field,
+.work-item-edit-grid > .work-item-user-autocomplete,
+.work-item-edit-grid > .work-item-full-field { width: 100%; min-width: 0; }
+.work-item-edit-grid .work-item-full-field { grid-column: 1 / -1; }
+.work-item-user-autocomplete { position: relative; min-width: 0; }
+.work-item-user-options {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% - 10px);
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow: auto;
+  padding: 5px;
+  border: 1px solid #dbe3ec;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, .14);
+}
+.work-item-user-options button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-width: 0;
+  padding: 8px;
+  border: 0;
+  border-radius: 7px;
+  background: #fff;
+  color: #111827;
+  text-align: left;
+  cursor: pointer;
+}
+.work-item-user-options button:hover { background: #f1f7ff; }
+.work-item-user-options button > span:last-child { display: flex; flex: 1 1 auto; flex-direction: column; gap: 3px; min-width: 0; }
+.work-item-user-options strong { font-size: 11px; }
+.work-item-user-options small { color: #6b7280; font-size: 10px; overflow-wrap: anywhere; }
+.work-item-metadata-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.metadata-people-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.metadata-person-row { min-width: 0; padding: 10px; border: 1px solid #edf0f4; border-radius: 9px; }
+.metadata-facts-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 18px; }
+.linked-section-full .work-item-editor-subsection { margin-top: 14px; }
+.work-item-tests-panel { margin-top: 12px; }
+.work-item-comment-composer { display: flex; align-items: flex-start; gap: 12px; margin-top: 14px; }
+.work-item-comment-composer .work-item-full-field { flex: 1 1 auto; min-width: 0; margin-bottom: 0; }
+.work-item-comment-composer > button { flex: 0 0 auto; margin-top: 4px; }
+.work-item-autosave-status {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  margin: 0 16px 8px;
+  padding: 9px 12px;
+  border: 1px solid #d7e9f8;
+  border-radius: 8px;
+  background: #f5faff;
+  color: #075985;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.work-item-autosave-status mat-icon { flex: 0 0 auto; width: 17px; height: 17px; font-size: 17px; }
+.work-item-dialog-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  margin: 0 !important;
+  padding: 12px 18px !important;
+  border-top: 1px solid #e5e7eb;
+  background: #fff;
+}
+.work-item-dialog-actions .toolbar-spacer { flex: 1 1 auto; }
+.work-item-dialog-actions button { border-radius: 8px; }
+.work-item-dialog-actions button[mat-flat-button] { background: #003aa5; box-shadow: none; }
+.work-item-dialog .mat-mdc-form-field { width: 100%; min-width: 0; }
+.work-item-dialog .mat-mdc-form-field-subscript-wrapper { min-height: 0; }
+.work-item-dialog .mat-mdc-form-field-infix { min-width: 0; }
+.work-item-dialog .mat-mdc-card-content:last-child { padding-bottom: 16px; }
+@media (max-width: 640px) {
+  .material-overlay.work-item-overlay { align-items: flex-start; padding: 8px; }
+  .work-item-dialog.product-card { width: 100%; max-width: none; max-height: calc(100dvh - 16px); border-radius: 12px; }
+  .work-item-dialog-header { gap: 8px; padding: 12px !important; }
+  .work-item-dialog-header .mat-mdc-card-title { font-size: 15px !important; }
+  .work-item-dialog-content { padding: 10px !important; }
+  .work-item-section-card { padding: 12px; border-radius: 9px; }
+  .work-item-section-title-row { align-items: flex-start; }
+  .work-item-edit-grid, .metadata-people-grid, .metadata-facts-grid { grid-template-columns: minmax(0, 1fr); }
+  .work-item-edit-grid .work-item-full-field { grid-column: auto; }
+  .work-item-comment-composer { flex-direction: column; }
+  .work-item-comment-composer > button { align-self: flex-end; }
+  .work-item-dialog-actions { padding: 10px 12px !important; }
+}
+
+
+/* Inline work-item editor: quiet, borderless fields and a clean hierarchy */
+.work-item-dialog {
+  width: min(980px, 96vw);
+  max-height: min(92vh, 1000px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  box-shadow: 0 24px 72px rgba(15, 23, 42, .20);
+}
+.work-item-dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 22px 16px !important;
+  border-bottom: 1px solid #edf0f4;
+  flex: 0 0 auto;
+}
+.work-item-dialog-header .work-dialog-heading {
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 9px;
+}
+.work-item-dialog-header .work-dialog-type {
+  flex-wrap: wrap;
+  min-width: 0;
+  gap: 10px;
+}
+.work-item-header-title-input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin-top: 5px;
+  padding: 3px 0 5px;
+  border: 0 !important;
+  border-radius: 0;
+  outline: none;
+  box-shadow: none !important;
+  background: transparent;
+  color: #111827;
+  font: inherit;
+  font-size: 20px;
+  font-weight: 650;
+  line-height: 1.35;
+  letter-spacing: -.35px;
+  border-bottom: 1px solid black;
+}
+.work-item-header-title-input::placeholder { color: #9ca3af; font-weight: 500; }
+.work-item-header-title-input:focus {
+  border-bottom: 1px solid #0788cc !important;
+}
+.work-item-dialog-content {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 18px 22px 22px !important;
+}
+.work-item-sections {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+.work-item-section-card {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid #cecdcd;
+  border-radius: 13px;
+  background: #fff;
+}
+.work-item-section-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.work-item-section-title-row h3 {
+  margin: 0;
+  color: #111827;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -.1px;
+}
+.work-item-section-title-row p {
+  margin: 4px 0 0;
+  color: #6b7280;
+  font-size: 12px;
+  line-height: 1.45;
+}
+/* Hide MDC outlines/underlines only inside this work-item editor. */
+.work-item-dialog .mat-mdc-form-field {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+.work-item-dialog .mat-mdc-text-field-wrapper,
+.work-item-dialog .mat-mdc-form-field-focus-overlay {
+  background: transparent !important;
+}
+.work-item-dialog .mdc-notched-outline,
+.work-item-dialog .mat-mdc-form-field-focus-overlay,
+.work-item-dialog .mdc-line-ripple {
+  display: none !important;
+}
+.work-item-dialog .mat-mdc-form-field-infix {
+  min-height: 36px;
+  padding-top: 8px !important;
+  padding-bottom: 7px !important;
+}
+.work-item-dialog .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+.work-item-dialog .mat-mdc-form-field-flex {
+  align-items: center;
+  padding: 0 2px !important;
+}
+.work-item-dialog .mat-mdc-input-element,
+.work-item-dialog .mat-mdc-select-value,
+.work-item-dialog textarea.mat-mdc-input-element {
+  color: #1f2937;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.work-item-dialog .mat-mdc-form-field:hover .mat-mdc-input-element,
+.work-item-dialog .mat-mdc-form-field:hover .mat-mdc-select-value {
+  color: #111827;
+}
+.work-item-dialog .mat-mdc-form-field:focus-within {
+  border-radius: 6px;
+  background: #f8fbff;
+  box-shadow: inset 0 -1px 0 #0788cc;
+}
+.work-item-dialog .work-item-edit-grid,
+.work-item-dialog .work-item-metadata-grid,
+.work-item-dialog .metadata-people-grid,
+.work-item-dialog .metadata-facts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 18px;
+}
+.work-item-dialog .work-item-full-field,
+.work-item-dialog .work-item-user-autocomplete,
+.work-item-dialog .metadata-readonly-row {
+  min-width: 0;
+  grid-column: 1 / -1;
+}
+.work-item-dialog .work-item-description-block {
+  margin: 0;
+}
+.work-item-dialog .work-item-description-block .mat-mdc-form-field {
+  margin-top: 4px;
+}
+.work-item-dialog textarea.mat-mdc-input-element {
+  resize: vertical;
+  min-height: 100px;
+}
+.work-item-dialog .work-item-user-autocomplete {
+  position: relative;
+}
+.work-item-dialog .work-item-user-options {
+  position: absolute;
+  top: calc(100% - 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  max-height: 230px;
+  overflow: auto;
+  padding: 5px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, .12);
+}
+.work-item-dialog .work-item-autosave-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-top: 1px solid #edf0f4;
+  color: #64748b;
+  font-size: 11px;
+  flex: 0 0 auto;
+}
+.work-item-dialog .work-item-autosave-status mat-icon {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+}
+.work-item-dialog-actions {
+  display: flex;
+  align-items: center;
+  padding: 8px 22px 14px !important;
+  margin: 0 !important;
+  border-top: 0 !important;
+  flex: 0 0 auto;
+}
+.work-item-dialog .work-item-id-pill {
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 700;
+}
+.work-item-dialog .work-item-dialog-project {
+  color: #ce3737;
+  font-size: 1px;font-weight: bold;
+}
+.work-item-dialog .work-item-comment-composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  margin-top: 14px;
+}
+.work-item-dialog .work-item-comment-composer .mat-mdc-form-field {
+  flex: 1 1 auto;
+}
+.work-item-dialog .work-item-comment-composer button {
+  flex: 0 0 auto;
+  margin-bottom: 4px;
+}
+@media (max-width: 700px) {
+  .work-item-dialog-header { padding: 14px 14px 12px !important; }
+  .work-item-dialog-content { padding: 12px !important; }
+  .work-item-section-card { padding: 13px; }
+  .work-item-dialog .work-item-edit-grid,
+  .work-item-dialog .work-item-metadata-grid,
+  .work-item-dialog .metadata-people-grid,
+  .work-item-dialog .metadata-facts-grid { grid-template-columns: minmax(0, 1fr); }
+  .work-item-dialog .work-item-comment-composer { align-items: stretch; flex-direction: column; }
+  .work-item-header-title-input { font-size: 17px; }
+}
+
+.work-item-dialog-header .work-dialog-type {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 2px;
+}
+.work-item-dialog-header .work-item-dialog-project {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #ce3737;
+  font-size: 12px;font-weight: bold;
+  padding-top: 10px;padding-bottom: 10px;
+}
+.work-item-dialog-header .work-item-header-title-input {
+  grid-column: 1 / -1;
+}
+
+/* Borderless inline editing for every work-item field except the comment composer.
+   Comment inputs intentionally retain Angular Material's normal outline. */
+.work-item-dialog .mat-mdc-form-field:not(.work-item-comment-composer *),
+.work-item-dialog .mat-mdc-text-field-wrapper:not(.work-item-comment-composer *),
+.work-item-dialog .mat-mdc-form-field-flex:not(.work-item-comment-composer *),
+.work-item-dialog .mat-mdc-form-field-infix:not(.work-item-comment-composer *),
+.work-item-dialog .mat-mdc-form-field-focus-overlay:not(.work-item-comment-composer *),
+.work-item-dialog .mdc-notched-outline:not(.work-item-comment-composer *),
+.work-item-dialog .mdc-notched-outline__leading:not(.work-item-comment-composer *),
+.work-item-dialog .mdc-notched-outline__notch:not(.work-item-comment-composer *),
+.work-item-dialog .mdc-notched-outline__trailing:not(.work-item-comment-composer *),
+.work-item-dialog .mdc-line-ripple:not(.work-item-comment-composer *),
+.work-item-dialog .mat-mdc-form-field-bottom-align::before {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+.work-item-dialog .mat-mdc-form-field:not(.work-item-comment-composer *),
+.work-item-dialog .mat-mdc-form-field:not(.work-item-comment-composer *):hover,
+.work-item-dialog .mat-mdc-form-field:not(.work-item-comment-composer *):focus-within,
+.work-item-dialog .mat-mdc-form-field.mat-focused:not(.work-item-comment-composer *),
+.work-item-dialog .mat-mdc-form-field.mat-form-field-invalid:not(.work-item-comment-composer *),
+.work-item-dialog .mat-mdc-text-field-wrapper:not(.work-item-comment-composer *),
+.work-item-dialog .mat-mdc-text-field-wrapper:not(.work-item-comment-composer *):hover,
+.work-item-dialog .mat-mdc-form-field-focus-overlay:not(.work-item-comment-composer *) {
+  background: transparent !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+.work-item-dialog input:not(.work-item-comment-composer *),
+.work-item-dialog textarea:not(.work-item-comment-composer *),
+.work-item-dialog select:not(.work-item-comment-composer *),
+.work-item-dialog .mat-mdc-input-element:not(.work-item-comment-composer *),
+.work-item-dialog .mat-mdc-select-trigger:not(.work-item-comment-composer *),
+.work-item-dialog .mat-mdc-select-value:not(.work-item-comment-composer *),
+.work-item-dialog .work-item-header-title-input,
+.work-item-dialog .work-item-user-autocomplete input {
+  border-bottom: 1px solid black;
+  box-shadow: none !important;
+  background-image: none !important;
+}
+.work-item-dialog input:not(.work-item-comment-composer *):hover,
+.work-item-dialog input:not(.work-item-comment-composer *):focus,
+.work-item-dialog input:not(.work-item-comment-composer *):focus-visible,
+.work-item-dialog textarea:not(.work-item-comment-composer *):hover,
+.work-item-dialog textarea:not(.work-item-comment-composer *):focus,
+.work-item-dialog textarea:not(.work-item-comment-composer *):focus-visible,
+.work-item-dialog select:not(.work-item-comment-composer *):hover,
+.work-item-dialog select:not(.work-item-comment-composer *):focus,
+.work-item-dialog .mat-mdc-select:not(.work-item-comment-composer *):focus,
+.work-item-dialog .mat-mdc-select.mat-mdc-select-focused:not(.work-item-comment-composer *),
+.work-item-dialog .work-item-header-title-input:focus,
+.work-item-dialog .work-item-user-autocomplete input:focus {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+.work-item-dialog .mat-mdc-form-field:focus-within:not(.work-item-comment-composer *),
+.work-item-dialog .mat-mdc-form-field:not(.work-item-comment-composer *):focus-within {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+
+/* FINAL FIX: Angular Material's MDC internals are rendered inside mat-form-field.
+   ::ng-deep is required here because this stylesheet uses Angular's emulated
+   view encapsulation. Only the comment composer keeps its Material outline. */
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field:not(.work-item-comment-field),
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field:not(.work-item-comment-field):hover,
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field:not(.work-item-comment-field):focus-within,
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field:not(.work-item-comment-field).mat-focused,
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field:not(.work-item-comment-field) .mat-mdc-text-field-wrapper,
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field:not(.work-item-comment-field) .mat-mdc-form-field-flex,
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field:not(.work-item-comment-field) .mat-mdc-form-field-infix,
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field:not(.work-item-comment-field) .mat-mdc-form-field-focus-overlay {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field:not(.work-item-comment-field) .mdc-notched-outline,
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field:not(.work-item-comment-field) .mdc-line-ripple {
+  display: none !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field:not(.work-item-comment-field) .mdc-notched-outline__leading,
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field:not(.work-item-comment-field) .mdc-notched-outline__notch,
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field:not(.work-item-comment-field) .mdc-notched-outline__trailing,
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field:not(.work-item-comment-field) input,
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field:not(.work-item-comment-field) textarea,
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field:not(.work-item-comment-field) .mat-mdc-select-trigger,
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field:not(.work-item-comment-field) .mat-mdc-select-value {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background-image: none !important;
+}
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field:not(.work-item-comment-field) input:focus,
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field:not(.work-item-comment-field) textarea:focus,
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field:not(.work-item-comment-field) .mat-mdc-select:focus,
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field:not(.work-item-comment-field) .mat-mdc-select.mat-mdc-select-focused {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+/* Restore the default Material outline exclusively for the Comments composer. */
+:host ::ng-deep .work-item-dialog .work-item-comment-field .mdc-notched-outline {
+  display: block !important;
+  border: initial !important;
+  outline: initial !important;
+  box-shadow: none !important;
+}
+:host ::ng-deep .work-item-dialog .work-item-comment-field .mdc-notched-outline__leading,
+:host ::ng-deep .work-item-dialog .work-item-comment-field .mdc-notched-outline__notch,
+:host ::ng-deep .work-item-dialog .work-item-comment-field .mdc-notched-outline__trailing {
+  border-color: var(--mdc-outlined-text-field-outline-color, #79747e) !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+}
+:host ::ng-deep .work-item-dialog .work-item-comment-field .mdc-notched-outline__leading {
+  border-right: 0 !important;
+  border-radius: 4px 0 0 4px !important;
+}
+:host ::ng-deep .work-item-dialog .work-item-comment-field .mdc-notched-outline__notch {
+  border-left: 0 !important;
+  border-right: 0 !important;
+}
+:host ::ng-deep .work-item-dialog .work-item-comment-field .mdc-notched-outline__trailing {
+  border-left: 0 !important;
+  border-radius: 0 4px 4px 0 !important;
+}
+.work-item-dialog-header .work-item-header-title-input,
+.work-item-dialog-header .work-item-header-title-input:hover,
+.work-item-dialog-header .work-item-header-title-input:focus,
+.work-item-dialog-header .work-item-header-title-input:focus-visible {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+
+/* FINAL WORK-ITEM POLISH: pure white surfaces, black text, name-only suggestions,
+   and a stable outlined Comments composer. */
+.work-item-dialog,
+.work-item-dialog .work-item-dialog-content,
+.work-item-dialog .work-item-sections,
+.work-item-dialog .work-item-section-card,
+.work-item-dialog .item-details-section,
+.work-item-dialog .metadata-section,
+.work-item-dialog .linked-section-full,
+.work-item-dialog .comments-section-full,
+.work-item-dialog .work-item-comments-list,
+.work-item-dialog .work-item-comment,
+.work-item-dialog .work-item-comment-composer,
+.work-item-dialog .work-item-user-options,
+.work-item-dialog .mat-mdc-card,
+.work-item-dialog .mat-mdc-card-content {
+  background: #fff !important;
+}
+.work-item-dialog .work-item-description-block,
+.work-item-dialog .work-item-description-block textarea,
+.work-item-dialog textarea.mat-mdc-input-element,
+.work-item-dialog .work-item-header-title-input,
+.work-item-dialog .mat-mdc-input-element,
+.work-item-dialog .mat-mdc-select-value,
+.work-item-dialog .mat-mdc-select-value-text,
+.work-item-dialog .mat-mdc-form-field-infix,
+.work-item-dialog .work-item-field-label,
+.work-item-dialog .mat-mdc-form-field label,
+.work-item-dialog .mat-mdc-floating-label {
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+}
+.work-item-dialog input::placeholder,
+.work-item-dialog textarea::placeholder,
+.work-item-dialog .mat-mdc-input-element::placeholder,
+.work-item-dialog .work-item-header-title-input::placeholder {
+  color: #000 !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #000 !important;
+}
+.work-item-dialog .work-item-user-name {
+  display: block;
+  min-width: 0;
+  color: #000;
+}
+.work-item-dialog .work-item-user-name strong {
+  display: block;
+  color: #000;
+  font-size: 13px;
+  font-weight: 600;
+}
+.work-item-dialog .work-item-user-options button {
+  background: #fff !important;
+  color: #000 !important;
+}
+.work-item-dialog .work-item-user-options button:hover,
+.work-item-dialog .work-item-user-options button:focus-visible {
+  background: #fff !important;
+  outline: 1px solid #111 !important;
+  outline-offset: -1px;
+}
+/* Full-screen board creation actions remain visible beside the board title. */
+.focus-create-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+.focus-create-actions .mat-mdc-button-base {
+  white-space: nowrap;
+  color: #111 !important;
+  border-color: #d1d5db !important;
+  background: #fff !important;
+}
+.focus-create-actions .mat-icon {
+  margin-right: 3px;
+}
+.focus-close-button { margin-left: 8px; }
+/* Keep Comments outlined; isolate its outline from the borderless fields above. */
+:host ::ng-deep .work-item-dialog .work-item-comment-field .mat-mdc-text-field-wrapper {
+  background: #fff !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+:host ::ng-deep .work-item-dialog .work-item-comment-field .mdc-notched-outline {
+  display: flex !important;
+  border: 0 !important;
+  border-radius: 4px !important;
+  visibility: visible !important;
+}
+:host ::ng-deep .work-item-dialog .work-item-comment-field .mdc-notched-outline__leading,
+:host ::ng-deep .work-item-dialog .work-item-comment-field .mdc-notched-outline__notch,
+:host ::ng-deep .work-item-dialog .work-item-comment-field .mdc-notched-outline__trailing {
+  border-color: #767676 !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+  visibility: visible !important;
+}
+:host ::ng-deep .work-item-dialog .work-item-comment-field .mdc-notched-outline__leading {
+  border-right-width: 0 !important;
+  border-radius: 4px 0 0 4px !important;
+}
+:host ::ng-deep .work-item-dialog .work-item-comment-field .mdc-notched-outline__notch {
+  border-left-width: 0 !important;
+  border-right-width: 0 !important;
+}
+:host ::ng-deep .work-item-dialog .work-item-comment-field .mdc-notched-outline__trailing {
+  border-left-width: 0 !important;
+  border-radius: 0 4px 4px 0 !important;
+}
+:host ::ng-deep .work-item-dialog .work-item-comment-field textarea,
+:host ::ng-deep .work-item-dialog .work-item-comment-field textarea:focus {
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+  background: #fff !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+@media (max-width: 900px) {
+  .focus-create-actions { gap: 3px; }
+  .focus-create-actions .mat-mdc-button-base { padding-inline: 8px; min-width: 0; }
+}
+@media (max-width: 680px) {
+  .focus-toolbar { gap: 4px; }
+  .focus-create-actions { gap: 2px; }
+  .focus-create-actions .mat-mdc-button-base { padding-inline: 4px; font-size: 11px; }
+  .focus-create-actions .mat-icon { display: none; }
+  .focus-title { font-size: 14px; }
+}
+
+/* Relationship cards stay on one horizontal line; scroll sideways if there are many. */
+.work-item-dialog .linked-work-item-list-inline {
+  display: flex !important;
+  flex-flow: row nowrap !important;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 0 7px;
+  scrollbar-width: thin;
+}
+.work-item-dialog .linked-work-item-list-inline .linked-work-item {
+  display: flex;
+  flex: 0 0 270px;
+  align-items: center;
+  min-width: 0;
+  max-width: 270px;
+  padding: 8px 9px;
+  background: #fff !important;
+  text-align: left;
+}
+.work-item-dialog .linked-work-item-list-inline .linked-work-item-copy {
+  min-width: 0;
+  overflow: hidden;
+}
+.work-item-dialog .linked-work-item-list-inline .linked-work-item-copy span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Fix the Comments placeholder specifically without changing the dialog layout. */
+:host ::ng-deep .work-item-dialog .work-item-comment-field textarea.mat-mdc-input-element::placeholder,
+:host ::ng-deep .work-item-dialog .work-item-comment-field textarea::placeholder {
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+  opacity: 1 !important;
+  font: inherit !important;
+  line-height: inherit !important;
+}
+:host ::ng-deep .work-item-dialog .work-item-comment-field textarea.mat-mdc-input-element {
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+  background: #fff !important;
+}
+
+
+/* Requested final field-label and people-layout adjustments. */
+.work-item-dialog,
+.work-item-dialog * {
+  color: #000 !important;
+}
+
+.work-item-dialog :is(.mat-mdc-floating-label, mat-label, .work-item-field-label) {
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
+}
+
+.work-item-dialog :is(input, textarea, .mat-mdc-input-element, .mat-mdc-select-value, .mat-mdc-select-value-text) {
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+}
+
+.work-item-dialog :is(input, textarea, .mat-mdc-input-element)::placeholder {
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+  opacity: 1 !important;
+}
+
+.work-item-dialog .work-item-user-autocomplete {
+  grid-column: auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  align-self: start;
+}
+
+.work-item-dialog .work-item-user-autocomplete > .mat-mdc-form-field {
+  width: 100% !important;
+}
+
+@media (max-width: 640px) {
+  .work-item-dialog .work-item-user-autocomplete {
+    grid-column: 1 / -1 !important;
+  }
+}
+
+
+/* Persistent labels for every editable work-item field. */
+.work-item-dialog .work-item-explicit-label {
+  display: block !important;
+  width: 100%;
+  margin: 0 0 4px !important;
+  padding: 0 !important;
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+  opacity: 1 !important;
+}
+.work-item-dialog .work-item-explicit-label + .mat-mdc-form-field {
+  width: 100%;
+}
+.work-item-dialog .work-item-title-label {
+  margin-top: 8px !important;
+  margin-bottom: 2px !important;
+}
+/* Floating labels are replaced by the persistent labels above each field. */
+:host ::ng-deep .work-item-dialog mat-label,
+:host ::ng-deep .work-item-dialog .mat-mdc-floating-label {
+  display: none !important;
+}
+
+
+/* Stable Google-style field alignment: every label and control travel together. */
+.work-item-dialog .work-item-edit-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  align-items: start !important;
+  gap: 16px 24px !important;
+  width: 100%;
+  min-width: 0;
+}
+.work-item-dialog .work-item-field {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 4px !important;
+  width: 100%;
+  min-width: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  grid-column: auto !important;
+  box-sizing: border-box;
+}
+.work-item-dialog .work-item-field > .mat-mdc-form-field,
+.work-item-dialog .work-item-field > mat-form-field,
+.work-item-dialog .work-item-field .mat-mdc-form-field {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+.work-item-dialog .work-item-edit-grid > .metadata-readonly-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 8px 0;
+  border-top: 1px solid #e5e5e5;
+  grid-column: auto !important;
+}
+.work-item-dialog .work-item-explicit-label {
+  display: block !important;
+  position: static !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 17px;
+  color: #000 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 17px !important;
+  white-space: nowrap;
+}
+.work-item-dialog .work-item-user-autocomplete {
+  grid-column: auto !important;
+  align-self: start !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+.work-item-dialog .metadata-edit-grid > .work-item-user-autocomplete {
+  grid-column: auto !important;
+}
+.work-item-dialog .linked-edit-grid {
+  margin-bottom: 14px;
+}
+.work-item-dialog .test-case-edit-grid .work-item-field textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+.work-item-dialog .item-details-section > .work-item-explicit-label {
+  margin-bottom: 4px !important;
+}
+.work-item-dialog .item-details-section > .mat-mdc-form-field,
+.work-item-dialog .item-details-section > .work-item-full-field {
+  display: block;
+  width: 100% !important;
+  margin: 0 !important;
+}
+.work-item-dialog .work-item-dialog-header .work-dialog-type {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 4px !important;
+  min-width: 0;
+  width: 100%;
+}
+.work-item-dialog .work-item-title-label { margin: 3px 0 0 !important; }
+.work-item-dialog .work-item-header-title-input {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  line-height: 1.4;
+}
+.work-item-dialog .work-item-section-title-row { margin-bottom: 16px; }
+.work-item-dialog .work-item-user-options { top: calc(100% + 2px) !important; }
+@media (max-width: 680px) {
+  .work-item-dialog .work-item-edit-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 14px !important; }
+  .work-item-dialog .work-item-field,
+  .work-item-dialog .work-item-edit-grid > .metadata-readonly-row { grid-column: 1 / -1 !important; }
+  .work-item-dialog .work-item-section-card { padding: 12px !important; }
+  .work-item-dialog .work-item-dialog-content { padding: 12px !important; }
+}
+
+/* FINAL FIELD RESET — labels sit above values; every control is borderless and
+   values have zero internal padding. This intentionally includes Comments. */
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field,
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field:hover,
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field:focus-within,
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field.mat-focused,
+:host ::ng-deep .work-item-dialog .mat-mdc-text-field-wrapper,
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field-flex,
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field-infix,
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field-focus-overlay,
+:host ::ng-deep .work-item-dialog .mdc-text-field,
+:host ::ng-deep .work-item-dialog .mdc-text-field--outlined,
+:host ::ng-deep .work-item-dialog .mdc-text-field--focused {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: #fff !important;
+  background-image: none !important;
+}
+
+:host ::ng-deep .work-item-dialog .mdc-notched-outline,
+:host ::ng-deep .work-item-dialog .mdc-notched-outline__leading,
+:host ::ng-deep .work-item-dialog .mdc-notched-outline__notch,
+:host ::ng-deep .work-item-dialog .mdc-notched-outline__trailing,
+:host ::ng-deep .work-item-dialog .mdc-line-ripple,
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field-subscript-wrapper {
+  display: none !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field-infix {
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field-flex,
+:host ::ng-deep .work-item-dialog .mat-mdc-text-field-wrapper {
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+:host ::ng-deep .work-item-dialog input.mat-mdc-input-element,
+:host ::ng-deep .work-item-dialog textarea.mat-mdc-input-element,
+:host ::ng-deep .work-item-dialog .mat-mdc-select-trigger,
+:host ::ng-deep .work-item-dialog .mat-mdc-select-value,
+:host ::ng-deep .work-item-dialog .mat-mdc-select-value-text,
+.work-item-dialog .work-item-header-title-input {
+  box-sizing: border-box !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: #fff !important;
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+}
+:host ::ng-deep .work-item-dialog textarea.mat-mdc-input-element {
+  resize: vertical;
+}
+:host ::ng-deep .work-item-dialog input.mat-mdc-input-element:focus,
+:host ::ng-deep .work-item-dialog textarea.mat-mdc-input-element:focus,
+:host ::ng-deep .work-item-dialog .mat-mdc-select:focus,
+:host ::ng-deep .work-item-dialog .mat-mdc-select.mat-mdc-select-focused,
+.work-item-dialog .work-item-header-title-input:focus,
+.work-item-dialog .work-item-header-title-input:focus-visible {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: #fff !important;
+}
+.work-item-dialog .work-item-explicit-label {
+  display: block !important;
+  margin: 0 0 2px !important;
+  padding: 0 !important;
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+  font-weight: 700 !important;
+}
+.work-item-dialog .work-item-title-label {
+  margin: 3px 0 2px !important;
+}
+.work-item-dialog .work-item-field,
+.work-item-dialog .item-details-section,
+.work-item-dialog .work-item-comment-composer {
+  padding: 0 !important;
+}
+.work-item-dialog input::placeholder,
+.work-item-dialog textarea::placeholder,
+:host ::ng-deep .work-item-dialog .mat-mdc-input-element::placeholder {
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+  opacity: 1 !important;
+}
+
+
+/* Final targeted alignment fixes: align Description with the metadata grid,
+   make the Comments composer visible and usable, and keep board actions at right. */
+.work-item-dialog .item-details-section {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  padding: 18px !important;
+  margin: 0 !important;
+}
+.work-item-dialog .item-details-section > .work-item-explicit-label {
+  display: block !important;
+  width: 100% !important;
+  margin: 0 0 6px !important;
+  padding: 0 !important;
+  text-align: left !important;
+}
+.work-item-dialog .item-details-section > mat-form-field,
+.work-item-dialog .item-details-section > .mat-mdc-form-field,
+.work-item-dialog .item-details-section > .work-item-full-field {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+.work-item-dialog .comments-section-full {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow: visible !important;
+}
+.work-item-dialog .work-item-comment-composer {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-end !important;
+  gap: 12px !important;
+  width: 100% !important;
+  margin-top: 16px !important;
+  padding: 0 !important;
+}
+.work-item-dialog .work-item-comment-input-wrap {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+  width: 100% !important;
+}
+.work-item-dialog .work-item-comment-input-wrap > .work-item-explicit-label {
+  display: block !important;
+  position: static !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: #000 !important;
+}
+.work-item-dialog .work-item-comment-input-wrap .work-item-comment-field {
+  display: block !important;
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+:host ::ng-deep .work-item-dialog .work-item-comment-field .mat-mdc-text-field-wrapper {
+  min-height: 82px !important;
+  padding: 8px 10px !important;
+  border: 1px solid #111 !important;
+  border-radius: 6px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+:host ::ng-deep .work-item-dialog .work-item-comment-field .mdc-notched-outline {
+  display: flex !important;
+  border: 0 !important;
+}
+:host ::ng-deep .work-item-dialog .work-item-comment-field .mdc-notched-outline__leading,
+:host ::ng-deep .work-item-dialog .work-item-comment-field .mdc-notched-outline__notch,
+:host ::ng-deep .work-item-dialog .work-item-comment-field .mdc-notched-outline__trailing {
+  border-color: #111 !important;
+  border-width: 1px !important;
+}
+:host ::ng-deep .work-item-dialog .work-item-comment-field textarea.mat-mdc-input-element {
+  display: block !important;
+  width: 100% !important;
+  min-height: 64px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  resize: vertical !important;
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+  background: #fff !important;
+}
+:host ::ng-deep .work-item-dialog .work-item-comment-field textarea::placeholder {
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+  opacity: 1 !important;
+}
+.work-item-dialog .work-item-comment-composer > button {
+  flex: 0 0 auto !important;
+  align-self: flex-end !important;
+  margin: 0 0 2px !important;
+}
+.focus-toolbar.focus-toolbar-title-only {
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  gap: 10px !important;
+}
+.focus-toolbar .focus-title {
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+}
+.focus-toolbar .toolbar-spacer {
+  flex: 1 1 auto !important;
+  min-width: 12px !important;
+}
+.focus-toolbar .focus-create-actions {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  flex: 0 0 auto !important;
+  margin-left: auto !important;
+}
+.focus-toolbar .focus-close-button {
+  flex: 0 0 auto !important;
+  margin-left: 4px !important;
+}
+@media (max-width: 700px) {
+  .work-item-dialog .work-item-comment-composer {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .work-item-dialog .work-item-comment-composer > button {
+    align-self: flex-end !important;
+  }
+  .focus-toolbar.focus-toolbar-title-only { flex-wrap: wrap !important; }
+  .focus-toolbar .toolbar-spacer { display: none !important; }
+  .focus-toolbar .focus-create-actions {
+    order: 3 !important;
+    width: 100% !important;
+    justify-content: flex-end !important;
+    flex-wrap: wrap !important;
+  }
+  .focus-toolbar .focus-close-button { margin-left: auto !important; }
+}
+
+/* ========================================================================
+   GOOGLE ONE-INSPIRED WORK-ITEM DIALOGS
+   Visual-only overrides. Existing HTML, Angular bindings, APIs and behavior
+   remain unchanged. Scoped to the work-item dialog and related test inspector.
+   ======================================================================== */
+.material-overlay.work-item-overlay,
+.material-overlay.associated-tests-overlay {
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 24px !important;
+  background: rgba(32, 33, 36, .34) !important;
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+}
+
+.work-item-dialog.product-card {
+  width: min(960px, 96vw) !important;
+  max-width: 960px !important;
+  max-height: min(92vh, 1040px) !important;
+  border: 1px solid #e2e7ef !important;
+  border-radius: 28px !important;
+  background: #fff !important;
+  color: #202124 !important;
+  box-shadow: 0 24px 80px rgba(60, 64, 67, .24), 0 4px 14px rgba(60, 64, 67, .08) !important;
+  overflow: hidden !important;
+}
+.work-item-dialog.product-card:hover {
+  border-color: #e2e7ef !important;
+  box-shadow: 0 24px 80px rgba(60, 64, 67, .24), 0 4px 14px rgba(60, 64, 67, .08) !important;
+}
+
+.work-item-dialog-header {
+  align-items: flex-start !important;
+  gap: 16px !important;
+  padding: 24px 28px 20px !important;
+  border-bottom: 1px solid #edf0f5 !important;
+  background: linear-gradient(135deg, #fff 0%, #f8fbff 100%) !important;
+}
+.work-item-dialog-header .work-dialog-heading {
+  gap: 7px !important;
+}
+.work-item-dialog-header .work-dialog-type {
+  gap: 6px !important;
+}
+.work-item-dialog-header .work-item-id-pill {
+  padding: 5px 10px !important;
+  border: 1px solid #d2e3fc !important;
+  border-radius: 999px !important;
+  background: #eaf2ff !important;
+  color: #174ea6 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: .15px;
+}
+.work-item-dialog-header .work-item-dialog-id-link:hover {
+  border-color: #a8c7fa !important;
+  background: #dbe8ff !important;
+  color: #174ea6 !important;
+}
+.work-item-dialog .work-item-dialog-project {
+  color: #5f6368 !important;
+  -webkit-text-fill-color: #5f6368 !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 1.5 !important;
+}
+.work-item-dialog .work-item-title-label {
+  margin: 8px 0 2px !important;
+  color: #5f6368 !important;
+  -webkit-text-fill-color: #5f6368 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+}
+.work-item-dialog .work-item-header-title-input {
+  width: 100% !important;
+  min-height: 38px !important;
+  padding: 3px 0 8px !important;
+  border: 0 !important;
+  border-bottom: 1px solid #dadce0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  color: #202124 !important;
+  -webkit-text-fill-color: #202124 !important;
+  font: inherit !important;
+  font-size: 22px !important;
+  font-weight: 500 !important;
+  letter-spacing: -.35px !important;
+  line-height: 1.35 !important;
+  transition: border-color .16s ease, box-shadow .16s ease !important;
+}
+.work-item-dialog .work-item-header-title-input:hover {
+  border-bottom-color: #9aa0a6 !important;
+}
+.work-item-dialog .work-item-header-title-input:focus,
+.work-item-dialog .work-item-header-title-input:focus-visible {
+  border-bottom: 2px solid #1a73e8 !important;
+  padding-bottom: 7px !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+.work-item-dialog .work-item-header-title-input::placeholder {
+  color: #80868b !important;
+  -webkit-text-fill-color: #80868b !important;
+  opacity: 1 !important;
+}
+.work-item-dialog-close {
+  width: 40px !important;
+  height: 40px !important;
+  flex-basis: 40px !important;
+  border-radius: 50% !important;
+  color: #5f6368 !important;
+  transition: background .15s ease !important;
+}
+.work-item-dialog-close:hover {
+  background: #f1f3f4 !important;
+  color: #202124 !important;
+}
+
+.work-item-dialog-content {
+  padding: 22px 24px !important;
+  background: #f8fafd !important;
+}
+.work-item-sections {
+  gap: 16px !important;
+}
+.work-item-dialog .work-item-section-card {
+  padding: 20px 22px !important;
+  border: 1px solid #e6eaf0 !important;
+  border-radius: 20px !important;
+  background: #fff !important;
+  box-shadow: 0 1px 2px rgba(60, 64, 67, .035) !important;
+}
+.work-item-dialog .work-item-section-title-row {
+  align-items: center !important;
+  margin: 0 0 16px !important;
+  padding: 0 0 12px !important;
+  border-bottom: 1px solid #edf0f5 !important;
+}
+.work-item-dialog .work-item-section-title-row h3 {
+  color: #202124 !important;
+  -webkit-text-fill-color: #202124 !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  letter-spacing: -.1px !important;
+}
+.work-item-dialog .work-item-section-title-row p {
+  color: #5f6368 !important;
+  -webkit-text-fill-color: #5f6368 !important;
+  font-size: 12px !important;
+}
+.work-item-dialog .work-item-explicit-label {
+  color: #3c4043 !important;
+  -webkit-text-fill-color: #3c4043 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 18px !important;
+}
+.work-item-dialog .work-item-edit-grid {
+  gap: 18px 20px !important;
+}
+.work-item-dialog .work-item-field {
+  gap: 6px !important;
+}
+.work-item-dialog .metadata-readonly-row {
+  padding: 10px 0 !important;
+  border-top-color: #edf0f5 !important;
+}
+.work-item-dialog .metadata-readonly-row > span {
+  color: #5f6368 !important;
+  font-size: 11px !important;
+}
+.work-item-dialog .metadata-readonly-row > strong {
+  color: #202124 !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+/* Restore a soft outlined Google-style treatment to editable Material fields. */
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field {
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+:host ::ng-deep .work-item-dialog .mat-mdc-text-field-wrapper {
+  min-height: 44px !important;
+  padding: 0 12px !important;
+  border: 1px solid #dadce0 !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease !important;
+}
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field:hover .mat-mdc-text-field-wrapper {
+  border-color: #9aa0a6 !important;
+}
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field:focus-within .mat-mdc-text-field-wrapper,
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper {
+  border-color: #1a73e8 !important;
+  box-shadow: 0 0 0 1px #1a73e8 !important;
+  background: #fff !important;
+}
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field-flex {
+  min-height: 42px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  align-items: center !important;
+}
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field-infix {
+  min-height: 42px !important;
+  padding: 10px 0 !important;
+  border: 0 !important;
+  box-sizing: border-box !important;
+}
+:host ::ng-deep .work-item-dialog .mdc-notched-outline {
+  display: none !important;
+}
+:host ::ng-deep .work-item-dialog .mdc-line-ripple,
+:host ::ng-deep .work-item-dialog .mat-mdc-form-field-focus-overlay {
+  display: none !important;
+}
+:host ::ng-deep .work-item-dialog input.mat-mdc-input-element,
+:host ::ng-deep .work-item-dialog textarea.mat-mdc-input-element,
+:host ::ng-deep .work-item-dialog .mat-mdc-select-trigger,
+:host ::ng-deep .work-item-dialog .mat-mdc-select-value,
+:host ::ng-deep .work-item-dialog .mat-mdc-select-value-text {
+  min-height: 20px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  color: #202124 !important;
+  -webkit-text-fill-color: #202124 !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+}
+:host ::ng-deep .work-item-dialog input.mat-mdc-input-element::placeholder,
+:host ::ng-deep .work-item-dialog textarea.mat-mdc-input-element::placeholder {
+  color: #80868b !important;
+  -webkit-text-fill-color: #80868b !important;
+  opacity: 1 !important;
+}
+:host ::ng-deep .work-item-dialog textarea.mat-mdc-input-element {
+  resize: vertical !important;
+}
+:host ::ng-deep .work-item-dialog .item-details-section .mat-mdc-text-field-wrapper {
+  align-items: stretch !important;
+  padding: 12px 14px !important;
+}
+:host ::ng-deep .work-item-dialog .item-details-section .mat-mdc-form-field-flex,
+:host ::ng-deep .work-item-dialog .item-details-section .mat-mdc-form-field-infix {
+  min-height: 112px !important;
+  align-items: stretch !important;
+}
+:host ::ng-deep .work-item-dialog .item-details-section textarea.mat-mdc-input-element {
+  min-height: 88px !important;
+  line-height: 1.6 !important;
+}
+:host ::ng-deep .work-item-dialog .work-item-comment-field .mat-mdc-text-field-wrapper {
+  min-height: 94px !important;
+  padding: 12px 14px !important;
+  border: 1px solid #dadce0 !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+:host ::ng-deep .work-item-dialog .work-item-comment-field .mat-mdc-form-field-flex,
+:host ::ng-deep .work-item-dialog .work-item-comment-field .mat-mdc-form-field-infix {
+  min-height: 68px !important;
+  align-items: stretch !important;
+}
+:host ::ng-deep .work-item-dialog .work-item-comment-field textarea.mat-mdc-input-element {
+  min-height: 66px !important;
+  line-height: 1.55 !important;
+}
+:host ::ng-deep .work-item-dialog .work-item-comment-field .mdc-notched-outline {
+  display: none !important;
+}
+
+.work-item-dialog .work-item-user-options {
+  top: calc(100% + 6px) !important;
+  padding: 6px !important;
+  border: 1px solid #e0e4eb !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+  box-shadow: 0 12px 30px rgba(60, 64, 67, .18) !important;
+}
+.work-item-dialog .work-item-user-options button {
+  min-height: 42px !important;
+  padding: 9px 10px !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+  color: #202124 !important;
+  transition: background .15s ease !important;
+}
+.work-item-dialog .work-item-user-options button:hover {
+  background: #f1f6fe !important;
+}
+.work-item-dialog .work-item-user-options strong {
+  color: #202124 !important;
+  font-size: 12px !important;
+}
+.work-item-dialog .work-item-user-options small {
+  color: #5f6368 !important;
+}
+.work-item-dialog .linked-work-item-list-inline .linked-work-item {
+  border: 1px solid #e6eaf0 !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  transition: border-color .15s ease, background .15s ease !important;
+}
+.work-item-dialog .linked-work-item-list-inline .linked-work-item:hover {
+  border-color: #c2d7fb !important;
+  background: #f8fbff !important;
+}
+.work-item-dialog .work-item-tests-panel {
+  padding: 14px 16px !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 14px !important;
+  background: #f8fafd !important;
+}
+.work-item-dialog .work-item-tests-copy strong {
+  color: #202124 !important;
+}
+.work-item-dialog .work-item-tests-copy small {
+  color: #5f6368 !important;
+}
+.work-item-dialog .work-item-comment {
+  padding: 14px 0 !important;
+  border-bottom-color: #edf0f5 !important;
+}
+.work-item-dialog .work-item-comment-meta strong {
+  color: #202124 !important;
+  font-size: 12px !important;
+}
+.work-item-dialog .work-item-comment-meta time {
+  color: #80868b !important;
+}
+.work-item-dialog .work-item-comment p,
+.work-item-dialog .comments-empty,
+.work-item-dialog .linked-empty {
+  color: #5f6368 !important;
+}
+.work-item-dialog .work-item-dialog-actions {
+  gap: 10px !important;
+  padding: 16px 24px 20px !important;
+  border-top: 1px solid #edf0f5 !important;
+  background: #fff !important;
+}
+.work-item-dialog .work-item-dialog-actions button {
+  min-height: 40px !important;
+  padding: 0 18px !important;
+  border-radius: 999px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+.work-item-dialog .work-item-dialog-actions button[mat-flat-button] {
+  background: #1a73e8 !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+.work-item-dialog .work-item-dialog-actions button[mat-flat-button]:hover {
+  background: #1765cc !important;
+  box-shadow: 0 1px 2px rgba(60, 64, 67, .2) !important;
+}
+.work-item-dialog .work-item-dialog-actions button[mat-button] {
+  color: #1a73e8 !important;
+}
+.work-item-dialog .work-item-dialog-actions button[mat-button]:hover {
+  background: #f1f6fe !important;
+}
+
+/* Related test inspector follows the same soft, rounded surface language. */
+.associated-tests-dialog.product-card {
+  border: 1px solid #e2e7ef !important;
+  border-radius: 24px !important;
+  box-shadow: 0 24px 80px rgba(60, 64, 67, .24) !important;
+}
+.associated-tests-dialog .associated-tests-header {
+  padding: 22px 24px !important;
+  border-bottom: 1px solid #edf0f5 !important;
+  background: linear-gradient(135deg, #fff 0%, #f8fbff 100%) !important;
+}
+.associated-tests-dialog .associated-tests-content {
+  padding: 18px 24px 24px !important;
+  background: #f8fafd !important;
+}
+.associated-tests-dialog .associated-test-row {
+  border: 1px solid #e6eaf0 !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+}
+
+@media (max-width: 680px) {
+  .material-overlay.work-item-overlay,
+  .material-overlay.associated-tests-overlay {
+    align-items: flex-start !important;
+    padding: 8px !important;
+  }
+  .work-item-dialog.product-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: calc(100dvh - 16px) !important;
+    border-radius: 22px !important;
+  }
+  .work-item-dialog-header {
+    padding: 18px 18px 16px !important;
+  }
+  .work-item-dialog .work-item-header-title-input {
+    font-size: 19px !important;
+  }
+  .work-item-dialog-content {
+    padding: 12px !important;
+  }
+  .work-item-dialog .work-item-section-card {
+    padding: 15px !important;
+    border-radius: 16px !important;
+  }
+  .work-item-dialog .work-item-edit-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 14px !important;
+  }
+  .work-item-dialog .work-item-dialog-actions {
+    padding: 12px 16px 16px !important;
+  }
+}
+
+
+/* Description field only: no border on focus and zero left padding. */
+:host ::ng-deep .work-item-dialog .item-details-section textarea.mat-mdc-input-element,
+:host ::ng-deep .work-item-dialog .item-details-section textarea.mat-mdc-input-element:hover,
+:host ::ng-deep .work-item-dialog .item-details-section textarea.mat-mdc-input-element:focus,
+:host ::ng-deep .work-item-dialog .item-details-section textarea.mat-mdc-input-element:focus-visible {
+  padding-left: 0 !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+:host ::ng-deep .work-item-dialog .item-details-section .mat-mdc-form-field:focus-within,
+:host ::ng-deep .work-item-dialog .item-details-section .mat-mdc-form-field:focus-within .mat-mdc-text-field-wrapper,
+:host ::ng-deep .work-item-dialog .item-details-section .mat-mdc-form-field:focus-within .mat-mdc-form-field-flex,
+:host ::ng-deep .work-item-dialog .item-details-section .mat-mdc-form-field:focus-within .mat-mdc-form-field-infix {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  padding-left: 0 !important;
+  background: transparent !important;
+}
+:host ::ng-deep .work-item-dialog .item-details-section .mdc-notched-outline,
+:host ::ng-deep .work-item-dialog .item-details-section .mdc-line-ripple {
+  display: none !important;
+}
+
+
+/* FINAL targeted fix: keep borders visible on Description and metadata fields,
+   including while focused. Keep Description text flush to the left. */
+:host ::ng-deep .work-item-dialog .item-details-section .mat-mdc-text-field-wrapper,
+:host ::ng-deep .work-item-dialog .metadata-section .mat-mdc-text-field-wrapper {
+  border: 1px solid #dadce0 !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+:host ::ng-deep .work-item-dialog .item-details-section .mat-mdc-form-field:hover .mat-mdc-text-field-wrapper,
+:host ::ng-deep .work-item-dialog .metadata-section .mat-mdc-form-field:hover .mat-mdc-text-field-wrapper {
+  border-color: #9aa0a6 !important;
+}
+
+:host ::ng-deep .work-item-dialog .item-details-section .mat-mdc-form-field:focus-within .mat-mdc-text-field-wrapper,
+:host ::ng-deep .work-item-dialog .metadata-section .mat-mdc-form-field:focus-within .mat-mdc-text-field-wrapper,
+:host ::ng-deep .work-item-dialog .metadata-section .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper {
+  border: 1px solid #1a73e8 !important;
+  box-shadow: 0 0 0 1px #1a73e8 !important;
+  background: #fff !important;
+}
+
+:host ::ng-deep .work-item-dialog .item-details-section textarea.mat-mdc-input-element,
+:host ::ng-deep .work-item-dialog .item-details-section textarea.mat-mdc-input-element:hover,
+:host ::ng-deep .work-item-dialog .item-details-section textarea.mat-mdc-input-element:focus,
+:host ::ng-deep .work-item-dialog .item-details-section textarea.mat-mdc-input-element:focus-visible {
+  padding-left: 0 !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* Keep the Material outline hidden because the wrapper supplies the border. */
+:host ::ng-deep .work-item-dialog .item-details-section .mdc-notched-outline,
+:host ::ng-deep .work-item-dialog .metadata-section .mdc-notched-outline,
+:host ::ng-deep .work-item-dialog .item-details-section .mdc-line-ripple,
+:host ::ng-deep .work-item-dialog .metadata-section .mdc-line-ripple {
+  display: none !important;
+}
+
+
+/* FINAL targeted work-item dialog field styling requested by user. */
+.work-item-dialog .work-dialog-heading {
+  width: 100% !important;
+  min-width: 0 !important;
+  align-items: stretch !important;
+}
+
+.work-item-dialog .work-dialog-type {
+  width: 100% !important;
+  min-width: 0 !important;
+  align-items: flex-start !important;
+  flex-wrap: wrap !important;
+}
+
+.work-item-dialog .work-item-header-title-input,
+.work-item-dialog .work-item-header-title-input:hover,
+.work-item-dialog .work-item-header-title-input:focus,
+.work-item-dialog .work-item-header-title-input:focus-visible {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  flex: 1 1 100% !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  border: 0 !important;
+  border-bottom: 1px solid #5f6368 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* Description keeps zero left padding and does not gain a focus border. */
+:host ::ng-deep .work-item-dialog .item-details-section .mat-mdc-text-field-wrapper,
+:host ::ng-deep .work-item-dialog .item-details-section .mat-mdc-text-field-wrapper:hover,
+:host ::ng-deep .work-item-dialog .item-details-section .mat-mdc-form-field:focus-within .mat-mdc-text-field-wrapper,
+:host ::ng-deep .work-item-dialog .item-details-section .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper {
+  border: 1px solid #f5f5f5 !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+}
+
+:host ::ng-deep .work-item-dialog .item-details-section textarea.mat-mdc-input-element,
+:host ::ng-deep .work-item-dialog .item-details-section textarea.mat-mdc-input-element:hover,
+:host ::ng-deep .work-item-dialog .item-details-section textarea.mat-mdc-input-element:focus,
+:host ::ng-deep .work-item-dialog .item-details-section textarea.mat-mdc-input-element:focus-visible {
+  padding-left: 0 !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+:host ::ng-deep .work-item-dialog .item-details-section .mdc-notched-outline,
+:host ::ng-deep .work-item-dialog .item-details-section .mdc-line-ripple,
+:host ::ng-deep .work-item-dialog .item-details-section .mat-mdc-form-field-focus-overlay {
+  opacity: 0 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Status and all metadata controls use a subtle 1px whitesmoke border. */
+:host ::ng-deep .work-item-dialog .metadata-section .mat-mdc-text-field-wrapper,
+:host ::ng-deep .work-item-dialog .metadata-section .mat-mdc-form-field:hover .mat-mdc-text-field-wrapper,
+:host ::ng-deep .work-item-dialog .metadata-section .mat-mdc-form-field:focus-within .mat-mdc-text-field-wrapper,
+:host ::ng-deep .work-item-dialog .metadata-section .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper {
+  border: 1px solid #f5f5f5 !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+}
+
+:host ::ng-deep .work-item-dialog .metadata-section .mdc-notched-outline,
+:host ::ng-deep .work-item-dialog .metadata-section .mdc-line-ripple {
+  border: 0 !important;
+  opacity: 0 !important;
+}
+
+
+/* Final dialog field behavior: multiline title; borders remain stable on focus. */
+.work-item-dialog .work-item-header-title-input,
+.work-item-dialog .work-item-header-title-input:hover,
+.work-item-dialog .work-item-header-title-input:focus,
+.work-item-dialog .work-item-header-title-input:focus-visible {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  min-height: 56px !important;
+  box-sizing: border-box !important;
+  flex: 1 1 100% !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+  overflow: hidden !important;
+  resize: vertical !important;
+  padding: 8px 0 10px !important;
+  line-height: 1.45 !important;
+  border: 0 !important;
+  border-bottom: 1px solid #5f6368 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  color: #202124 !important;
+  font: inherit !important;
+}
+
+/* Metadata borders are identical at rest, hover, and focus. */
+:host ::ng-deep .work-item-dialog .metadata-section .mat-mdc-text-field-wrapper,
+:host ::ng-deep .work-item-dialog .metadata-section .mat-mdc-form-field:hover .mat-mdc-text-field-wrapper,
+:host ::ng-deep .work-item-dialog .metadata-section .mat-mdc-form-field:focus-within .mat-mdc-text-field-wrapper,
+:host ::ng-deep .work-item-dialog .metadata-section .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper {
+  border: 1px solid #f5f5f5 !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+  background: #fff !important;
+}
+
+
+/* Linked work items: show a readable vertical list instead of horizontal scrolling. */
+.work-item-dialog .linked-work-item-list-inline {
+  display: flex !important;
+  flex-direction: column !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+  gap: 6px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow: visible !important;
+  padding: 2px 0 4px !important;
+}
+.work-item-dialog .linked-work-item-list-inline .linked-work-item {
+  display: flex !important;
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  justify-content: flex-start !important;
+}
+.work-item-dialog .linked-work-item-list-inline .linked-work-item-copy {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  overflow: visible !important;
+}
+.work-item-dialog .linked-work-item-list-inline .linked-work-item-copy span {
+  display: block !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  text-overflow: clip !important;
+}
+
+/* Normalize the Description edit field: remove the extra 10px left inset. */
+:host ::ng-deep .work-item-dialog .item-details-section .mat-mdc-form-field-infix,
+:host ::ng-deep .work-item-dialog .item-details-section .mat-mdc-form-field-infix:focus-within {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin-left: 0 !important;
+}
+:host ::ng-deep .work-item-dialog .item-details-section textarea.mat-mdc-input-element,
+:host ::ng-deep .work-item-dialog .item-details-section textarea.mat-mdc-input-element:hover,
+:host ::ng-deep .work-item-dialog .item-details-section textarea.mat-mdc-input-element:focus,
+:host ::ng-deep .work-item-dialog .item-details-section textarea.mat-mdc-input-element:focus-visible {
+  display: block !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  text-indent: 0 !important;
+}
+
+/* Description only: remove the wrapper border while the field is focused. */
+:host ::ng-deep .work-item-dialog .item-details-section .mat-mdc-form-field:focus-within .mat-mdc-text-field-wrapper,
+:host ::ng-deep .work-item-dialog .item-details-section .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper {
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+}
+
+:host ::ng-deep .work-item-dialog .item-details-section .mat-mdc-form-field:focus-within .mdc-notched-outline,
+:host ::ng-deep .work-item-dialog .item-details-section .mat-mdc-form-field.mat-focused .mdc-notched-outline,
+:host ::ng-deep .work-item-dialog .item-details-section .mat-mdc-form-field:focus-within .mdc-line-ripple,
+:host ::ng-deep .work-item-dialog .item-details-section .mat-mdc-form-field.mat-focused .mdc-line-ripple {
+  display: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+
+/* HARD OVERRIDE: Description must not show any focus border/ring.
+   Keep the normal unfocused field styling unchanged. */
+:host ::ng-deep .work-item-dialog .item-details-section > mat-form-field.work-item-full-field:focus-within,
+:host ::ng-deep .work-item-dialog .item-details-section > mat-form-field.work-item-full-field.mat-focused,
+:host ::ng-deep .work-item-dialog .item-details-section > mat-form-field.work-item-full-field:focus-within .mat-mdc-text-field-wrapper,
+:host ::ng-deep .work-item-dialog .item-details-section > mat-form-field.work-item-full-field.mat-focused .mat-mdc-text-field-wrapper,
+:host ::ng-deep .work-item-dialog .item-details-section > mat-form-field.work-item-full-field:focus-within .mat-mdc-form-field-flex,
+:host ::ng-deep .work-item-dialog .item-details-section > mat-form-field.work-item-full-field.mat-focused .mat-mdc-form-field-flex,
+:host ::ng-deep .work-item-dialog .item-details-section > mat-form-field.work-item-full-field:focus-within .mat-mdc-form-field-infix,
+:host ::ng-deep .work-item-dialog .item-details-section > mat-form-field.work-item-full-field.mat-focused .mat-mdc-form-field-infix,
+:host ::ng-deep .work-item-dialog .item-details-section > mat-form-field.work-item-full-field:focus-within .mdc-text-field,
+:host ::ng-deep .work-item-dialog .item-details-section > mat-form-field.work-item-full-field.mat-focused .mdc-text-field,
+:host ::ng-deep .work-item-dialog .item-details-section > mat-form-field.work-item-full-field:focus-within .mdc-text-field--outlined,
+:host ::ng-deep .work-item-dialog .item-details-section > mat-form-field.work-item-full-field.mat-focused .mdc-text-field--outlined {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background-image: none !important;
+}
+
+:host ::ng-deep .work-item-dialog .item-details-section > mat-form-field.work-item-full-field:focus-within .mdc-notched-outline,
+:host ::ng-deep .work-item-dialog .item-details-section > mat-form-field.work-item-full-field.mat-focused .mdc-notched-outline,
+:host ::ng-deep .work-item-dialog .item-details-section > mat-form-field.work-item-full-field:focus-within .mdc-line-ripple,
+:host ::ng-deep .work-item-dialog .item-details-section > mat-form-field.work-item-full-field.mat-focused .mdc-line-ripple,
+:host ::ng-deep .work-item-dialog .item-details-section > mat-form-field.work-item-full-field:focus-within .mat-mdc-form-field-focus-overlay,
+:host ::ng-deep .work-item-dialog .item-details-section > mat-form-field.work-item-full-field.mat-focused .mat-mdc-form-field-focus-overlay {
+  display: none !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  opacity: 0 !important;
+}
+
+:host ::ng-deep .work-item-dialog .item-details-section > mat-form-field.work-item-full-field:focus-within .mat-mdc-text-field-wrapper::before,
+:host ::ng-deep .work-item-dialog .item-details-section > mat-form-field.work-item-full-field:focus-within .mat-mdc-text-field-wrapper::after,
+:host ::ng-deep .work-item-dialog .item-details-section > mat-form-field.work-item-full-field.mat-focused .mat-mdc-text-field-wrapper::before,
+:host ::ng-deep .work-item-dialog .item-details-section > mat-form-field.work-item-full-field.mat-focused .mat-mdc-text-field-wrapper::after {
+  content: none !important;
+  display: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+.work-item-header-title-input,
+.work-item-header-title-input:hover,
+.work-item-header-title-input:focus,
+.work-item-header-title-input:focus-visible {
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: 1px solid #5f6368 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.work-item-header-title-input,
+.work-item-header-title-input:hover,
+.work-item-header-title-input:focus,
+.work-item-header-title-input:focus-visible {
+  padding-left: 0px !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+/* =====================================================================
+   WORK ITEM POPUP — fresh Google One-inspired styling
+   Scope is intentionally limited to .material-overlay.work-item-overlay.
+   All existing Boards page, toolbar, filters, and board-card styling stays
+   untouched. This block resets the popup's previous visual rules and
+   rebuilds its surface, spacing, typography, fields, sections, and actions.
+   ===================================================================== */
+.material-overlay.work-item-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 1200 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  padding: 24px !important;
+  overflow: auto !important;
+  background: rgba(32, 33, 36, .42) !important;
+  backdrop-filter: blur(3px);
+}
+
+.material-overlay.work-item-overlay .work-item-dialog,
+.material-overlay.work-item-overlay .work-item-dialog.product-card {
+  display: flex !important;
+  flex-direction: column !important;
+  width: min(960px, calc(100vw - 48px)) !important;
+  max-width: 960px !important;
+  max-height: min(900px, calc(100dvh - 48px)) !important;
+  min-height: 0 !important;
+  margin: auto !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  border: 1px solid #dadce0 !important;
+  border-radius: 24px !important;
+  background: #fff !important;
+  color: #202124 !important;
+  box-shadow: 0 8px 32px rgba(60, 64, 67, .20) !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+.material-overlay.work-item-overlay .work-item-dialog:hover,
+.material-overlay.work-item-overlay .work-item-dialog.product-card:hover {
+  border-color: #dadce0 !important;
+  box-shadow: 0 8px 32px rgba(60, 64, 67, .20) !important;
+  transform: none !important;
+}
+
+.material-overlay.work-item-overlay .work-item-dialog-header {
+  display: flex !important;
+  flex: 0 0 auto !important;
+  align-items: flex-start !important;
+  gap: 16px !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 24px 28px 20px !important;
+  border: 0 !important;
+  border-bottom: 1px solid #e8eaed !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+.material-overlay.work-item-overlay .work-item-dialog-header .mat-mdc-card-header-text {
+  display: none !important;
+}
+
+.material-overlay.work-item-overlay .work-item-dialog-header .work-dialog-heading {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.material-overlay.work-item-overlay .work-item-dialog-header .work-dialog-type {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 8px 12px !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.material-overlay.work-item-overlay .work-item-id-pill,
+.material-overlay.work-item-overlay .work-item-dialog-id-link {
+  display: inline-flex !important;
+  align-items: center !important;
+  min-height: 28px !important;
+  width: fit-content !important;
+  padding: 4px 10px !important;
+  border: 1px solid #dadce0 !important;
+  border-radius: 999px !important;
+  background: #f8f9fa !important;
+  color: #1967d2 !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 1.3 !important;
+  text-decoration: none !important;
+  box-shadow: none !important;
+}
+
+.material-overlay.work-item-overlay .work-item-dialog-project {
+  min-width: 0 !important;
+  color: #5f6368 !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+  overflow-wrap: anywhere !important;
+}
+
+.material-overlay.work-item-overlay .work-item-title-label,
+.material-overlay.work-item-overlay .work-item-explicit-label {
+  display: block !important;
+  margin: 0 0 6px !important;
+  padding: 0 !important;
+  color: #5f6368 !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  letter-spacing: .1px !important;
+}
+
+.material-overlay.work-item-overlay .work-item-header-title-input {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 44px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  resize: vertical !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: none !important;
+  background: transparent !important;
+  color: #202124 !important;
+  box-shadow: none !important;
+  font: 400 25px/1.32 "Google Sans", "Roboto", Arial, sans-serif !important;
+  letter-spacing: -.35px !important;
+}
+
+.material-overlay.work-item-overlay .work-item-header-title-input:hover,
+.material-overlay.work-item-overlay .work-item-header-title-input:focus,
+.material-overlay.work-item-overlay .work-item-header-title-input:focus-visible {
+  border: 0 !important;
+  outline: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.material-overlay.work-item-overlay .work-item-dialog-close {
+  flex: 0 0 40px !important;
+  width: 40px !important;
+  height: 40px !important;
+  margin: 0 0 0 auto !important;
+  border-radius: 50% !important;
+  color: #5f6368 !important;
+  background: transparent !important;
+}
+.material-overlay.work-item-overlay .work-item-dialog-close:hover { background: #f1f3f4 !important; }
+
+.material-overlay.work-item-overlay .work-item-dialog-content {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow: auto !important;
+  margin: 0 !important;
+  padding: 24px 28px !important;
+  background: #fff !important;
+  box-sizing: border-box !important;
+}
+
+.material-overlay.work-item-overlay .work-item-sections {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 28px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.material-overlay.work-item-overlay .work-item-section-card,
+.material-overlay.work-item-overlay .work-item-section-card.item-details-section,
+.material-overlay.work-item-overlay .work-item-section-card.metadata-section,
+.material-overlay.work-item-overlay .work-item-section-card.linked-section-full,
+.material-overlay.work-item-overlay .work-item-section-card.comments-section-full,
+.material-overlay.work-item-overlay .comments-section-full {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+}
+
+.material-overlay.work-item-overlay .work-item-section-title-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  margin: 0 0 14px !important;
+  padding: 0 0 10px !important;
+  border: 0 !important;
+  border-bottom: 1px solid #e8eaed !important;
+}
+.material-overlay.work-item-overlay .work-item-section-title-row h3 {
+  margin: 0 !important;
+  color: #202124 !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  line-height: 1.5 !important;
+}
+
+.material-overlay.work-item-overlay .work-item-edit-grid,
+.material-overlay.work-item-overlay .metadata-edit-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  align-items: start !important;
+  gap: 18px 20px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.material-overlay.work-item-overlay .work-item-field,
+.material-overlay.work-item-overlay .work-item-user-autocomplete {
+  position: relative !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.material-overlay.work-item-overlay .work-item-edit-grid .work-item-full-field,
+.material-overlay.work-item-overlay .work-item-edit-grid > .work-item-full-field {
+  grid-column: 1 / -1 !important;
+}
+
+.material-overlay.work-item-overlay .mat-mdc-form-field {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-family: "Google Sans Text", "Roboto", Arial, sans-serif !important;
+}
+.material-overlay.work-item-overlay .mat-mdc-form-field-subscript-wrapper { min-height: 0 !important; }
+.material-overlay.work-item-overlay .mat-mdc-text-field-wrapper {
+  padding: 0 14px !important;
+  border: 1px solid #dadce0 !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+.material-overlay.work-item-overlay .mat-mdc-form-field:hover .mat-mdc-text-field-wrapper,
+.material-overlay.work-item-overlay .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper,
+.material-overlay.work-item-overlay .mat-mdc-form-field:focus-within .mat-mdc-text-field-wrapper {
+  border-color: #9aa0a6 !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+.material-overlay.work-item-overlay .mdc-notched-outline,
+.material-overlay.work-item-overlay .mdc-notched-outline__leading,
+.material-overlay.work-item-overlay .mdc-notched-outline__notch,
+.material-overlay.work-item-overlay .mdc-notched-outline__trailing {
+  border: 0 !important;
+  border-color: transparent !important;
+}
+.material-overlay.work-item-overlay .mat-mdc-form-field-infix {
+  min-height: 48px !important;
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
+  box-sizing: border-box !important;
+}
+.material-overlay.work-item-overlay .mat-mdc-select-value,
+.material-overlay.work-item-overlay input.mat-mdc-input-element,
+.material-overlay.work-item-overlay textarea.mat-mdc-input-element {
+  color: #202124 !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+}
+.material-overlay.work-item-overlay textarea.mat-mdc-input-element {
+  min-height: 116px !important;
+  resize: vertical !important;
+}
+.material-overlay.work-item-overlay .item-details-section .mat-mdc-text-field-wrapper {
+  padding: 0 16px !important;
+}
+.material-overlay.work-item-overlay .item-details-section .mat-mdc-form-field-infix {
+  padding-top: 13px !important;
+  padding-bottom: 13px !important;
+}
+
+.material-overlay.work-item-overlay .work-item-user-options {
+  position: absolute !important;
+  z-index: 20 !important;
+  top: calc(100% - 2px) !important;
+  left: 0 !important;
+  right: 0 !important;
+  max-height: 220px !important;
+  overflow: auto !important;
+  padding: 6px !important;
+  border: 1px solid #dadce0 !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  box-shadow: 0 4px 16px rgba(60, 64, 67, .18) !important;
+}
+.material-overlay.work-item-overlay .work-item-user-options button {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  width: 100% !important;
+  padding: 10px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  color: #202124 !important;
+  text-align: left !important;
+}
+.material-overlay.work-item-overlay .work-item-user-options button:hover { background: #f8f9fa !important; }
+
+.material-overlay.work-item-overlay .work-item-dialog-actions {
+  display: flex !important;
+  flex: 0 0 auto !important;
+  align-items: center !important;
+  gap: 10px !important;
+  margin: 0 !important;
+  padding: 16px 28px 20px !important;
+  border: 0 !important;
+  border-top: 1px solid #e8eaed !important;
+  background: #fff !important;
+}
+.material-overlay.work-item-overlay .work-item-dialog-actions .toolbar-spacer { flex: 1 1 auto !important; }
+.material-overlay.work-item-overlay .work-item-dialog-actions button[mat-button] {
+  min-height: 40px !important;
+  padding: 0 18px !important;
+  border-radius: 999px !important;
+  color: #1967d2 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+.material-overlay.work-item-overlay .work-item-dialog-actions button[mat-flat-button] {
+  min-height: 40px !important;
+  padding: 0 22px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: #0b57d0 !important;
+  color: #fff !important;
+  box-shadow: none !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+.material-overlay.work-item-overlay .work-item-autosave-status {
+  flex: 0 0 auto !important;
+  margin: 0 28px 12px !important;
+  padding: 10px 12px !important;
+  border: 1px solid #d2e3fc !important;
+  border-radius: 10px !important;
+  background: #f8fbff !important;
+  color: #174ea6 !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 680px) {
+  .material-overlay.work-item-overlay { align-items: flex-start !important; padding: 8px !important; }
+  .material-overlay.work-item-overlay .work-item-dialog,
+  .material-overlay.work-item-overlay .work-item-dialog.product-card {
+    width: 100% !important;
+    max-width: none !important;
+    max-height: calc(100dvh - 16px) !important;
+    margin: auto 0 !important;
+    border-radius: 18px !important;
+  }
+  .material-overlay.work-item-overlay .work-item-dialog-header { padding: 18px 18px 16px !important; gap: 8px !important; }
+  .material-overlay.work-item-overlay .work-item-header-title-input { font-size: 21px !important; }
+  .material-overlay.work-item-overlay .work-item-dialog-content { padding: 20px 18px !important; }
+  .material-overlay.work-item-overlay .work-item-sections { gap: 24px !important; }
+  .material-overlay.work-item-overlay .work-item-edit-grid,
+  .material-overlay.work-item-overlay .metadata-edit-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 16px !important; }
+  .material-overlay.work-item-overlay .work-item-edit-grid .work-item-full-field { grid-column: auto !important; }
+  .material-overlay.work-item-overlay .work-item-dialog-actions { padding: 14px 18px 18px !important; }
+  .material-overlay.work-item-overlay .work-item-autosave-status { margin: 0 18px 10px !important; }
+}
+
+/* Angular Material internals inside this component require deep scoping. */
+:host ::ng-deep .material-overlay.work-item-overlay .mat-mdc-text-field-wrapper {
+  padding: 0 14px !important;
+  border: 1px solid #dadce0 !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+:host ::ng-deep .material-overlay.work-item-overlay .mat-mdc-form-field:hover .mat-mdc-text-field-wrapper,
+:host ::ng-deep .material-overlay.work-item-overlay .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper,
+:host ::ng-deep .material-overlay.work-item-overlay .mat-mdc-form-field:focus-within .mat-mdc-text-field-wrapper {
+  border-color: #9aa0a6 !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+:host ::ng-deep .material-overlay.work-item-overlay .mdc-notched-outline,
+:host ::ng-deep .material-overlay.work-item-overlay .mdc-notched-outline__leading,
+:host ::ng-deep .material-overlay.work-item-overlay .mdc-notched-outline__notch,
+:host ::ng-deep .material-overlay.work-item-overlay .mdc-notched-outline__trailing {
+  border: 0 !important;
+  border-color: transparent !important;
+}
+:host ::ng-deep .material-overlay.work-item-overlay .mat-mdc-form-field-infix {
+  min-height: 48px !important;
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
+  box-sizing: border-box !important;
+}
+:host ::ng-deep .material-overlay.work-item-overlay .mat-mdc-select-value,
+:host ::ng-deep .material-overlay.work-item-overlay input.mat-mdc-input-element,
+:host ::ng-deep .material-overlay.work-item-overlay textarea.mat-mdc-input-element {
+  color: #202124 !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+}
+:host ::ng-deep .material-overlay.work-item-overlay .item-details-section .mat-mdc-text-field-wrapper {
+  padding: 0 16px !important;
+}
+:host ::ng-deep .material-overlay.work-item-overlay .item-details-section .mat-mdc-form-field-infix {
+  padding-top: 13px !important;
+  padding-bottom: 13px !important;
+}
+
+/* FIX: work-item popup must sit above the board and all board-level layers. */
+.material-overlay.work-item-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 99999 !important;
+  isolation: isolate !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  box-sizing: border-box !important;
+}
+
+.material-overlay.work-item-overlay .work-item-dialog,
+.material-overlay.work-item-overlay .work-item-dialog.product-card {
+  position: relative !important;
+  z-index: 100000 !important;
+  flex: 0 1 960px !important;
+  width: min(960px, calc(100vw - 48px)) !important;
+  max-width: 960px !important;
+  max-height: calc(100dvh - 48px) !important;
+  min-width: 0 !important;
+  margin: auto !important;
+}
+
+/* Header and body use the same left/right content rails. */
+.material-overlay.work-item-overlay .work-item-dialog-header {
+  display: flex !important;
+  align-items: flex-start !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 24px 28px 20px !important;
+}
+.material-overlay.work-item-overlay .work-item-dialog-header .work-dialog-heading {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  align-items: stretch !important;
+  text-align: left !important;
+}
+.material-overlay.work-item-overlay .work-item-dialog-header .work-dialog-type {
+  display: grid !important;
+  grid-template-columns: max-content minmax(0, 1fr) !important;
+  align-items: center !important;
+  justify-content: start !important;
+  justify-items: start !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  text-align: left !important;
+}
+.material-overlay.work-item-overlay .work-item-dialog-header .work-item-title-label,
+.material-overlay.work-item-overlay .work-item-dialog-header .work-item-header-title-input {
+  grid-column: 1 / -1 !important;
+  justify-self: stretch !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+  text-align: left !important;
+  box-sizing: border-box !important;
+}
+.material-overlay.work-item-overlay .work-item-dialog-content {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 20px 28px 24px !important;
+}
+.material-overlay.work-item-overlay .work-item-sections,
+.material-overlay.work-item-overlay .work-item-section-card,
+.material-overlay.work-item-overlay .work-item-edit-grid,
+.material-overlay.work-item-overlay .metadata-edit-grid {
+  width: 100% !important;
+  min-width: 0 !important;
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+  box-sizing: border-box !important;
+}
+.material-overlay.work-item-overlay .work-item-dialog-actions {
+  box-sizing: border-box !important;
+  padding-left: 28px !important;
+  padding-right: 28px !important;
+}
+@media (max-width: 680px) {
+  .material-overlay.work-item-overlay { padding: 8px !important; }
+  .material-overlay.work-item-overlay .work-item-dialog,
+  .material-overlay.work-item-overlay .work-item-dialog.product-card {
+    width: calc(100vw - 16px) !important;
+    max-height: calc(100dvh - 16px) !important;
+  }
+  .material-overlay.work-item-overlay .work-item-dialog-header { padding: 18px 16px 16px !important; }
+  .material-overlay.work-item-overlay .work-item-dialog-content { padding: 16px !important; }
+  .material-overlay.work-item-overlay .work-item-dialog-actions { padding-left: 16px !important; padding-right: 16px !important; }
+}
+
+
+/* Description editor mirrors the Title editor inside the work-item popup. */
+.material-overlay.work-item-overlay .work-item-description-label {
+  display: block !important;
+  margin: 0 0 6px !important;
+  padding: 0 !important;
+  color: #5f6368 !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  letter-spacing: .1px !important;
+}
+.material-overlay.work-item-overlay .work-item-description-input {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  min-height: 44px !important;
+  margin: 0 !important;
+  padding: 0 0 8px !important;
+  box-sizing: border-box !important;
+  resize: vertical !important;
+  border: 0 !important;
+  border-bottom: 1px solid #dadce0 !important;
+  border-radius: 0 !important;
+  outline: none !important;
+  background: transparent !important;
+  color: #202124 !important;
+  -webkit-text-fill-color: #202124 !important;
+  box-shadow: none !important;
+  font: 400 16px/1.5 "Google Sans", "Roboto", Arial, sans-serif !important;
+  letter-spacing: 0 !important;
+  transition: border-color .16s ease !important;
+}
+.material-overlay.work-item-overlay .work-item-description-input::placeholder {
+  color: #80868b !important;
+  -webkit-text-fill-color: #80868b !important;
+  opacity: 1 !important;
+}
+.material-overlay.work-item-overlay .work-item-description-input:hover {
+  border-bottom-color: #9aa0a6 !important;
+}
+.material-overlay.work-item-overlay .work-item-description-input:focus,
+.material-overlay.work-item-overlay .work-item-description-input:focus-visible {
+  border: 0 !important;
+  border-bottom: 2px solid #1a73e8 !important;
+  padding-bottom: 7px !important;
+  outline: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Latest popup field refinements: taller Description and default outlined metadata controls. */
+.material-overlay.work-item-overlay .work-item-description-input {
+  min-height: 132px !important;
+  height: 132px !important;
+  line-height: 1.5 !important;
+  padding: 10px 0 10px !important;
+  resize: vertical !important;
+  box-sizing: border-box !important;
+}
+.material-overlay.work-item-overlay .work-item-description-input:focus,
+.material-overlay.work-item-overlay .work-item-description-input:focus-visible {
+  min-height: 132px !important;
+  height: 132px !important;
+  padding: 10px 0 9px !important;
+}
+
+/* Always-visible 1px outline for Status, Priority, Sprint, Assignee and Reporter. */
+:host ::ng-deep .material-overlay.work-item-overlay .metadata-edit-grid .work-item-field > .mat-mdc-form-field .mat-mdc-text-field-wrapper,
+:host ::ng-deep .material-overlay.work-item-overlay .metadata-edit-grid .work-item-field > .mat-mdc-form-field .mdc-text-field,
+:host ::ng-deep .material-overlay.work-item-overlay .metadata-edit-grid .work-item-field > .mat-mdc-form-field .mdc-text-field--outlined {
+  border: 1px solid #dadce0 !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+}
+:host ::ng-deep .material-overlay.work-item-overlay .metadata-edit-grid .work-item-field > .mat-mdc-form-field:hover .mat-mdc-text-field-wrapper,
+:host ::ng-deep .material-overlay.work-item-overlay .metadata-edit-grid .work-item-field > .mat-mdc-form-field:hover .mdc-text-field {
+  border-color: #bdc1c6 !important;
+}
+:host ::ng-deep .material-overlay.work-item-overlay .metadata-edit-grid .work-item-field > .mat-mdc-form-field:focus-within .mat-mdc-text-field-wrapper,
+:host ::ng-deep .material-overlay.work-item-overlay .metadata-edit-grid .work-item-field > .mat-mdc-form-field.mat-focused .mdc-text-field {
+  border-color: #1a73e8 !important;
+  border-width: 1px !important;
+  box-shadow: none !important;
+}
+:host ::ng-deep .material-overlay.work-item-overlay .metadata-edit-grid .work-item-field > .mat-mdc-form-field .mdc-notched-outline,
+:host ::ng-deep .material-overlay.work-item-overlay .metadata-edit-grid .work-item-field > .mat-mdc-form-field .mdc-notched-outline__leading,
+:host ::ng-deep .material-overlay.work-item-overlay .metadata-edit-grid .work-item-field > .mat-mdc-form-field .mdc-notched-outline__notch,
+:host ::ng-deep .material-overlay.work-item-overlay .metadata-edit-grid .work-item-field > .mat-mdc-form-field .mdc-notched-outline__trailing {
+  border: 0 !important;
+  border-color: transparent !important;
+}
+:host ::ng-deep .material-overlay.work-item-overlay .metadata-edit-grid .work-item-field > .mat-mdc-form-field .mat-mdc-form-field-infix {
+  min-height: 46px !important;
+  padding: 11px 12px !important;
+  box-sizing: border-box !important;
+}
+:host ::ng-deep .material-overlay.work-item-overlay .metadata-edit-grid .work-item-field > .mat-mdc-form-field .mat-mdc-select-trigger,
+:host ::ng-deep .material-overlay.work-item-overlay .metadata-edit-grid .work-item-field > .mat-mdc-form-field input.mat-mdc-input-element {
+  min-height: 22px !important;
+  line-height: 22px !important;
+}
+
+/* Latest request: content-sized title, tall description, outlined Parent Story. */
+.material-overlay.work-item-overlay .work-item-header-title-input {
+  field-sizing: content !important;
+  height: auto !important;
+  min-height: 44px !important;
+  max-height: none !important;
+  overflow-y: hidden !important;
+  resize: none !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.45 !important;
+  box-sizing: border-box !important;
+}
+.material-overlay.work-item-overlay .work-item-description-input,
+.material-overlay.work-item-overlay .work-item-description-input:focus,
+.material-overlay.work-item-overlay .work-item-description-input:focus-visible {
+  min-height: 600px !important;
+  height: 600px !important;
+  box-sizing: border-box !important;
+  resize: vertical !important;
+}
+:host ::ng-deep .material-overlay.work-item-overlay .linked-edit-grid .work-item-field > .mat-mdc-form-field .mat-mdc-text-field-wrapper,
+:host ::ng-deep .material-overlay.work-item-overlay .linked-edit-grid .work-item-field > .mat-mdc-form-field .mdc-text-field,
+:host ::ng-deep .material-overlay.work-item-overlay .linked-edit-grid .work-item-field > .mat-mdc-form-field .mdc-text-field--outlined {
+  border: 1px solid #dadce0 !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+}
+:host ::ng-deep .material-overlay.work-item-overlay .linked-edit-grid .work-item-field > .mat-mdc-form-field:hover .mat-mdc-text-field-wrapper,
+:host ::ng-deep .material-overlay.work-item-overlay .linked-edit-grid .work-item-field > .mat-mdc-form-field:hover .mdc-text-field {
+  border-color: #bdc1c6 !important;
+}
+:host ::ng-deep .material-overlay.work-item-overlay .linked-edit-grid .work-item-field > .mat-mdc-form-field:focus-within .mat-mdc-text-field-wrapper,
+:host ::ng-deep .material-overlay.work-item-overlay .linked-edit-grid .work-item-field > .mat-mdc-form-field.mat-focused .mdc-text-field {
+  border-color: #1a73e8 !important;
+  border-width: 1px !important;
+}
+:host ::ng-deep .material-overlay.work-item-overlay .linked-edit-grid .work-item-field > .mat-mdc-form-field .mdc-notched-outline,
+:host ::ng-deep .material-overlay.work-item-overlay .linked-edit-grid .work-item-field > .mat-mdc-form-field .mdc-notched-outline__leading,
+:host ::ng-deep .material-overlay.work-item-overlay .linked-edit-grid .work-item-field > .mat-mdc-form-field .mdc-notched-outline__notch,
+:host ::ng-deep .material-overlay.work-item-overlay .linked-edit-grid .work-item-field > .mat-mdc-form-field .mdc-notched-outline__trailing {
+  border: 0 !important;
+  border-color: transparent !important;
+}
+
+/* Latest request: Description field height is 300px. */
+.material-overlay.work-item-overlay .work-item-description-input,
+.material-overlay.work-item-overlay .work-item-description-input:focus,
+.material-overlay.work-item-overlay .work-item-description-input:focus-visible {
+  min-height: 300px !important;
+  height: 300px !important;
+  box-sizing: border-box !important;
+  resize: vertical !important;
+}
+
+/* Board member chips: restore breathing room around avatar, name and count.
+   Scoped to the board's regular and full-screen Scrum people filters. */
+.people-chips mat-chip,
+.focus-people-chips mat-chip,
+:host ::ng-deep .people-chips .mat-mdc-chip,
+:host ::ng-deep .focus-people-chips .mat-mdc-chip {
+  box-sizing: border-box !important;
+  min-height: 40px !important;
+  height: auto !important;
+  padding: 4px 12px !important;
+  margin: 2px 0 !important;
+  gap: 9px !important;
+  overflow: visible !important;
+}
+
+:host ::ng-deep .people-chips .mdc-evolution-chip__action--primary,
+:host ::ng-deep .focus-people-chips .mdc-evolution-chip__action--primary {
+  padding: 4px 12px !important;
+  min-width: 0 !important;
+}
+
+:host ::ng-deep .people-chips .mdc-evolution-chip__text-label,
+:host ::ng-deep .focus-people-chips .mdc-evolution-chip__text-label {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 9px !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  white-space: nowrap !important;
+}
+
+.people-chips .mini-avatar,
+.focus-people-chips .mini-avatar {
+  box-sizing: border-box !important;
+  width: 26px !important;
+  height: 26px !important;
+  min-width: 26px !important;
+  flex: 0 0 26px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  line-height: 1 !important;
+}
+
+.people-chips mat-chip > span:not(.mini-avatar),
+.focus-people-chips mat-chip > span:not(.mini-avatar) {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  padding: 0 2px !important;
+  line-height: 1.3;
+}
+
+.people-chips mat-chip b,
+.focus-people-chips mat-chip b {
+  box-sizing: border-box !important;
+  min-width: 24px !important;
+  height: 24px !important;
+  padding: 0 7px !important;
+  margin: 0 0 0 2px !important;
+  flex: 0 0 auto !important;
+  border-radius: 12px !important;
+  line-height: 24px !important;
+  text-align: center !important;
+}
+
+@media (max-width: 768px) {
+  .people-chips mat-chip,
+  .focus-people-chips mat-chip,
+  :host ::ng-deep .people-chips .mat-mdc-chip,
+  :host ::ng-deep .focus-people-chips .mat-mdc-chip {
+    min-height: 36px !important;
+    padding: 3px 9px !important;
+    gap: 7px !important;
+  }
+  .people-chips .mini-avatar,
+  .focus-people-chips .mini-avatar {
+    width: 23px !important;
+    height: 23px !important;
+    min-width: 23px !important;
+    flex-basis: 23px !important;
+  }
+}
+
+
+/* Sprint progress summary available from the full-screen Kanban toolbar. */
+.focus-create-actions .focus-sprint-progress-button { white-space: nowrap; }
+.board-sprint-progress-backdrop {
+  position: fixed; inset: 0; z-index: 2300; display: flex; align-items: center; justify-content: center;
+  padding: 20px; background: rgba(15, 23, 42, .48);
+}
+.board-sprint-progress-dialog {
+  width: min(760px, 96vw); max-height: min(90vh, 860px); overflow: auto; border-radius: 16px;
+  border: 1px solid #d3d3d3; background: #fff; box-shadow: 0 22px 70px rgba(17,24,39,.20);
+}
+.board-sprint-progress-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding:20px 22px 16px; border-bottom:1px solid #edf0f4; }
+.board-sprint-progress-header h2 { margin:5px 0 6px; font-size:20px; font-weight:650; color:#111827; }
+.board-sprint-progress-header p { margin:0; color:#6b7280; font-size:12px; }
+.board-sprint-progress-body { padding:20px 22px; }
+.board-sprint-progress-overall { padding:16px; border:1px solid #e5e7eb; border-radius:12px; background:#fbfdff; }
+.board-sprint-progress-overall > div { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+.board-sprint-progress-overall span,.board-sprint-progress-metrics span { color:#6b7280; font-size:12px; }
+.board-sprint-progress-overall strong { color:#1967d2; font-size:25px; }
+.board-sprint-progress-metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:14px 0 22px; }
+.board-sprint-progress-metrics > div { display:flex; flex-direction:column; gap:8px; padding:14px; border:1px solid #e5e7eb; border-radius:10px; }
+.board-sprint-progress-metrics strong { color:#111827; font-size:18px; }
+.board-sprint-status-breakdown h3 { margin:0 0 14px; font-size:14px; }
+.board-sprint-status-row { display:grid; grid-template-columns:minmax(100px,1fr) 32px minmax(90px,1.4fr); align-items:center; gap:12px; margin:12px 0; font-size:12px; }
+.board-sprint-status-row > span { color:#4b5563; }
+.board-sprint-status-track { height:7px; overflow:hidden; border-radius:8px; background:#eef2f7; }
+.board-sprint-status-track span { display:block; height:100%; border-radius:8px; background:#0b57d0; }
+.board-sprint-progress-footer { display:flex; justify-content:flex-end; padding:12px 22px 18px; border-top:1px solid #edf0f4; }
+@media (max-width:650px) { .board-sprint-progress-metrics { grid-template-columns:1fr; } .board-sprint-progress-backdrop { padding:10px; } }

@@ -55,61 +55,7 @@
 
     <div class="search-area">
 
-      <div class="search-box">
-
-        <button
-          type="button"
-          class="search-button"
-          (click)="focusSearch()"
-          aria-label="Search">
-
-          <svg viewBox="0 0 24 24">
-            <circle
-              cx="10.8"
-              cy="10.8"
-              r="6.8">
-            </circle>
-
-            <path d="M16 16l5 5"></path>
-          </svg>
-
-        </button>
-
-
-        <input
-          #searchInput
-          class="search-input"
-          type="text"
-          [(ngModel)]="searchQuery"
-          placeholder="Search projects, users, teams..."
-          autocomplete="off" />
-
-
-        <button
-          *ngIf="searchQuery"
-          type="button"
-          class="search-clear"
-          (click)="clearSearch()"
-          aria-label="Clear search">
-
-          <svg viewBox="0 0 24 24">
-            <path d="M6 6l12 12"></path>
-            <path d="M18 6L6 18"></path>
-          </svg>
-
-        </button>
-
-
-        <span
-          *ngIf="!searchQuery"
-          class="search-shortcut">
-
-          ⌘ K
-
-        </span>
-
-      </div>
-
+    
     </div>
 
 
@@ -477,224 +423,37 @@
            NAVIGATION
       ====================================================== -->
 
-      <nav
-        class="navigation"
-        aria-label="Main navigation">
-
-
-        <!-- PRIMARY -->
-        <button
-          *ngFor="let item of primaryNavigation"
-          type="button"
-          class="nav-item"
-          [class.active]="isActive(item.id)"
-          [class.collapsed-item]="isCollapsed"
-          (click)="setActive(item.id)"
-          [attr.title]="isCollapsed ? item.label : null">
-
-
-          <span class="nav-icon">
-
-
-            <!-- DASHBOARD -->
-            <svg
-              *ngIf="item.icon === 'dashboard'"
-              viewBox="0 0 24 24">
-
-              <path d="M4 4h7v7H4z"></path>
-              <path d="M13 4h7v7h-7z"></path>
-              <path d="M4 13h7v7H4z"></path>
-              <path d="M13 13h7v7h-7z"></path>
-
-            </svg>
-
-
-            <!-- PRODUCTS -->
-            <svg
-              *ngIf="item.icon === 'products'"
-              viewBox="0 0 24 24">
-
-              <path d="M4 7l8-4 8 4-8 4z"></path>
-              <path d="M4 7v10l8 4 8-4V7"></path>
-              <path d="M12 11v10"></path>
-
-            </svg>
-
-
-            <!-- PROJECTS -->
-            <svg
-              *ngIf="item.icon === 'projects'"
-              viewBox="0 0 24 24">
-
-              <path d="M3 6h7l2 2h9v11H3z"></path>
-
-            </svg>
-
-
-            <!-- EPICS -->
-            <svg
-              *ngIf="item.icon === 'epics'"
-              viewBox="0 0 24 24">
-
-              <path d="M4 5h16v14H4z"></path>
-              <path d="M8 9h8"></path>
-              <path d="M8 13h6"></path>
-
-            </svg>
-
-
-            <!-- TESTS -->
-            <svg
-              *ngIf="item.icon === 'tests'"
-              viewBox="0 0 24 24">
-
-              <path d="M4 5h16v14H4z"></path>
-              <path d="M7 9l2 2 4-4"></path>
-              <path d="M7 15h8"></path>
-
-            </svg>
-
-
-            <!-- RELEASES -->
-            <svg
-              *ngIf="item.icon === 'releases'"
-              viewBox="0 0 24 24">
-
-              <path d="M5 19L19 5"></path>
-              <path d="M9 5h10v10"></path>
-
-            </svg>
-
-
-            <!-- DOCS -->
-            <svg
-              *ngIf="item.icon === 'docs'"
-              viewBox="0 0 24 24">
-
-              <path d="M6 3h9l4 4v14H6z"></path>
-              <path d="M15 3v5h4"></path>
-              <path d="M9 12h6"></path>
-              <path d="M9 16h6"></path>
-
-            </svg>
-
-          </span>
-
-
-          <span
-            class="nav-label"
-            *ngIf="!isCollapsed">
-
-            {{ item.label }}
-
-          </span>
-
-        </button>
-
-
-        <!-- ADMINISTRATION -->
-        <div
-          class="navigation-section"
-          *ngIf="!isCollapsed">
-
-          Administration
-
-        </div>
-
-
-        <div
-          class="navigation-divider"
-          *ngIf="isCollapsed">
-        </div>
-
-
-        <!-- ADMIN -->
-        <button
-          *ngFor="let item of administrationNavigation"
-          type="button"
-          class="nav-item"
-          [class.active]="isActive(item.id)"
-          [class.collapsed-item]="isCollapsed"
-          (click)="setActive(item.id)"
-          [attr.title]="isCollapsed ? item.label : null">
-
-
-          <span class="nav-icon">
-
-
-            <!-- ROLES -->
-            <svg
-              *ngIf="item.icon === 'roles'"
-              viewBox="0 0 24 24">
-
-              <path
-                d="M12 3l7 3v5c0 5-3.5 8.5-7 10
-                   -3.5-1.5-7-5-7-10V6z">
-              </path>
-
-              <path d="M9 12l2 2 4-4"></path>
-
-            </svg>
-
-
-            <!-- USERS -->
-            <svg
-              *ngIf="item.icon === 'users'"
-              viewBox="0 0 24 24">
-
-              <circle
-                cx="12"
-                cy="8"
-                r="3.5">
-              </circle>
-
-              <path
-                d="M5 20a7 7 0 0 1 14 0">
-              </path>
-
-            </svg>
-
-
-            <!-- TEAMS -->
-            <svg
-              *ngIf="item.icon === 'teams'"
-              viewBox="0 0 24 24">
-
-              <circle
-                cx="9"
-                cy="8"
-                r="3">
-              </circle>
-
-              <circle
-                cx="17"
-                cy="9"
-                r="2.5">
-              </circle>
-
-              <path
-                d="M3 20a6 6 0 0 1 12 0">
-              </path>
-
-              <path
-                d="M15 15a5 5 0 0 1 6 5">
-              </path>
-
-            </svg>
-
-          </span>
-
-
-          <span
-            class="nav-label"
-            *ngIf="!isCollapsed">
-
-            {{ item.label }}
-
-          </span>
-
-        </button>
-
+      <nav class="navigation" aria-label="Main navigation">
+        <ng-container *ngTemplateOutlet="navigationGroup; context: { title: '', items: primaryNavigation, first: true }"></ng-container>
+        <ng-container *ngTemplateOutlet="navigationGroup; context: { title: 'Plan & Track', items: planningNavigation }"></ng-container>
+        <ng-container *ngTemplateOutlet="navigationGroup; context: { title: 'Quality', items: qualityNavigation }"></ng-container>
+        <ng-container *ngTemplateOutlet="navigationGroup; context: { title: 'Delivery', items: deliveryNavigation }"></ng-container>
+        <ng-container *ngTemplateOutlet="navigationGroup; context: { title: 'Knowledge', items: knowledgeNavigation }"></ng-container>
+        <ng-container *ngTemplateOutlet="navigationGroup; context: { title: 'People & Access', items: peopleNavigation }"></ng-container>
+
+        <ng-template #navigationGroup let-title="title" let-items="items" let-first="first">
+          <div class="navigation-section" *ngIf="title && !isCollapsed">{{ title }}</div>
+          <div class="navigation-divider" *ngIf="title && isCollapsed"></div>
+          <button *ngFor="let item of items" type="button" class="nav-item"
+            [class.active]="isActive(item.id)" [class.collapsed-item]="isCollapsed"
+            (click)="setActive(item.id)" [attr.title]="isCollapsed ? item.label : null">
+            <span class="nav-icon">
+            <svg *ngIf="item.icon === 'dashboard'" viewBox="0 0 24 24"><path d="M4 4h7v7H4z"></path><path d="M13 4h7v7h-7z"></path><path d="M4 13h7v7H4z"></path><path d="M13 13h7v7h-7z"></path></svg>
+            <svg *ngIf="item.icon === 'products'" viewBox="0 0 24 24"><path d="M4 7l8-4 8 4-8 4z"></path><path d="M4 7v10l8 4 8-4V7"></path><path d="M12 11v10"></path></svg>
+            <svg *ngIf="item.icon === 'projects'" viewBox="0 0 24 24"><path d="M3 6h7l2 2h9v11H3z"></path></svg>
+            <svg *ngIf="item.icon === 'boards'" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M9 4v16M15 4v16"></path></svg>
+            <svg *ngIf="item.icon === 'epics'" viewBox="0 0 24 24"><path d="M4 5h16v14H4z"></path><path d="M8 9h8M8 13h6"></path></svg>
+            <svg *ngIf="item.icon === 'tests'" viewBox="0 0 24 24"><path d="M4 5h16v14H4z"></path><path d="M7 9l2 2 4-4M7 15h8"></path></svg>
+            <svg *ngIf="item.icon === 'issues'" viewBox="0 0 24 24"><path d="M12 3l9 17H3z"></path><path d="M12 9v5M12 17v.01"></path></svg>
+            <svg *ngIf="item.icon === 'releases'" viewBox="0 0 24 24"><path d="M5 19L19 5M9 5h10v10"></path></svg>
+            <svg *ngIf="item.icon === 'docs'" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"></path><path d="M15 3v5h4M9 12h6M9 16h6"></path></svg>
+            <svg *ngIf="item.icon === 'roles'" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6z"></path><path d="M9 12l2 2 4-4"></path></svg>
+            <svg *ngIf="item.icon === 'users'" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20a7 7 0 0 1 14 0"></path></svg>
+            <svg *ngIf="item.icon === 'teams'" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"></circle><circle cx="17" cy="9" r="2.5"></circle><path d="M3 20a6 6 0 0 1 12 0M15 15a5 5 0 0 1 6 5"></path></svg>
+            </span>
+            <span class="nav-label" *ngIf="!isCollapsed">{{ item.label }}</span>
+          </button>
+        </ng-template>
       </nav>
 
 
@@ -767,7 +526,6 @@
         <ng-container
           *ngIf="!isViewerRoute()">
 
-
           <app-dashboard
             *ngIf="activeMenu === 'dashboard'">
           </app-dashboard>
@@ -777,26 +535,25 @@
             *ngIf="activeMenu === 'roles'">
           </app-roles>
 
-
           <app-users
             *ngIf="activeMenu === 'users'">
           </app-users>
-
 
           <app-teams
             *ngIf="activeMenu === 'teams'">
           </app-teams>
 
-
           <app-products
             *ngIf="activeMenu === 'products'">
           </app-products>
-
 
           <app-projects
             *ngIf="activeMenu === 'projects'">
           </app-projects>
 
+          <app-boards
+            *ngIf="activeMenu === 'boards'">
+          </app-boards>
 
           <app-epics
             *ngIf="activeMenu === 'epics'">
@@ -806,6 +563,9 @@
             *ngIf="activeMenu === 'test-cases'">
           </app-testcases>
 
+          <app-issues
+            *ngIf="activeMenu === 'issues'">
+          </app-issues>
 
           <app-releases
             *ngIf="activeMenu === 'releases'">

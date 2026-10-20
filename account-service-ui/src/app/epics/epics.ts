@@ -19,6 +19,9 @@ import { environment } from '../../environment';
 import { AuthService } from '../auth.service';
 
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatTableModule } from '@angular/material/table';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -35,6 +38,8 @@ export interface Team {
 
 export interface Sprint {
   id: number;
+  /** Display name of the project that owns this sprint (used by the all-projects sprint filter). */
+  projectName?: string;
   projectId?: number;
   project_id?: number;
   name: string;
@@ -91,14 +96,34 @@ export interface TestCase {
   title?: string;
   name?: string;
   executionStatus?: string;
+  execution_status?: string;
+  testCaseCode?: string;
+  test_case_code?: string;
+  code?: string;
   projectId?: number;
   project_id?: number;
+  project?: any;
   epicId?: number;
   epic_id?: number;
+  epic?: any;
   storyId?: number;
   story_id?: number;
+  story?: any;
+  userStory?: any;
+  user_story?: any;
   taskId?: number;
   task_id?: number;
+  task?: any;
+  testSuiteId?: number;
+  test_suite_id?: number;
+  testSuite?: any;
+  testPlanId?: number;
+  test_plan_id?: number;
+  testPlan?: any;
+  status?: string;
+  priority?: string;
+  type?: string;
+  description?: string;
 }
 
 export interface TaskNode {
@@ -221,6 +246,29 @@ export interface SprintProgress {
   tasks: ProgressStatusMetrics;
 }
 
+export interface OtherWorkItem {
+  type: 'EPIC' | 'STORY' | 'TASK';
+  id: number;
+  title: string;
+  code?: string;
+  sprint: Sprint;
+  status: string;
+  priority?: string;
+  assignee_user_id?: number | null;
+  reporter_user_id?: number | null;
+  parentEpicName?: string;
+  parentEpicCode?: string;
+  parentStoryTitle?: string;
+  originalItem: EpicNode | StoryNode | TaskNode;
+  projectName?: string;
+  sprintName?: string;
+}
+
+export interface OtherWorkGroup {
+  sprint: Sprint;
+  items: OtherWorkItem[];
+}
+
 export interface KanbanItem {
   type: 'EPIC' | 'STORY' | 'TASK';
   id?: number;
@@ -237,6 +285,8 @@ export interface KanbanItem {
   issues?: Issue[];
   testCases?: TestCase[];
   originalItem: EpicNode | StoryNode | TaskNode;
+  projectName?: string;
+  sprintName?: string;
 }
 
 @Pipe({
@@ -259,6 +309,9 @@ export class ResolveUserPipe implements PipeTransform {
     FormsModule,
     ResolveUserPipe,
     MatButtonModule,
+    MatCardModule,
+    MatChipsModule,
+    MatTableModule,
     MatButtonToggleModule,
     MatCheckboxModule,
     MatFormFieldModule,
@@ -273,6 +326,8 @@ export class ResolveUserPipe implements PipeTransform {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Epics implements OnInit {
+  showEpicTests = false;
+  readonly issueDisplayedColumns = ['issue', 'status', 'sprint', 'priority', 'linkedWork', 'assignee', 'reporter', 'actions'];
   private http = inject(HttpClient);
   private auth = inject(AuthService);
 
@@ -296,6 +351,10 @@ export class Epics implements OnInit {
   teamMembers = signal<any[]>([]);
   sprints = signal<Sprint[]>([]);
   hierarchyTree = signal<EpicNode[]>([]);
+  /** Board-only hierarchy aggregated across every project; directory views remain project-scoped. */
+  boardHierarchyTree = signal<EpicNode[]>([]);
+  showBoardSprintFilters = signal(false);
+  selectedBoardSprintFilter = signal<number | 'ALL'>('ALL');
   projectTestcases = signal<TestCase[]>([]);
   projectIssues = signal<Issue[]>([]);
   storyModalEpics = signal<EpicNode[]>([]);
@@ -303,7 +362,7 @@ export class Epics implements OnInit {
 
   userMap = signal<Map<number, any>>(new Map());
 
-  activeTab = signal<'TREE' | 'KANBAN'>('TREE');
+  activeTab = signal<'TREE' | 'KANBAN'>('KANBAN');
 
   /**
    * Primary workspace presentation:
@@ -312,9 +371,81 @@ export class Epics implements OnInit {
    * TASKS = only Tasks
    * ALL = complete Epic -> Story -> Task hierarchy grouped by Sprint
    */
-  workItemMode = signal<'EPICS' | 'STORIES' | 'TASKS' | 'ALL' | 'ISSUES'>('EPICS');
+  workItemMode = signal<'EPICS' | 'STORIES' | 'TASKS' | 'ALL' | 'OTHER' | 'ISSUES'>('EPICS');
+  selectedEpicsTabIndex = 0;
+  isKanbanFullscreen = signal(false);
+
 
   showFilters = signal(false);
+
+  // Directory tables use filters directly in each column header.
+  directoryColumnFilters = signal({
+    key: '',
+    summary: '',
+    status: 'ALL',
+    sprint: 'ALL' as number | 'ALL',
+    priority: 'ALL',
+    assignee: 'ALL' as number | 'ALL',
+    reporter: 'ALL' as number | 'ALL'
+  });
+
+  updateDirectoryColumnFilter(
+    key: 'key' | 'summary' | 'status' | 'sprint' | 'priority' | 'assignee' | 'reporter',
+    value: any
+  ): void {
+    this.directoryColumnFilters.update(filters => ({ ...filters, [key]: value }));
+  }
+
+  clearDirectoryColumnFilters(): void {
+    this.directoryColumnFilters.set({
+      key: '', summary: '', status: 'ALL', sprint: 'ALL',
+      priority: 'ALL', assignee: 'ALL', reporter: 'ALL'
+    });
+  }
+
+  private directoryRowMatches(row: any): boolean {
+    const f = this.directoryColumnFilters();
+    const norm = (value: unknown) => String(value ?? '').trim().toLowerCase();
+    if (f.key && !norm(row.code).includes(norm(f.key))) return false;
+    if (f.summary && !norm(row.title).includes(norm(f.summary))) return false;
+    if (f.status !== 'ALL' && norm(row.status).toUpperCase() !== f.status) return false;
+    if (f.sprint !== 'ALL' && Number(row.sprintId) !== Number(f.sprint)) return false;
+    if (f.priority !== 'ALL' && norm(row.priority).toUpperCase() !== f.priority) return false;
+    if (f.assignee !== 'ALL' && Number(row.assigneeId) !== Number(f.assignee)) return false;
+    if (f.reporter !== 'ALL' && Number(row.reporterId) !== Number(f.reporter)) return false;
+    return true;
+  }
+
+  epicTableRows = computed(() => this.epicDirectoryGroups().flatMap(group =>
+    group.items.map(item => ({
+      type: 'EPIC', code: item.epic.epic_code || `E-${item.epic.id}`,
+      title: item.epic.name, status: item.epic.status || 'BACKLOG',
+      sprintId: group.sprint.id, sprintName: group.sprint.name,
+      priority: (item.epic as any).priority || '',
+      assigneeId: item.epic.assignee_user_id, reporterId: item.epic.reporter_user_id,
+      item: item.epic, parent: item.epic.name
+    }))
+  ).filter(row => this.directoryRowMatches(row)));
+
+  storyTableRows = computed(() => this.storyDirectoryGroups().flatMap(group =>
+    group.items.map(item => ({
+      type: 'STORY', code: `S-${item.story.id}`, title: item.story.title,
+      status: item.story.status || 'BACKLOG', sprintId: group.sprint.id,
+      sprintName: group.sprint.name, priority: item.story.priority || '',
+      assigneeId: item.story.assignee_user_id, reporterId: item.story.reporter_user_id,
+      item: item.story, parent: item.epicName
+    }))
+  ).filter(row => this.directoryRowMatches(row)));
+
+  taskTableRows = computed(() => this.taskDirectoryGroups().flatMap(group =>
+    group.items.map(item => ({
+      type: 'TASK', code: `T-${item.task.id}`, title: item.task.title,
+      status: item.task.status || 'BACKLOG',
+      sprintId: this.resolveItemSprintId(item.task), sprintName: group.sprint.name,
+      priority: item.task.priority || '', assigneeId: item.task.assignee_user_id,
+      reporterId: item.task.reporter_user_id, item: item.task, parent: item.storyTitle
+    }))
+  ).filter(row => this.directoryRowMatches(row)));
   searchExpanded = signal(false);
 
   selectedProjectId = signal<number | null>(1);
@@ -367,6 +498,53 @@ export class Epics implements OnInit {
 
   sprintProgressOpen = signal(false);
   sprintProgress = signal<SprintProgress | null>(null);
+
+  /** Sprint lifecycle prompt shown when no sprint is currently ACTIVE. */
+  sprintStartPromptOpen = signal(false);
+  sprintStartCandidate = computed<Sprint | null>(() => {
+    const list = this.projectSprints()
+      .filter(s => String(s.status || '').toUpperCase() !== 'COMPLETED');
+
+    if (!list.length) return null;
+
+    const now = Date.now();
+
+    const inWindow = list.find(s => {
+      if (!s.startDate || !s.endDate) return false;
+      return now >= new Date(s.startDate).getTime() &&
+        now <= new Date(s.endDate).getTime();
+    });
+    if (inWindow) return inWindow;
+
+    const future = [...list]
+      .filter(s => s.startDate && new Date(s.startDate).getTime() > now)
+      .sort((a, b) => new Date(a.startDate!).getTime() - new Date(b.startDate!).getTime());
+    if (future.length) return future[0];
+
+    return [...list].sort((a, b) => {
+      const aTime = a.startDate ? new Date(a.startDate).getTime() : Number.MAX_SAFE_INTEGER;
+      const bTime = b.startDate ? new Date(b.startDate).getTime() : Number.MAX_SAFE_INTEGER;
+      if (aTime !== bTime) return aTime - bTime;
+      return this.extractSprintNumber(a.name) - this.extractSprintNumber(b.name);
+    })[0] || null;
+  });
+
+  currentSprintId = computed<number | null>(() => {
+    const sprint = this.activeCurrentSprint();
+    return sprint ? Number(sprint.id) : null;
+  });
+
+  currentSprintIsRunning = computed(() => this.currentSprintId() !== null);
+
+  currentSprintEpicCount = computed(() => {
+    const currentId = this.currentSprintId();
+    if (currentId === null) return 0;
+    return this.hierarchyTree().filter(epic =>
+      this.resolveItemSprintId(epic) === Number(currentId)
+    ).length;
+  });
+
+  private sprintPromptDismissedProjectId: number | null = null;
 
   availableStories = computed<StoryNode[]>(() => {
     const stories = this.projectStories();
@@ -427,6 +605,27 @@ export class Epics implements OnInit {
     return project?.name || 'Default Workspace';
   });
 
+  /** Sprint filter options are limited to the project currently selected in the header. */
+  allBoardSprints = computed<Sprint[]>(() => {
+    const projectId = Number(this.selectedProjectId());
+    const projectNames = new Map(this.projects().map((p: any) => [Number(p.id), String(p.name || `Project ${p.id}`)]));
+    return [...this.sprints()]
+      .filter(s => {
+        const sprintProjectId = s.projectId ?? s.project_id;
+        // When the API omits project ownership, the selected-project sprint endpoint is authoritative.
+        return sprintProjectId == null || Number(sprintProjectId) === projectId;
+      })
+      .map(s => ({
+        ...s,
+        projectName: projectNames.get(Number(s.projectId ?? s.project_id ?? projectId)) || ''
+      } as Sprint))
+      .sort((a, b) => {
+        const aTime = a.startDate ? new Date(a.startDate).getTime() : Number.MAX_SAFE_INTEGER;
+        const bTime = b.startDate ? new Date(b.startDate).getTime() : Number.MAX_SAFE_INTEGER;
+        return aTime !== bTime ? aTime - bTime : String(a.name).localeCompare(String(b.name));
+      });
+  });
+
   projectSprints = computed(() => {
     const projectId = this.selectedProjectId();
     let list = [...this.sprints()];
@@ -447,55 +646,56 @@ export class Epics implements OnInit {
   });
 
   activeCurrentSprint = computed<Sprint | null>(() => {
-    const list = this.projectSprints();
-    if (!list.length) return null;
+    return this.projectSprints().find(s =>
+      String(s.status || '').toUpperCase() === 'ACTIVE'
+    ) || null;
+  });
 
+  /** Same default cycle resolution as Boards: in-date-range, ACTIVE, then a project sprint fallback. */
+  currentProjectCycleSprint = computed<Sprint | null>(() => {
+    const sprints = this.projectSprints();
     const now = Date.now();
-
-    const dateActive = list.find(s => {
+    const inDateRange = sprints.find(s => {
       if (!s.startDate || !s.endDate) return false;
-      return now >= new Date(s.startDate).getTime() &&
-        now <= new Date(s.endDate).getTime();
+      const start = new Date(s.startDate).getTime();
+      const end = new Date(s.endDate).getTime();
+      return Number.isFinite(start) && Number.isFinite(end) && now >= start && now <= end;
     });
-
-    return dateActive ||
-      list.find(s => (s.status || '').toUpperCase() === 'ACTIVE') ||
-      list[0] ||
-      null;
+    // If multiple cycles are marked ACTIVE, the first one in the selected
+    // project's ordered sprint list is the default. Only use date range when
+    // there is no ACTIVE cycle at all.
+    return this.activeCurrentSprint()
+      || inDateRange
+      || sprints.find(s => String(s.status || '').toUpperCase() !== 'COMPLETED')
+      || sprints[0]
+      || null;
   });
 
   displayedKanbanSprint = computed<Sprint | null>(() => {
-    const filter = this.selectedSprintFilter();
-    const list = this.projectSprints();
-
-    if (filter !== 'ALL') {
-      return list.find(s => Number(s.id) === Number(filter)) ||
-        this.activeCurrentSprint();
-    }
-
-    return this.activeCurrentSprint() ||
-      list[0] ||
-      { id: 0, name: 'All Sprint Cycles', status: 'ACTIVE' };
+    const filter = this.selectedBoardSprintFilter();
+    if (filter === 'ALL') return null;
+    return this.allBoardSprints().find(s => Number(s.id) === Number(filter)) || null;
   });
 
   activeSprintUsers = computed(() => {
-    const sprint = this.displayedKanbanSprint();
-    if (!sprint) return [];
-
+    const selectedSprint = this.displayedKanbanSprint();
+    const allSprintsSelected = this.selectedBoardSprintFilter() === 'ALL';
     const ids = new Set<number>();
 
-    for (const epic of this.hierarchyTree()) {
-      if (sprint.id === 0 || Number(epic.sprint_id) === Number(sprint.id)) {
+    // With "All sprints" selected, show every assignee present in the board,
+    // rather than returning an empty member list because there is no single sprint.
+    for (const epic of this.boardHierarchyTree()) {
+      if (allSprintsSelected || Number(this.resolveItemSprintId(epic)) === Number(selectedSprint?.id)) {
         if (epic.assignee_user_id) ids.add(Number(epic.assignee_user_id));
       }
 
       for (const story of epic.stories || []) {
-        if (sprint.id === 0 || Number(story.sprint_id) === Number(sprint.id)) {
+        if (allSprintsSelected || Number(this.resolveItemSprintId(story, epic.sprint_id)) === Number(selectedSprint?.id)) {
           if (story.assignee_user_id) ids.add(Number(story.assignee_user_id));
         }
 
         for (const task of story.tasks || []) {
-          if (sprint.id === 0 || Number(task.sprint_id) === Number(sprint.id)) {
+          if (allSprintsSelected || Number(this.resolveItemSprintId(task, story.sprint_id ?? epic.sprint_id)) === Number(selectedSprint?.id)) {
             if (task.assignee_user_id) ids.add(Number(task.assignee_user_id));
           }
         }
@@ -507,6 +707,29 @@ export class Epics implements OnInit {
       .filter(Boolean);
   });
 
+
+  sprintItemsForUser(userId: number): number {
+    const selectedSprint = this.displayedKanbanSprint();
+    const allSprintsSelected = this.selectedBoardSprintFilter() === 'ALL';
+    let count = 0;
+
+    for (const epic of this.boardHierarchyTree()) {
+      const epicSprint = this.resolveItemSprintId(epic);
+      if ((allSprintsSelected || epicSprint === Number(selectedSprint?.id)) && Number(epic.assignee_user_id) === Number(userId)) count++;
+
+      for (const story of epic.stories || []) {
+        const storySprint = this.resolveItemSprintId(story, epic.sprint_id);
+        if ((allSprintsSelected || storySprint === Number(selectedSprint?.id)) && Number(story.assignee_user_id) === Number(userId)) count++;
+
+        for (const task of story.tasks || []) {
+          const taskSprint = this.resolveItemSprintId(task, story.sprint_id ?? epic.sprint_id);
+          if ((allSprintsSelected || taskSprint === Number(selectedSprint?.id)) && Number(task.assignee_user_id) === Number(userId)) count++;
+        }
+      }
+    }
+
+    return count;
+  }
 
   private matchesTeamFilter(item: any): boolean {
     const teamFilter = this.selectedTeamFilter();
@@ -523,51 +746,63 @@ export class Epics implements OnInit {
     return Number(userTeam) === Number(teamFilter);
   }
 
-  private matchesSprintFilter(item: any): boolean {
-    const sprintFilter = this.selectedSprintFilter();
+  private resolveItemSprintId(item: any, parentSprintId?: number | null): number {
+    const own = item?.sprint_id ?? item?.sprintId;
+    if (own !== null && own !== undefined && own !== '') {
+      const id = Number(own);
+      return Number.isFinite(id) ? id : 0;
+    }
 
-    if (sprintFilter === 'ALL') return true;
-
-    const sprintId = item?.sprint_id ?? item?.sprintId ?? null;
-
-    return Number(sprintId || 0) === Number(sprintFilter);
+    const parent = Number(parentSprintId);
+    return Number.isFinite(parent) ? parent : 0;
   }
 
-  private matchesCommonDirectoryFilters(item: any): boolean {
+  private matchesCurrentSprintScope(item: any, parentSprintId?: number | null): boolean {
+    const currentId = this.currentSprintId();
+    if (currentId === null) return false;
+    return this.resolveItemSprintId(item, parentSprintId) === Number(currentId);
+  }
+
+  private matchesCommonDirectoryFilters(item: any, parentSprintId?: number | null): boolean {
     const statusFilter = this.selectedStatusFilter();
     const assigneeFilter = this.selectedAssigneeFilter();
     const reporterFilter = this.selectedReporterFilter();
     const userFilter = this.selectedUserFilter();
 
-    if (!this.matchesSprintFilter(item)) return false;
+    const sprintFilter = this.selectedSprintFilter();
+    const effectiveSprintId = this.resolveItemSprintId(item, parentSprintId);
+    const currentId = this.currentSprintId();
+
+    // A selected sprint always wins over the default current-sprint scope.
+    // ALL keeps the existing mode behaviour: current sprint for the main views,
+    // and outside-current-sprint work for OTHER.
+    if (sprintFilter !== 'ALL') {
+      if (effectiveSprintId !== Number(sprintFilter)) return false;
+    } else if (this.workItemMode() === 'OTHER') {
+      if (currentId !== null && effectiveSprintId === Number(currentId)) return false;
+    } else if (!this.matchesCurrentSprintScope(item, parentSprintId)) {
+      return false;
+    }
 
     if (
       statusFilter !== 'ALL' &&
       String(item?.status || '').toUpperCase() !== String(statusFilter).toUpperCase()
-    ) {
-      return false;
-    }
+    ) return false;
 
     if (
       assigneeFilter !== 'ALL' &&
       Number(item?.assignee_user_id) !== Number(assigneeFilter)
-    ) {
-      return false;
-    }
+    ) return false;
 
     if (
       reporterFilter !== 'ALL' &&
       Number(item?.reporter_user_id) !== Number(reporterFilter)
-    ) {
-      return false;
-    }
+    ) return false;
 
     if (
       userFilter !== null &&
       Number(item?.assignee_user_id) !== Number(userFilter)
-    ) {
-      return false;
-    }
+    ) return false;
 
     return this.matchesTeamFilter(item);
   }
@@ -633,7 +868,7 @@ export class Epics implements OnInit {
 
     for (const epic of this.hierarchyTree()) {
       for (const story of epic.stories || []) {
-        if (!this.matchesCommonDirectoryFilters(story)) continue;
+        if (!this.matchesCommonDirectoryFilters(story, epic.sprint_id)) continue;
 
         if (
           this.selectedPriorityFilter() !== 'ALL' &&
@@ -654,7 +889,7 @@ export class Epics implements OnInit {
           continue;
         }
 
-        const sprintId = Number(story.sprint_id || 0);
+        const sprintId = this.resolveItemSprintId(story, epic.sprint_id);
         const list = grouped.get(sprintId) || [];
 
         list.push({
@@ -678,7 +913,7 @@ export class Epics implements OnInit {
     for (const epic of this.hierarchyTree()) {
       for (const story of epic.stories || []) {
         for (const task of story.tasks || []) {
-          if (!this.matchesCommonDirectoryFilters(task)) continue;
+          if (!this.matchesCommonDirectoryFilters(task, story.sprint_id ?? epic.sprint_id)) continue;
 
           if (
             this.selectedPriorityFilter() !== 'ALL' &&
@@ -699,7 +934,7 @@ export class Epics implements OnInit {
             continue;
           }
 
-          const sprintId = Number(task.sprint_id || story.sprint_id || epic.sprint_id || 0);
+          const sprintId = this.resolveItemSprintId(task, story.sprint_id ?? epic.sprint_id);
           const list = grouped.get(sprintId) || [];
 
           list.push({
@@ -762,12 +997,128 @@ export class Epics implements OnInit {
   }
 
   setWorkItemMode(
-    mode: 'EPICS' | 'STORIES' | 'TASKS' | 'ALL' | 'ISSUES'
+    mode: 'EPICS' | 'STORIES' | 'TASKS' | 'ALL' | 'OTHER' | 'ISSUES'
   ): void {
     this.workItemMode.set(mode);
     this.activeTab.set('TREE');
+    this.showFilters.set(false);
+    this.clearDirectoryColumnFilters();
+    this.selectedSprintFilter.set('ALL');
+    this.selectedStatusFilter.set('ALL');
+    this.selectedPriorityFilter.set('ALL');
+    this.selectedTeamFilter.set('ALL');
+    this.selectedAssigneeFilter.set('ALL');
+    this.selectedReporterFilter.set('ALL');
     this.issueLinkFilter.set(null);
     this.clearSelection();
+
+    if (mode === 'OTHER') {
+      this.selectedSprintFilter.set('ALL');
+      return;
+    }
+
+    if (mode === 'ISSUES') {
+      // Issues starts with all sprint cycles; the Sprint column and filter
+      // make each issue's sprint visible without hiding older/future issues.
+      this.selectedSprintFilter.set('ALL');
+      this.sprintStartPromptOpen.set(false);
+      return;
+    }
+
+    // Directory tables show work across sprints; the Sprint column filter scopes rows.
+    this.selectedSprintFilter.set('ALL');
+    this.sprintStartPromptOpen.set(false);
+  }
+
+  onEpicsTabChange(index: number): void {
+    this.selectedEpicsTabIndex = index;
+    switch (index) {
+      case 0:
+        this.openBoard();
+        break;
+      case 1:
+        this.setWorkItemMode('EPICS');
+        break;
+      case 2:
+        this.setWorkItemMode('STORIES');
+        break;
+      case 3:
+        this.setWorkItemMode('TASKS');
+        break;
+      case 4:
+        this.setWorkItemMode('ISSUES');
+        break;
+      default:
+        this.selectedEpicsTabIndex = 1;
+        this.setWorkItemMode('EPICS');
+    }
+  }
+
+  openBoard(): void {
+    const active = this.activeCurrentSprint();
+    // The Board view is the default landing view and must remain available
+    // even when the project has no active sprint.
+    this.selectedBoardSprintFilter.set(active ? Number(active.id) : 'ALL');
+    this.selectedSprintFilter.set('ALL');
+    this.selectedEpicsTabIndex = 0;
+    this.activeTab.set('KANBAN');
+    this.isKanbanFullscreen.set(false);
+  }
+
+  toggleKanbanFullscreen(): void {
+    this.isKanbanFullscreen.update(value => !value);
+  }
+
+  exitKanbanFullscreen(): void {
+    this.isKanbanFullscreen.set(false);
+  }
+
+  private syncSprintContext(showPrompt = true): void {
+    const active = this.activeCurrentSprint();
+    const currentCycle = this.currentProjectCycleSprint();
+
+    // Kanban always opens on the current cycle for the selected project, using the same
+    // date-range/ACTIVE/fallback resolution as Boards. Explicit user filter choices remain intact
+    // until the selected project changes or this synchronization is run again.
+    this.selectedBoardSprintFilter.set(currentCycle ? Number(currentCycle.id) : 'ALL');
+    this.selectedUserFilter.set(null);
+
+    if (active) {
+      this.selectedSprintFilter.set(Number(active.id));
+      this.sprintPromptDismissedProjectId = null;
+      this.sprintStartPromptOpen.set(false);
+      return;
+    }
+
+    // No ACTIVE sprint exists for the selected project; keep the existing start-sprint prompt.
+    this.selectedSprintFilter.set('ALL');
+
+    if (showPrompt) {
+      this.openSprintStartPrompt();
+    }
+  }
+
+  openSprintStartPrompt(): void {
+    const projectId = Number(this.selectedProjectId());
+    if (!Number.isFinite(projectId) || projectId <= 0) return;
+    if (this.sprintPromptDismissedProjectId === projectId) return;
+
+    this.sprintStartPromptOpen.set(true);
+  }
+
+  closeSprintStartPrompt(): void {
+    this.sprintStartPromptOpen.set(false);
+    this.sprintPromptDismissedProjectId = Number(this.selectedProjectId());
+  }
+
+  startCurrentSprintFromPrompt(): void {
+    const candidate = this.sprintStartCandidate();
+    if (!candidate) {
+      this.showToast('No pending sprint is available to start');
+      return;
+    }
+
+    this.startSprint(candidate, true);
   }
 
   /** Open the Issues tab scoped to the selected work item's linked issues. */
@@ -783,30 +1134,30 @@ export class Epics implements OnInit {
 
     this.issueLinkFilter.set({ type, id });
     this.workItemMode.set('ISSUES');
+    this.selectedSprintFilter.set(this.activeCurrentSprint()?.id ?? 'ALL');
     this.activeTab.set('TREE');
     this.clearSelection();
+
+    if (!this.activeCurrentSprint()) this.openSprintStartPrompt();
   }
 
   sprintTreeGroups = computed<SprintCycleGroup[]>(() => {
-    const query = this.searchTerm().trim().toLowerCase();
     const sprintFilter = this.selectedSprintFilter();
+    const selectedSprint = sprintFilter === 'ALL'
+      ? this.activeCurrentSprint()
+      : this.projectSprints().find(s => Number(s.id) === Number(sprintFilter));
+
+    if (!selectedSprint) return [];
+
+    const currentSprint = selectedSprint;
+
+    const query = this.searchTerm().trim().toLowerCase();
     const priorityFilter = this.selectedPriorityFilter();
     const statusFilter = this.selectedStatusFilter();
     const teamFilter = this.selectedTeamFilter();
     const assigneeFilter = this.selectedAssigneeFilter();
     const reporterFilter = this.selectedReporterFilter();
     const userFilter = this.selectedUserFilter();
-
-    const backlog: Sprint = {
-      id: 0,
-      name: 'Backlog / Unassigned',
-      status: 'FUTURE'
-    };
-
-    const source = this.hierarchyTree();
-    const allSprints = source.some(e => !e.sprint_id)
-      ? [backlog, ...this.projectSprints()]
-      : (this.projectSprints().length ? this.projectSprints() : [backlog]);
 
     const teamMatches = (item: any): boolean => {
       if (teamFilter === 'ALL') return true;
@@ -818,155 +1169,234 @@ export class Epics implements OnInit {
       return Number(userTeam) === Number(teamFilter);
     };
 
-    return allSprints
-      .filter(s => sprintFilter === 'ALL' || Number(s.id) === Number(sprintFilter))
-      .map(sprint => {
-        const epics: EpicNode[] = [];
-        let totalPoints = 0;
+    const sprintId = Number(currentSprint.id);
+    const epics: EpicNode[] = [];
+    let totalPoints = 0;
 
-        for (const epic of source) {
-          const epicSprint = epic.sprint_id ? Number(epic.sprint_id) : 0;
-          if (epicSprint !== Number(sprint.id)) continue;
+    for (const epic of this.hierarchyTree()) {
+      if (this.resolveItemSprintId(epic) !== sprintId) continue;
 
-          if (statusFilter !== 'ALL' && epic.status !== statusFilter) continue;
-          if (assigneeFilter !== 'ALL' &&
-            Number(epic.assignee_user_id) !== Number(assigneeFilter)) continue;
-          if (reporterFilter !== 'ALL' &&
-            Number(epic.reporter_user_id) !== Number(reporterFilter)) continue;
-          if (!teamMatches(epic)) continue;
+      if (statusFilter !== 'ALL' && String(epic.status || '').toUpperCase() !== String(statusFilter).toUpperCase()) continue;
+      if (assigneeFilter !== 'ALL' && Number(epic.assignee_user_id) !== Number(assigneeFilter)) continue;
+      if (reporterFilter !== 'ALL' && Number(epic.reporter_user_id) !== Number(reporterFilter)) continue;
+      if (!teamMatches(epic)) continue;
 
-          const epicSearch =
-            !query ||
-            (epic.name || '').toLowerCase().includes(query) ||
-            (epic.epic_code || '').toLowerCase().includes(query);
+      const epicSearch = !query ||
+        (epic.name || '').toLowerCase().includes(query) ||
+        (epic.epic_code || '').toLowerCase().includes(query);
 
-          const stories = (epic.stories || []).filter(story => {
-            if (priorityFilter !== 'ALL' && story.priority !== priorityFilter) return false;
-            if (statusFilter !== 'ALL' && story.status !== statusFilter) return false;
-            if (assigneeFilter !== 'ALL' &&
-              Number(story.assignee_user_id) !== Number(assigneeFilter)) return false;
-            if (reporterFilter !== 'ALL' &&
-              Number(story.reporter_user_id) !== Number(reporterFilter)) return false;
-            if (!teamMatches(story)) return false;
-            if (userFilter !== null &&
-              Number(story.assignee_user_id) !== Number(userFilter) &&
-              !(story.tasks || []).some(t => Number(t.assignee_user_id) === Number(userFilter))) {
-              return false;
-            }
-
-            const storySearch =
-              !query ||
-              (story.title || '').toLowerCase().includes(query);
-
-            const tasks = (story.tasks || []).filter(task => {
-              if (statusFilter !== 'ALL' && task.status !== statusFilter) return false;
-              if (assigneeFilter !== 'ALL' &&
-                Number(task.assignee_user_id) !== Number(assigneeFilter)) return false;
-              if (reporterFilter !== 'ALL' &&
-                Number(task.reporter_user_id) !== Number(reporterFilter)) return false;
-              if (userFilter !== null &&
-                Number(task.assignee_user_id) !== Number(userFilter)) return false;
-              return !query || (task.title || '').toLowerCase().includes(query);
-            });
-
-            return storySearch || tasks.length > 0;
-          });
-
-          if (epicSearch || stories.length) {
-            totalPoints += stories.reduce(
-              (sum, s) => sum + Number(s.story_points || 0), 0
-            );
-
-            epics.push({
-              ...epic,
-              expanded: epic.expanded ?? true,
-              stories: stories.map(s => ({
-                ...s,
-                expanded: s.expanded ?? true
-              }))
-            });
-          }
+      const stories = (epic.stories || []).filter(story => {
+        if (this.resolveItemSprintId(story, epic.sprint_id) !== sprintId) return false;
+        if (priorityFilter !== 'ALL' && String(story.priority || '').toUpperCase() !== String(priorityFilter).toUpperCase()) return false;
+        if (statusFilter !== 'ALL' && String(story.status || '').toUpperCase() !== String(statusFilter).toUpperCase()) return false;
+        if (assigneeFilter !== 'ALL' && Number(story.assignee_user_id) !== Number(assigneeFilter)) return false;
+        if (reporterFilter !== 'ALL' && Number(story.reporter_user_id) !== Number(reporterFilter)) return false;
+        if (!teamMatches(story)) return false;
+        if (userFilter !== null &&
+          Number(story.assignee_user_id) !== Number(userFilter) &&
+          !(story.tasks || []).some(t => this.resolveItemSprintId(t, story.sprint_id ?? epic.sprint_id) === sprintId && Number(t.assignee_user_id) === Number(userFilter))) {
+          return false;
         }
 
-        return { sprint, epics, totalPoints };
-      });
+        const storySearch = !query || (story.title || '').toLowerCase().includes(query);
+
+        const tasks = (story.tasks || []).filter(task => {
+          if (this.resolveItemSprintId(task, story.sprint_id ?? epic.sprint_id) !== sprintId) return false;
+          if (statusFilter !== 'ALL' && String(task.status || '').toUpperCase() !== String(statusFilter).toUpperCase()) return false;
+          if (assigneeFilter !== 'ALL' && Number(task.assignee_user_id) !== Number(assigneeFilter)) return false;
+          if (reporterFilter !== 'ALL' && Number(task.reporter_user_id) !== Number(reporterFilter)) return false;
+          if (userFilter !== null && Number(task.assignee_user_id) !== Number(userFilter)) return false;
+          return !query || (task.title || '').toLowerCase().includes(query);
+        });
+
+        return storySearch || tasks.length > 0;
+      }).map(story => ({
+        ...story,
+        expanded: story.expanded ?? true,
+        tasks: (story.tasks || []).filter(task =>
+          this.resolveItemSprintId(task, story.sprint_id ?? epic.sprint_id) === sprintId
+        )
+      }));
+
+      if (epicSearch || stories.length) {
+        totalPoints += stories.reduce((sum, s) => sum + Number(s.story_points || 0), 0);
+        epics.push({
+          ...epic,
+          expanded: epic.expanded ?? true,
+          stories
+        });
+      }
+    }
+
+    return [{ sprint: currentSprint, epics, totalPoints }];
   });
 
-  kanbanItemsByStatus = computed<Record<string, KanbanItem[]>>(() => {
-    const map: Record<string, KanbanItem[]> = {};
-    for (const status of this.statusPipeline) map[status] = [];
+  /** Everything outside the currently ACTIVE sprint, including completed/future/backlog work. */
+  otherWorkGroups = computed<OtherWorkGroup[]>(() => {
+    const query = this.searchTerm().trim().toLowerCase();
+    const map = new Map<number, OtherWorkItem[]>();
+    const currentId = this.currentSprintId();
 
-    for (const group of this.sprintTreeGroups()) {
-      for (const epic of group.epics) {
-        const epicStatus = (epic.status || 'BACKLOG').toUpperCase();
+    const add = (item: OtherWorkItem): void => {
+      const sprintId = Number(item.sprint.id || 0);
+      const list = map.get(sprintId) || [];
+      list.push(item);
+      map.set(sprintId, list);
+    };
 
-        if (map[epicStatus]) {
-          map[epicStatus].push({
-            type: 'EPIC',
-            id: epic.id,
-            title: epic.name,
-            code: epic.epic_code,
-            status: epicStatus,
-            assignee_user_id: epic.assignee_user_id,
-            reporter_user_id: epic.reporter_user_id,
-            issues: epic.issues,
-            testCases: epic.testCases,
-            originalItem: epic
+    const sprintMap = new Map<number, Sprint>();
+    for (const sprint of this.projectSprints()) sprintMap.set(Number(sprint.id), sprint);
+
+    const sprintFor = (id: number): Sprint => sprintMap.get(id) || ({
+      id: 0, name: 'Backlog / Unassigned', status: 'FUTURE'
+    } as Sprint);
+
+    const passExtra = (item: any, parentSprintId?: number | null): boolean => {
+      const sid = this.resolveItemSprintId(item, parentSprintId);
+      if (currentId !== null && sid === Number(currentId)) return false;
+      const sf = this.selectedSprintFilter();
+      if (sf !== 'ALL' && sid !== Number(sf)) return false;
+
+      const status = this.selectedStatusFilter();
+      if (status !== 'ALL' && String(item?.status || '').toUpperCase() !== String(status).toUpperCase()) return false;
+
+      const af = this.selectedAssigneeFilter();
+      if (af !== 'ALL' && Number(item?.assignee_user_id) !== Number(af)) return false;
+
+      const rf = this.selectedReporterFilter();
+      if (rf !== 'ALL' && Number(item?.reporter_user_id) !== Number(rf)) return false;
+
+      const uf = this.selectedUserFilter();
+      if (uf !== null && Number(item?.assignee_user_id) !== Number(uf)) return false;
+
+      if (!this.matchesTeamFilter(item)) return false;
+      return true;
+    };
+
+    const search = (...values: any[]) =>
+      !query || values.some(v => String(v ?? '').toLowerCase().includes(query));
+
+    for (const epic of this.hierarchyTree()) {
+      const sid = this.resolveItemSprintId(epic);
+      if (currentId !== null && sid === Number(currentId)) {
+        // Current-sprint epics can still contain stories/tasks assigned to other sprints.
+      } else if (passExtra(epic) && search(epic.epic_code, epic.name, epic.description, epic.status)) {
+        add({
+          type: 'EPIC', id: Number(epic.id), title: epic.name, code: epic.epic_code,
+          sprint: sprintFor(sid), status: epic.status, assignee_user_id: epic.assignee_user_id,
+          reporter_user_id: epic.reporter_user_id, originalItem: epic
+        });
+      }
+
+      for (const story of epic.stories || []) {
+        const storySid = this.resolveItemSprintId(story, epic.sprint_id);
+        if (passExtra(story, epic.sprint_id) &&
+            search(story.title, story.description, story.status, story.priority, epic.name, epic.epic_code) &&
+            (this.selectedPriorityFilter() === 'ALL' || String(story.priority || '').toUpperCase() === String(this.selectedPriorityFilter()).toUpperCase())) {
+          add({
+            type: 'STORY', id: Number(story.id), title: story.title, code: epic.epic_code,
+            sprint: sprintFor(storySid), status: story.status, priority: story.priority,
+            assignee_user_id: story.assignee_user_id, reporter_user_id: story.reporter_user_id,
+            parentEpicName: epic.name, parentEpicCode: epic.epic_code, originalItem: story
           });
         }
 
-        for (const story of epic.stories || []) {
-          const storyStatus = (story.status || 'BACKLOG').toUpperCase();
-
-          if (map[storyStatus]) {
-            map[storyStatus].push({
-              type: 'STORY',
-              id: story.id,
-              title: story.title,
-              code: `#${story.id}`,
-              status: storyStatus,
-              priority: story.priority,
-              pointsOrHours: story.story_points,
-              assignee_user_id: story.assignee_user_id,
-              reporter_user_id: story.reporter_user_id,
-              parentEpicName: epic.name,
-              parentEpicCode: epic.epic_code,
-              issues: story.issues,
-              testCases: story.testCases,
-              originalItem: story
+        for (const task of story.tasks || []) {
+          const taskSid = this.resolveItemSprintId(task, story.sprint_id ?? epic.sprint_id);
+          if (passExtra(task, story.sprint_id ?? epic.sprint_id) &&
+              search(task.title, task.description, task.status, task.priority, story.title, epic.name) &&
+              (this.selectedPriorityFilter() === 'ALL' || String(task.priority || '').toUpperCase() === String(this.selectedPriorityFilter()).toUpperCase())) {
+            add({
+              type: 'TASK', id: Number(task.id), title: task.title,
+              sprint: sprintFor(taskSid), status: task.status, priority: task.priority,
+              assignee_user_id: task.assignee_user_id, reporter_user_id: task.reporter_user_id,
+              parentEpicName: epic.name, parentEpicCode: epic.epic_code,
+              parentStoryTitle: story.title, originalItem: task
             });
-          }
-
-          for (const task of story.tasks || []) {
-            const taskStatus = (task.status || 'BACKLOG').toUpperCase();
-
-            if (map[taskStatus]) {
-              map[taskStatus].push({
-                type: 'TASK',
-                id: task.id,
-                title: task.title,
-                code: `#${task.id}`,
-                status: taskStatus,
-                priority: task.priority,
-                assignee_user_id: task.assignee_user_id,
-                reporter_user_id: task.reporter_user_id,
-                parentStoryTitle: story.title,
-                parentEpicName: epic.name,
-                parentEpicCode: epic.epic_code,
-                issues: task.issues,
-                testCases: task.testCases,
-                originalItem: task
-              });
-            }
           }
         }
       }
     }
 
+    const groups = [...map.entries()].map(([sprintId, items]) => ({
+      sprint: sprintFor(sprintId),
+      items: items.sort((a, b) => a.title.localeCompare(b.title))
+    }));
+
+    groups.sort((a, b) => {
+      const aTime = a.sprint.startDate ? new Date(a.sprint.startDate).getTime() : Number.MAX_SAFE_INTEGER;
+      const bTime = b.sprint.startDate ? new Date(b.sprint.startDate).getTime() : Number.MAX_SAFE_INTEGER;
+      if (a.sprint.id === 0 && b.sprint.id !== 0) return -1;
+      if (a.sprint.id !== 0 && b.sprint.id === 0) return 1;
+      if (aTime !== bTime) return aTime - bTime;
+      return a.sprint.name.localeCompare(b.sprint.name);
+    });
+
+    return groups;
+  });
+
+  kanbanItemsByStatus = computed<Record<string, KanbanItem[]>>(() => {
+    const map: Record<string, KanbanItem[]> = {};
+    for (const status of this.statusPipeline) map[status] = [];
+    const sprintFilter = this.selectedBoardSprintFilter();
+    const assigneeFilter = this.selectedAssigneeFilter();
+    const reporterFilter = this.selectedReporterFilter();
+    const teamFilter = this.selectedTeamFilter();
+    const userFilter = this.selectedUserFilter();
+    const query = this.searchTerm().trim().toLowerCase();
+    const sprintById = new Map(this.allBoardSprints().map(s => [Number(s.id), s]));
+
+    const add = (item: any, type: 'EPIC' | 'STORY' | 'TASK', parent?: any, story?: any) => {
+      const status = String(item.status || 'BACKLOG').toUpperCase();
+      if (!map[status]) return;
+      const sid = this.resolveItemSprintId(item, story?.sprint_id ?? parent?.sprint_id);
+      if (sprintFilter !== 'ALL' && sid !== Number(sprintFilter)) return;
+      if (assigneeFilter !== 'ALL' && Number(item.assignee_user_id) !== Number(assigneeFilter)) return;
+      if (reporterFilter !== 'ALL' && Number(item.reporter_user_id) !== Number(reporterFilter)) return;
+      if (userFilter !== null && Number(item.assignee_user_id) !== Number(userFilter)) return;
+      if (teamFilter !== 'ALL' && Number(item.team_id) !== Number(teamFilter)) return;
+      const text = [item.title, item.name, item.description, item.epic_code, parent?.name, parent?.epic_code, story?.title].join(' ').toLowerCase();
+      if (query && !text.includes(query)) return;
+      const projectId = Number(item.project_id ?? parent?.project_id ?? story?.project_id ?? 0);
+      const project = this.projects().find((p: any) => Number(p.id) === projectId);
+      const sprint = sprintById.get(Number(sid));
+      map[status].push({
+        type, id: Number(item.id), title: type === 'EPIC' ? item.name : item.title,
+        code: type === 'EPIC' ? item.epic_code : `#${item.id}`, status,
+        priority: item.priority, pointsOrHours: item.story_points ?? item.estimated_hours,
+        assignee_user_id: item.assignee_user_id, reporter_user_id: item.reporter_user_id,
+        parentEpicName: type === 'EPIC' ? undefined : (parent?.name ?? parent?.parentEpicName),
+        parentEpicCode: type === 'EPIC' ? undefined : (parent?.epic_code ?? parent?.parentEpicCode),
+        parentStoryTitle: type === 'TASK' ? story?.title : undefined,
+        issues: item.issues || [], testCases: item.testCases || [], originalItem: item,
+        projectName: project?.name || (projectId ? `Project ${projectId}` : ''),
+        sprintName: sprint?.name || (sid ? `Sprint ${sid}` : 'Backlog / Unassigned')
+      } as any);
+    };
+
+    for (const epic of this.boardHierarchyTree()) {
+      add(epic, 'EPIC');
+      for (const story of epic.stories || []) {
+        add(story, 'STORY', epic);
+        for (const task of story.tasks || []) add(task, 'TASK', epic, story);
+      }
+    }
+    for (const status of this.statusPipeline) {
+      map[status].sort((a: any, b: any) => String(a.projectName).localeCompare(String(b.projectName)) || String(a.sprintName).localeCompare(String(b.sprintName)) || String(a.title).localeCompare(String(b.title)));
+    }
     return map;
   });
 
+  kanbanTotalItems = computed(() =>
+    this.statusPipeline.reduce(
+      (total, status) => total + (this.kanbanItemsByStatus()[status] || []).length,
+      0
+    )
+  );
+
   ngOnInit(): void {
+    this.activeTab.set('KANBAN');
+    this.selectedEpicsTabIndex = 0;
     this.fetchUsers();
     this.fetchTeams();
     this.fetchSprints(() => this.fetchProjects());
@@ -981,7 +1411,7 @@ export class Epics implements OnInit {
     if (!res || typeof res !== 'object') return [];
 
     const preferredKeys = [
-      'data', 'items', 'results', 'records',
+      'content', 'data', 'items', 'results', 'records',
       'projects', 'project',
       'users', 'user',
       'teams', 'team',
@@ -1138,18 +1568,65 @@ export class Epics implements OnInit {
   }
 
   private normalizeTestCase(raw: any): TestCase {
+    const id = this.nullableNumber(
+      raw?.id ?? raw?.testcase_id ?? raw?.testCaseId
+    );
+
+    const projectId = this.nullableNumber(
+      raw?.project?.id ?? raw?.project_id ?? raw?.projectId ??
+      (typeof raw?.project === 'number' ? raw.project : null)
+    );
+
+    const epicId = this.nullableNumber(
+      raw?.epic?.id ?? raw?.epic_id ?? raw?.epicId ??
+      (typeof raw?.epic === 'number' ? raw.epic : null)
+    );
+
+    const storyId = this.nullableNumber(
+      raw?.story?.id ?? raw?.story_id ?? raw?.storyId ??
+      raw?.userStory?.id ?? raw?.user_story?.id ?? raw?.userStoryId ?? raw?.user_story_id ??
+      (typeof raw?.story === 'number' ? raw.story : null)
+    );
+
+    const taskId = this.nullableNumber(
+      raw?.task?.id ?? raw?.task_id ?? raw?.taskId ??
+      (typeof raw?.task === 'number' ? raw.task : null)
+    );
+
+    const testSuiteId = this.nullableNumber(
+      raw?.testSuite?.id ?? raw?.test_suite_id ?? raw?.testSuiteId ??
+      (typeof raw?.testSuite === 'number' ? raw.testSuite : null)
+    );
+
+    const testPlanId = this.nullableNumber(
+      raw?.testPlan?.id ?? raw?.test_plan_id ?? raw?.testPlanId ??
+      (typeof raw?.testPlan === 'number' ? raw.testPlan : null)
+    );
+
     return {
       ...raw,
-      id: Number(raw?.id ?? raw?.testcase_id ?? raw?.testCaseId),
+      id: id ?? 0,
       title: raw?.title ?? raw?.name ?? '',
       name: raw?.name ?? raw?.title ?? '',
-      executionStatus: raw?.executionStatus ?? raw?.execution_status ?? 'UNEXECUTED',
-      projectId: this.nullableNumber(raw?.projectId ?? raw?.project_id) ?? undefined,
-      epicId: this.nullableNumber(raw?.epicId ?? raw?.epic_id) ?? undefined,
-      storyId: this.nullableNumber(raw?.storyId ?? raw?.story_id) ?? undefined,
-      taskId: this.nullableNumber(raw?.taskId ?? raw?.task_id) ?? undefined,
-      isBlocking: Boolean(raw?.isBlocking ?? raw?.is_blocking ?? false),
-      is_blocking: Boolean(raw?.isBlocking ?? raw?.is_blocking ?? false)
+      executionStatus: raw?.executionStatus ?? raw?.execution_status ?? raw?.status ?? 'UNEXECUTED',
+      execution_status: raw?.execution_status ?? raw?.executionStatus ?? raw?.status ?? 'UNEXECUTED',
+      testCaseCode: raw?.testCaseCode ?? raw?.test_case_code ?? raw?.code ?? (id ? `TC-${id}` : 'TC-N/A'),
+      test_case_code: raw?.test_case_code ?? raw?.testCaseCode ?? raw?.code ?? (id ? `TC-${id}` : 'TC-N/A'),
+      projectId: projectId ?? undefined,
+      project_id: projectId ?? undefined,
+      epicId: epicId ?? undefined,
+      epic_id: epicId ?? undefined,
+      storyId: storyId ?? undefined,
+      story_id: storyId ?? undefined,
+      taskId: taskId ?? undefined,
+      task_id: taskId ?? undefined,
+      testSuiteId: testSuiteId ?? undefined,
+      test_suite_id: testSuiteId ?? undefined,
+      testPlanId: testPlanId ?? undefined,
+      test_plan_id: testPlanId ?? undefined,
+      status: raw?.status ?? 'DRAFT',
+      priority: raw?.priority ?? 'MEDIUM',
+      type: raw?.type ?? 'Functional'
     };
   }
 
@@ -1375,6 +1852,12 @@ export class Epics implements OnInit {
     return parts.join(' · ');
   }
 
+  getSprintName(sprintId: unknown): string {
+    const id = Number(sprintId);
+    if (!sprintId || !Number.isFinite(id)) return 'Backlog / Unassigned';
+    return this.projectSprints().find(s => Number(s.id) === id)?.name || `Sprint ${id}`;
+  }
+
   getIssueListSprintName(issue: Issue | Partial<Issue>): string {
     const sprintId = this.issueSprintId(issue);
     return this.projectSprints().find(s => Number(s.id) === sprintId)?.name || 'Backlog / Unassigned';
@@ -1446,12 +1929,6 @@ export class Epics implements OnInit {
         .filter(s => Number.isFinite(s.id) && s.id > 0);
 
       this.sprints.set(sprints);
-
-      const active = this.activeCurrentSprint();
-      if (active && this.selectedSprintFilter() === 'ALL') {
-        this.selectedSprintFilter.set(active.id);
-      }
-
       callback?.();
     });
   }
@@ -1478,8 +1955,39 @@ export class Epics implements OnInit {
         ?? projects[0];
 
       this.selectedProjectId.set(Number(selected.id));
-      this.selectedSprintFilter.set('ALL');
+      this.sprintPromptDismissedProjectId = null;
+      this.syncSprintContext(false);
       this.loadFullHierarchy();
+      this.loadAllProjectsBoardData(projects);
+    });
+  }
+
+  /** Load each project's Epics and Stories before grouping all items on the board by sprint. */
+  private loadAllProjectsBoardData(projects = this.projects()): void {
+    if (!projects.length) { this.boardHierarchyTree.set([]); return; }
+    const projectRequests = projects.map((project: any) => forkJoin({
+      epics: this.http.get<any>(`${this.baseUrl}/projects/${Number(project.id)}/epics`, this.headers()).pipe(catchError(() => of([]))),
+      stories: this.http.get<any>(`${this.baseUrl}/projects/${Number(project.id)}/stories`, this.headers()).pipe(catchError(() => of([])))
+    }).pipe());
+    const tasks$ = this.http.get<any>(`${this.baseUrl}/tasks`, this.headers()).pipe(catchError(() => of([])));
+    forkJoin({ projects: forkJoin(projectRequests), tasks: tasks$ }).subscribe(({ projects: results, tasks: taskRes }) => {
+      const allTasks = this.extractArray(taskRes).map(v => this.normalizeTask(v)).filter(v => !!v.id);
+      const tree: EpicNode[] = [];
+      results.forEach((result: any, index: number) => {
+        const project = projects[index];
+        const projectId = Number(project.id);
+        const epics = this.extractArray(result.epics).map(v => this.normalizeEpic({ ...v, project_id: v?.project_id ?? v?.projectId ?? projectId })).filter(v => !!v.id);
+        const stories = this.extractArray(result.stories).map(v => this.normalizeStory({ ...v, project_id: v?.project_id ?? v?.projectId ?? projectId })).filter(v => !!v.id);
+        const projectTasks = allTasks.filter((task: any) => stories.some(story => Number(story.id) === Number(task.story_id)));
+        for (const epic of epics) {
+          const epicStories = stories.filter(story => Number(story.epic_id) === Number(epic.id)).map(story => ({
+            ...story, project_id: projectId,
+            tasks: projectTasks.filter((task: any) => Number(task.story_id) === Number(story.id)).map((task: any) => ({ ...task, project_id: projectId }))
+          }));
+          tree.push({ ...epic, project_id: projectId, stories: epicStories });
+        }
+      });
+      this.boardHierarchyTree.set(tree);
     });
   }
 
@@ -1499,16 +2007,32 @@ export class Epics implements OnInit {
       .get<any>(`${this.baseUrl}/tasks`, this.headers())
       .pipe(catchError(() => of([])));
 
-    const testCases$ = this.http
-      .get<any>(`${this.baseUrl2}/v1/testcases?projectId=${projectId}`, this.headers())
-      .pipe(catchError(() => of([])));
+    // Test Cases use the same service family as the dedicated Test Lab.
+    // Prefer the current M/base-2 endpoints and retain fallbacks so a
+    // different environment mapping does not silently make the hierarchy
+    // appear empty. Do not depend on a backend-side project query parameter;
+    // the standalone Test Cases screen loads the collection and filters it
+    // locally as well.
+    const testcaseUrls = Array.from(new Set([
+      `${this.baseUrl2}/v1/testcases`,
+      `${environment.apiBaseUrl2 || ''}/v1/testcases`,
+      `${environment.apiBaseUrl || ''}/v1/testcases`
+    ].filter(Boolean)));
+
+    const testCases$ = this.getCollection(testcaseUrls);
 
     const issues$ = this.http
       .get<any>(`${this.baseUrl2}/v1/issues?projectId=${projectId}`, this.headers())
       .pipe(catchError(() => of([])));
 
-    forkJoin([epics$, stories$, tasks$, testCases$, issues$])
-      .subscribe(([epicRes, storyRes, taskRes, tcRes, issueRes]) => {
+    forkJoin({
+      epics: epics$,
+      stories: stories$,
+      tasks: tasks$,
+      testCases: testCases$,
+      issues: issues$
+    })
+      .subscribe(({ epics: epicRes, stories: storyRes, tasks: taskRes, testCases: tcRes, issues: issueRes }) => {
         const epics = this.extractArray(epicRes)
           .map(v => this.normalizeEpic(v))
           .filter(v => !!v.id);
@@ -1521,8 +2045,22 @@ export class Epics implements OnInit {
           .map(v => this.normalizeTask(v))
           .filter(v => !!v.id);
 
-        const testCases = this.extractArray(tcRes)
-          .map(v => this.normalizeTestCase(v));
+        const allTestCases = this.extractArray(tcRes)
+          .map(v => this.normalizeTestCase(v))
+          .filter(tc => Number(tc.id) > 0);
+
+        // Some deployments return project as a nested relation while others
+        // return project_id/projectId. Filter only when the response actually
+        // carries project identity; otherwise keep the collection returned by
+        // the project-agnostic endpoint so we do not hide valid records.
+        const testCasesWithProject = allTestCases.filter(tc => {
+          const pid = tc.projectId ?? tc.project_id ?? tc.project?.id;
+          return pid !== null && pid !== undefined && pid !== '';
+        });
+
+        const testCases = testCasesWithProject.length
+          ? testCasesWithProject.filter(tc => Number(tc.projectId ?? tc.project_id ?? tc.project?.id) === Number(projectId))
+          : allTestCases;
 
         const issues = this.extractArray(issueRes)
           .map(v => this.normalizeIssue(v));
@@ -1595,6 +2133,8 @@ export class Epics implements OnInit {
     if (!Number.isFinite(id) || id <= 0) return;
 
     this.selectedProjectId.set(id);
+    this.selectedBoardSprintFilter.set('ALL');
+    this.showBoardSprintFilters.set(false);
     this.selectedUserFilter.set(null);
     this.selectedAssigneeFilter.set('ALL');
     this.selectedReporterFilter.set('ALL');
@@ -1604,7 +2144,12 @@ export class Epics implements OnInit {
     this.storyModalEpics.set([]);
     this.projectStories.set([]);
 
-    this.fetchSprints(() => this.loadFullHierarchy());
+    this.sprintPromptDismissedProjectId = null;
+    this.fetchSprints(() => {
+      this.syncSprintContext(true);
+      this.loadFullHierarchy();
+      this.loadAllProjectsBoardData();
+    });
   }
 
   onStoryProjectChange(projectId: number): void {
@@ -1618,6 +2163,32 @@ export class Epics implements OnInit {
     this.currentStory.epic_id = null;
     this.currentStory.sprint_id = null;
     this.loadEpicsForStoryProject(id);
+  }
+
+
+  toggleBoardSprintFilters(): void {
+    this.showBoardSprintFilters.update(value => !value);
+  }
+
+  selectBoardSprintFilter(value: number | string): void {
+    if (value === 'ALL' || value === '' || value === null || value === undefined) {
+      this.selectedBoardSprintFilter.set('ALL');
+    } else {
+      const id = Number(value);
+      this.selectedBoardSprintFilter.set(Number.isFinite(id) ? id : 'ALL');
+    }
+    this.showBoardSprintFilters.set(false);
+    this.selectedUserFilter.set(null);
+  }
+
+  onSprintFilterChange(sprintId: number | string | 'ALL'): void {
+    if (sprintId === 'ALL' || sprintId === null || sprintId === undefined || sprintId === '') {
+      this.selectedSprintFilter.set('ALL');
+      return;
+    }
+
+    const id = Number(sprintId);
+    this.selectedSprintFilter.set(Number.isFinite(id) ? id : 'ALL');
   }
 
   onTeamFilterChange(teamId: number | 'ALL'): void {
@@ -1650,7 +2221,7 @@ export class Epics implements OnInit {
   }
 
   clearAllFilters(): void {
-    this.selectedSprintFilter.set(this.activeCurrentSprint()?.id ?? 'ALL');
+    this.selectedSprintFilter.set('ALL');
     this.selectedPriorityFilter.set('ALL');
     this.selectedStatusFilter.set('ALL');
     this.selectedTeamFilter.set('ALL');
@@ -1835,32 +2406,55 @@ export class Epics implements OnInit {
 
   openViewStory(story: StoryNode): void {
     const id = Number(story?.id);
-
     if (!Number.isFinite(id) || id <= 0) {
       this.showToast('Invalid Story ID');
       return;
     }
 
-    this.openViewerTab(
-      'STORY',
+    const normalized = this.normalizeStory(story);
+    this.currentStory = {
+      ...normalized,
       id,
-      story.project_id ?? this.selectedProjectId()
-    );
+      project_id: story.project_id ?? this.selectedProjectId() ?? undefined,
+      assignee_user_id: normalized.assignee_user_id ?? null,
+      reporter_user_id: normalized.reporter_user_id ?? null,
+      testCases: this.getTestCasesForStory(id)
+    };
+    this.loadEpicsForStoryProject(Number(this.currentStory.project_id));
+    this.modalMode.set('VIEW');
+    this.activeModal.set('STORY');
+    this.syncPersonSearchFields();
   }
 
   openViewTask(task: TaskNode): void {
     const id = Number(task?.id);
-
     if (!Number.isFinite(id) || id <= 0) {
       this.showToast('Invalid Task ID');
       return;
     }
 
-    this.openViewerTab(
-      'TASK',
+    const normalized = this.normalizeTask(task);
+    this.currentTask = {
+      ...normalized,
       id,
-      this.selectedProjectId()
-    );
+      assignee_user_id: normalized.assignee_user_id ?? null,
+      reporter_user_id: normalized.reporter_user_id ?? null,
+      testCases: this.getTestCasesForTask(id)
+    };
+    this.modalMode.set('VIEW');
+    this.activeModal.set('TASK');
+    this.syncPersonSearchFields();
+  }
+
+  /** Opens the existing work-item popup when a directory table row is clicked. */
+  openDirectoryRow(row: { type: string; item: any }): void {
+    if (!row?.item) return;
+    switch (row.type) {
+      case 'EPIC': this.openViewEpic(row.item as EpicNode); break;
+      case 'STORY': this.openViewStory(row.item as StoryNode); break;
+      case 'TASK': this.openViewTask(row.item as TaskNode); break;
+      case 'ISSUE': this.openViewIssue(row.item as Issue); break;
+    }
   }
 
   openViewIssue(issue: Issue): void {
@@ -1894,12 +2488,8 @@ export class Epics implements OnInit {
     this.currentIssue = {
       project_id: projectId,
       projectId,
-      sprint_id: this.selectedSprintFilter() === 'ALL'
-        ? null
-        : Number(this.selectedSprintFilter()),
-      sprintId: this.selectedSprintFilter() === 'ALL'
-        ? null
-        : Number(this.selectedSprintFilter()),
+      sprint_id: this.activeCurrentSprint()?.id ?? null,
+      sprintId: this.activeCurrentSprint()?.id ?? null,
       user_id: currentUserId,
       userId: currentUserId,
       creator_user_id: currentUserId,
@@ -1915,11 +2505,7 @@ export class Epics implements OnInit {
       is_blocking: false
     };
 
-    this.issueDraftSprintId.set(
-      this.selectedSprintFilter() === 'ALL'
-        ? null
-        : Number(this.selectedSprintFilter())
-    );
+    this.issueDraftSprintId.set(this.activeCurrentSprint()?.id ?? null);
     this.selectedIssueEpicIds.set([]);
     this.selectedIssueStoryIds.set([]);
     this.selectedIssueTaskIds.set([]);
@@ -2151,8 +2737,12 @@ export class Epics implements OnInit {
     const sprintFilter = this.selectedSprintFilter();
 
     const map = new Map<number, Issue[]>();
+    const currentSprintId = this.currentSprintId();
 
     for (const issue of this.projectIssues()) {
+      if (currentSprintId === null || this.issueSprintId(issue) !== Number(currentSprintId)) {
+        continue;
+      }
       if (
         sprintFilter !== 'ALL' &&
         this.issueSprintId(issue) !== Number(sprintFilter)
@@ -2253,17 +2843,85 @@ export class Epics implements OnInit {
     return groups;
   });
 
-  /** Flat issue collection for the Issues tab. The tab intentionally renders only a table. */
+  /** Flat, filterable issue list across every sprint in the selected project. */
   issueTableItems = computed<Issue[]>(() => {
-    const issues = this.issueDirectoryGroups().flatMap(group => group.items);
-    const filter = this.issueLinkFilter();
+    const query = this.searchTerm().trim().toLowerCase();
+    const sprintFilter = this.selectedSprintFilter();
+    const statusFilter = this.selectedStatusFilter();
+    const priorityFilter = this.selectedPriorityFilter();
+    const assigneeFilter = this.selectedAssigneeFilter();
+    const reporterFilter = this.selectedReporterFilter();
+    const teamFilter = this.selectedTeamFilter();
+    const linkFilter = this.issueLinkFilter();
 
-    if (!filter) return issues;
+    return this.projectIssues()
+      .filter(issue => {
+        const sprintId = this.issueSprintId(issue);
+        if (sprintFilter !== 'ALL' && Number(sprintId) !== Number(sprintFilter)) return false;
 
-    return issues.filter(issue =>
-      this.getIssueLinkedIds(issue, filter.type).some(id => Number(id) === filter.id)
-    );
+        if (statusFilter !== 'ALL' &&
+            String(issue.status || '').toUpperCase() !== String(statusFilter).toUpperCase()) return false;
+
+        if (priorityFilter !== 'ALL' &&
+            String(issue['priority'] || '').toUpperCase() !== String(priorityFilter).toUpperCase()) return false;
+
+        if (assigneeFilter !== 'ALL' &&
+            Number(issue.assignee_user_id ?? issue.assigneeUserId) !== Number(assigneeFilter)) return false;
+
+        if (reporterFilter !== 'ALL' &&
+            Number(issue.reporter_user_id ?? issue.reporterUserId) !== Number(reporterFilter)) return false;
+
+        if (teamFilter !== 'ALL' &&
+            Number(issue['team_id'] ?? issue['teamId']) !== Number(teamFilter)) return false;
+
+        if (linkFilter && !this.getIssueLinkedIds(issue, linkFilter.type)
+          .some(id => Number(id) === Number(linkFilter.id))) return false;
+
+        if (query) {
+          const searchable = [
+            issue.issue_code, issue.issueCode, issue.title, issue.description,
+            issue.status, issue['priority'], this.getIssueListSprintName(issue),
+            this.getIssueLinkedEpicNames(issue), this.getIssueLinkedStoryNames(issue),
+            this.getIssueLinkedTaskNames(issue), this.getUserName(issue.assignee_user_id),
+            this.getUserName(issue.reporter_user_id)
+          ].some(value => String(value ?? '').toLowerCase().includes(query));
+          if (!searchable) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        const aSprint = this.issueSprintId(a);
+        const bSprint = this.issueSprintId(b);
+        if (aSprint !== bSprint) return aSprint - bSprint;
+        return String(a.issue_code || a.issueCode || a.id)
+          .localeCompare(String(b.issue_code || b.issueCode || b.id));
+      });
   });
+
+  readonly issueDirectoryColumns = ['key', 'summary', 'status', 'sprint', 'priority', 'assignee', 'reporter', 'actions'];
+
+  filteredIssueTableRows = computed(() => this.issueTableItems().map(issue => ({
+    type: 'ISSUE',
+    code: issue.issue_code || issue.issueCode || `#${issue.id}`,
+    title: issue.title,
+    status: issue.status || 'BACKLOG',
+    sprintId: this.issueSprintId(issue),
+    sprintName: this.getIssueListSprintName(issue),
+    priority: issue['priority'] || '',
+    assigneeId: issue.assignee_user_id ?? issue.assigneeUserId,
+    reporterId: issue.reporter_user_id ?? issue.reporterUserId,
+    item: issue
+  })).filter(row => this.directoryRowMatches(row)));
+
+  openOtherWorkItem(item: OtherWorkItem): void {
+    if (item.type === 'EPIC') this.openViewEpic(item.originalItem as EpicNode);
+    else if (item.type === 'STORY') this.openViewStory(item.originalItem as StoryNode);
+    else this.openViewTask(item.originalItem as TaskNode);
+  }
+
+  trackByOtherWorkItem(index: number, item: OtherWorkItem): string {
+    return `${item.type}_${item.id}` || String(index);
+  }
 
   trackByIssueId(index: number, issue: Issue): number {
     return Number(issue?.id ?? index);
@@ -2314,7 +2972,7 @@ export class Epics implements OnInit {
       name: '',
       description: '',
       status: 'BACKLOG',
-      sprint_id: null,
+      sprint_id: this.activeCurrentSprint()?.id ?? null,
       assignee_user_id: this.getAuthenticatedUserId(),
       reporter_user_id: this.getAuthenticatedUserId(),
       issues: [],
@@ -2327,7 +2985,11 @@ export class Epics implements OnInit {
   }
 
   openEditEpic(epic: EpicNode): void {
-    this.currentEpic = { ...epic };
+    this.currentEpic = {
+      ...epic,
+      assignee_user_id: epic.assignee_user_id ?? this.getAuthenticatedUserId(),
+      reporter_user_id: epic.reporter_user_id ?? this.getAuthenticatedUserId()
+    };
     this.modalMode.set('EDIT');
     this.activeModal.set('EPIC');
     this.syncPersonSearchFields();
@@ -2339,7 +3001,7 @@ export class Epics implements OnInit {
     this.currentStory = {
       project_id: projectId,
       epic_id: epic?.id ?? null,
-      sprint_id: epic?.sprint_id ?? null,
+      sprint_id: epic?.sprint_id ?? this.activeCurrentSprint()?.id ?? null,
       title: '',
       description: '',
       story_points: 0,
@@ -2369,6 +3031,8 @@ export class Epics implements OnInit {
     this.currentStory = {
       ...this.normalizeStory(story),
       id,
+      assignee_user_id: this.normalizeStory(story).assignee_user_id ?? this.getAuthenticatedUserId(),
+      reporter_user_id: this.normalizeStory(story).reporter_user_id ?? this.getAuthenticatedUserId(),
       testCases: this.getTestCasesForStory(id)
     };
 
@@ -2381,7 +3045,7 @@ export class Epics implements OnInit {
   openCreateTask(story?: StoryNode): void {
     this.currentTask = {
       story_id: Number(story?.id ?? 0),
-      sprint_id: story?.sprint_id ?? null,
+      sprint_id: story?.sprint_id ?? this.activeCurrentSprint()?.id ?? null,
       title: '',
       description: '',
       status: 'TODO',
@@ -2408,6 +3072,8 @@ export class Epics implements OnInit {
     this.currentTask = {
       ...this.normalizeTask(task),
       id,
+      assignee_user_id: this.normalizeTask(task).assignee_user_id ?? this.getAuthenticatedUserId(),
+      reporter_user_id: this.normalizeTask(task).reporter_user_id ?? this.getAuthenticatedUserId(),
       testCases: this.getTestCasesForTask(id)
     };
     this.syncPersonSearchFields();
@@ -3050,7 +3716,25 @@ export class Epics implements OnInit {
     ).length;
   }
 
-  startSprint(sprint: Sprint): void {
+  startSprint(sprint: Sprint, fromPrompt = false): void {
+    // A project can have only one ACTIVE sprint through this UI.
+    // The only supported start action is the no-active-sprint prompt.
+    const active = this.activeCurrentSprint();
+
+    if (active && Number(active.id) !== Number(sprint.id)) {
+      this.showToast(`${active.name} is already running for this project`);
+      return;
+    }
+
+    if (String(sprint.status || '').toUpperCase() === 'COMPLETED') {
+      this.showToast('A completed sprint cannot be started');
+      return;
+    }
+
+    if (fromPrompt) {
+      this.sprintStartPromptOpen.set(false);
+    }
+
     this.http.put(
       `${this.baseUrl}/sprints/${sprint.id}`,
       { name: sprint.name, status: 'ACTIVE' },
@@ -3058,7 +3742,15 @@ export class Epics implements OnInit {
     ).subscribe({
       next: () => {
         this.showToast(`${sprint.name} started`);
-        this.fetchSprints();
+        this.sprintPromptDismissedProjectId = null;
+
+        this.fetchSprints(() => {
+          // Refresh the project-level ACTIVE sprint, then reload its work items.
+          this.syncSprintContext(false);
+          this.selectedSprintFilter.set(Number(sprint.id));
+          this.sprintStartPromptOpen.set(false);
+          this.loadFullHierarchy();
+        });
       },
       error: error => {
         console.error('Sprint start failed', error);
@@ -3075,7 +3767,11 @@ export class Epics implements OnInit {
     ).subscribe({
       next: () => {
         this.showToast(`${sprint.name} completed`);
-        this.fetchSprints();
+        this.sprintPromptDismissedProjectId = null;
+        this.fetchSprints(() => {
+          this.syncSprintContext(true);
+          this.loadFullHierarchy();
+        });
       },
       error: error => {
         console.error('Sprint completion failed', error);
@@ -3443,7 +4139,9 @@ export class Epics implements OnInit {
     }
 
     if (event.key === 'Escape') {
-      if (this.sprintProgressOpen()) {
+      if (this.sprintStartPromptOpen()) {
+        this.closeSprintStartPrompt();
+      } else if (this.sprintProgressOpen()) {
         this.closeSprintProgress();
       } else if (this.testCasePopupOpen()) {
         this.closeTestCasesPopup();

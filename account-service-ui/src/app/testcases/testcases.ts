@@ -11,11 +11,20 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../auth.service';
 
-import { of } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { environment } from '../../environment';
 import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatCardModule } from '@angular/material/card';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatTableModule } from '@angular/material/table';
 
 
 /* ============================================================
@@ -149,7 +158,17 @@ export interface TestSuite {
 
   imports: [
     CommonModule,
-    FormsModule, MatIconModule
+    FormsModule,
+    MatIconModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatCheckboxModule,
+    MatCardModule,
+    MatDividerModule,
+    MatTooltipModule,
+    MatTableModule
   ],
 
   templateUrl: './testcases.html',
@@ -194,6 +213,10 @@ export class Testcases implements OnInit {
   ============================================================ */
 
   selectedProjectId: number | null = null;
+
+  /** Identifies the newest project load so stale responses are ignored. */
+  private projectLoadToken = 0;
+  isProjectLoading = false;
 
 
   /* ============================================================
@@ -278,6 +301,8 @@ showAddTestCasesModal = false;
 
 availableTestCases: TestCase[] = [];
 
+displayedAvailableTestCaseColumns: string[] = ['select', 'code', 'title', 'status', 'priority', 'suite'];
+
 selectedTestCaseIds = new Set<number>();
 
 addTestCaseSearch = '';
@@ -304,17 +329,10 @@ isAddingTestCases = false;
   ============================================================ */
 
   ngOnInit(): void {
-
+    // Project data is loaded only after projects resolve and a project is selected.
+    // Avoid firing unfiltered requests here and then immediately repeating them.
     this.loadProjects();
-
-    this.loadTestPlans();
-
-    this.loadTestSuites();
-
-    this.loadTestcases();
-
     this.loadUsers();
-
     this.loadTasks();
   }
 
@@ -934,6 +952,13 @@ private finishAddingTestCases(
     ) {
 
       this.selectedProjectId = null;
+      ++this.projectLoadToken;
+      this.isProjectLoading = false;
+      this.testPlans = [];
+      this.testSuites = [];
+      this.testCases = [];
+      this.epics = [];
+      this.stories = [];
 
       this.selectedPlan = null;
       this.selectedSuite = null;
@@ -954,42 +979,72 @@ private finishAddingTestCases(
   ============================================================ */
 
   applyProjectSelection(): void {
+    const projectId = this.selectedProjectId;
+    const requestToken = ++this.projectLoadToken;
 
-    const projectId =
-      this.selectedProjectId;
+    // Clear the previous project's content immediately, so the UI never shows
+    // stale project data while the new project's requests are in flight.
+    this.selectedPlan = null;
+    this.selectedSuite = null;
+    this.selectedTestCase = null;
+    this.testPlans = [];
+    this.testSuites = [];
+    this.testCases = [];
+    this.epics = [];
+    this.stories = [];
 
     if (!projectId) {
+      this.isProjectLoading = false;
+      this.cdr.markForCheck();
       return;
     }
 
-    /*
-     * Reload the same existing APIs.
-     */
-    this.loadTestPlans();
+    this.isProjectLoading = true;
+    this.cdr.markForCheck();
 
-    this.loadTestSuites();
+    const headers = this.auth.getAuthHeaders();
+    const plans$ = this.http
+      .get<any>(`${this.baseUrl2}/v1/test-plans`, { headers })
+      .pipe(catchError(() => of([])));
+    const suites$ = this.http
+      .get<any>(`${this.baseUrl2}/v1/test-suites`, { headers })
+      .pipe(catchError(() => of([])));
+    const cases$ = this.http
+      .get<any>(`${this.baseUrl2}/v1/testcases`, { headers })
+      .pipe(catchError(() => of([])));
+    const epics$ = this.http
+      .get<any>(`${this.baseUrl}/projects/${projectId}/epics`, { headers })
+      .pipe(catchError(() => of([])));
+    const stories$ = this.http
+      .get<any>(`${this.baseUrl}/projects/${projectId}/stories`, { headers })
+      .pipe(catchError(() => of([])));
 
-    this.loadTestcases();
+    // Run independent requests concurrently, and apply the result only once.
+    forkJoin({ plans: plans$, suites: suites$, cases: cases$, epics: epics$, stories: stories$ })
+      .subscribe(({ plans, suites, cases, epics, stories }) => {
+        // A newer project was selected while these requests were running.
+        if (requestToken !== this.projectLoadToken || projectId !== this.selectedProjectId) {
+          return;
+        }
 
-    /*
-     * These require project id.
-     */
-    this.loadEpics();
+        const projectKey = String(projectId);
+        this.testPlans = this.extractArray(plans)
+          .filter(plan => String(this.getProjectId(plan)) === projectKey)
+          .map(plan => ({ ...plan, expanded: false, suites: [] }));
+        this.testSuites = this.extractArray(suites)
+          .filter(suite => String(this.getProjectId(suite)) === projectKey);
+        this.testCases = this.extractArray(cases)
+          .filter(testcase => String(this.getProjectId(testcase)) === projectKey);
+        this.epics = this.extractArray(epics);
+        this.stories = this.extractArray(stories);
 
-    this.loadStories();
-
-    /*
-     * Reset current tree selection.
-     */
-    this.selectedPlan = null;
-
-    this.selectedSuite = null;
-
-    this.selectedTestCase = null;
-
-    this.cdr.detectChanges();
+        this.attachTestCasesToSuites();
+        this.attachSuitesToPlans();
+        this.selectInitialNode();
+        this.isProjectLoading = false;
+        this.cdr.detectChanges();
+      });
   }
-
 
   /* ============================================================
      TEST PLANS
@@ -1278,88 +1333,55 @@ private finishAddingTestCases(
   ============================================================ */
 
   attachSuitesToPlans(): void {
+    // Build a lookup once instead of filtering every suite for every plan.
+    const suitesByPlan = new Map<string, TestSuite[]>();
 
-    this.testPlans.forEach(plan => {
+    for (const suite of this.testSuites) {
+      const planId = this.getEntityId(suite.testPlan, suite.testPlanId);
+      if (planId === null || planId === undefined || planId === '') continue;
+      const key = String(planId);
+      const bucket = suitesByPlan.get(key) || [];
+      bucket.push(suite);
+      suitesByPlan.set(key, bucket);
+    }
 
-      plan.suites = [];
-
-      const planId =
-        this.getEntityId(
-          plan,
-          plan.id
-        );
-
-      this.testSuites
-        .filter(suite => {
-
-          const suitePlanId =
-            this.getEntityId(
-              suite.testPlan,
-              suite.testPlanId
-            );
-
-          return String(suitePlanId) ===
-            String(planId);
-        })
-        .forEach(suite => {
-
-          suite.testCases =
-            suite.testCases || [];
-
-          suite.expanded =
-            suite.expanded ?? false;
-
-          plan.suites!.push(
-            suite
-          );
-        });
-    });
+    for (const plan of this.testPlans) {
+      const planId = this.getEntityId(plan, plan.id);
+      const suites = suitesByPlan.get(String(planId)) || [];
+      plan.suites = suites;
+      for (const suite of suites) {
+        suite.testCases = suite.testCases || [];
+        suite.expanded = suite.expanded ?? false;
+      }
+    }
   }
-
 
   /* ============================================================
      ATTACH TEST CASES TO SUITES
   ============================================================ */
 
   attachTestCasesToSuites(): void {
+    // Index cases by suite id to avoid an O(suites × test cases) scan.
+    const casesBySuite = new Map<string, TestCase[]>();
 
-    this.testSuites.forEach(
-      suite => {
+    for (const testcase of this.testCases) {
+      const suiteId = this.getEntityId(
+        testcase.testSuite,
+        testcase.testSuiteId || testcase.test_suite_id
+      );
+      if (suiteId === null || suiteId === undefined || suiteId === '') continue;
+      const key = String(suiteId);
+      const bucket = casesBySuite.get(key) || [];
+      bucket.push(testcase);
+      casesBySuite.set(key, bucket);
+    }
 
-        suite.testCases = [];
-
-        const suiteId =
-          suite.id;
-
-        this.testCases
-          .filter(testcase => {
-
-            const testcaseSuiteId =
-              this.getEntityId(
-                testcase.testSuite,
-                testcase.testSuiteId ||
-                testcase.test_suite_id
-              );
-
-            return (
-              testcaseSuiteId !== null &&
-              testcaseSuiteId !== undefined &&
-              testcaseSuiteId !== '' &&
-              Number(testcaseSuiteId) === Number(suiteId)
-            );
-          })
-          .forEach(testcase => {
-
-            suite.testCases!.push(
-              testcase
-            );
-          });
-      }
-    );
+    for (const suite of this.testSuites) {
+      suite.testCases = casesBySuite.get(String(suite.id)) || [];
+    }
 
     this.attachSuitesToPlans();
   }
-
 
   /* ============================================================
      INITIAL SELECTION

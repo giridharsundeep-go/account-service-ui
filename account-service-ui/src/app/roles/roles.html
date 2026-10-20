@@ -19,11 +19,14 @@
     </div>
   </header>
 
+  <div class="role-feedback role-feedback-error" *ngIf="errorMessage" role="alert">{{ errorMessage }}</div>
+  <div class="role-feedback role-feedback-success" *ngIf="successMessage" role="status">{{ successMessage }}</div>
+
   <!-- COLLAPSIBLE CREATE / EDIT DRAWER PANEL -->
   <div class="form-drawer-wrapper" [class.open]="editingRoleId !== null">
     <div class="drawer-card">
       <div class="drawer-header">
-        <h3>{{ editingRoleId ? 'Modify Security Role' : 'Establish New System Role' }}</h3>
+        <h3>{{ editingRoleId !== null && editingRoleId > 0 ? 'Modify Security Role' : 'Establish New System Role' }}</h3>
         <p>Set clear naming conventions and specify descriptions for accountability boundaries.</p>
       </div>
 
@@ -49,7 +52,7 @@
           class="gp-button gp-action"
           (click)="saveRole()"
           [disabled]="loading || !roleName.trim()">
-          {{ loading ? 'Processing...' : (editingRoleId ? 'Save System Role' : 'Create System Role') }}
+          {{ loading ? 'Processing...' : (editingRoleId !== null && editingRoleId > 0 ? 'Save System Role' : 'Create System Role') }}
         </button>
 
         <button mat-stroked-button class="gp-button gp-cancel" (click)="resetForm()">

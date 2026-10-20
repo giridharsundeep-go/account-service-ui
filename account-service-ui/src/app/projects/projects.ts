@@ -20,6 +20,7 @@ import { environment } from '../../environment';
 import { AuthService } from '../auth.service';
 
 import { MatIconModule } from '@angular/material/icon';
+import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
@@ -147,6 +148,7 @@ export interface SprintItem {
     FormsModule,
 
     MatIconModule,
+    MatCardModule,
     MatInputModule,
     MatFormFieldModule,
     MatSelectModule,
@@ -195,6 +197,8 @@ export class Projects implements OnInit {
   ============================================================ */
 
   public globalSearchQuery = '';
+
+  public selectedProductId: number | 'ALL' = 'ALL';
 
 
   /* ============================================================
@@ -435,12 +439,19 @@ Math: any;
         .trim()
         .toLowerCase();
 
-    if (!query) {
-      return projects;
-    }
-
     return projects.filter(
       project => {
+
+        if (
+          this.selectedProductId !== 'ALL' &&
+          Number(project.product_id) !== Number(this.selectedProductId)
+        ) {
+          return false;
+        }
+
+        if (!query) {
+          return true;
+        }
 
         return (
           (project.name || '')
@@ -468,6 +479,14 @@ Math: any;
 
       }
     );
+  }
+
+
+
+  public setProductFilter(productId: number | 'ALL'): void {
+
+    this.selectedProductId = productId;
+    this.cdr.detectChanges();
   }
 
 
@@ -975,9 +994,13 @@ Math: any;
 
   public closeComposerDrawer(): void {
 
-    this.isComposerOpen =
-      false;
+    // Do not allow backdrop/cancel actions to dismiss the composer while
+    // the project and its related resources are still being persisted.
+    if (this.isSaving) {
+      return;
+    }
 
+    this.isComposerOpen = false;
   }
 
 
@@ -1406,20 +1429,31 @@ Math: any;
 
   public commitProjectToSystem(): void {
 
-    this.isSaving =
-      true;
+    // A synchronous guard prevents duplicate POSTs even if the user clicks
+    // repeatedly before Angular has rendered the disabled button.
+    if (this.isSaving) {
+      return;
+    }
+
+    this.isSaving = true;
 
     const isExistingProject =
       !!this.projectForm.id;
 
+    const numericTeamIds = this.selectedTeamIds
+      .map(id => Number(id))
+      .filter(id => Number.isFinite(id) && id > 0);
+
+    const numericUserIds = this.selectedUsers
+      .map(id => Number(id))
+      .filter(id => Number.isFinite(id) && id > 0);
+
+    // Snapshot all form values before starting network requests so the
+    // payload cannot change while the save is in progress.
     const body = {
       ...this.projectForm,
-      associatedTeamIds: this.selectedTeamIds
-        .map(id => Number(id))
-        .filter(id => Number.isFinite(id) && id > 0),
-      associatedUserIds: this.selectedUsers
-        .map(id => Number(id))
-        .filter(id => Number.isFinite(id) && id > 0),
+      associatedTeamIds: [...numericTeamIds],
+      associatedUserIds: [...numericUserIds],
       previewStartDate: this.previewStartDate,
       previewActivationType: this.previewActivationType
     };
@@ -1459,16 +1493,6 @@ Math: any;
               'Could not resolve project ID.'
             );
           }
-
-          const numericTeamIds =
-            this.selectedTeamIds
-              .map(id => Number(id))
-              .filter(id => Number.isFinite(id) && id > 0);
-
-          const numericUserIds =
-            this.selectedUsers
-              .map(id => Number(id))
-              .filter(id => Number.isFinite(id) && id > 0);
 
           const requests: Record<string, any> = {
 

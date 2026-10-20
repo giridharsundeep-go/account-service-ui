@@ -13,6 +13,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatCardModule } from '@angular/material/card';
 
 export interface AgileProductNode {
   id?: number; 
@@ -33,7 +34,7 @@ export interface AgileProductNode {
     MatInputModule, 
     MatFormFieldModule, 
     MatButtonModule, 
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule, MatCardModule
   ]
 })
 export class Products implements OnInit {

@@ -602,3 +602,23 @@
     right: 31px;
   }
 }
+
+
+/* API feedback messages */
+.role-feedback {
+  margin: 0 auto 14px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.role-feedback-error {
+  color: #b42318;
+  background: #fef3f2;
+  border: 1px solid #fecdca;
+}
+.role-feedback-success {
+  color: #166534;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}

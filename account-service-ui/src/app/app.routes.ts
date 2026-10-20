@@ -25,6 +25,12 @@ export const routes: Routes = [
       import('./create-account/create-account').then(m => m.CreateAccount)
   },
 
+  {
+    path: 'super-reg',
+    loadComponent: () =>
+      import('./super-reg/super-reg').then(m => m.SuperReg)
+  },
+
   // =========================================================
   // ORGANISATION
   // =========================================================

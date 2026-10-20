@@ -37,6 +37,7 @@ import { Issues } from '../issues/issues';
 import { Testcases } from '../testcases/testcases';
 import { Releases } from '../releases/releases';
 import { Docs } from '../docs/docs';
+import { Boards } from '../boards/boards';
 
 @Component({
   selector: 'app-user-home',
@@ -54,6 +55,7 @@ import { Docs } from '../docs/docs';
     Products,
     Projects,
     Epics,
+    Boards,
     Issues,
     Testcases,
     Releases,
@@ -70,6 +72,8 @@ export class UserHome implements OnInit {
   // =========================================================
 
   activeMenu = 'dashboard';
+
+  private readonly ACTIVE_MENU_STORAGE_KEY = 'greatley-poshley-active-menu';
 
   currentYear =
     new Date().getFullYear();
@@ -97,62 +101,47 @@ export class UserHome implements OnInit {
   // NAVIGATION
   // =========================================================
 
+  // Sidebar navigation is grouped around the user's workflow.
   readonly primaryNavigation = [
-    {
-      id: 'dashboard',
-      label: 'Dashboard',
-      icon: 'dashboard'
-    },
-    {
-      id: 'products',
-      label: 'Products',
-      icon: 'products'
-    },
-    {
-      id: 'projects',
-      label: 'Projects',
-      icon: 'projects'
-    },
-    {
-      id: 'epics',
-      label: 'Epics & Backlogs',
-      icon: 'epics'
-    },
-    
-    {
-      id: 'test-cases',
-      label: 'Test Cases',
-      icon: 'tests'
-    },
-    {
-      id: 'releases',
-      label: 'Releases',
-      icon: 'releases'
-    },
-    {
-      id: 'docs',
-      label: 'Documentation',
-      icon: 'docs'
-    }
+    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' }
   ];
 
-  readonly administrationNavigation = [
-    {
-      id: 'roles',
-      label: 'Roles',
-      icon: 'roles'
-    },
-    {
-      id: 'users',
-      label: 'Users',
-      icon: 'users'
-    },
-    {
-      id: 'teams',
-      label: 'Teams',
-      icon: 'teams'
-    }
+  readonly planningNavigation = [
+    { id: 'products', label: 'Products', icon: 'products' },
+    { id: 'projects', label: 'Projects', icon: 'projects' },
+    { id: 'boards', label: 'Boards', icon: 'boards' },
+    { id: 'epics', label: 'Epics & Backlogs', icon: 'epics' }
   ];
+
+  readonly qualityNavigation = [
+    { id: 'test-cases', label: 'Test Cases', icon: 'tests' },
+    { id: 'issues', label: 'Issues', icon: 'issues' }
+  ];
+
+  readonly deliveryNavigation = [
+    { id: 'releases', label: 'Releases', icon: 'releases' }
+  ];
+
+  readonly knowledgeNavigation = [
+    { id: 'docs', label: 'Documentation', icon: 'docs' }
+  ];
+
+  readonly peopleNavigation = [
+    { id: 'teams', label: 'Teams', icon: 'teams' },
+    { id: 'users', label: 'Users', icon: 'users' },
+    { id: 'roles', label: 'Roles & Permissions', icon: 'roles' }
+  ];
+
+  private get allNavigationItems() {
+    return [
+      ...this.primaryNavigation,
+      ...this.planningNavigation,
+      ...this.qualityNavigation,
+      ...this.deliveryNavigation,
+      ...this.knowledgeNavigation,
+      ...this.peopleNavigation
+    ];
+  }
 
   readonly createItems = [
     {
@@ -206,6 +195,10 @@ export class UserHome implements OnInit {
 
   ngOnInit(): void {
 
+    // Restore the last selected workspace tab before route/query
+    // synchronization so a browser reload does not fall back to Dashboard.
+    this.restoreActiveMenu();
+
     this.syncActiveRoute();
 
     // Viewer returns to UserHome with ?menu=...
@@ -215,13 +208,10 @@ export class UserHome implements OnInit {
 
       if (!menu) return;
 
-      const valid = [
-        ...this.primaryNavigation.map(item => item.id),
-        ...this.administrationNavigation.map(item => item.id)
-      ];
+      const valid = this.allNavigationItems.map(item => item.id);
 
       if (valid.includes(menu)) {
-        this.activeMenu = menu;
+        this.setActive(menu, false);
       }
     });
 
@@ -265,12 +255,41 @@ export class UserHome implements OnInit {
   // NAVIGATION
   // =========================================================
 
-  setActive(menu: string): void {
+  setActive(menu: string, persist = true): void {
 
     this.activeMenu = menu;
 
+    if (persist && isPlatformBrowser(this.platformId)) {
+      localStorage.setItem(
+        this.ACTIVE_MENU_STORAGE_KEY,
+        menu
+      );
+    }
+
     this.createMenuOpen = false;
     this.profileMenuOpen = false;
+  }
+
+  private restoreActiveMenu(): void {
+
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    const storedMenu =
+      localStorage.getItem(
+        this.ACTIVE_MENU_STORAGE_KEY
+      );
+
+    if (!storedMenu) {
+      return;
+    }
+
+    const valid = this.allNavigationItems.map(item => item.id);
+
+    if (valid.includes(storedMenu)) {
+      this.activeMenu = storedMenu;
+    }
   }
 
   isActive(menu: string): boolean {
@@ -551,52 +570,57 @@ export class UserHome implements OnInit {
     if (
       url.includes('/epics')
     ) {
-      this.activeMenu = 'epics';
+      this.setActive('epics');
     }
     else if (
       url.includes('/issues')
     ) {
-      this.activeMenu = 'issues';
+      this.setActive('issues');
     }
     else if (
       url.includes('/testcases')
     ) {
-      this.activeMenu = 'test-cases';
+      this.setActive('test-cases');
     }
     else if (
       url.includes('/projects')
     ) {
-      this.activeMenu = 'projects';
+      this.setActive('projects');
+    }
+    else if (
+      url.includes('/boards')
+    ) {
+      this.setActive('boards');
     }
     else if (
       url.includes('/products')
     ) {
-      this.activeMenu = 'products';
+      this.setActive('products');
     }
     else if (
       url.includes('/users')
     ) {
-      this.activeMenu = 'users';
+      this.setActive('users');
     }
     else if (
       url.includes('/teams')
     ) {
-      this.activeMenu = 'teams';
+      this.setActive('teams');
     }
     else if (
       url.includes('/roles')
     ) {
-      this.activeMenu = 'roles';
+      this.setActive('roles');
     }
     else if (
       url.includes('/releases')
     ) {
-      this.activeMenu = 'releases';
+      this.setActive('releases');
     }
     else if (
       url.includes('/docs')
     ) {
-      this.activeMenu = 'docs';
+      this.setActive('docs');
     }
   }
 

@@ -41,17 +41,17 @@
                     Project
                 </span>
 
-                <select [ngModel]="selectedProjectId" (ngModelChange)="onProjectChange($event)">
+                <mat-form-field appearance="outline" class="gp-material-field"><mat-select [ngModel]="selectedProjectId" (ngModelChange)="onProjectChange($event)">
 
-                    <option [ngValue]="null">
+                    <mat-option [value]="null">
                         Select project
-                    </option>
+                    </mat-option>
 
-                    <option *ngFor="let project of projects" [ngValue]="getOptionId(project)">
+                    <mat-option *ngFor="let project of projects" [value]="getOptionId(project)">
                         {{ project.name || project.title }}
-                    </option>
+                    </mat-option>
 
-                </select>
+                </mat-select></mat-form-field>
 
             </div>
 
@@ -64,10 +64,10 @@
                     ⌕
                 </span>
 
-                <input type="text" [(ngModel)]="searchText" (ngModelChange)="onSearchChange()"
-                    placeholder="Search test cases..." />
+                <mat-form-field appearance="outline" class="gp-material-field"><input matInput type="text" [(ngModel)]="searchText" (ngModelChange)="onSearchChange()"
+                    placeholder="Search test cases..."></mat-form-field>
 
-                <button *ngIf="searchText" type="button" class="clear-search" (click)="clearSearch()">
+                <button *ngIf="searchText" type="button" class="clear-search" (click)="clearSearch()" mat-icon-button>
                     ×
                 </button>
 
@@ -76,9 +76,9 @@
             <div class="suite-header-actions">
 
                 <button type="button" class="suite-action-button" *ngIf="selectedSuite"
-                    (click)="openAddTestCasesToSuite()">
+                    (click)="openAddTestCasesToSuite()" mat-button>
 
-                    <span class="gp-icon gp-icon-add" aria-hidden="true">＋</span>
+                    <mat-icon aria-hidden="true">add</mat-icon>
 
                     <span>
                         Add Test Cases
@@ -91,7 +91,7 @@
 
             <!-- FILTER -->
 
-            <button type="button" class="filter-button" [class.active]="showFilters" (click)="toggleFilters()">
+            <button type="button" class="filter-button" [class.active]="showFilters" (click)="toggleFilters()" mat-button>
 
                 <span>☷</span>
 
@@ -106,7 +106,7 @@
 
             <!-- CREATE -->
 
-            <button type="button" class="primary-button" [disabled]="!selectedProjectId" (click)="openCreateTestCase()">
+            <button type="button" class="primary-button" [disabled]="!selectedProjectId" (click)="openCreateTestCase()" mat-flat-button color="primary">
 
                 <span>＋</span>
 
@@ -129,17 +129,17 @@
 
             <label>Status</label>
 
-            <select [(ngModel)]="selectedStatus" (ngModelChange)="onSearchChange()">
+            <mat-form-field appearance="outline" class="gp-material-field"><mat-select [(ngModel)]="selectedStatus" (ngModelChange)="onSearchChange()">
 
-                <option value="">
+                <mat-option value="">
                     All Statuses
-                </option>
+                </mat-option>
 
-                <option *ngFor="let status of statuses" [value]="status">
+                <mat-option *ngFor="let status of statuses" [value]="status">
                     {{ status }}
-                </option>
+                </mat-option>
 
-            </select>
+            </mat-select></mat-form-field>
 
         </div>
 
@@ -148,17 +148,17 @@
 
             <label>Priority</label>
 
-            <select [(ngModel)]="selectedPriority" (ngModelChange)="onSearchChange()">
+            <mat-form-field appearance="outline" class="gp-material-field"><mat-select [(ngModel)]="selectedPriority" (ngModelChange)="onSearchChange()">
 
-                <option value="">
+                <mat-option value="">
                     All Priorities
-                </option>
+                </mat-option>
 
-                <option *ngFor="let priority of priorities" [value]="priority">
+                <mat-option *ngFor="let priority of priorities" [value]="priority">
                     {{ priority }}
-                </option>
+                </mat-option>
 
-            </select>
+            </mat-select></mat-form-field>
 
         </div>
 
@@ -167,17 +167,17 @@
 
             <label>Type</label>
 
-            <select [(ngModel)]="selectedType" (ngModelChange)="onSearchChange()">
+            <mat-form-field appearance="outline" class="gp-material-field"><mat-select [(ngModel)]="selectedType" (ngModelChange)="onSearchChange()">
 
-                <option value="">
+                <mat-option value="">
                     All Types
-                </option>
+                </mat-option>
 
-                <option *ngFor="let type of types" [value]="type">
+                <mat-option *ngFor="let type of types" [value]="type">
                     {{ type }}
-                </option>
+                </mat-option>
 
-            </select>
+            </mat-select></mat-form-field>
 
         </div>
 
@@ -186,22 +186,22 @@
 
             <label>Assignee</label>
 
-            <select [(ngModel)]="selectedAssignee" (ngModelChange)="onSearchChange()">
+            <mat-form-field appearance="outline" class="gp-material-field"><mat-select [(ngModel)]="selectedAssignee" (ngModelChange)="onSearchChange()">
 
-                <option value="">
+                <mat-option value="">
                     All Assignees
-                </option>
+                </mat-option>
 
-                <option *ngFor="let assignee of assignees" [value]="assignee">
+                <mat-option *ngFor="let assignee of assignees" [value]="assignee">
                     {{ assignee }}
-                </option>
+                </mat-option>
 
-            </select>
+            </mat-select></mat-form-field>
 
         </div>
 
 
-        <button type="button" class="clear-filter-button" (click)="clearFilters()">
+        <button type="button" class="clear-filter-button" (click)="clearFilters()" mat-button>
             Clear Filters
         </button>
 
@@ -236,7 +236,7 @@
                 </div>
 
                 <button type="button" class="tree-add-button" title="Create Test Plan" [disabled]="!selectedProjectId"
-                    (click)="openCreatePlan()">
+                    (click)="openCreatePlan()" mat-icon-button>
                     ＋
                 </button>
 
@@ -282,7 +282,7 @@
                     Create a test plan to get started.
                 </span>
 
-                <button type="button" class="small-primary-button" (click)="openCreatePlan()">
+                <button type="button" class="small-primary-button" (click)="openCreatePlan()" mat-flat-button color="primary">
                     Create Test Plan
                 </button>
 
@@ -310,7 +310,7 @@
               !selectedSuite
             " (click)="selectPlan($event, plan)">
 
-                        <button type="button" class="expand-button" (click)="togglePlan($event, plan)">
+                        <button type="button" class="expand-button" (click)="togglePlan($event, plan)" mat-icon-button>
                             {{ plan.expanded ? '⌄' : '›' }}
                         </button>
 
@@ -345,17 +345,17 @@
                   $event.stopPropagation();
                   selectedPlan = plan;
                   openCreateSuite()
-                ">
+                " mat-button>
                                 ＋
                             </button>
 
 
-                            <button type="button" title="Edit Plan" (click)="openEditPlan($event, plan)">
+                            <button type="button" title="Edit Plan" (click)="openEditPlan($event, plan)" mat-button>
                                 ✎
                             </button>
 
 
-                            <button type="button" title="Delete Plan" (click)="deletePlan($event, plan)">
+                            <button type="button" title="Delete Plan" (click)="deletePlan($event, plan)" mat-button>
                                 ⋮
                             </button>
 
@@ -391,7 +391,7 @@
                       plan,
                       suite
                     )
-                  ">
+                  " mat-icon-button>
                                     {{ suite.expanded ? '⌄' : '›' }}
                                 </button>
 
@@ -427,7 +427,7 @@
                       selectedPlan = plan;
                       selectedSuite = suite;
                       openCreateTestCase()
-                    ">
+                    " mat-button>
                                         ＋
                                     </button>
 
@@ -437,7 +437,7 @@
                         $event,
                         suite
                       )
-                    ">
+                    " mat-button>
                                         ✎
                                     </button>
 
@@ -447,7 +447,7 @@
                         $event,
                         suite
                       )
-                    ">
+                    " mat-button>
                                         ⋮
                                     </button>
 
@@ -515,7 +515,7 @@
                         <button type="button" class="tree-add-child" (click)="
                 selectedPlan = plan;
                 openCreateSuite()
-              ">
+              " mat-button>
                             ＋ Add test suite
                         </button>
 
@@ -578,12 +578,12 @@
 
                     <div class="detail-actions">
 
-                        <button type="button" class="secondary-button" (click)="openEditTestCase(testcase)">
+                        <button type="button" class="secondary-button" (click)="openEditTestCase(testcase)" mat-button>
                             ✎ Edit
                         </button>
 
 
-                        <button type="button" class="danger-outline-button" (click)="deleteTestcase(testcase)">
+                        <button type="button" class="danger-outline-button" (click)="deleteTestcase(testcase)" mat-stroked-button color="warn">
                             Delete
                         </button>
 
@@ -897,7 +897,7 @@
                         </div>
 
 
-                        <button type="button" class="primary-button" (click)="openCreateTestCase()">
+                        <button type="button" class="primary-button" (click)="openCreateTestCase()" mat-flat-button color="primary">
                             ＋ Create Test Case
                         </button>
 
@@ -949,7 +949,7 @@
                   $event,
                   testcase
                 )
-              ">
+              " mat-button>
 
                             <span class="case-code">
                                 {{ getTestCaseCode(testcase) }}
@@ -1024,7 +1024,7 @@
                             </div>
 
 
-                            <button type="button" class="primary-button" (click)="openCreateSuite()">
+                            <button type="button" class="primary-button" (click)="openCreateSuite()" mat-flat-button color="primary">
                                 ＋ Create Test Suite
                             </button>
 
@@ -1104,7 +1104,7 @@
                     plan,
                     suite
                   )
-                ">
+                " mat-button>
 
                                 <span class="suite-item-icon">
                                     ▤
@@ -1187,7 +1187,7 @@
 
                 </div>
 
-                <button type="button" class="modal-close" (click)="closeCreatePlan()">
+                <button type="button" class="modal-close" (click)="closeCreatePlan()" mat-icon-button>
                     ×
                 </button>
 
@@ -1200,46 +1200,46 @@
                     Name
                 </label>
 
-                <input type="text" [(ngModel)]="planForm.name" placeholder="Enter test plan name" />
+                <mat-form-field appearance="outline" class="gp-material-field"><input matInput type="text" [(ngModel)]="planForm.name" placeholder="Enter test plan name"></mat-form-field>
 
 
                 <label>
                     Project
                 </label>
 
-                <select [(ngModel)]="planForm.projectId">
+                <mat-form-field appearance="outline" class="gp-material-field"><mat-select [(ngModel)]="planForm.projectId">
 
-                    <option [ngValue]="null">
+                    <mat-option [value]="null">
                         Select project
-                    </option>
+                    </mat-option>
 
-                    <option *ngFor="let project of projects" [ngValue]="getOptionId(project)">
+                    <mat-option *ngFor="let project of projects" [value]="getOptionId(project)">
                         {{ project.name || project.title }}
-                    </option>
+                    </mat-option>
 
-                </select>
+                </mat-select></mat-form-field>
 
 
                 <label>
                     Description
                 </label>
 
-                <textarea rows="5" [(ngModel)]="planForm.description"
-                    placeholder="Describe the purpose of this test plan"></textarea>
+                <mat-form-field appearance="outline" class="gp-material-field"><textarea matInput rows="5" [(ngModel)]="planForm.description"
+                    placeholder="Describe the purpose of this test plan"></textarea></mat-form-field>
 
             </div>
 
 
             <div class="modal-footer">
 
-                <button type="button" class="secondary-button" (click)="closeCreatePlan()">
+                <button type="button" class="secondary-button" (click)="closeCreatePlan()" mat-button>
                     Cancel
                 </button>
 
                 <button type="button" class="primary-button" (click)="createPlan()" [disabled]="
             !planForm.name?.trim() ||
             !selectedProjectId
-          ">
+          " mat-flat-button color="primary">
                     Create Plan
                 </button>
 
@@ -1272,7 +1272,7 @@
 
                 </div>
 
-                <button type="button" class="modal-close" (click)="closeEditPlan()">
+                <button type="button" class="modal-close" (click)="closeEditPlan()" mat-icon-button>
                     ×
                 </button>
 
@@ -1285,42 +1285,42 @@
                     Name
                 </label>
 
-                <input type="text" [(ngModel)]="planForm.name" />
+                <mat-form-field appearance="outline" class="gp-material-field"><input matInput type="text" [(ngModel)]="planForm.name"></mat-form-field>
 
 
                 <label>
                     Project
                 </label>
 
-                <select [(ngModel)]="planForm.projectId">
+                <mat-form-field appearance="outline" class="gp-material-field"><mat-select [(ngModel)]="planForm.projectId">
 
-                    <option [ngValue]="null">
+                    <mat-option [value]="null">
                         Select project
-                    </option>
+                    </mat-option>
 
-                    <option *ngFor="let project of projects" [ngValue]="getOptionId(project)">
+                    <mat-option *ngFor="let project of projects" [value]="getOptionId(project)">
                         {{ project.name || project.title }}
-                    </option>
+                    </mat-option>
 
-                </select>
+                </mat-select></mat-form-field>
 
 
                 <label>
                     Description
                 </label>
 
-                <textarea rows="5" [(ngModel)]="planForm.description"></textarea>
+                <mat-form-field appearance="outline" class="gp-material-field"><textarea matInput rows="5" [(ngModel)]="planForm.description"></textarea></mat-form-field>
 
             </div>
 
 
             <div class="modal-footer">
 
-                <button type="button" class="secondary-button" (click)="closeEditPlan()">
+                <button type="button" class="secondary-button" (click)="closeEditPlan()" mat-button>
                     Cancel
                 </button>
 
-                <button type="button" class="primary-button" (click)="updatePlan()">
+                <button type="button" class="primary-button" (click)="updatePlan()" mat-flat-button color="primary">
                     Save Changes
                 </button>
 
@@ -1353,7 +1353,7 @@
 
                 </div>
 
-                <button type="button" class="modal-close" (click)="closeCreateSuite()">
+                <button type="button" class="modal-close" (click)="closeCreateSuite()" mat-icon-button>
                     ×
                 </button>
 
@@ -1366,46 +1366,46 @@
                     Test Plan
                 </label>
 
-                <select [(ngModel)]="suiteForm.testPlanId">
+                <mat-form-field appearance="outline" class="gp-material-field"><mat-select [(ngModel)]="suiteForm.testPlanId">
 
-                    <option [ngValue]="null">
+                    <mat-option [value]="null">
                         Select test plan
-                    </option>
+                    </mat-option>
 
-                    <option *ngFor="let plan of testPlans" [ngValue]="plan.id">
+                    <mat-option *ngFor="let plan of testPlans" [value]="plan.id">
                         {{ plan.name }}
-                    </option>
+                    </mat-option>
 
-                </select>
+                </mat-select></mat-form-field>
 
 
                 <label>
                     Suite Name
                 </label>
 
-                <input type="text" [(ngModel)]="suiteForm.name" placeholder="Enter test suite name" />
+                <mat-form-field appearance="outline" class="gp-material-field"><input matInput type="text" [(ngModel)]="suiteForm.name" placeholder="Enter test suite name"></mat-form-field>
 
 
                 <label>
                     Description
                 </label>
 
-                <textarea rows="5" [(ngModel)]="suiteForm.description"
-                    placeholder="Describe this test suite"></textarea>
+                <mat-form-field appearance="outline" class="gp-material-field"><textarea matInput rows="5" [(ngModel)]="suiteForm.description"
+                    placeholder="Describe this test suite"></textarea></mat-form-field>
 
             </div>
 
 
             <div class="modal-footer">
 
-                <button type="button" class="secondary-button" (click)="closeCreateSuite()">
+                <button type="button" class="secondary-button" (click)="closeCreateSuite()" mat-button>
                     Cancel
                 </button>
 
                 <button type="button" class="primary-button" (click)="createSuite()" [disabled]="
             !suiteForm.name?.trim() ||
             !suiteForm.testPlanId
-          ">
+          " mat-flat-button color="primary">
                     Create Suite
                 </button>
 
@@ -1438,7 +1438,7 @@
 
                 </div>
 
-                <button type="button" class="modal-close" (click)="closeEditSuite()">
+                <button type="button" class="modal-close" (click)="closeEditSuite()" mat-icon-button>
                     ×
                 </button>
 
@@ -1451,38 +1451,38 @@
                     Test Plan
                 </label>
 
-                <select [(ngModel)]="suiteForm.testPlanId">
+                <mat-form-field appearance="outline" class="gp-material-field"><mat-select [(ngModel)]="suiteForm.testPlanId">
 
-                    <option *ngFor="let plan of testPlans" [ngValue]="plan.id">
+                    <mat-option *ngFor="let plan of testPlans" [value]="plan.id">
                         {{ plan.name }}
-                    </option>
+                    </mat-option>
 
-                </select>
+                </mat-select></mat-form-field>
 
 
                 <label>
                     Suite Name
                 </label>
 
-                <input type="text" [(ngModel)]="suiteForm.name" />
+                <mat-form-field appearance="outline" class="gp-material-field"><input matInput type="text" [(ngModel)]="suiteForm.name"></mat-form-field>
 
 
                 <label>
                     Description
                 </label>
 
-                <textarea rows="5" [(ngModel)]="suiteForm.description"></textarea>
+                <mat-form-field appearance="outline" class="gp-material-field"><textarea matInput rows="5" [(ngModel)]="suiteForm.description"></textarea></mat-form-field>
 
             </div>
 
 
             <div class="modal-footer">
 
-                <button type="button" class="secondary-button" (click)="closeEditSuite()">
+                <button type="button" class="secondary-button" (click)="closeEditSuite()" mat-button>
                     Cancel
                 </button>
 
-                <button type="button" class="primary-button" (click)="updateSuite()">
+                <button type="button" class="primary-button" (click)="updateSuite()" mat-flat-button color="primary">
                     Save Changes
                 </button>
 
@@ -1511,7 +1511,7 @@
         <p>{{ showEditTestCaseModal ? 'Update execution, priority, ownership and linked delivery work.' : 'Define the test intent, execution steps and delivery context.' }}</p>
       </div>
       <button type="button" class="modal-close" aria-label="Close dialog"
-        (click)="showCreateTestCaseModal ? closeCreateTestCase() : closeEditTestCase()">×</button>
+        (click)="showCreateTestCaseModal ? closeCreateTestCase() : closeEditTestCase()" mat-icon-button>×</button>
     </header>
 
     <div class="modal-body testcase-modal-body">
@@ -1527,29 +1527,29 @@
         <div class="form-grid">
           <div class="form-group">
             <label for="tc-code">Test Case Code</label>
-            <input id="tc-code" type="text" [(ngModel)]="testcaseForm.testCaseCode" placeholder="TC-001" />
+            <mat-form-field appearance="outline" class="gp-material-field"><input matInput id="tc-code" type="text" [(ngModel)]="testcaseForm.testCaseCode" placeholder="TC-001"></mat-form-field>
           </div>
 
           <div class="form-group form-group-wide">
             <label for="tc-title">Title <span class="required-mark">*</span></label>
-            <input id="tc-title" type="text" [(ngModel)]="testcaseForm.title" placeholder="Enter a clear, action-oriented test case title" />
+            <mat-form-field appearance="outline" class="gp-material-field"><input matInput id="tc-title" type="text" [(ngModel)]="testcaseForm.title" placeholder="Enter a clear, action-oriented test case title"></mat-form-field>
           </div>
 
           <div class="form-group">
             <label for="tc-type">Test Type</label>
-            <select id="tc-type" [(ngModel)]="testcaseForm.type">
-              <option *ngFor="let type of types" [value]="type">{{ type }}</option>
-            </select>
+            <mat-form-field appearance="outline" class="gp-material-field"><mat-select id="tc-type" [(ngModel)]="testcaseForm.type">
+              <mat-option *ngFor="let type of types" [value]="type">{{ type }}</mat-option>
+            </mat-select></mat-form-field>
           </div>
 
           <div class="form-group">
             <label for="tc-priority">Priority</label>
-            <select id="tc-priority" [(ngModel)]="testcaseForm.priority">
-              <option value="LOW">Low</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="HIGH">High</option>
-              <option value="CRITICAL">Critical</option>
-            </select>
+            <mat-form-field appearance="outline" class="gp-material-field"><mat-select id="tc-priority" [(ngModel)]="testcaseForm.priority">
+              <mat-option value="LOW">Low</mat-option>
+              <mat-option value="MEDIUM">Medium</mat-option>
+              <mat-option value="HIGH">High</mat-option>
+              <mat-option value="CRITICAL">Critical</mat-option>
+            </mat-select></mat-form-field>
           </div>
         </div>
       </section>
@@ -1565,46 +1565,46 @@
         <div class="form-grid form-grid-context">
           <div class="form-group">
             <label for="tc-project">Project <span class="required-mark">*</span></label>
-            <select id="tc-project" [(ngModel)]="testcaseForm.projectId" (ngModelChange)="selectedProjectId = $event ? toNumber($event) : null; loadEpics(); loadStories()">
-              <option [ngValue]="null">Select project</option>
-              <option *ngFor="let project of projects" [ngValue]="getOptionId(project)">{{ project.name || project.title }}</option>
-            </select>
+            <mat-form-field appearance="outline" class="gp-material-field"><mat-select id="tc-project" [(ngModel)]="testcaseForm.projectId" (ngModelChange)="selectedProjectId = $event ? toNumber($event) : null; loadEpics(); loadStories()">
+              <mat-option [value]="null">Select project</mat-option>
+              <mat-option *ngFor="let project of projects" [value]="getOptionId(project)">{{ project.name || project.title }}</mat-option>
+            </mat-select></mat-form-field>
           </div>
 
           <div class="form-group">
             <label for="tc-status">Execution Status</label>
-            <select id="tc-status" [(ngModel)]="testcaseForm.status">
-              <option value="DRAFT">Draft</option>
-              <option value="READY">Ready</option>
-              <option value="IN_PROGRESS">In Progress</option>
-              <option value="PASSED">Passed</option>
-              <option value="FAILED">Failed</option>
-              <option value="BLOCKED">Blocked</option>
-            </select>
+            <mat-form-field appearance="outline" class="gp-material-field"><mat-select id="tc-status" [(ngModel)]="testcaseForm.status">
+              <mat-option value="DRAFT">Draft</mat-option>
+              <mat-option value="READY">Ready</mat-option>
+              <mat-option value="IN_PROGRESS">In Progress</mat-option>
+              <mat-option value="PASSED">Passed</mat-option>
+              <mat-option value="FAILED">Failed</mat-option>
+              <mat-option value="BLOCKED">Blocked</mat-option>
+            </mat-select></mat-form-field>
           </div>
 
           <div class="form-group">
             <label for="tc-plan">Test Plan</label>
-            <select id="tc-plan" [(ngModel)]="testcaseForm.testPlanId">
-              <option [ngValue]="null">Select test plan</option>
-              <option *ngFor="let plan of testPlans" [ngValue]="plan.id">{{ plan.name }}</option>
-            </select>
+            <mat-form-field appearance="outline" class="gp-material-field"><mat-select id="tc-plan" [(ngModel)]="testcaseForm.testPlanId">
+              <mat-option [value]="null">Select test plan</mat-option>
+              <mat-option *ngFor="let plan of testPlans" [value]="plan.id">{{ plan.name }}</mat-option>
+            </mat-select></mat-form-field>
           </div>
 
           <div class="form-group">
             <label for="tc-suite">Test Suite</label>
-            <select id="tc-suite" [(ngModel)]="testcaseForm.testSuiteId">
-              <option [ngValue]="null">Select test suite</option>
-              <option *ngFor="let suite of testSuites" [ngValue]="suite.id">{{ suite.name }}</option>
-            </select>
+            <mat-form-field appearance="outline" class="gp-material-field"><mat-select id="tc-suite" [(ngModel)]="testcaseForm.testSuiteId">
+              <mat-option [value]="null">Select test suite</mat-option>
+              <mat-option *ngFor="let suite of testSuites" [value]="suite.id">{{ suite.name }}</mat-option>
+            </mat-select></mat-form-field>
           </div>
 
           <div class="form-group">
             <label for="tc-assignee">Assignee</label>
-            <select id="tc-assignee" [(ngModel)]="testcaseForm.userId">
-              <option [ngValue]="null">Unassigned</option>
-              <option *ngFor="let user of users" [ngValue]="getOptionId(user)">{{ user.name || user.username || user.email }}</option>
-            </select>
+            <mat-form-field appearance="outline" class="gp-material-field"><mat-select id="tc-assignee" [(ngModel)]="testcaseForm.userId">
+              <mat-option [value]="null">Unassigned</mat-option>
+              <mat-option *ngFor="let user of users" [value]="getOptionId(user)">{{ user.name || user.username || user.email }}</mat-option>
+            </mat-select></mat-form-field>
           </div>
         </div>
       </section>
@@ -1621,26 +1621,26 @@
         <div class="form-grid linked-work-form-grid">
           <div class="form-group">
             <label for="tc-epic">Epic</label>
-            <select id="tc-epic" [(ngModel)]="testcaseForm.epicId">
-              <option [ngValue]="null">No Epic linked</option>
-              <option *ngFor="let epic of epics" [ngValue]="epic.id">{{ epic.epic_code || ('EPIC-' + epic.id) }} — {{ epic.name || epic.title }}</option>
-            </select>
+            <mat-form-field appearance="outline" class="gp-material-field"><mat-select id="tc-epic" [(ngModel)]="testcaseForm.epicId">
+              <mat-option [value]="null">No Epic linked</mat-option>
+              <mat-option *ngFor="let epic of epics" [value]="epic.id">{{ epic.epic_code || ('EPIC-' + epic.id) }} — {{ epic.name || epic.title }}</mat-option>
+            </mat-select></mat-form-field>
           </div>
 
           <div class="form-group">
             <label for="tc-story">Story</label>
-            <select id="tc-story" [(ngModel)]="testcaseForm.storyId">
-              <option [ngValue]="null">No Story linked</option>
-              <option *ngFor="let story of stories" [ngValue]="story.id">{{ story.title || story.name }}</option>
-            </select>
+            <mat-form-field appearance="outline" class="gp-material-field"><mat-select id="tc-story" [(ngModel)]="testcaseForm.storyId">
+              <mat-option [value]="null">No Story linked</mat-option>
+              <mat-option *ngFor="let story of stories" [value]="story.id">{{ story.title || story.name }}</mat-option>
+            </mat-select></mat-form-field>
           </div>
 
           <div class="form-group">
             <label for="tc-task">Task</label>
-            <select id="tc-task" [(ngModel)]="testcaseForm.taskId">
-              <option [ngValue]="null">No Task linked</option>
-              <option *ngFor="let task of tasks" [ngValue]="task.id">{{ task.title || task.name }}</option>
-            </select>
+            <mat-form-field appearance="outline" class="gp-material-field"><mat-select id="tc-task" [(ngModel)]="testcaseForm.taskId">
+              <mat-option [value]="null">No Task linked</mat-option>
+              <mat-option *ngFor="let task of tasks" [value]="task.id">{{ task.title || task.name }}</mat-option>
+            </mat-select></mat-form-field>
           </div>
         </div>
 
@@ -1663,28 +1663,28 @@
         <div class="form-stack">
           <div class="form-group form-group-full">
             <label for="tc-description">Description</label>
-            <textarea id="tc-description" rows="3" [(ngModel)]="testcaseForm.description" placeholder="Describe what this test validates and why it matters."></textarea>
+            <mat-form-field appearance="outline" class="gp-material-field"><textarea matInput id="tc-description" rows="3" [(ngModel)]="testcaseForm.description" placeholder="Describe what this test validates and why it matters."></textarea></mat-form-field>
           </div>
 
           <div class="form-group form-group-full">
             <label for="tc-preconditions">Preconditions</label>
-            <textarea id="tc-preconditions" rows="3" [(ngModel)]="testcaseForm.preconditions" placeholder="List the required setup, data, permissions or environment."></textarea>
+            <mat-form-field appearance="outline" class="gp-material-field"><textarea matInput id="tc-preconditions" rows="3" [(ngModel)]="testcaseForm.preconditions" placeholder="List the required setup, data, permissions or environment."></textarea></mat-form-field>
           </div>
 
           <div class="form-group form-group-full">
             <label for="tc-steps">Test Steps <span class="required-mark">*</span></label>
-            <textarea id="tc-steps" rows="6" [(ngModel)]="testcaseForm.steps" placeholder="1. Open the application&#10;2. Perform the action&#10;3. Verify the result"></textarea>
+            <mat-form-field appearance="outline" class="gp-material-field"><textarea matInput id="tc-steps" rows="6" [(ngModel)]="testcaseForm.steps" placeholder="1. Open the application&#10;2. Perform the action&#10;3. Verify the result"></textarea></mat-form-field>
           </div>
 
           <div class="form-grid result-grid">
             <div class="form-group">
               <label for="tc-expected">Expected Result <span class="required-mark">*</span></label>
-              <textarea id="tc-expected" rows="5" [(ngModel)]="testcaseForm.expectedResult" placeholder="Describe the expected outcome."></textarea>
+              <mat-form-field appearance="outline" class="gp-material-field"><textarea matInput id="tc-expected" rows="5" [(ngModel)]="testcaseForm.expectedResult" placeholder="Describe the expected outcome."></textarea></mat-form-field>
             </div>
 
             <div class="form-group">
               <label for="tc-actual">Actual Result</label>
-              <textarea id="tc-actual" rows="5" [(ngModel)]="testcaseForm.actualResult" placeholder="Record the observed outcome after execution."></textarea>
+              <mat-form-field appearance="outline" class="gp-material-field"><textarea matInput id="tc-actual" rows="5" [(ngModel)]="testcaseForm.actualResult" placeholder="Record the observed outcome after execution."></textarea></mat-form-field>
             </div>
           </div>
         </div>
@@ -1697,10 +1697,10 @@
         <strong>{{ testcaseForm.testCaseCode || 'New test case' }}</strong>
       </div>
       <div class="modal-footer-actions">
-        <button type="button" class="secondary-button" (click)="showCreateTestCaseModal ? closeCreateTestCase() : closeEditTestCase()">Cancel</button>
+        <button type="button" class="secondary-button" (click)="showCreateTestCaseModal ? closeCreateTestCase() : closeEditTestCase()" mat-button>Cancel</button>
         <button *ngIf="showCreateTestCaseModal" type="button" class="primary-button" (click)="createTestCase()"
-          [disabled]="!testcaseForm.title?.trim() || !testcaseForm.steps?.trim() || !testcaseForm.expectedResult?.trim() || !selectedProjectId">Create Test Case</button>
-        <button *ngIf="showEditTestCaseModal" type="button" class="primary-button" (click)="updateTestCase()">Save Changes</button>
+          [disabled]="!testcaseForm.title?.trim() || !testcaseForm.steps?.trim() || !testcaseForm.expectedResult?.trim() || !selectedProjectId" mat-flat-button color="primary">Create Test Case</button>
+        <button *ngIf="showEditTestCaseModal" type="button" class="primary-button" (click)="updateTestCase()" mat-flat-button color="primary">Save Changes</button>
       </div>
     </footer>
   </section>
@@ -1726,7 +1726,7 @@
       <div class="add-testcases-title-area">
 
         <div class="add-testcases-icon">
-          <span class="gp-icon gp-icon-add" aria-hidden="true">＋</span>
+          <mat-icon aria-hidden="true">add</mat-icon>
         </div>
 
         <div>
@@ -1753,7 +1753,7 @@
         type="button"
         class="modal-close-button"
         [disabled]="isAddingTestCases"
-        (click)="closeAddTestCasesToSuite()">
+        (click)="closeAddTestCasesToSuite()" mat-icon-button>
 
         <span class="gp-icon gp-icon-close" aria-hidden="true">×</span>
 
@@ -1770,17 +1770,16 @@
 
         <span class="gp-icon gp-icon-search" aria-hidden="true">⌕</span>
 
-        <input
+        <mat-form-field appearance="outline" class="gp-material-field"><input matInput
           type="text"
           [(ngModel)]="addTestCaseSearch"
-          placeholder="Search test cases..."
-        />
+          placeholder="Search test cases..."></mat-form-field>
 
         <button
           *ngIf="addTestCaseSearch"
           type="button"
           class="search-clear"
-          (click)="addTestCaseSearch = ''">
+          (click)="addTestCaseSearch = ''" mat-icon-button>
 
           <span class="gp-icon gp-icon-close" aria-hidden="true">×</span>
 
@@ -1794,7 +1793,7 @@
         <button
           type="button"
           class="secondary-toolbar-button"
-          (click)="selectAllAvailableTestCases()">
+          (click)="selectAllAvailableTestCases()" mat-button>
 
           Select visible
 
@@ -1803,7 +1802,7 @@
         <button
           type="button"
           class="secondary-toolbar-button"
-          (click)="clearSelectedAvailableTestCases()">
+          (click)="clearSelectedAvailableTestCases()" mat-button>
 
           Clear visible
 
@@ -1848,204 +1847,78 @@
     </div>
 
 
-    <!-- TABLE -->
-
+    <!-- ANGULAR MATERIAL TABLE -->
     <div class="add-testcases-table-wrapper">
-
-      <table class="add-testcases-table">
-
-        <thead>
-
-          <tr>
-
-            <th class="check-column">
-              <span class="gp-icon gp-icon-check" aria-hidden="true">✓</span>
-            </th>
-
-            <th>
-              Test Case
-            </th>
-
-            <th>
-              Title
-            </th>
-
-            <th>
-              Status
-            </th>
-
-            <th>
-              Priority
-            </th>
-
-            <th>
-              Suite
-            </th>
-
-          </tr>
-
-        </thead>
-
-
-        <tbody>
-
-          <tr
-            *ngFor="
-              let testcase of filteredAvailableTestCases;
-              trackBy: trackByTestCase
-            "
-            [class.selected-row]="
-              isTestCaseSelected(testcase)
-            "
-            (click)="toggleTestCaseForSuite(testcase)">
-
-            <td
-              class="check-column"
-              (click)="$event.stopPropagation()">
-
-              <label class="custom-checkbox">
-
-                <input
-                  type="checkbox"
-                  [checked]="
-                    isTestCaseSelected(testcase)
-                  "
-                  (change)="
-                    toggleTestCaseForSuite(testcase)
-                  "
-                />
-
-                <span class="checkbox-box">
-
-                  <span class="gp-icon gp-icon-check" *ngIf="isTestCaseSelected(testcase)" aria-hidden="true">✓</span>
-
-                </span>
-
-              </label>
-
-            </td>
-
-
-            <td>
-
-              <div class="tc-code">
-
-                {{ getTestCaseCode(testcase) }}
-
-              </div>
-
-            </td>
-
-
-            <td>
-
-              <div class="tc-title">
-
-                {{ getTestCaseTitle(testcase) }}
-
-              </div>
-
-              <div
-                class="tc-description"
-                *ngIf="testcase.description">
-
-                {{ testcase.description }}
-
-              </div>
-
-            </td>
-
-
-            <td>
-
-              <span
-                class="status-pill"
-                [ngClass]="
-                  getStatusClass(testcase.status)
-                ">
-
-                {{ testcase.status || 'DRAFT' }}
-
-              </span>
-
-            </td>
-
-
-            <td>
-
-              <span
-                class="priority-pill"
-                [ngClass]="
-                  getPriorityClass(testcase.priority)
-                ">
-
-                {{ testcase.priority || 'MEDIUM' }}
-
-              </span>
-
-            </td>
-
-
-            <td>
-
-              <span
-                class="current-suite"
-                *ngIf="
-                  getSuiteDisplay(testcase) !== '-'
-                ">
-
-                <span class="gp-icon gp-icon-folder" aria-hidden="true">▤</span>
-
-                {{ getSuiteDisplay(testcase) }}
-
-              </span>
-
-              <span
-                class="unassigned-suite"
-                *ngIf="
-                  getSuiteDisplay(testcase) === '-'
-                ">
-
-                Not assigned
-
-              </span>
-
-            </td>
-
-          </tr>
-
-
-          <!-- EMPTY -->
-
-          <tr
-            *ngIf="
-              filteredAvailableTestCases.length === 0
-            ">
-
-            <td
-              colspan="6"
-              class="empty-testcases">
-
-              <span class="gp-icon gp-icon-search" aria-hidden="true">⌕</span>
-
-              <strong>
-                No test cases found
-              </strong>
-
-              <span>
-                Try changing your search.
-              </span>
-
-            </td>
-
-          </tr>
-
-        </tbody>
-
+      <table mat-table [dataSource]="filteredAvailableTestCases" class="add-testcases-table mat-elevation-z0">
+
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef class="check-column">
+            <mat-icon aria-hidden="true">check</mat-icon>
+          </th>
+          <td mat-cell *matCellDef="let testcase" class="check-column" (click)="$event.stopPropagation()">
+            <mat-checkbox class="gp-material-checkbox"
+              [checked]="isTestCaseSelected(testcase)"
+              (change)="toggleTestCaseForSuite(testcase)"
+              aria-label="Select test case"></mat-checkbox>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="code">
+          <th mat-header-cell *matHeaderCellDef>Test Case</th>
+          <td mat-cell *matCellDef="let testcase">
+            <div class="tc-code">{{ getTestCaseCode(testcase) }}</div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="title">
+          <th mat-header-cell *matHeaderCellDef>Title</th>
+          <td mat-cell *matCellDef="let testcase">
+            <div class="tc-title">{{ getTestCaseTitle(testcase) }}</div>
+            <div class="tc-description" *ngIf="testcase.description">{{ testcase.description }}</div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let testcase">
+            <span class="status-pill" [ngClass]="getStatusClass(testcase.status)">
+              {{ testcase.status || 'DRAFT' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="priority">
+          <th mat-header-cell *matHeaderCellDef>Priority</th>
+          <td mat-cell *matCellDef="let testcase">
+            <span class="priority-pill" [ngClass]="getPriorityClass(testcase.priority)">
+              {{ testcase.priority || 'MEDIUM' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="suite">
+          <th mat-header-cell *matHeaderCellDef>Suite</th>
+          <td mat-cell *matCellDef="let testcase">
+            <span class="current-suite" *ngIf="getSuiteDisplay(testcase) !== '-'">
+              <mat-icon aria-hidden="true">folder</mat-icon>
+              {{ getSuiteDisplay(testcase) }}
+            </span>
+            <span class="unassigned-suite" *ngIf="getSuiteDisplay(testcase) === '-'">Not assigned</span>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedAvailableTestCaseColumns"></tr>
+        <tr mat-row *matRowDef="let testcase; columns: displayedAvailableTestCaseColumns;"
+            [class.selected-row]="isTestCaseSelected(testcase)"
+            (click)="toggleTestCaseForSuite(testcase)"></tr>
       </table>
 
+      <div class="empty-testcases" *ngIf="filteredAvailableTestCases.length === 0">
+        <mat-icon aria-hidden="true">search</mat-icon>
+        <strong>No test cases found</strong>
+        <span>Try changing your search.</span>
+      </div>
     </div>
-
 
     <!-- FOOTER -->
 
@@ -2053,7 +1926,7 @@
 
       <div class="footer-selection-info">
 
-        <span class="gp-icon gp-icon-check" aria-hidden="true">✓</span>
+        <mat-icon aria-hidden="true">check</mat-icon>
 
         {{ selectedAvailableTestCaseCount }}
         test case{{ selectedAvailableTestCaseCount === 1 ? '' : 's' }}
@@ -2068,7 +1941,7 @@
           type="button"
           class="cancel-button"
           [disabled]="isAddingTestCases"
-          (click)="closeAddTestCasesToSuite()">
+          (click)="closeAddTestCasesToSuite()" mat-button>
 
           Cancel
 
@@ -2083,7 +1956,7 @@
             !selectedAvailableTestCaseCount ||
             !selectedSuite?.id
           "
-          (click)="addSelectedTestCasesToSuite()">
+          (click)="addSelectedTestCasesToSuite()" mat-flat-button color="primary">
 
           <span class="gp-icon gp-icon-add" *ngIf="!isAddingTestCases" aria-hidden="true">＋</span>
 
