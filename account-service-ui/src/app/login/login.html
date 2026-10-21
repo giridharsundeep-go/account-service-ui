@@ -1,19 +1,15 @@
 <main class="main">
 
+  <header class="site-header">
+    <a class="site-brand" routerLink="/login" aria-label="Greatley Poshley home">Greatley Poshley</a>
+    <button class="header-create-account" type="button" (click)="goToCreateAccount()">
+      Create account
+    </button>
+  </header>
+
   <div class="container">
 
-    <!-- BRAND -->
-    <header class="brand">
-      <img
-        src="assets/images/greatley-poshley.svg"
-        alt="Greatley Poshley"
-        class="brand-logo"
-      />
-
-      <div class="brand-name">Greatley Poshley</div>
-    </header>
-
-    <!-- 🧾 LOGIN CARD -->
+    <!-- LOGIN CARD -->
     <div class="login-card">
 
       <h2 class="login-title">Welcome</h2>
@@ -67,13 +63,6 @@
         </button>
 
       </form>
-
-      <div class="divider-text">Don't have an account?</div>
-
-      <!-- CREATE -->
-      <button class="create-account-button" (click)="goToCreateAccount()">
-        Create an Account
-      </button>
 
     </div>
 

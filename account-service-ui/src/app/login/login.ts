@@ -108,7 +108,7 @@ export class Login {
   }
 
   goToCreateAccount() {
-    this.router.navigate(['/create-account']);
+    this.router.navigate(['/super-reg']);
   }
 
   goToForgotPassword() {

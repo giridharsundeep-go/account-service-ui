@@ -33,14 +33,13 @@ export class SuperReg {
     return `${this.baseUrl.replace(/\/+$/, '')}/${endpoint.replace(/^\/+/, '')}`;
   }
   currentStep = 0; isSubmitting = false; showPassword = false; showConfirmPassword = false;
+  readonly selectedPlan = 'FREE';
   stepError = ''; submitError = ''; submitSuccess = '';
 
   readonly registrationForm = this.fb.group({
     organisation: this.fb.group({
       title: ['', [Validators.required, Validators.maxLength(255)]],
-      slug: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100), Validators.pattern(/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])$/)]],
-      description: ['', Validators.maxLength(5000)], email: ['', [Validators.email, Validators.maxLength(150)]],
-      phone: ['', Validators.maxLength(15)], address: ['', Validators.maxLength(5000)]
+      slug: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100), Validators.pattern(/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])$/)]]
     }),
     masterUser: this.fb.group({
       firstName: ['', [Validators.required, Validators.maxLength(100)]], lastName: ['', [Validators.required, Validators.maxLength(100)]],
@@ -75,7 +74,34 @@ export class SuperReg {
     this.currentStep = 1;
   }
 
-  backToOrganisation(): void { this.currentStep = 0; this.submitError = ''; this.submitSuccess = ''; }
+  backToOrganisation(): void {
+    this.currentStep = 0;
+    this.stepError = '';
+    this.submitError = '';
+    this.submitSuccess = '';
+  }
+
+  continueToPlan(): void {
+    this.submitError = '';
+    this.submitSuccess = '';
+    const masterUser = this.registrationForm.controls.masterUser;
+    masterUser.markAllAsTouched();
+
+    if (masterUser.invalid) {
+      this.submitError = masterUser.hasError('passwordMismatch')
+        ? 'Passwords do not match.'
+        : 'Please complete all required account details correctly.';
+      return;
+    }
+
+    this.currentStep = 2;
+  }
+
+  backToAccount(): void {
+    this.currentStep = 1;
+    this.submitError = '';
+    this.submitSuccess = '';
+  }
 
   submitRegistration(): void {
     this.submitError = '';
@@ -91,14 +117,12 @@ export class SuperReg {
 
     const v = this.registrationForm.getRawValue();
     const slug = v.organisation.slug?.trim().toLowerCase() ?? '';
+    // The Free plan is the default for this initial registration flow.
+    // selectedPlan is currently FREE; no separate billing endpoint is called yet.
 
     const organisationPayload = {
       title: v.organisation.title?.trim(),
-      slug,
-      description: v.organisation.description?.trim() || null,
-      email: v.organisation.email?.trim() || null,
-      phone: v.organisation.phone?.trim() || null,
-      address: v.organisation.address?.trim() || null
+      slug
     };
 
     const masterUserPayload = {
@@ -106,8 +130,9 @@ export class SuperReg {
       lastName: v.masterUser.lastName?.trim(),
       email: v.masterUser.email?.trim().toLowerCase(),
       phone: v.masterUser.phone?.trim(),
-      gender: v.masterUser.gender,
-      password: v.masterUser.password
+      gender: (v.masterUser.gender ?? '').toLowerCase(),
+      password: v.masterUser.password,
+      orgRole: 'SUPER_USER'
     };
 
     this.isSubmitting = true;

@@ -1,37 +1,216 @@
 <main class="registration-page">
-  <section class="registration-shell" aria-labelledby="registration-title">
-    <header class="brand-header"><div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span><span></span></div><div class="brand-copy"><span class="brand-name">GREATLEY POSHLEY</span><span class="brand-product">PROFESSY</span></div></header>
-    <div class="intro"><p class="eyebrow">GET STARTED</p><h1 id="registration-title">Create your workspace</h1><p class="intro-copy">Set up your organisation, then create the master account that will manage it.</p></div>
-    <div class="stepper-progress" aria-label="Registration progress"><div class="progress-step" [class.active]="currentStep === 0" [class.complete]="currentStep > 0"><span class="step-number"><mat-icon *ngIf="currentStep > 0">check</mat-icon><ng-container *ngIf="currentStep === 0">1</ng-container></span><span class="step-label">Organisation</span></div><span class="progress-line" [class.complete]="currentStep > 0"></span><div class="progress-step" [class.active]="currentStep === 1"><span class="step-number">2</span><span class="step-label">Master account</span></div></div>
-    <form [formGroup]="registrationForm" (ngSubmit)="submitRegistration()" novalidate>
-      <section class="step-panel" *ngIf="currentStep === 0" formGroupName="organisation">
-        <div class="panel-heading"><div><h2>Tell us about your organisation</h2><p>This will be your organisation’s dedicated PROFESSY workspace.</p></div><mat-icon class="panel-icon">domain</mat-icon></div>
-        <div class="form-grid">
-          <mat-form-field appearance="outline" class="full-width"><mat-label>Organisation name</mat-label><input matInput formControlName="title" placeholder="e.g. Acme Technologies" autocomplete="organization" required><mat-error *ngIf="fieldInvalid('organisation.title','required')">Enter an organisation name.</mat-error><mat-error *ngIf="fieldInvalid('organisation.title','maxlength')">Use 255 characters or fewer.</mat-error></mat-form-field>
-          <mat-form-field appearance="outline" class="full-width"><mat-label>Workspace address</mat-label><span matTextPrefix>professy.app/</span><input matInput formControlName="slug" placeholder="acme-technologies" (input)="normaliseSlug()" autocomplete="off" required><mat-hint>Use lowercase letters, numbers and hyphens.</mat-hint><mat-error *ngIf="fieldInvalid('organisation.slug','required')">Choose a workspace address.</mat-error><mat-error *ngIf="fieldInvalid('organisation.slug','pattern')">Use 3–100 lowercase letters, numbers or hyphens.</mat-error><mat-error *ngIf="fieldInvalid('organisation.slug','slugTaken')">This workspace address is already taken.</mat-error></mat-form-field>
-          <mat-form-field appearance="outline" class="full-width"><mat-label>Description (optional)</mat-label><textarea matInput formControlName="description" rows="3" placeholder="What does your organisation do?"></textarea></mat-form-field>
-          <mat-form-field appearance="outline"><mat-label>Organisation email (optional)</mat-label><input matInput type="email" formControlName="email" placeholder="hello@company.com" autocomplete="email"><mat-error *ngIf="fieldInvalid('organisation.email','email')">Enter a valid email address.</mat-error></mat-form-field>
-          <mat-form-field appearance="outline"><mat-label>Phone (optional)</mat-label><input matInput formControlName="phone" placeholder="+91 98765 43210" autocomplete="tel"></mat-form-field>
-          <mat-form-field appearance="outline" class="full-width"><mat-label>Address (optional)</mat-label><textarea matInput formControlName="address" rows="2" placeholder="Office address"></textarea></mat-form-field>
-        </div>
-        <div class="inline-message error-message" role="alert" aria-live="assertive" *ngIf="stepError">{{ stepError }}</div><div class="form-actions"><span class="privacy-note"><mat-icon>lock</mat-icon>Your workspace details stay private.</span><button mat-flat-button color="primary" type="button" class="primary-action" (click)="continueToAccount()">Continue <mat-icon>arrow_forward</mat-icon></button></div>
-      </section>
+  <header class="site-header">
+    <a class="site-brand" routerLink="/login" aria-label="Greatley Poshley home">Greatley Poshley</a>
+    <div class="header-actions">
+      <span>Already have an account?</span>
+      <a routerLink="/login">Sign in</a>
+    </div>
+  </header>
+
+  <section class="hero-section" aria-labelledby="hero-title">
+    <div class="hero-art" aria-hidden="true">
+      <div class="art-orbit orbit-one"></div>
+      <div class="art-orbit orbit-two"></div>
+      <img class="registration-illustration" src="assets/registration-illustration.png" alt="">
+    </div>
+    <div class="hero-copy">
+      <h1 id="hero-title">Build work<br><span>better.</span></h1>
+      <p class="hero-support">One place to plan, build and deliver great work.</p>
+
+    </div>
+    <a class="scroll-cue" href="#registration-flow" aria-label="Scroll to registration">
+      <span>Get started</span><mat-icon>keyboard_arrow_down</mat-icon>
+    </a>
+  </section>
+
+  <section class="registration-section" id="registration-flow" aria-labelledby="registration-title">
+     
+    <div class="registration-shell">
+      <div class="form-intro">
+      </div>
+
+      <form [formGroup]="registrationForm" (ngSubmit)="submitRegistration()" novalidate>
+        <!-- STEP 1: ORGANISATION -->
+        <section class="step-panel organisation-panel" *ngIf="currentStep === 0" formGroupName="organisation">
+          <div class="panel-heading">
+            <div><h3>Organisation details</h3><p>Start with your organisation name and workspace address.</p></div>
+          </div>
+
+          <div class="organisation-fields">
+            <mat-form-field appearance="outline" class="full-width large-field">
+              <mat-label>Organisation name</mat-label>
+              <input matInput formControlName="title" placeholder="e.g. Acme Technologies" autocomplete="organization" required>
+              <mat-error *ngIf="fieldInvalid('organisation.title','required')">Enter an organisation name.</mat-error>
+              <mat-error *ngIf="fieldInvalid('organisation.title','maxlength')">Use 255 characters or fewer.</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width large-field">
+              <mat-label>Workspace address</mat-label>
+              <span matTextPrefix>professy.app/</span>
+              <input matInput formControlName="slug" placeholder="acme-technologies" (input)="normaliseSlug()" autocomplete="off" required>
+              <mat-hint>Your unique workspace URL. Use lowercase letters, numbers and hyphens.</mat-hint>
+              <mat-error *ngIf="fieldInvalid('organisation.slug','required')">Choose a workspace address.</mat-error>
+              <mat-error *ngIf="fieldInvalid('organisation.slug','minlength')">Use at least 3 characters.</mat-error>
+              <mat-error *ngIf="fieldInvalid('organisation.slug','pattern')">Use 3–100 lowercase letters, numbers or hyphens.</mat-error>
+              <mat-error *ngIf="fieldInvalid('organisation.slug','slugTaken')">This workspace address is already taken.</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="inline-message error-message" role="alert" aria-live="assertive" *ngIf="stepError">{{ stepError }}</div>
+          <div class="form-actions">
+            <span class="step-caption">Step 1 of 3</span>
+            <button mat-flat-button color="primary" type="button" class="primary-action" (click)="continueToAccount()">
+              Continue <mat-icon>arrow_forward</mat-icon>
+            </button>
+          </div>
+        </section>
+
+      <!-- STEP 2: SUPER USER ACCOUNT -->
       <section class="step-panel" *ngIf="currentStep === 1" formGroupName="masterUser">
-        <div class="panel-heading"><div><h2>Create the master account</h2><p>This account will be the initial owner and administrator of your workspace.</p></div><mat-icon class="panel-icon">admin_panel_settings</mat-icon></div>
-        <div class="workspace-summary"><div class="summary-icon"><mat-icon>domain</mat-icon></div><div class="summary-copy"><strong>{{ organisationTitle || 'Your organisation' }}</strong><span>professy.app/{{ organisationSlug || 'your-workspace' }}</span></div><button mat-button type="button" class="edit-link" (click)="backToOrganisation()">Edit</button></div>
-        <div class="form-grid">
-          <mat-form-field appearance="outline"><mat-label>First name</mat-label><input matInput formControlName="firstName" autocomplete="given-name" required><mat-error *ngIf="fieldInvalid('masterUser.firstName','required')">Enter your first name.</mat-error></mat-form-field>
-          <mat-form-field appearance="outline"><mat-label>Last name</mat-label><input matInput formControlName="lastName" autocomplete="family-name" required><mat-error *ngIf="fieldInvalid('masterUser.lastName','required')">Enter your last name.</mat-error></mat-form-field>
-          <mat-form-field appearance="outline"><mat-label>Work email</mat-label><input matInput type="email" formControlName="email" autocomplete="email" required><mat-error *ngIf="fieldInvalid('masterUser.email','required')">Enter your email address.</mat-error><mat-error *ngIf="fieldInvalid('masterUser.email','email')">Enter a valid email address.</mat-error></mat-form-field>
-          <mat-form-field appearance="outline"><mat-label>Phone number</mat-label><input matInput type="tel" formControlName="phone" autocomplete="tel" required><mat-error *ngIf="fieldInvalid('masterUser.phone','required')">Enter your phone number.</mat-error><mat-error *ngIf="fieldInvalid('masterUser.phone','pattern')">Enter a valid phone number.</mat-error></mat-form-field>
-          <mat-form-field appearance="outline"><mat-label>Gender</mat-label><mat-select formControlName="gender" required><mat-option value="MALE">Male</mat-option><mat-option value="FEMALE">Female</mat-option><mat-option value="OTHER">Other</mat-option></mat-select><mat-error *ngIf="fieldInvalid('masterUser.gender','required')">Select an option.</mat-error></mat-form-field>
-          <mat-form-field appearance="outline"><mat-label>Password</mat-label><input matInput [type]="showPassword ? 'text' : 'password'" formControlName="password" autocomplete="new-password" required><button mat-icon-button matSuffix type="button" [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'" (click)="showPassword = !showPassword"><mat-icon>{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon></button><mat-hint>At least 8 characters.</mat-hint><mat-error *ngIf="fieldInvalid('masterUser.password','required')">Create a password.</mat-error><mat-error *ngIf="fieldInvalid('masterUser.password','minlength')">Use at least 8 characters.</mat-error></mat-form-field>
-          <mat-form-field appearance="outline" class="full-width"><mat-label>Confirm password</mat-label><input matInput [type]="showConfirmPassword ? 'text' : 'password'" formControlName="confirmPassword" autocomplete="new-password" required><button mat-icon-button matSuffix type="button" [attr.aria-label]="showConfirmPassword ? 'Hide password' : 'Show password'" (click)="showConfirmPassword = !showConfirmPassword"><mat-icon>{{ showConfirmPassword ? 'visibility_off' : 'visibility' }}</mat-icon></button><mat-error *ngIf="fieldInvalid('masterUser.confirmPassword','required')">Confirm your password.</mat-error><mat-error *ngIf="registrationForm.get('masterUser')?.hasError('passwordMismatch') && registrationForm.get('masterUser.confirmPassword')?.touched">Passwords do not match.</mat-error></mat-form-field>
+        <div class="panel-heading">
+          <div><h2>Create your Super User account</h2><p>This will be the primary administrator account for {{ organisationTitle || 'your organisation' }}.</p></div>
         </div>
-        <p class="security-note"><mat-icon>verified_user</mat-icon>Your password must be securely hashed by the server.</p><div class="inline-message error-message" role="alert" aria-live="assertive" *ngIf="submitError"><mat-icon aria-hidden="true">error_outline</mat-icon><span>{{ submitError }}</span></div><div class="inline-message success-message" role="status" aria-live="polite" *ngIf="submitSuccess"><mat-icon aria-hidden="true">check_circle</mat-icon><span>{{ submitSuccess }}</span></div>
-        <div class="form-actions form-actions-split"><button mat-button type="button" class="back-action" (click)="backToOrganisation()" [disabled]="isSubmitting"><mat-icon>arrow_back</mat-icon>Back</button><button mat-flat-button color="primary" type="submit" class="primary-action" [disabled]="isSubmitting || registrationForm.invalid"><mat-spinner *ngIf="isSubmitting" diameter="18"></mat-spinner><ng-container *ngIf="!isSubmitting">Create workspace <mat-icon>arrow_forward</mat-icon></ng-container><span *ngIf="isSubmitting">Creating…</span></button></div>
+
+        <div class="workspace-summary">
+          <div class="summary-icon"><mat-icon>domain</mat-icon></div>
+          <div class="summary-copy">
+            <strong>{{ organisationTitle || 'Your organisation' }}</strong>
+            <span>professy.app/{{ organisationSlug || 'your-workspace' }}</span>
+          </div>
+          <button mat-button type="button" class="edit-link" (click)="backToOrganisation()">Edit</button>
+        </div>
+
+
+
+        <div class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>First name</mat-label>
+            <input matInput formControlName="firstName" autocomplete="given-name" required>
+            <mat-error *ngIf="fieldInvalid('masterUser.firstName','required')">Enter your first name.</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Last name</mat-label>
+            <input matInput formControlName="lastName" autocomplete="family-name" required>
+            <mat-error *ngIf="fieldInvalid('masterUser.lastName','required')">Enter your last name.</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Work email</mat-label>
+            <input matInput type="email" formControlName="email" autocomplete="email" required>
+            <mat-error *ngIf="fieldInvalid('masterUser.email','required')">Enter your email address.</mat-error>
+            <mat-error *ngIf="fieldInvalid('masterUser.email','email')">Enter a valid email address.</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Phone number</mat-label>
+            <input matInput type="tel" formControlName="phone" autocomplete="tel" required>
+            <mat-error *ngIf="fieldInvalid('masterUser.phone','required')">Enter your phone number.</mat-error>
+            <mat-error *ngIf="fieldInvalid('masterUser.phone','pattern')">Enter a valid phone number.</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Gender</mat-label>
+            <mat-select formControlName="gender" required>
+              <mat-option value="male">Male</mat-option>
+              <mat-option value="female">Female</mat-option>
+              <mat-option value="other">Other</mat-option>
+            </mat-select>
+            <mat-error *ngIf="fieldInvalid('masterUser.gender','required')">Select an option.</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Password</mat-label>
+            <input matInput [type]="showPassword ? 'text' : 'password'" formControlName="password" autocomplete="new-password" required>
+            <button mat-icon-button matSuffix type="button" [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'" (click)="showPassword = !showPassword">
+              <mat-icon>{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+            <mat-hint>At least 8 characters.</mat-hint>
+            <mat-error *ngIf="fieldInvalid('masterUser.password','required')">Create a password.</mat-error>
+            <mat-error *ngIf="fieldInvalid('masterUser.password','minlength')">Use at least 8 characters.</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Confirm password</mat-label>
+            <input matInput [type]="showConfirmPassword ? 'text' : 'password'" formControlName="confirmPassword" autocomplete="new-password" required>
+            <button mat-icon-button matSuffix type="button" [attr.aria-label]="showConfirmPassword ? 'Hide password' : 'Show password'" (click)="showConfirmPassword = !showConfirmPassword">
+              <mat-icon>{{ showConfirmPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+            <mat-error *ngIf="fieldInvalid('masterUser.confirmPassword','required')">Confirm your password.</mat-error>
+            <mat-error *ngIf="registrationForm.get('masterUser')?.hasError('passwordMismatch') && registrationForm.get('masterUser.confirmPassword')?.touched">Passwords do not match.</mat-error>
+          </mat-form-field>
+        </div>
+
+        <p class="security-note"><mat-icon>lock</mat-icon>Your password should be securely hashed by the server.</p>
+        <div class="inline-message error-message" role="alert" aria-live="assertive" *ngIf="submitError">
+          <mat-icon aria-hidden="true">error_outline</mat-icon><span>{{ submitError }}</span>
+        </div>
+
+        <div class="form-actions form-actions-split">
+          <button mat-button type="button" class="back-action" (click)="backToOrganisation()">
+            <mat-icon>arrow_back</mat-icon>Back
+          </button>
+          <button mat-flat-button color="primary" type="button" class="primary-action" (click)="continueToPlan()">
+            Review plan <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </div>
+      </section>
+
+      <!-- STEP 3: PLAN SELECTION -->
+      <section class="step-panel" *ngIf="currentStep === 2">
+        <div class="panel-heading">
+          <div><h2>Choose plan</h2></div>
+        </div>
+
+        <div class="workspace-summary">
+          <div class="summary-icon"><mat-icon>domain</mat-icon></div>
+          <div class="summary-copy">
+            <strong>{{ organisationTitle || 'Your organisation' }}</strong>
+            <span>professy.app/{{ organisationSlug || 'your-workspace' }}</span>
+          </div>
+          <button mat-button type="button" class="edit-link" (click)="backToOrganisation()">Edit</button>
+        </div>
+
+        <button type="button" class="plan-card selected" aria-pressed="true">
+          <span class="plan-radio"><mat-icon>check</mat-icon></span>
+          <span class="plan-main">
+            <span class="plan-title-row"><strong>{{ selectedPlan === 'FREE' ? 'Free' : selectedPlan }}</strong><span class="plan-badge">Selected</span></span>
+            <span class="plan-description">Get started with your workspace.</span>
+            <span class="plan-features">
+              <span><mat-icon>check_circle</mat-icon> No payment required</span>
+              <span><mat-icon>check_circle</mat-icon> Organisation workspace</span>
+              <span><mat-icon>check_circle</mat-icon> Administrator account included</span>
+            </span>
+          </span>
+          <span class="plan-price"><strong>₹0</strong><span>for now</span></span>
+        </button>
+
+
+
+        <div class="inline-message error-message" role="alert" aria-live="assertive" *ngIf="submitError">
+          <mat-icon aria-hidden="true">error_outline</mat-icon><span>{{ submitError }}</span>
+        </div>
+        <div class="inline-message success-message" role="status" aria-live="polite" *ngIf="submitSuccess">
+          <mat-icon aria-hidden="true">check_circle</mat-icon><span>{{ submitSuccess }}</span>
+        </div>
+
+        <div class="form-actions form-actions-split">
+          <button mat-button type="button" class="back-action" (click)="backToAccount()" [disabled]="isSubmitting">
+            <mat-icon>arrow_back</mat-icon>Back
+          </button>
+          <button mat-flat-button color="primary" type="submit" class="primary-action" [disabled]="isSubmitting || registrationForm.invalid">
+            <mat-spinner *ngIf="isSubmitting" diameter="18"></mat-spinner>
+            <ng-container *ngIf="!isSubmitting">Create free workspace <mat-icon>arrow_forward</mat-icon></ng-container>
+            <span *ngIf="isSubmitting">Creating workspace…</span>
+          </button>
+        </div>
       </section>
     </form>
-    <footer class="registration-footer"><span>Already have an account?</span><a routerLink="/login">Sign in</a></footer>
+
+      <footer class="registration-footer">
+        <span>© 2026 Greatley Poshley</span>
+        <a routerLink="/login">Sign in</a>
+      </footer>
+    </div>
   </section>
 </main>
