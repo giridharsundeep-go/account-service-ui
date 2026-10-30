@@ -1,13 +1,15 @@
+
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { environment } from '../../environment';
+import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { environment } from '../../environment';
 
 import {
   Observable,
   BehaviorSubject,
-  of
+  of,
+  Subscription
 } from 'rxjs';
 
 import {
@@ -19,12 +21,15 @@ import {
 import { AuthService } from '../auth.service';
 
 // Angular Material
+import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatSelectModule } from '@angular/material/select';
+import { MatIconModule } from '@angular/material/icon';
 
 import {
   UserSelectDialog,
@@ -47,6 +52,10 @@ interface TeamView {
   description: string;
   createdAt?: string | null;
   members: TeamMemberView[];
+  teamLeadName?: string | null;
+  teamLeadId?: number | null;
+  category?: string | null;
+  status?: string | null;
 }
 
 @Component({
@@ -55,44 +64,56 @@ interface TeamView {
   imports: [
     CommonModule,
     FormsModule,
+    MatCardModule,
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
     MatExpansionModule,
     MatDialogModule,
-    MatChipsModule
+    MatChipsModule,
+    MatSelectModule,
+    MatIconModule
   ],
   templateUrl: './teams.html',
-  styleUrls: ['./teams.css']
+  styleUrls: ['./teams.css', '../shared/field-controls.css']
 })
-export class Teams implements OnInit {
+export class Teams implements OnInit, OnDestroy {
 
   baseUrl = environment.apiBaseUrlM;
 
-  private teamsRefresh$ =
-    new BehaviorSubject<void>(undefined);
+  private teamsRefresh$ = new BehaviorSubject<void>(undefined);
+  private teamsSubscription?: Subscription;
 
-
+  /**
+   * `teams$` remains available for templates that use the async pipe.
+   * `teams` supports templates that use filterTeams(teams).
+   */
   teams$: Observable<TeamView[]> = of([]);
+  teams: TeamView[] = [];
 
   allUsers: UserPayload[] = [];
 
   name = '';
   description = '';
 
-  // User IDs sent to POST/PUT /api/teams
   selectedUsers: number[] = [];
-
-  // Display-only chip objects
   chipUserObjects: UserPayload[] = [];
 
   editingTeamId: number | null = null;
-
   searchTerm = '';
-
+  memberSearchTerm = '';
+  statusFilter: 'all' | 'operational' | 'empty' = 'all';
+  teamLeadFilter = 'all';
+  memberCountFilter: 'all' | '0' | '1-5' | '6-10' | '11+' = 'all';
   loading = false;
 
   selectedTeam: TeamView | null = null;
+  teamProfileTab: 'overview' | 'work' | 'resources' = 'overview';
+  createTab: 'overview' | 'work' | 'resources' = 'overview';
+  editingProfileTitle = false;
+  editingProfileDescription = false;
+  profileNameDraft = '';
+  profileDescriptionDraft = '';
 
   constructor(
     private http: HttpClient,
@@ -102,190 +123,244 @@ export class Teams implements OnInit {
   ) {}
 
   // ============================================================
-  // INITIAL LOAD
+  // INITIAL LOAD / CLEANUP
   // ============================================================
 
   ngOnInit(): void {
+    const cleanBaseUrl = this.baseUrl.replace(/\/+$/, '');
 
-    this.loadUsersBackground();
-
-    /*
-     * GET /api/teams returns:
-     *
-     * {
-     *   data: [
-     *     {
-     *       id,
-     *       name,
-     *       description,
-     *       createdAt,
-     *       members: [ User, User, User ]
-     *     }
-     *   ],
-     *   message,
-     *   success
-     * }
-     *
-     * Member identity data is hydrated from the same /api/users list.
-     */
+    // Keep the stream alive after a failed request so later refreshes work.
+    // APIs may return a raw array, { data: [...] }, { teams: [...] }, or a
+    // paginated/nested response depending on the controller implementation.
     this.teams$ = this.teamsRefresh$.pipe(
       switchMap(() =>
         this.http.get<any>(
-          `${this.baseUrl}/teams`,
-          {
-            headers: this.auth.getAuthHeaders()
-          }
+          `${cleanBaseUrl}/teams`,
+          { headers: this.auth.getAuthHeaders() }
+        ).pipe(
+          map((res: any) => {
+            const rawTeams = this.extractTeamsArray(res);
+            return rawTeams
+              .map((team: any) => this.normalizeTeam(team))
+              .filter((team: TeamView) => Number.isFinite(team.id) && team.id > 0);
+          }),
+          catchError((error) => {
+            console.error('Failed to load teams from GET /teams:', error);
+            return of([] as TeamView[]);
+          })
         )
-      ),
-
-      map((res: any) => {
-
-        const teams =
-          Array.isArray(res?.data)
-            ? res.data
-            : [];
-
-        return teams.map((team: any) =>
-          this.normalizeTeam(team)
-        );
-      }),
-
-      catchError((error) => {
-
-        console.error(
-          'Failed to load teams:',
-          error
-        );
-
-        return of([] as TeamView[]);
-      })
+      )
     );
+
+    // Synchronize the observable with the array used by the card template.
+    this.teamsSubscription = this.teams$.subscribe({
+      next: (teams: TeamView[]) => {
+        this.teams = teams;
+
+        // Keep the selected detail view in sync after refreshes.
+        if (this.selectedTeam) {
+          const refreshedTeam = teams.find(
+            team => Number(team.id) === Number(this.selectedTeam?.id)
+          );
+
+          if (refreshedTeam) {
+            // GET /teams commonly returns directory rows without the membership join.
+            // Do not replace a fully loaded profile's members with that incomplete list row.
+            this.selectedTeam = {
+              ...refreshedTeam,
+              members: refreshedTeam.members.length
+                ? refreshedTeam.members
+                : (this.selectedTeam.members || [])
+            };
+          }
+        }
+
+        this.cdr.markForCheck();
+      }
+    });
+
+    this.loadUsersBackground();
+  }
+
+  ngOnDestroy(): void {
+    this.teamsSubscription?.unsubscribe();
   }
 
   // ============================================================
-  // SEARCH
+  // SEARCH / FILTER
   // ============================================================
 
-  filterTeams(teams: TeamView[] | null): TeamView[] {
+  get totalTeams(): number {
+    return this.teams.length;
+  }
 
-    if (!teams) {
+  get operationalTeams(): number {
+    return this.teams.filter(team => this.getTeamMembers(team).length > 0).length;
+  }
+
+  get teamsNeedingMembers(): number {
+    return this.teams.filter(team => this.getTeamMembers(team).length === 0).length;
+  }
+
+  get totalTeamMembers(): number {
+    return this.teams.reduce((total, team) => total + this.getTeamMembers(team).length, 0);
+  }
+
+  get teamLeadOptions(): string[] {
+    return [...new Set(
+      this.teams
+        .map((team: TeamView) => this.getTeamLeadName(team))
+        .filter((name: string) => !!name && name !== 'Not assigned')
+    )].sort((a, b) => a.localeCompare(b));
+  }
+
+  filterTeams(teams: TeamView[] | null | undefined): TeamView[] {
+    if (!Array.isArray(teams)) {
       return [];
     }
 
-    const term =
-      this.searchTerm
-        .trim()
-        .toLowerCase();
-
-    if (!term) {
-      return teams;
-    }
+    const term = (this.searchTerm || '').trim().toLowerCase();
 
     return teams.filter((team: TeamView) => {
+      const members = this.getTeamMembers(team);
+      const lead = this.getTeamLeadName(team);
+      const status = members.length > 0 ? 'operational' : 'empty';
 
-      const teamMatches =
-        (team?.name || '')
-          .toLowerCase()
-          .includes(term) ||
-        (team?.description || '')
-          .toLowerCase()
-          .includes(term);
+      const matchesSearch = !term || [
+        team?.name || '',
+        team?.description || '',
+        lead,
+        ...members.flatMap((member: TeamMemberView) => [
+          this.getMemberName(member),
+          this.getMemberEmail(member),
+          this.getMemberEmployeeCode(member)
+        ])
+      ].some((value: string) => value.toLowerCase().includes(term));
 
-      const memberMatches =
-        this.getTeamMembers(team).some(
-          (member: TeamMemberView) =>
-            this.getMemberName(member)
-              .toLowerCase()
-              .includes(term) ||
-            this.getMemberEmail(member)
-              .toLowerCase()
-              .includes(term)
-        );
+      const matchesStatus = this.statusFilter === 'all' || status === this.statusFilter;
+      const matchesLead = this.teamLeadFilter === 'all' || lead === this.teamLeadFilter;
+      const count = members.length;
+      const matchesCount =
+        this.memberCountFilter === 'all' ||
+        (this.memberCountFilter === '0' && count === 0) ||
+        (this.memberCountFilter === '1-5' && count >= 1 && count <= 5) ||
+        (this.memberCountFilter === '6-10' && count >= 6 && count <= 10) ||
+        (this.memberCountFilter === '11+' && count >= 11);
 
-      return teamMatches || memberMatches;
+      return matchesSearch && matchesStatus && matchesLead && matchesCount;
     });
   }
 
-  // ============================================================
-  // REFRESH
-  // ============================================================
+  trackTeam(index: number, team: TeamView): number {
+    return Number(team?.id ?? index);
+  }
 
   refreshTeamsList(): void {
     this.teamsRefresh$.next();
   }
 
   // ============================================================
-  // USERS
+  // LOAD USERS
   // ============================================================
 
   loadUsersBackground(): void {
-
-    /*
-     * User picker source of truth:
-     * GET /api/users
-     *
-     * The API should return safe user fields only. The frontend
-     * normalizes both camelCase and snake_case responses.
-     */
     this.http.get<any>(
       `${this.baseUrl}/users`,
-      {
-        headers: this.auth.getAuthHeaders()
-      }
+      { headers: this.auth.getAuthHeaders() }
     ).subscribe({
       next: (res: any) => {
+        const rawUsers = this.extractUsersArray(res);
 
-        const rawUsers =
-          Array.isArray(res?.data)
-            ? res.data
-            : Array.isArray(res)
-              ? res
-              : [];
+        this.allUsers = rawUsers
+          .map((user: any) => this.normalizeUser(user))
+          .filter((user: UserPayload) => Number.isFinite(Number(user.id)) && Number(user.id) > 0);
 
-        this.allUsers =
-          rawUsers.map((user: any) =>
-            this.normalizeUser(user)
-          );
-
+        if (this.allUsers.length === 0) {
+          console.warn('GET /users returned no recognizable user records. Check the response shape in the Network tab.', res);
+        }
 
         this.rebuildChipsFromSelectedUsers();
 
-        /*
-         * Re-fetch teams after users are loaded so team membership IDs
-         * can always be hydrated with name/email/avatar/employee code.
-         */
+        // Reload team membership details after user data is available.
         this.refreshTeamsList();
-
         this.cdr.markForCheck();
       },
-
       error: (error) => {
-
-        console.error(
-          'Failed to load users:',
-          error
-        );
+        console.error('Failed to load users:', error);
       }
     });
   }
 
+  private extractUsersArray(response: any): any[] {
+    // Support common API response envelopes without assuming one backend shape.
+    const candidates = [
+      response,
+      response?.data,
+      response?.users,
+      response?.content,
+      response?.items,
+      response?.results,
+      response?.result,
+      response?.payload,
+      response?.data?.users,
+      response?.data?.content,
+      response?.data?.items,
+      response?.data?.results,
+      response?.result?.users,
+      response?.payload?.users
+    ];
+    const direct = candidates.find((value: any) => Array.isArray(value));
+    if (direct) return direct;
+
+    // Some endpoints return a nested wrapper such as { data: { result: { users: [] } } }.
+    const queue: any[] = [response];
+    const seen = new Set<any>();
+    while (queue.length) {
+      const value = queue.shift();
+      if (!value || typeof value !== 'object' || seen.has(value)) continue;
+      seen.add(value);
+      for (const [key, child] of Object.entries(value)) {
+        if (Array.isArray(child) && child.every((item: any) => item && typeof item === 'object')) {
+          if (child.length === 0 || child.some((item: any) =>
+            'id' in item || 'user_id' in item || 'userId' in item || 'email' in item)) {
+            return child;
+          }
+        } else if (child && typeof child === 'object') {
+          queue.push(child);
+        }
+      }
+    }
+    return [];
+  }
+
+  private resolveDisplayName(user: any): string {
+    const profile = user?.profile ?? user?.userProfile ?? user?.user_profile ?? {};
+    const firstName = user?.firstName ?? user?.first_name ?? user?.givenName ?? user?.given_name ?? profile?.firstName ?? profile?.first_name ?? '';
+    const lastName = user?.lastName ?? user?.last_name ?? user?.surname ?? profile?.lastName ?? profile?.last_name ?? '';
+    const joinedName = `${String(firstName).trim()} ${String(lastName).trim()}`.trim();
+    const candidate =
+      user?.displayName ?? user?.display_name ?? user?.fullName ?? user?.full_name ??
+      user?.name ?? user?.preferredName ?? user?.preferred_name ?? joinedName ?? '';
+    const clean = String(candidate ?? '').trim();
+    if (clean && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) return clean;
+    // Some APIs store a login identifier in `username`; only use it if it is not an email.
+    const username = String(user?.username ?? user?.login ?? '').trim();
+    if (username && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username)) return username;
+    return 'Name not provided';
+  }
+
   private normalizeUser(user: any): UserPayload {
     return {
-      id: Number(
-        user?.id ??
-        user?.user_id
-      ),
-      name:
-        user?.name ||
-        user?.username ||
-        user?.email ||
-        'Unknown User',
-      email:
-        user?.email ||
-        'No email available',
+      id: Number(user?.id ?? user?.user_id ?? user?.userId ?? user?.user_account_id),
+      name: this.resolveDisplayName(user),
+      email: user?.email || 'No email available',
       profilePictureUrl:
         user?.profilePictureUrl ??
         user?.profile_picture_url ??
+        user?.avatarUrl ??
+        user?.avatar_url ??
+        user?.photoUrl ??
+        user?.photo_url ??
         null,
       employeeIdPrefix:
         user?.employeeIdPrefix ??
@@ -298,63 +373,88 @@ export class Teams implements OnInit {
     };
   }
 
+  private extractTeamsArray(response: any): any[] {
+    const candidates = [
+      response,
+      response?.data,
+      response?.teams,
+      response?.content,
+      response?.data?.teams,
+      response?.data?.content,
+      response?.result,
+      response?.result?.teams,
+      response?.payload?.teams
+    ];
+
+    return candidates.find((value: any) => Array.isArray(value)) ?? [];
+  }
+
   private normalizeTeam(team: any): TeamView {
     const rawMembers =
-      Array.isArray(team?.members)
-        ? team.members
-        : Array.isArray(team?.teamMembers)
-          ? team.teamMembers
-          : Array.isArray(team?.team_members)
-            ? team.team_members
-            : Array.isArray(team?.memberIds)
-              ? team.memberIds
-              : [];
+      Array.isArray(team?.members) ? team.members :
+      Array.isArray(team?.teamMembers) ? team.teamMembers :
+      Array.isArray(team?.team_members) ? team.team_members :
+      Array.isArray(team?.teamUsers) ? team.teamUsers :
+      Array.isArray(team?.team_users) ? team.team_users :
+      Array.isArray(team?.memberships) ? team.memberships :
+      Array.isArray(team?.teamMemberships) ? team.teamMemberships :
+      Array.isArray(team?.team_memberships) ? team.team_memberships :
+      Array.isArray(team?.users) ? team.users :
+      Array.isArray(team?.memberIds) ? team.memberIds :
+      Array.isArray(team?.member_ids) ? team.member_ids :
+      [];
+
+    const members = rawMembers
+      .map((member: any) => this.normalizeMember(member))
+      .map((member: TeamMemberView) => this.enrichMemberFromUsers(member))
+      .filter((member: TeamMemberView) =>
+        Number.isFinite(member.id) && member.id > 0
+      );
+
+    const rawLead = team?.teamLead ?? team?.team_lead ?? team?.lead ?? team?.owner ?? null;
+    const teamLeadName =
+      team?.teamLeadName ?? team?.team_lead_name ?? team?.leadName ?? team?.lead_name ??
+      rawLead?.name ?? rawLead?.fullName ?? rawLead?.full_name ?? null;
+    const rawLeadId =
+      team?.teamLeadId ?? team?.team_lead_id ?? team?.leadUserId ?? team?.lead_user_id ??
+      rawLead?.id ?? rawLead?.user_id ?? null;
 
     return {
-      id: Number(team?.id),
-      name: team?.name ?? '',
-      description: team?.description ?? '',
-      createdAt:
-        team?.createdAt ??
-        team?.created_at ??
-        null,
-      members:
-        rawMembers
-          .map((member: any) =>
-            this.normalizeMember(member)
-          )
-          .map((member: TeamMemberView) =>
-            this.enrichMemberFromUsers(member)
-          )
-          .filter((member: TeamMemberView) =>
-            Number.isFinite(member.id) && member.id > 0
-          )
+      id: Number(team?.id ?? team?.teamId ?? team?.team_id),
+      name: team?.name ?? team?.teamName ?? team?.team_name ?? '',
+      description: team?.description ?? team?.teamDescription ?? team?.team_description ?? '',
+      createdAt: team?.createdAt ?? team?.created_at ?? team?.createdDate ?? team?.created_date ?? null,
+      members,
+      teamLeadName: teamLeadName ? String(teamLeadName) : null,
+      teamLeadId: rawLeadId == null ? null : Number(rawLeadId),
+      category: team?.category ?? team?.teamCategory ?? team?.team_category ?? team?.type ?? null,
+      status: team?.status ?? team?.teamStatus ?? team?.team_status ?? null
     };
   }
 
   private normalizeMember(member: any): TeamMemberView {
-    const source =
-      member?.user ??
-      member;
+    // Some team APIs return full user objects, while others return only numeric/string IDs.
+    // Preserve ID-only members so enrichMemberFromUsers can hydrate them into visible people cards.
+    const source = member?.user ?? member;
 
     const rawId =
+      (typeof member === 'number' || typeof member === 'string' ? member : undefined) ??
       member?.user_id ??
       member?.userId ??
       member?.memberId ??
+      member?.userAccountId ??
+      member?.user_account_id ??
+      member?.account_id ??
+      source?.userAccountId ??
+      source?.user_account_id ??
       source?.id ??
       source?.user_id ??
       member?.id;
 
     return {
       id: Number(rawId),
-      name:
-        source?.name ||
-        source?.username ||
-        source?.email ||
-        'Unknown User',
-      email:
-        source?.email ||
-        'No email available',
+      name: this.resolveDisplayName(source),
+      email: source?.email || 'No email available',
       profilePictureUrl:
         source?.profilePictureUrl ??
         source?.profile_picture_url ??
@@ -377,8 +477,7 @@ export class Teams implements OnInit {
   }
 
   private enrichMemberFromUsers(member: TeamMemberView): TeamMemberView {
-    const knownUser =
-      this.findKnownUser(member.id);
+    const knownUser = this.findKnownUser(member.id);
 
     if (!knownUser) {
       return member;
@@ -388,34 +487,54 @@ export class Teams implements OnInit {
       ...member,
       name:
         member.name &&
-        member.name !== 'Unknown User'
+        member.name !== 'Unknown User' &&
+        member.name !== 'Name not provided'
           ? member.name
           : knownUser.name,
       email:
-        member.email &&
-        member.email !== 'No email available'
+        member.email && member.email !== 'No email available'
           ? member.email
           : knownUser.email,
       profilePictureUrl:
-        member.profilePictureUrl ??
-        knownUser.profilePictureUrl ??
-        null,
+        member.profilePictureUrl ?? knownUser.profilePictureUrl ?? null,
       employeeIdPrefix:
-        member.employeeIdPrefix ??
-        knownUser.employeeIdPrefix ??
-        null,
+        member.employeeIdPrefix ?? knownUser.employeeIdPrefix ?? null,
       employeeIdNumber:
-        member.employeeIdNumber ??
-        knownUser.employeeIdNumber ??
-        null
+        member.employeeIdNumber ?? knownUser.employeeIdNumber ?? null
     };
   }
 
-  trackTeam(index: number, team: TeamView): number {
-    return Number(
-      team?.id ??
-      index
+  private findKnownUser(id: number): UserPayload | null {
+    return this.allUsers.find(
+      (user: UserPayload) => Number(user.id) === Number(id)
+    ) ?? null;
+  }
+
+  getTeamLeadName(team: TeamView | null): string {
+    if (!team) {
+      return 'Not assigned';
+    }
+
+    if (team.teamLeadName?.trim()) {
+      return team.teamLeadName.trim();
+    }
+
+    if (team.teamLeadId) {
+      const lead = this.findKnownUser(Number(team.teamLeadId));
+      if (lead?.name) {
+        return lead.name;
+      }
+    }
+
+    const leadMember = this.getTeamMembers(team).find((member: TeamMemberView) =>
+      /team lead|lead|manager/i.test(member.role_name || '')
     );
+
+    return leadMember?.name || 'Not assigned';
+  }
+
+  getTeamCategory(team: TeamView): string {
+    return team.category?.trim() || `Team #${team.id}`;
   }
 
   // ============================================================
@@ -423,19 +542,26 @@ export class Teams implements OnInit {
   // ============================================================
 
   getTeamMembers(team: TeamView | null): TeamMemberView[] {
-
     if (!Array.isArray(team?.members)) {
       return [];
     }
 
-    return team!.members
-      .map((member: TeamMemberView) =>
-        this.enrichMemberFromUsers(member)
-      );
+    return team.members.map(
+      (member: TeamMemberView) => this.enrichMemberFromUsers(member)
+    );
+  }
+
+  getFilteredTeamMembers(team: TeamView | null): TeamMemberView[] {
+    const members = this.getTeamMembers(team);
+    const term = (this.memberSearchTerm || '').trim().toLowerCase();
+    if (!term) return members;
+    return members.filter((member: TeamMemberView) =>
+      [this.getMemberName(member), this.getMemberEmail(member), this.getMemberEmployeeCode(member)]
+        .some((value: string) => String(value || '').toLowerCase().includes(term))
+    );
   }
 
   getMemberId(member: any): number {
-
     return Number(
       member?.id ??
       member?.user_id ??
@@ -444,7 +570,6 @@ export class Teams implements OnInit {
   }
 
   getMemberName(member: any): string {
-
     return (
       member?.name ||
       member?.user?.name ||
@@ -455,13 +580,26 @@ export class Teams implements OnInit {
   }
 
   getMemberEmail(member: any): string {
-
     return (
       member?.email ||
       member?.user?.email ||
       'No email available'
     );
   }
+
+  getMemberRoleLabel(member: any): string {
+    const role = String(
+      member?.role_name ?? member?.roleName ?? member?.role?.name ?? member?.user?.role_name ?? ''
+    ).trim();
+    if (/lead|manager/i.test(role)) return 'Team lead';
+    return role || 'Team member';
+  }
+
+  // Arrow property keeps the component context when Angular calls trackBy.
+  trackMember = (_index: number, member: any): number | string => {
+    const id = this.getMemberId(member);
+    return (Number.isFinite(id) && id > 0 ? id : '') || this.getMemberEmail(member) || this.getMemberName(member) || _index;
+  };
 
   getMemberEmployeeCode(member: any): string {
     const prefix =
@@ -490,7 +628,6 @@ export class Teams implements OnInit {
   }
 
   getMemberAvatar(member: any): string | null {
-
     return (
       member?.profilePictureUrl ??
       member?.profile_picture_url ??
@@ -501,15 +638,11 @@ export class Teams implements OnInit {
   }
 
   getMemberAvatarDisplaySrc(member: any): string {
-    return this.resolveAvatarUrl(
-      this.getMemberAvatar(member)
-    );
+    return this.resolveAvatarUrl(this.getMemberAvatar(member));
   }
 
   getAvatarDisplaySrc(user: UserPayload): string {
-    return this.resolveAvatarUrl(
-      user?.profilePictureUrl ?? null
-    );
+    return this.resolveAvatarUrl(user?.profilePictureUrl ?? null);
   }
 
   private resolveAvatarUrl(path: string | null): string {
@@ -517,14 +650,15 @@ export class Teams implements OnInit {
       return '';
     }
 
-    if (path.startsWith('data:') || path.startsWith('http://') || path.startsWith('https://')) {
+    if (
+      path.startsWith('data:') ||
+      path.startsWith('http://') ||
+      path.startsWith('https://')
+    ) {
       return path;
     }
 
-    const cleanPath = path
-      .trim()
-      .replace(/^\/+/, '');
-
+    const cleanPath = path.trim().replace(/^\/+/, '');
     const cleanBase = this.baseUrl.endsWith('/')
       ? this.baseUrl.slice(0, -1)
       : this.baseUrl;
@@ -533,21 +667,15 @@ export class Teams implements OnInit {
   }
 
   getInitials(name: string): string {
-
     if (!name?.trim()) {
       return '?';
     }
 
-    const parts =
-      name
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean);
+    const parts = name.trim().split(/\s+/).filter(Boolean);
 
     if (parts.length >= 2) {
       return (
-        parts[0][0] +
-        parts[parts.length - 1][0]
+        parts[0][0] + parts[parts.length - 1][0]
       ).toUpperCase();
     }
 
@@ -555,7 +683,6 @@ export class Teams implements OnInit {
   }
 
   getMemberRole(member: any): string {
-
     return (
       member?.role_name ||
       member?.role?.name ||
@@ -566,112 +693,148 @@ export class Teams implements OnInit {
   }
 
   getDominantRole(members: TeamMemberView[]): string {
-
     if (!members?.length) {
       return 'None Configured';
     }
 
-    const counts: {
-      [key: string]: number
-    } = {};
+    const counts: Record<string, number> = {};
 
     members.forEach((member: TeamMemberView) => {
-
-      const role =
-        this.getMemberRole(member);
-
-      counts[role] =
-        (counts[role] || 0) + 1;
+      const role = this.getMemberRole(member);
+      counts[role] = (counts[role] || 0) + 1;
     });
 
-    return Object.keys(counts)
-      .reduce((a, b) =>
-        counts[a] > counts[b]
-          ? a
-          : b
-      );
+    return Object.keys(counts).reduce((a, b) =>
+      counts[a] > counts[b] ? a : b
+    );
   }
 
   getUniqueRolesCount(members: TeamMemberView[]): number {
-
     if (!members?.length) {
       return 0;
     }
 
     return new Set(
-      members.map(
-        (member: TeamMemberView) =>
-          this.getMemberRole(member)
-      )
+      members.map((member: TeamMemberView) => this.getMemberRole(member))
     ).size;
   }
 
-  getUnassignedCandidates(
-    currentTeamMembers: TeamMemberView[]
-  ): UserPayload[] {
-
-    const assignedIds =
-      new Set(
-        (currentTeamMembers || [])
-          .map((member: TeamMemberView) =>
-            this.getMemberId(member)
-          )
-          .filter((id: number) =>
-            Number.isFinite(id) && id > 0
-          )
-      );
+  getUnassignedCandidates(currentTeamMembers: TeamMemberView[]): UserPayload[] {
+    const assignedIds = new Set(
+      (currentTeamMembers || [])
+        .map((member: TeamMemberView) => this.getMemberId(member))
+        .filter((id: number) => Number.isFinite(id) && id > 0)
+    );
 
     return this.allUsers.filter(
-      (user: UserPayload) =>
-        !assignedIds.has(
-          Number(user?.id)
-        )
+      (user: UserPayload) => !assignedIds.has(Number(user?.id))
     );
   }
 
   // ============================================================
-  // EDIT TEAM
+  // CREATE / EDIT FORM
   // ============================================================
 
   editTeam(team: TeamView): void {
+    this.selectedTeam = null;
+    this.teamProfileTab = 'overview';
+    this.createTab = 'overview';
+    this.name = team?.name || '';
+    this.description = team?.description || '';
+    this.editingTeamId = Number(team?.id);
 
-    this.name =
-      team?.name || '';
-
-    this.description =
-      team?.description || '';
-
-    this.editingTeamId =
-      Number(team?.id);
-
-    const members =
-      this.getTeamMembers(team);
-
-    this.selectedUsers =
-      members
-        .map((member: TeamMemberView) =>
-          this.getMemberId(member)
-        )
-        .filter((id: number) =>
-          Number.isFinite(id) && id > 0
-        );
+    this.selectedUsers = this.getTeamMembers(team)
+      .map((member: TeamMemberView) => this.getMemberId(member))
+      .filter((id: number) => Number.isFinite(id) && id > 0);
 
     this.rebuildChipsFromSelectedUsers();
 
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    this.cdr.markForCheck();
+  }
 
+  saveTeam(): void {
+    const trimmedName = this.name.trim();
+
+    if (!trimmedName || this.loading) {
+      return;
+    }
+
+    this.loading = true;
+
+    const payload = this.buildTeamPayload(this.selectedUsers);
+    const headers = this.auth.getAuthHeaders();
+
+    if (this.editingTeamId !== null && this.editingTeamId > 0) {
+      this.http.put<any>(
+        `${this.baseUrl}/teams/${this.editingTeamId}`,
+        payload,
+        { headers }
+      ).subscribe({
+        next: (res: any) => this.handleSuccessfulTeamSave(res),
+        error: (error) => {
+          console.error('Failed to update team:', error);
+          this.loading = false;
+          this.cdr.markForCheck();
+        }
+      });
+
+      return;
+    }
+
+    this.http.post<any>(
+      `${this.baseUrl}/teams`,
+      payload,
+      { headers }
+    ).subscribe({
+      next: (res: any) => this.handleSuccessfulTeamSave(res),
+      error: (error) => {
+        console.error('Failed to create team:', error);
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  private buildTeamPayload(memberIds: number[]): any {
+    return {
+      name: this.name.trim(),
+      description: this.description.trim(),
+      memberIds: [
+        ...new Set(
+          memberIds
+            .map((id: number) => Number(id))
+            .filter((id: number) => Number.isFinite(id) && id > 0)
+        )
+      ]
+    };
+  }
+
+  private handleSuccessfulTeamSave(_res: any): void {
+    this.loading = false;
+    this.resetForm();
+    this.refreshTeamsList();
+    this.cdr.markForCheck();
+  }
+
+  resetForm(): void {
+    this.name = '';
+    this.description = '';
+    this.selectedUsers = [];
+    this.chipUserObjects = [];
+    this.editingTeamId = null;
+    this.selectedTeam = null;
+    this.createTab = 'overview';
+    this.editingProfileTitle = false;
+    this.editingProfileDescription = false;
     this.cdr.markForCheck();
   }
 
   // ============================================================
-  // MEMBER SELECT DIALOG
+  // USER SELECTION DIALOG / CHIPS
   // ============================================================
 
   openUserSelectModal(): void {
-
     this.openUserSelectionDialog(
       this.selectedUsers,
       (ids: number[]) => {
@@ -681,31 +844,18 @@ export class Teams implements OnInit {
     );
   }
 
-  openTeamMemberManager(
-    team: TeamView | null
-  ): void {
-
+  openTeamMemberManager(team: TeamView | null): void {
     if (!team) {
       return;
     }
 
-    const currentIds =
-      this.getTeamMembers(team)
-        .map((member: TeamMemberView) =>
-          this.getMemberId(member)
-        )
-        .filter((id: number) =>
-          Number.isFinite(id) && id > 0
-        );
+    const currentIds = this.getTeamMembers(team)
+      .map((member: TeamMemberView) => this.getMemberId(member))
+      .filter((id: number) => Number.isFinite(id) && id > 0);
 
     this.openUserSelectionDialog(
       currentIds,
-      (ids: number[]) => {
-        this.updateTeamMembers(
-          team,
-          ids
-        );
-      }
+      (ids: number[]) => this.updateTeamMembers(team, ids)
     );
   }
 
@@ -713,426 +863,160 @@ export class Teams implements OnInit {
     currentSelection: number[],
     onSelected: (ids: number[]) => void
   ): void {
-
-    const currentIds =
-      new Set(
-        currentSelection.map(
-          (id: number) => Number(id)
-        )
-      );
+    const currentIds = new Set(
+      currentSelection.map((id: number) => Number(id))
+    );
 
     const usersForDialog = [
       ...this.allUsers,
       ...currentSelection
-        .map((id: number) =>
-          this.findKnownUser(id)
-        )
-        .filter(
-          (user): user is UserPayload =>
-            !!user
-        )
+        .map((id: number) => this.findKnownUser(id))
+        .filter((user): user is UserPayload => !!user)
     ].filter(
       (user: UserPayload, index: number, collection: UserPayload[]) =>
         collection.findIndex(
-          (candidate: UserPayload) =>
-            Number(candidate.id) ===
-            Number(user.id)
+          candidate => Number(candidate.id) === Number(user.id)
         ) === index
     );
 
-    const dialogRef =
-      this.dialog.open(
-        UserSelectDialog,
-        {
-          width: '860px',
-          maxWidth: '92vw',
-          data: {
-            users: usersForDialog,
-            currentSelection: [...currentIds]
-          }
-        }
+    const dialogRef = this.dialog.open(UserSelectDialog, {
+      width: '860px',
+      maxWidth: '92vw',
+      data: {
+        users: usersForDialog,
+        currentSelection: [...currentIds]
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((result: number[] | undefined) => {
+      if (!Array.isArray(result)) {
+        return;
+      }
+
+      const ids = [...new Set(
+        result.map((id: number) => Number(id))
+      )].filter(
+        (id: number) => Number.isFinite(id) && id > 0
       );
 
-    dialogRef
-      .afterClosed()
-      .subscribe(
-        (result: number[] | undefined) => {
-
-          if (!Array.isArray(result)) {
-            return;
-          }
-
-          onSelected(
-            [...new Set(
-              result.map(
-                (id: number) =>
-                  Number(id)
-              )
-            )].filter(
-              (id: number) =>
-                Number.isFinite(id) &&
-                id > 0
-            )
-          );
-        }
-      );
+      onSelected(ids);
+    });
   }
-
-  private findKnownUser(
-    id: number
-  ): UserPayload | null {
-
-    return (
-      this.allUsers.find(
-        (user: UserPayload) =>
-          Number(user.id) === Number(id)
-      ) ??
-      null
-    );
-  }
-
-  // ============================================================
-  // REBUILD CHIPS
-  // ============================================================
 
   private rebuildChipsFromSelectedUsers(): void {
-
-    this.chipUserObjects =
-      this.selectedUsers
-        .map((id: number) =>
-          this.findKnownUser(id)
-        )
-        .filter(
-          (user): user is UserPayload =>
-            !!user
-        );
+    this.chipUserObjects = this.selectedUsers
+      .map((id: number) => this.findKnownUser(id))
+      .filter((user): user is UserPayload => !!user);
 
     this.cdr.markForCheck();
   }
 
   removeUserChip(userId: number): void {
-
-    this.selectedUsers =
-      this.selectedUsers.filter(
-        (id: number) =>
-          Number(id) !== Number(userId)
-      );
+    this.selectedUsers = this.selectedUsers.filter(
+      (id: number) => Number(id) !== Number(userId)
+    );
 
     this.rebuildChipsFromSelectedUsers();
   }
 
   // ============================================================
-  // CREATE / UPDATE
-  //
-  // ONE REQUEST CONTAINS:
-  // Team fields + memberIds
-  //
-  // Backend updates teams + team_members in ONE transaction.
+  // TEAM MEMBER ADD / REMOVE
   // ============================================================
 
-  saveTeam(): void {
-
-    const trimmedName =
-      this.name.trim();
-
-    if (!trimmedName) {
-      return;
-    }
-
-    this.loading = true;
-
-    const payload =
-      this.buildTeamPayload(
-        this.selectedUsers
-      );
-
-    const headers =
-      this.auth.getAuthHeaders();
-
-    // UPDATE
-    if (
-      this.editingTeamId !== null &&
-      this.editingTeamId > 0
-    ) {
-
-      this.http.put<any>(
-        `${this.baseUrl}/teams/${this.editingTeamId}`,
-        payload,
-        { headers }
-      ).subscribe({
-
-        next: (res: any) => {
-          this.handleSuccessfulTeamSave(res);
-        },
-
-        error: (error) => {
-
-          console.error(
-            'Failed to update team:',
-            error
-          );
-
-          this.loading = false;
-          this.cdr.markForCheck();
-        }
-      });
-
-      return;
-    }
-
-    // CREATE
-    this.http.post<any>(
-      `${this.baseUrl}/teams`,
-      payload,
-      { headers }
-    ).subscribe({
-
-      next: (res: any) => {
-        this.handleSuccessfulTeamSave(res);
-      },
-
-      error: (error) => {
-
-        console.error(
-          'Failed to create team:',
-          error
-        );
-
-        this.loading = false;
-        this.cdr.markForCheck();
-      }
-    });
-  }
-
-  private buildTeamPayload(
-    memberIds: number[]
-  ): any {
-
-    return {
-      name: this.name.trim(),
-      description: this.description.trim(),
-      memberIds: [
-        ...new Set(
-          memberIds
-            .map((id: number) =>
-              Number(id)
-            )
-            .filter((id: number) =>
-              Number.isFinite(id) &&
-              id > 0
-            )
-        )
-      ]
-    };
-  }
-
-  private handleSuccessfulTeamSave(
-    res: any
-  ): void {
-
-    this.loading = false;
-
-    this.resetForm();
-    this.refreshTeamsList();
-    this.cdr.markForCheck();
-  }
-
-  // ============================================================
-  // INLINE MEMBER ADD / UPDATE
-  // ============================================================
-
-  addMemberToTeamInline(
-    teamId: number,
-    userId: number
-  ): void {
-
+  addMemberToTeamInline(teamId: number, userId: number): void {
     if (!userId || !this.selectedTeam) {
       return;
     }
 
-    if (
-      Number(this.selectedTeam.id) !==
-      Number(teamId)
-    ) {
+    if (Number(this.selectedTeam.id) !== Number(teamId)) {
       return;
     }
 
-    const currentIds =
-      this.getTeamMembers(
-        this.selectedTeam
-      )
-        .map((member: TeamMemberView) =>
-          this.getMemberId(member)
-        )
-        .filter((id: number) =>
-          Number.isFinite(id) &&
-          id > 0
-        );
+    const currentIds = this.getTeamMembers(this.selectedTeam)
+      .map((member: TeamMemberView) => this.getMemberId(member))
+      .filter((id: number) => Number.isFinite(id) && id > 0);
 
-    if (
-      currentIds.includes(
-        Number(userId)
-      )
-    ) {
+    if (currentIds.includes(Number(userId))) {
       return;
     }
 
     this.updateTeamMembersInline(
       this.selectedTeam,
-      [
-        ...currentIds,
-        Number(userId)
-      ]
+      [...currentIds, Number(userId)]
     );
+  }
+
+  removeMemberFromTeamInline(teamId: number, userId: number): void {
+    if (!this.selectedTeam) {
+      return;
+    }
+
+    if (Number(this.selectedTeam.id) !== Number(teamId)) {
+      return;
+    }
+
+    if (!confirm('Remove this user from the team?')) {
+      return;
+    }
+
+    const remainingIds = this.getTeamMembers(this.selectedTeam)
+      .map((member: TeamMemberView) => this.getMemberId(member))
+      .filter((id: number) =>
+        Number.isFinite(id) &&
+        id > 0 &&
+        Number(id) !== Number(userId)
+      );
+
+    this.updateTeamMembersInline(this.selectedTeam, remainingIds);
   }
 
   private updateTeamMembersInline(
     team: TeamView,
     memberIds: number[]
   ): void {
-
-    const payload =
-      this.buildTeamPayload(
-        memberIds
-      );
-
     this.loading = true;
 
     this.http.put<any>(
       `${this.baseUrl}/teams/${team.id}`,
-      payload,
-      {
-        headers:
-          this.auth.getAuthHeaders()
-      }
+      this.buildTeamPayload(memberIds),
+      { headers: this.auth.getAuthHeaders() }
     ).subscribe({
-
       next: (res: any) => {
-
-        const updatedTeam =
-          res?.data
-            ? this.normalizeTeam(res.data)
-            : null;
-
-        if (updatedTeam) {
-          this.selectedTeam =
-            updatedTeam;
+        if (res?.data) {
+          this.selectedTeam = this.normalizeTeam(res.data);
         }
 
         this.loading = false;
         this.refreshTeamsList();
         this.cdr.markForCheck();
       },
-
       error: (error) => {
-
-        console.error(
-          'Failed to update team members:',
-          error
-        );
-
+        console.error('Failed to update team members:', error);
         this.loading = false;
         this.cdr.markForCheck();
       }
     });
   }
 
-  // ============================================================
-  // INLINE MEMBER REMOVE
-  // ============================================================
-
-  removeMemberFromTeamInline(
-    teamId: number,
-    userId: number
-  ): void {
-
-    if (!this.selectedTeam) {
-      return;
-    }
-
-    if (
-      Number(this.selectedTeam.id) !==
-      Number(teamId)
-    ) {
-      return;
-    }
-
-    if (
-      !confirm(
-        'Remove this user from the team?'
-      )
-    ) {
-      return;
-    }
-
-    const remainingIds =
-      this.getTeamMembers(
-        this.selectedTeam
-      )
-        .map((member: TeamMemberView) =>
-          this.getMemberId(member)
-        )
-        .filter((id: number) =>
-          Number.isFinite(id) &&
-          id > 0 &&
-          Number(id) !== Number(userId)
-        );
-
-    this.updateTeamMembersInline(
-      this.selectedTeam,
-      remainingIds
-    );
-  }
-
-  // ============================================================
-  // TEAM MEMBER MANAGER
-  // ============================================================
-
-  private updateTeamMembers(
-    team: TeamView,
-    memberIds: number[]
-  ): void {
-
-    const payload =
-      this.buildTeamPayload(
-        memberIds
-      );
-
+  private updateTeamMembers(team: TeamView, memberIds: number[]): void {
     this.loading = true;
 
     this.http.put<any>(
       `${this.baseUrl}/teams/${team.id}`,
-      payload,
-      {
-        headers:
-          this.auth.getAuthHeaders()
-      }
+      this.buildTeamPayload(memberIds),
+      { headers: this.auth.getAuthHeaders() }
     ).subscribe({
-
       next: (res: any) => {
-
-        const updatedTeam =
-          res?.data
-            ? this.normalizeTeam(res.data)
-            : null;
-
-        if (updatedTeam) {
-          this.selectedTeam =
-            updatedTeam;
+        if (res?.data) {
+          this.selectedTeam = this.normalizeTeam(res.data);
         }
 
         this.loading = false;
         this.refreshTeamsList();
         this.cdr.markForCheck();
       },
-
       error: (error) => {
-
-        console.error(
-          'Failed to update team members:',
-          error
-        );
-
+        console.error('Failed to update team members:', error);
         this.loading = false;
         this.cdr.markForCheck();
       }
@@ -1143,17 +1027,160 @@ export class Teams implements OnInit {
   // TEAM DETAILS
   // ============================================================
 
-  openTeamDetails(
-    team: TeamView
-  ): void {
-
-    this.selectedTeam = team;
+  startProfileFieldEdit(field: 'name' | 'description'): void {
+    if (!this.selectedTeam) return;
+    this.editingProfileTitle = field === 'name';
+    this.editingProfileDescription = field === 'description';
+    this.profileNameDraft = this.selectedTeam.name || '';
+    this.profileDescriptionDraft = this.selectedTeam.description || '';
     this.cdr.markForCheck();
   }
 
-  closeTeamDetails(): void {
+  cancelProfileFieldEdit(): void {
+    this.editingProfileTitle = false;
+    this.editingProfileDescription = false;
+    this.profileNameDraft = this.selectedTeam?.name || '';
+    this.profileDescriptionDraft = this.selectedTeam?.description || '';
+    this.cdr.markForCheck();
+  }
 
+  saveProfileField(field: 'name' | 'description'): void {
+    const team = this.selectedTeam;
+    if (!team || this.loading) return;
+    const nextName = field === 'name' ? this.profileNameDraft.trim() : team.name;
+    const nextDescription = field === 'description' ? this.profileDescriptionDraft.trim() : team.description;
+    if (!nextName) return;
+
+    this.loading = true;
+    const memberIds = this.getTeamMembers(team).map((member: TeamMemberView) => this.getMemberId(member)).filter((id: number) => Number.isFinite(id) && id > 0);
+    this.http.put<any>(`${this.baseUrl}/teams/${team.id}`, {
+      name: nextName,
+      description: nextDescription,
+      memberIds: [...new Set(memberIds)]
+    }, { headers: this.auth.getAuthHeaders() }).subscribe({
+      next: (res: any) => {
+        const returned = res?.data ? this.normalizeTeam(res.data) : { ...team, name: nextName, description: nextDescription };
+        this.selectedTeam = { ...team, ...returned, name: nextName, description: nextDescription };
+        this.name = nextName;
+        this.description = nextDescription;
+        this.loading = false;
+        this.cancelProfileFieldEdit();
+        this.refreshTeamsList();
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error(`Failed to update team ${field}:`, error);
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  /** Extract membership arrays from the different response envelopes used by team APIs. */
+  private extractTeamMembersArray(response: any): any[] {
+    const candidates = [
+      response,
+      response?.data,
+      response?.members,
+      response?.teamMembers,
+      response?.team_members,
+      response?.users,
+      response?.content,
+      response?.items,
+      response?.results,
+      response?.result,
+      response?.payload,
+      response?.data?.members,
+      response?.data?.teamMembers,
+      response?.data?.team_members,
+      response?.data?.teamUsers,
+      response?.data?.team_users,
+      response?.data?.memberships,
+      response?.data?.users,
+      response?.data?.content,
+      response?.data?.items,
+      response?.result?.members,
+      response?.result?.teamMembers,
+      response?.result?.team_members,
+      response?.payload?.members,
+      response?.payload?.teamMembers,
+      response?.payload?.team_members
+    ];
+    const found = candidates.find((value: any) => Array.isArray(value));
+    if (found) return found;
+
+    // Some APIs wrap the team and its members in { data: { team: ..., ... } }.
+    const nestedTeam = response?.data?.team ?? response?.team ?? response?.result?.team ?? response?.payload?.team;
+    if (nestedTeam && nestedTeam !== response) {
+      return this.extractTeamMembersArray(nestedTeam);
+    }
+    return [];
+  }
+
+  private applyTeamMembersResponse(teamId: number, response: any): boolean {
+    const rawMembers = this.extractTeamMembersArray(response);
+    if (!rawMembers.length || Number(this.selectedTeam?.id) !== Number(teamId)) return false;
+
+    const members = rawMembers
+      .map((member: any) => this.normalizeMember(member))
+      .map((member: TeamMemberView) => this.enrichMemberFromUsers(member))
+      .filter((member: TeamMemberView) => Number.isFinite(member.id) && member.id > 0);
+
+    if (!members.length) return false;
+    this.selectedTeam = { ...this.selectedTeam!, members };
+    // Keep the list record in sync too, so reopening the profile does not lose its cards.
+    this.teams = this.teams.map((item: TeamView) =>
+      Number(item.id) === Number(teamId) ? { ...item, members } : item
+    );
+    this.cdr.markForCheck();
+    return true;
+  }
+
+  /** Fallback for backends where GET /teams/:id omits the membership join. */
+  private loadTeamMembersFallback(teamId: number): void {
+    const headers = this.auth.getAuthHeaders();
+    this.http.get<any>(`${this.baseUrl}/teams/${teamId}/members`, { headers }).subscribe({
+      next: (response: any) => {
+        if (this.applyTeamMembersResponse(teamId, response)) return;
+        // Some controllers expose the same relation under /users instead of /members.
+        this.http.get<any>(`${this.baseUrl}/teams/${teamId}/users`, { headers }).subscribe({
+          next: (usersResponse: any) => { this.applyTeamMembersResponse(teamId, usersResponse); },
+          error: () => { /* Optional compatibility endpoint; keep current profile state. */ }
+        });
+      },
+      error: () => {
+        this.http.get<any>(`${this.baseUrl}/teams/${teamId}/users`, { headers }).subscribe({
+          next: (usersResponse: any) => { this.applyTeamMembersResponse(teamId, usersResponse); },
+          error: () => { /* Optional compatibility endpoint; keep current profile state. */ }
+        });
+      }
+    });
+  }
+
+  openTeamDetails(team: TeamView): void {
+    // Open immediately from the team-list record. This backend returns 404 for
+    // GET /teams/:id, so avoid that unsupported request and use the existing
+    // team row plus the optional membership relation endpoint when necessary.
+    this.selectedTeam = {
+      ...team,
+      members: Array.isArray(team?.members) ? team.members : []
+    };
+    this.editingProfileTitle = false;
+    this.editingProfileDescription = false;
+    this.profileNameDraft = team?.name || '';
+    this.profileDescriptionDraft = team?.description || '';
+    this.teamProfileTab = 'overview';
+    this.memberSearchTerm = '';
+    this.cdr.markForCheck();
+
+    if (!this.getTeamMembers(this.selectedTeam).length) {
+      this.loadTeamMembersFallback(Number(team.id));
+    }
+  }
+
+  closeTeamDetails(): void {
     this.selectedTeam = null;
+    this.teamProfileTab = 'overview';
     this.cdr.markForCheck();
   }
 
@@ -1162,12 +1189,7 @@ export class Teams implements OnInit {
   // ============================================================
 
   deleteTeam(id: number): void {
-
-    if (
-      !confirm(
-        'Are you sure you want to delete this team?'
-      )
-    ) {
+    if (!confirm('Are you sure you want to delete this team?')) {
       return;
     }
 
@@ -1175,80 +1197,27 @@ export class Teams implements OnInit {
 
     this.http.delete<any>(
       `${this.baseUrl}/teams/${id}`,
-      {
-        headers:
-          this.auth.getAuthHeaders()
-      }
+      { headers: this.auth.getAuthHeaders() }
     ).subscribe({
-
       next: () => {
-
         this.loading = false;
-
         this.refreshTeamsList();
 
-        if (
-          this.editingTeamId === id
-        ) {
+        if (Number(this.editingTeamId) === Number(id)) {
           this.resetForm();
         }
 
-        if (
-          Number(this.selectedTeam?.id) ===
-          Number(id)
-        ) {
+        if (Number(this.selectedTeam?.id) === Number(id)) {
           this.closeTeamDetails();
         }
 
         this.cdr.markForCheck();
       },
-
       error: (error) => {
-
-        console.error(
-          'Failed to delete team:',
-          error
-        );
-
+        console.error('Failed to delete team:', error);
         this.loading = false;
         this.cdr.markForCheck();
       }
     });
-  }
-
-  // ============================================================
-  // COMPLETE SAVE
-  // ============================================================
-
-  private completeSaveWorkflow(): void {
-
-    this.resetForm();
-
-    this.refreshTeamsList();
-
-    this.loading = false;
-
-    this.cdr.markForCheck();
-  }
-
-  // ============================================================
-  // RESET
-  // ============================================================
-
-  resetForm(): void {
-
-    this.name = '';
-
-    this.description = '';
-
-    this.selectedUsers = [];
-
-    this.chipUserObjects = [];
-
-    this.editingTeamId = null;
-
-    this.selectedTeam = null;
-
-    this.cdr.markForCheck();
   }
 }

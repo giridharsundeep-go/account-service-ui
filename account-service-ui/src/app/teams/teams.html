@@ -1,531 +1,278 @@
-<div class="saas-container">
 
-    <!-- PREMIUM TOP HEADER BAR -->
-    <header class="saas-header">
-        <div class="header-title-block">
-            <h2>Teams Management</h2>
-            <p class="header-subtitle">
-                Create workspace teams and assign users.
-            </p>
+<div class="saas-container teams-page">
+
+  <section class="teams-illustration-wall" *ngIf="!selectedTeam && editingTeamId === null" aria-label="Teams build better work">
+    <div class="teams-illustration-copy">
+      <span class="teams-illustration-eyebrow">PEOPLE · TEAMWORK · PROGRESS</span>
+      <h1>Teams</h1>
+      <p>Build better work, together.</p>
+    </div>
+    <div class="teams-illustration-caption">Good work starts with good people.</div>
+  </section>
+
+  <ng-container *ngIf="!selectedTeam">
+  <header class="teams-page-hero" [hidden]="editingTeamId !== null">
+    <div class="teams-hero-copy">
+      <div class="teams-breadcrumb"><span>Organization</span><span class="breadcrumb-separator">/</span><strong>Teams</strong></div>
+      <h1>Teams</h1>
+      <p>Bring people together around shared goals. Manage team membership and keep ownership clear.</p>
+    </div>
+    <button type="button" class="teams-create-button" (click)="resetForm(); editingTeamId = 0">
+      <span class="create-plus" aria-hidden="true">+</span> Create team
+    </button>
+  </header>
+
+  <section class="teams-overview" aria-label="Team overview" [hidden]="editingTeamId !== null">
+    <article class="overview-metric overview-metric-primary">
+      <span class="metric-icon" aria-hidden="true"><mat-icon fontSet="material-icons">groups</mat-icon></span>
+      <div><span class="metric-label">Total teams</span><strong>{{ totalTeams }}</strong><small>Across your organization</small></div>
+    </article>
+    <article class="overview-metric">
+      <span class="metric-icon metric-icon-green" aria-hidden="true"><mat-icon fontSet="material-icons">task_alt</mat-icon></span>
+      <div><span class="metric-label">Operational</span><strong>{{ operationalTeams }}</strong><small>Teams with members</small></div>
+    </article>
+    <article class="overview-metric">
+      <span class="metric-icon metric-icon-amber" aria-hidden="true"><mat-icon fontSet="material-icons">person_add_alt</mat-icon></span>
+      <div><span class="metric-label">Need attention</span><strong>{{ teamsNeedingMembers }}</strong><small>Teams without members</small></div>
+    </article>
+    <article class="overview-metric">
+      <span class="metric-icon metric-icon-purple" aria-hidden="true"><mat-icon fontSet="material-icons">person</mat-icon></span>
+      <div><span class="metric-label">People assigned</span><strong>{{ totalTeamMembers }}</strong><small>Memberships across teams</small></div>
+    </article>
+  </section>
+
+  <!-- CREATE TEAM — uses the same profile layout as View -->
+  <section class="team-create-workspace" *ngIf="editingTeamId !== null">
+    <div class="team-profile-breadcrumb">
+      <button type="button" class="profile-back-button" (click)="resetForm()" aria-label="Back to teams">‹</button>
+      <span>People</span><span class="breadcrumb-separator">/</span><span>Teams</span><span class="breadcrumb-separator">/</span><strong>Create team</strong>
+    </div>
+    <div class="team-profile-cover-wall create-cover-wall" aria-label="Teams build better work">
+      <div class="team-profile-cover-copy"><span>TEAMWORK STARTS HERE</span><strong>Build better work, together.</strong></div>
+    </div>
+    <header class="team-profile-hero create-profile-hero">
+      <div class="team-profile-identity">
+        <div class="team-profile-avatar" [attr.data-initials]="getInitials(name || 'Team')" aria-hidden="true"></div>
+        <div class="team-profile-title-block">
+          <div class="team-profile-kicker">NEW TEAM</div>
+          <h1>Create team</h1>
+          <p>Set up your team and add the people who will work together.</p>
         </div>
+      </div>
+      <div class="team-profile-actions">
+        <button type="button" class="gp-button gp-outline" (click)="resetForm()" [disabled]="loading">Cancel</button>
+        <button type="button" class="gp-button gp-primary" [disabled]="loading || !name.trim()" (click)="saveTeam()">{{ loading ? 'Creating…' : 'Create team' }}</button>
+      </div>
+    </header>
+    <nav class="team-profile-tabs" aria-label="Create team sections">
+      <button type="button" [class.active]="createTab === 'overview'" (click)="createTab = 'overview'">Overview</button>
+      <button type="button" [class.active]="createTab === 'work'" (click)="createTab = 'work'">Work</button>
+      <button type="button" [class.active]="createTab === 'resources'" (click)="createTab = 'resources'">Resources</button>
+    </nav>
+    <div class="team-profile-content create-team-content" *ngIf="createTab === 'overview'">
+      <div class="team-profile-main-column">
+        <section class="profile-section-card create-field-card">
+          <div class="profile-section-heading"><div><h2>Team name</h2><p>Choose a clear name people will recognize.</p></div></div>
+          <div class="inline-edit-row">
+            <input class="team-inline-input team-inline-title" [(ngModel)]="name" placeholder="Enter team name" aria-label="Team name" maxlength="120" />
+          </div>
+        </section>
+        <section class="profile-section-card create-field-card">
+          <div class="profile-section-heading"><div><h2>Description</h2><p>“I love empty profiles” said nobody, ever. Fill in your description here.</p></div></div>
+          <textarea class="team-inline-input team-inline-description" [(ngModel)]="description" placeholder="“I love empty profiles” said nobody, ever. Fill in your description here." aria-label="Team description" rows="4"></textarea>
+        </section>
+        <section class="profile-section-card">
+          <div class="profile-section-heading"><div><h2>Members <span class="profile-tab-count">{{ chipUserObjects.length }}</span></h2><p>Add the people who belong to this team.</p></div>
+          <button type="button" class="gp-button gp-primary" (click)="openUserSelectModal()"><span aria-hidden="true">+</span> Add members</button></div>
+          <div class="profile-people-grid profile-people-grid-large create-member-wall" *ngIf="chipUserObjects.length; else createNoMembers">
+            <article class="profile-person-card create-member-card" *ngFor="let user of chipUserObjects">
+              <img *ngIf="user.profilePictureUrl" [src]="getAvatarDisplaySrc(user)" [alt]="user.name" class="profile-person-avatar" />
+              <span *ngIf="!user.profilePictureUrl" class="profile-person-avatar profile-person-avatar-fallback">{{ getInitials(user.name) }}</span>
+              <strong [title]="user.name">{{ user.name }}</strong><span class="profile-person-email">{{ user.email }}</span><span class="profile-person-code">Employee ID: {{ getMemberEmployeeCode(user) }}</span>
+              <button type="button" class="profile-remove-person" (click)="removeUserChip(user.id)">Remove</button>
+            </article>
+          </div>
+          <ng-template #createNoMembers><div class="profile-empty-state create-empty-members"><mat-icon fontSet="material-icons">group_add</mat-icon><strong>No members added yet</strong><p>Add members to see their people cards here.</p><button type="button" class="gp-button gp-primary" (click)="openUserSelectModal()">+ Add members</button></div></ng-template>
+        </section>
+      </div>
+    </div>
+    <div class="team-profile-content team-profile-single-column" *ngIf="createTab === 'work'"><section class="profile-section-card profile-empty-tab"><mat-icon fontSet="material-icons">work_outline</mat-icon><h2>Work</h2><p>Team work will appear here when projects are associated with this team.</p></section></div>
+    <div class="team-profile-content team-profile-single-column" *ngIf="createTab === 'resources'"><section class="profile-section-card profile-empty-tab"><mat-icon fontSet="material-icons">link</mat-icon><h2>Resources</h2><p>Team links and resources can be organized here.</p></section></div>
+  </section>
 
-        <div class="header-actions" *ngIf="editingTeamId === null">
-            <button
-                type="button"
-                mat-stroked-button
-                class="gp-button gp-primary header-wide-btn"
-                (click)="resetForm(); editingTeamId = 0">
+  <!-- TEAM LIST -->
+  <mat-card class="matrix-table-workspace teams-workspace" appearance="outlined" [hidden]="editingTeamId !== null">
+    <mat-card-content class="teams-directory-content">
+      <div class="teams-directory-intro">
+        
+        <div class="directory-count"><strong>{{ filterTeams(teams).length }}</strong><span>teams shown</span></div>
+      </div>
 
-                <span class="btn-indicator-pulse"></span>
-                Create New Team
-            </button>
+    <div class="saas-team-grid-layout">
+      <ng-container *ngIf="filterTeams(teams) as filteredTeams">
+        <ng-container *ngIf="filteredTeams.length > 0; else emptyTeams">
+
+          <mat-card class="example-card" appearance="outlined"
+                    *ngFor="let team of filteredTeams; trackBy: trackTeam">
+            <mat-card-header class="team-name-card-header">
+              <mat-card-title>{{ team.name }}</mat-card-title>
+            </mat-card-header>
+            <mat-card-actions class="team-name-card-actions">
+              <button mat-button type="button" class="team-action-button team-action-primary"
+                      (click)="openTeamDetails(team)">VIEW</button>
+            </mat-card-actions>
+          </mat-card>
+
+        </ng-container>
+      </ng-container>
+
+      <ng-template #emptyTeams>
+        <section class="teams-empty-state">
+          <span class="team-empty-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </span>
+          <h3>{{ searchTerm.trim() ? 'No matching teams' : 'No teams yet' }}</h3>
+          <p>
+            {{ searchTerm.trim()
+              ? 'Try a different search term.'
+              : 'Create your first team to get started.' }}
+          </p>
+
+          <button type="button" class="gp-button gp-primary"
+                  *ngIf="!searchTerm.trim()" (click)="resetForm(); editingTeamId = 0">
+            <span class="btn-indicator-pulse"></span>
+            Create your first team
+          </button>
+        </section>
+      </ng-template>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  </ng-container>
+
+  <!-- TEAM PROFILE — reference layout, preserving the existing cover illustration -->
+  <section class="team-profile-view" *ngIf="selectedTeam">
+    <div class="team-profile-breadcrumb">
+      <button type="button" class="profile-back-button" (click)="closeTeamDetails()" aria-label="Back to teams">‹</button>
+      <span>People</span><span class="breadcrumb-separator">/</span><span>Teams</span><span class="breadcrumb-separator">/</span><strong>{{ selectedTeam.name }}</strong>
+    </div>
+
+    <div class="team-profile-cover-wall" aria-label="Teams build better work">
+      <div class="team-profile-cover-copy"><span>TEAMS</span><strong>Build better work, together.</strong></div>
+    </div>
+
+    <header class="team-profile-hero team-profile-reference-hero">
+      <div class="team-profile-identity">
+        <div class="team-profile-avatar team-profile-reference-icon" aria-hidden="true"><mat-icon fontSet="material-icons">groups</mat-icon></div>
+        <div class="team-profile-title-block">
+          <div class="team-profile-editable-title" *ngIf="!editingProfileTitle; else editProfileTitleBlock">
+            <h1>{{ selectedTeam.name }}</h1>
+            <span class="team-status-pill" [class.team-status-pill-empty]="getTeamMembers(selectedTeam).length === 0">
+              <span class="team-status-pill-dot"></span>{{ getTeamMembers(selectedTeam).length > 0 ? 'Active' : 'Needs members' }}
+            </span>
+            <button type="button" class="profile-field-edit" aria-label="Edit team name" (click)="startProfileFieldEdit('name')"><mat-icon fontSet="material-icons">edit</mat-icon></button>
+          </div>
+          <ng-template #editProfileTitleBlock>
+            <div class="profile-inline-editor">
+              <input class="team-inline-input team-inline-title" [(ngModel)]="profileNameDraft" aria-label="Team name" maxlength="120"/>
+              <button type="button" class="profile-save-field" (click)="saveProfileField('name')" [disabled]="loading || !profileNameDraft.trim()">Save</button>
+              <button type="button" class="profile-cancel-field" (click)="cancelProfileFieldEdit()">Cancel</button>
+            </div>
+          </ng-template>
+          <p class="team-profile-reference-description" *ngIf="!editingProfileDescription">{{ selectedTeam.description || 'Bring people together around shared goals.' }}
+            <button type="button" class="profile-field-edit description-edit-button" aria-label="Edit team description" (click)="startProfileFieldEdit('description')"><mat-icon fontSet="material-icons">edit</mat-icon></button>
+          </p>
+          <div class="profile-description-editor team-reference-description-editor" *ngIf="editingProfileDescription">
+            <textarea class="team-inline-input team-inline-description" [(ngModel)]="profileDescriptionDraft" aria-label="Team description" rows="2"></textarea>
+            <button type="button" class="profile-save-field" (click)="saveProfileField('description')" [disabled]="loading">Save</button>
+            <button type="button" class="profile-cancel-field" (click)="cancelProfileFieldEdit()">Cancel</button>
+          </div>
         </div>
+      </div>
+      <div class="team-profile-actions">
+        <button type="button" class="gp-button gp-primary team-edit-profile-button" (click)="startProfileFieldEdit('name')">
+          <mat-icon fontSet="material-icons">edit</mat-icon> Edit team
+        </button>
+      </div>
     </header>
 
-    <!-- CREATE / UPDATE TEAM -->
-    <div
-        class="inline-form-container"
-        *ngIf="editingTeamId !== null">
+    <nav class="team-profile-tabs" aria-label="Team profile sections">
+      <button type="button" [class.active]="teamProfileTab === 'overview'" (click)="teamProfileTab = 'overview'">Overview</button>
+      <button type="button" [class.active]="teamProfileTab === 'work'" (click)="teamProfileTab = 'work'">Work</button>
+      <button type="button" [class.active]="teamProfileTab === 'resources'" (click)="teamProfileTab = 'resources'">Resources</button>
+      <button type="button" class="team-profile-close" (click)="closeTeamDetails()">Back to teams</button>
+    </nav>
 
-        <div class="inline-form-card">
+    <div class="team-profile-content team-profile-single-column team-profile-reference-content" *ngIf="teamProfileTab === 'overview'">
+      <section class="team-profile-stat-grid" aria-label="Team details">
+        <article class="team-profile-stat-card">
+          <span class="team-profile-stat-icon"><mat-icon fontSet="material-icons">groups</mat-icon></span>
+          <div><span class="team-profile-stat-label">Total members</span><strong>{{ getTeamMembers(selectedTeam).length }}</strong></div>
+        </article>
+        <article class="team-profile-stat-card">
+          <span class="team-profile-stat-icon team-profile-stat-icon-green"><mat-icon fontSet="material-icons">workspace_premium</mat-icon></span>
+          <div><span class="team-profile-stat-label">Team lead</span><strong>{{ getTeamLeadName(selectedTeam) }}</strong></div>
+        </article>
+        <article class="team-profile-stat-card">
+          <span class="team-profile-stat-icon"><mat-icon fontSet="material-icons">calendar_month</mat-icon></span>
+          <div><span class="team-profile-stat-label">Created on</span><strong>{{ selectedTeam.createdAt ? (selectedTeam.createdAt | date:'dd MMM yyyy') : 'Not available' }}</strong></div>
+        </article>
+      </section>
 
-            <div class="inline-form-header">
-
-                <h3>
-                    {{
-                        editingTeamId
-                            ? 'Modify Workspace Team'
-                            : 'Configure New Team Profile'
-                    }}
-                </h3>
-
-                <p>
-                    Define the team and select its users.
-                </p>
-
-            </div>
-
-            <div class="inline-form-body">
-
-                <div class="form-grid-two-col">
-
-                    <mat-form-field
-                        appearance="outline"
-                        class="saas-form-field">
-
-                        <mat-label>
-                            Team Name
-                        </mat-label>
-
-                        <input
-                            matInput
-                            [(ngModel)]="name"
-                            placeholder="e.g. Senior Engineering Squad" />
-
-                    </mat-form-field>
-
-                    <mat-form-field
-                        appearance="outline"
-                        class="saas-form-field">
-
-                        <mat-label>
-                            Team Purpose / Description
-                        </mat-label>
-
-                        <textarea
-                            matInput
-                            rows="1"
-                            [(ngModel)]="description"
-                            placeholder="Describe team scope...">
-                        </textarea>
-
-                    </mat-form-field>
-
-                </div>
-
-                <!-- MEMBERS -->
-                <div class="saas-members-section">
-
-                    <div class="section-flex-header">
-
-                        <div class="section-flex-titles">
-
-                            <h4>
-                                Assigned Members
-                            </h4>
-
-                            <p class="meta-desc">
-                                Users assigned to this team
-                            </p>
-
-                        </div>
-
-                        <button
-                            type="button"
-                            mat-stroked-button
-                            class="gp-button gp-primary add-members-btn form-action-fixed-btn"
-                            (click)="openUserSelectModal()">
-
-                            + Add Members
-
-                        </button>
-
-                    </div>
-
-                    <div class="saas-chips-box">
-
-                        <span
-                            *ngIf="chipUserObjects.length === 0"
-                            class="blank-info-text">
-                            No users assigned yet.
-                        </span>
-
-                        <div class="selected-user-list">
-                            <div
-                                class="selected-user-pill"
-                                *ngFor="let user of chipUserObjects">
-
-                                <div class="selected-user-avatar" aria-hidden="true">
-                                    <img
-                                        *ngIf="user.profilePictureUrl"
-                                        [src]="getAvatarDisplaySrc(user)"
-                                        [alt]="user.name" />
-                                    <span *ngIf="!user.profilePictureUrl">
-                                        {{ getInitials(user.name) }}
-                                    </span>
-                                </div>
-
-                                <div class="selected-user-copy">
-                                    <span class="selected-user-name">
-                                        {{ user.name }}
-                                    </span>
-                                    <span class="selected-user-email">
-                                        {{ user.email }}
-                                    </span>
-
-                                    <span class="selected-user-employee-code">
-                                        {{
-                                            (user.employeeIdPrefix && user.employeeIdNumber)
-                                                ? user.employeeIdPrefix + '//' + user.employeeIdNumber
-                                                : (user.employeeIdPrefix || user.employeeIdNumber || 'No employee code')
-                                        }}
-                                    </span>
-                                </div>
-
-                                <button
-                                    type="button"
-                                    class="selected-user-remove"
-                                    [attr.aria-label]="'Remove ' + user.name"
-                                    (click)="removeUserChip(user.id)">
-                                    &times;
-                                </button>
-                            </div>
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            <div class="inline-form-footer">
-
-                <button
-                    type="button"
-                    mat-stroked-button
-                    class="gp-button gp-action form-action-fixed-btn"
-                    (click)="saveTeam()"
-                    [disabled]="loading || !name.trim()">
-
-                    <ng-container *ngIf="loading">
-                        Saving Changes...
-                    </ng-container>
-
-                    <ng-container *ngIf="!loading">
-                        {{
-                            editingTeamId
-                                ? 'Update Team'
-                                : 'Create Team'
-                        }}
-                    </ng-container>
-
-                </button>
-
-                <button
-                    type="button"
-                    mat-stroked-button
-                    class="gp-button gp-cancel form-action-fixed-btn"
-                    (click)="resetForm()">
-
-                    Cancel
-
-                </button>
-
-            </div>
-
+      <section class="profile-section-card profile-members-wall-section team-profile-reference-members">
+        <div class="team-profile-members-toolbar">
+          <div><h2>Team members <span>({{ getTeamMembers(selectedTeam).length }})</span></h2></div>
+          <div class="team-profile-member-actions">
+            <label class="team-profile-member-search">
+              <mat-icon fontSet="material-icons">search</mat-icon>
+              <input type="search" [(ngModel)]="memberSearchTerm" placeholder="Search members" aria-label="Search team members"/>
+              <button *ngIf="memberSearchTerm" type="button" aria-label="Clear member search" (click)="memberSearchTerm = ''">×</button>
+            </label>
+            <button type="button" class="gp-button gp-outline team-profile-add-members" (click)="openTeamMemberManager(selectedTeam)">
+              <mat-icon fontSet="material-icons">add</mat-icon> Add members
+            </button>
+          </div>
         </div>
 
+        <ng-container *ngIf="selectedTeam as currentTeam">
+          <ng-container *ngIf="getTeamMembers(currentTeam) as teamMembers">
+            <div class="profile-people-grid profile-people-grid-large team-member-wall team-profile-reference-member-grid"
+                 *ngIf="getFilteredTeamMembers(currentTeam).length > 0">
+              <article class="profile-person-card team-profile-reference-person-card"
+                       *ngFor="let member of getFilteredTeamMembers(currentTeam); trackBy: trackMember"
+                       [attr.data-member-id]="getMemberId(member)">
+                <div class="team-member-card-cover" aria-hidden="true"></div>
+                <img *ngIf="getMemberAvatar(member)" [src]="getMemberAvatarDisplaySrc(member)" [alt]="getMemberName(member)" class="profile-person-avatar"/>
+                <span *ngIf="!getMemberAvatar(member)" class="profile-person-avatar profile-person-avatar-fallback">{{ getInitials(getMemberName(member)) }}</span>
+                <strong [title]="getMemberName(member)">{{ getMemberName(member) }}</strong>
+                <span class="profile-person-role">{{ getMemberRoleLabel(member) }}</span>
+                <span class="profile-person-email" [title]="getMemberEmail(member)">{{ getMemberEmail(member) }}</span>
+                <span class="profile-person-code">Employee ID: {{ getMemberEmployeeCode(member) }}</span>
+                <button type="button" class="profile-remove-person" (click)="removeMemberFromTeamInline(currentTeam.id, getMemberId(member))">Remove</button>
+              </article>
+            </div>
+            <div class="profile-empty-state" *ngIf="teamMembers.length === 0 && !memberSearchTerm.trim()">
+              <mat-icon fontSet="material-icons">group_add</mat-icon><strong>No people added</strong><p>Add members to this team to see their profile cards here.</p>
+              <button type="button" class="gp-button gp-primary" (click)="openTeamMemberManager(currentTeam)">+ Add members</button>
+            </div>
+            <div class="profile-empty-state team-member-search-empty" *ngIf="teamMembers.length > 0 && memberSearchTerm.trim() && getFilteredTeamMembers(currentTeam).length === 0">
+              <mat-icon fontSet="material-icons">search_off</mat-icon><strong>No matching members</strong><p>Try another name or email address.</p>
+              <button type="button" class="gp-button gp-outline" (click)="memberSearchTerm = ''">Clear search</button>
+            </div>
+          </ng-container>
+        </ng-container>
+      </section>
     </div>
 
-    <!-- TEAM WORKSPACE -->
-    <main class="dashboard-workspace">
-
-        <div class="workspace-filter-header">
-
-            <div class="workspace-badge-legend">
-                <span class="legend-indicator"></span>
-                Teams
-            </div>
-
-            <div class="workspace-search-input-frame">
-
-                <span class="search-lens"></span>
-
-                <input
-                    type="text"
-                    [(ngModel)]="searchTerm"
-                    placeholder="Search teams..." />
-
-            </div>
-
-        </div>
-
-        <div
-            class="saas-team-grid-layout"
-            *ngIf="teams$ | async as teams">
-
-            <ng-container
-                *ngIf="
-                    filterTeams(teams).length > 0;
-                    else emptyCardsFallback
-                ">
-
-                <article
-                    class="team-saas-card"
-                    *ngFor="
-                        let team of filterTeams(teams);
-                        trackBy: trackTeam
-                    "
-                    (click)="openTeamDetails(team)"
-                    [class.is-selected]="
-                        selectedTeam?.id === team.id
-                    ">
-
-                    <div class="card-main-details">
-
-                        <div class="card-upper-row">
-
-                            <div class="badge-title-group">
-
-                                <div class="title-meta">
-
-                                    <h4>
-                                        {{ team.name }}
-                                    </h4>
-
-
-
-                                </div>
-
-                            </div>
-
-                            <div class="card-action-menu">
-
-                                <button
-                                    type="button"
-                                    class="gp-action-trigger edit-trigger"
-                                    (click)="
-                                        $event.stopPropagation();
-                                        editTeam(team)
-                                    ">
-
-                                    Modify
-
-                                </button>
-
-                                <button
-                                    type="button"
-                                    class="gp-action-trigger delete-trigger"
-                                    (click)="
-                                        $event.stopPropagation();
-                                        deleteTeam(team.id)
-                                    ">
-
-                                    Delete
-
-                                </button>
-
-                            </div>
-
-                        </div>
-
-                        <p class="team-body-description">
-                            {{
-                                team.description ||
-                                'No description configured for this team.'
-                            }}
-                        </p>
-
-                    </div>
-
-                </article>
-
-            </ng-container>
-
-            <ng-template #emptyCardsFallback>
-
-                <div class="saas-empty-state">
-
-                    <div class="empty-vector">
-                        🔎
-                    </div>
-
-                    <h4>
-                        No teams found
-                    </h4>
-
-                    <p>
-                        Create a team or change your search.
-                    </p>
-
-                </div>
-
-            </ng-template>
-
-        </div>
-
-    </main>
-
-    <!-- TEAM DETAILS -->
-    <div
-        class="side-panel-overlay"
-        *ngIf="selectedTeam"
-        (click)="closeTeamDetails()">
+    <div class="team-profile-content team-profile-single-column" *ngIf="teamProfileTab === 'work'">
+      <section class="profile-section-card profile-empty-tab"><mat-icon fontSet="material-icons">work_outline</mat-icon><h2>Team work</h2><p>Projects and work items associated with this team can be shown here when a team-to-project association is available.</p></section>
     </div>
-
-    <aside
-        class="side-info-panel"
-        [class.panel-open]="!!selectedTeam"
-        *ngIf="selectedTeam">
-
-        <div class="panel-header">
-
-            <div class="panel-header-title">
-
-                <h3>
-                    {{ selectedTeam.name }}
-                </h3>
-
-                <p>
-                    Team details and assigned users
-                </p>
-
-            </div>
-
-            <button
-                type="button"
-                class="panel-close-btn"
-                (click)="closeTeamDetails()">
-
-                &times;
-
-            </button>
-
-        </div>
-
-        <div class="panel-scroll-content">
-
-            <div class="panel-section-title">
-                Team Summary
-            </div>
-
-            <div class="team-intel-grid">
-
-                <div class="intel-stat-block">
-                    <span class="intel-label">Members</span>
-                    <span class="intel-val">
-                        {{ getTeamMembers(selectedTeam).length }}
-                    </span>
-                </div>
-
-                <div class="intel-stat-block">
-                    <span class="intel-label">Status</span>
-                    <span class="intel-val">
-                        {{ getTeamMembers(selectedTeam).length > 0 ? 'Operational' : 'No Members' }}
-                    </span>
-                </div>
-
-            </div>
-
-            <div class="panel-section-title">
-                Description
-            </div>
-
-            <p class="panel-description-text">
-
-                {{
-                    selectedTeam.description ||
-                    'No description configured for this team.'
-                }}
-
-            </p>
-
-            <div class="team-detail-meta-grid">
-
-                <div class="team-detail-meta-item">
-                    <span class="team-detail-meta-label">Team ID</span>
-                    <span class="team-detail-meta-value">#{{ selectedTeam.id }}</span>
-                </div>
-
-                <div class="team-detail-meta-item" *ngIf="selectedTeam.createdAt">
-                    <span class="team-detail-meta-label">Created</span>
-                    <span class="team-detail-meta-value">{{ selectedTeam.createdAt | date:'medium' }}</span>
-                </div>
-
-                <div class="team-detail-meta-item">
-                    <span class="team-detail-meta-label">Members</span>
-                    <span class="team-detail-meta-value">{{ getTeamMembers(selectedTeam).length }}</span>
-                </div>
-
-                <div class="team-detail-meta-item">
-                    <span class="team-detail-meta-label">Status</span>
-                    <span class="team-detail-meta-value">
-                        {{ getTeamMembers(selectedTeam).length > 0 ? 'Operational' : 'No Members' }}
-                    </span>
-                </div>
-
-            </div>
-
-            <div class="panel-section-title">
-
-                Team Members
-                ({{
-                    getTeamMembers(selectedTeam).length
-                }})
-
-            </div>
-
-            <p
-                class="no-seats-hint"
-                *ngIf="
-                    getTeamMembers(selectedTeam).length === 0
-                ">
-
-                No users assigned to this team.
-
-            </p>
-
-            <div
-                class="team-member-chip-list"
-                *ngIf="getTeamMembers(selectedTeam).length > 0
-                ">
-
-                <div
-                    *ngFor="let member of getTeamMembers(selectedTeam)"
-                    class="team-member-chip">
-
-                    <div class="team-member-chip-avatar" aria-hidden="true">
-
-                        <img
-                            *ngIf="getMemberAvatar(member)"
-                            [src]="getMemberAvatarDisplaySrc(member)"
-                            [alt]="getMemberName(member)" />
-
-                        <span *ngIf="!getMemberAvatar(member)">
-                            {{ getInitials(getMemberName(member)) }}
-                        </span>
-
-                    </div>
-
-                    <div class="team-member-chip-copy">
-
-                        <span class="team-member-chip-name">
-                            {{ getMemberName(member) }}
-                        </span>
-
-                        <span class="team-member-chip-email">
-                            {{ getMemberEmail(member) }}
-                        </span>
-
-                        <span class="team-member-chip-employee-code">
-                            {{ getMemberEmployeeCode(member) }}
-                        </span>
-
-                    </div>
-
-                    <button
-                        type="button"
-                        class="team-member-chip-remove"
-                        title="Remove member from team"
-                        [attr.aria-label]="'Remove ' + getMemberName(member)"
-                        (click)="
-                            $event.stopPropagation();
-                            removeMemberFromTeamInline(
-                                selectedTeam.id,
-                                getMemberId(member)
-                            )
-                        ">
-                        &times;
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <!-- ADD / UPDATE MEMBERS -->
-        <div class="panel-fixed-footer">
-
-            <button
-                type="button"
-                class="gp-button gp-primary panel-add-members-btn"
-                (click)="openTeamMemberManager(selectedTeam)">
-                + Add Members
-            </button>
-
-        </div>
-
-    </aside>
+    <div class="team-profile-content team-profile-single-column" *ngIf="teamProfileTab === 'resources'">
+      <section class="profile-section-card profile-empty-tab"><mat-icon fontSet="material-icons">link</mat-icon><h2>Team resources</h2><p>Useful links and documents for this team can be managed here. No resource links are currently configured.</p></section>
+    </div>
+  </section>
 
 </div>

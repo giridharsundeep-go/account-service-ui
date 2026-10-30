@@ -18,7 +18,7 @@ type FolderNode = AnyRecord & { children: FolderNode[]; expanded?: boolean; dept
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './docs.html',
-  styleUrl: './docs.css',
+  styleUrls: ['./docs.css', '../shared/field-controls.css'],
 })
 export class Docs implements OnInit {
   private readonly http = inject(HttpClient);

@@ -1,0 +1,151 @@
+<section class="work-items-page" aria-label="All work items">
+  <nav class="work-items-breadcrumb" aria-label="Breadcrumb">
+    <span>Plan &amp; Track</span><span aria-hidden="true">/</span><strong>Work items</strong>
+  </nav>
+
+  <header class="work-items-heading work-items-hero">
+    <div class="work-items-title-wrap">
+      <span class="work-items-eyebrow">WORKSPACE</span>
+      <div><h1>All work items</h1><button type="button" class="work-items-star" aria-label="Add work items to favourites" title="Add to favourites">☆</button></div>
+      <p>Search, filter, and review Epics, Stories, Tasks, and Issues across your spaces.</p>
+    </div>
+    <img class="work-items-cover-art" src="assets/work-items-cover.png" alt="A team planning and tracking work together">
+    <div class="work-items-heading-actions">
+      <span class="work-items-total">{{ filteredItems.length }} of {{ items.length }} items</span>
+      <button type="button" class="work-items-refresh" (click)="loadWorkItems()" [disabled]="loading" aria-label="Refresh work items" title="Refresh">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"></path><path d="M5.5 9a7 7 0 0 1 11.7-2L20 12M4 12l2.8 5a7 7 0 0 0 11.7-2"></path></svg>
+      </button>
+    </div>
+  </header>
+
+  <section class="work-items-filter-panel" aria-label="Work item filters">
+    <div class="work-items-filter-row">
+      <div class="work-items-mode-tabs" aria-label="Filter mode"><span class="is-active">Basic</span></div>
+      <label class="work-items-search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"></circle><path d="m16 16 4.5 4.5"></path></svg>
+        <input type="search" [(ngModel)]="searchTerm" (ngModelChange)="resetVisibleItemCount()" placeholder="Search work" aria-label="Search work items">
+        <kbd>/</kbd>
+      </label>
+      <div class="work-filter-control" *ngFor="let key of primaryFilterKeys" [attr.data-filter]="key">
+        <button type="button" class="work-items-filter-trigger" [class.is-open]="activeFilter === key" [class.has-selection]="selectionForTemplate(key).size > 0" [attr.aria-expanded]="activeFilter === key" (click)="toggleFilterPopover(key, $event)">
+          <span>{{ filterButtonText(key) }}</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 7.5 5 5 5-5"></path></svg>
+        </button>
+        <div class="work-filter-popover" *ngIf="activeFilter === key" [ngStyle]="filterPopoverPosition(key)" (click)="$event.stopPropagation()" role="dialog" [attr.aria-label]="filterLabels[key] + ' filter'">
+          <div class="work-filter-operator-wrap">
+            <button type="button" class="work-filter-operator" [attr.aria-expanded]="operatorMenuOpen" (click)="operatorMenuOpen = !operatorMenuOpen">{{ filterLabels[key] }} {{ filterOperatorLabel(key) }}<svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 7.5 5 5 5-5"></path></svg></button>
+            <div class="work-filter-operator-menu" *ngIf="operatorMenuOpen">
+              <button type="button" [class.is-current]="filterOperators[key] === 'equals'" (click)="setFilterOperator(key, 'equals', $event)">Equals</button>
+              <button type="button" [class.is-current]="filterOperators[key] === 'not-equals'" (click)="setFilterOperator(key, 'not-equals', $event)">Does not equal</button>
+            </div>
+          </div>
+          <label class="work-filter-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"></circle><path d="m16 16 4.5 4.5"></path></svg><input type="search" [(ngModel)]="filterSearch" [placeholder]="'Search ' + filterLabels[key]" [attr.aria-label]="'Search ' + filterLabels[key]"></label>
+          <div class="work-filter-list-heading">{{ filterHeading(key) }}</div>
+          <div class="work-filter-options" role="listbox" [attr.aria-label]="filterLabels[key] + ' options'">
+            <button type="button" class="work-filter-option" *ngFor="let option of visibleFilterOptions(key)" [class.is-selected]="isFilterOptionSelected(key, option.value)" [attr.aria-selected]="isFilterOptionSelected(key, option.value)" (click)="toggleFilterOption(key, option.value, $event)">
+              <span class="work-filter-checkbox" [class.is-checked]="isFilterOptionSelected(key, option.value)" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="m3 8 3.2 3.2L13 4.5"></path></svg></span>
+              <img *ngIf="option.avatarUrl" class="work-filter-avatar" [ngClass]="option.kindClass" [src]="option.avatarUrl" alt="">
+              <span *ngIf="!option.avatarUrl" class="work-filter-avatar" [ngClass]="option.kindClass">{{ option.initials || initials(option.label) }}</span>
+              <span class="work-filter-option-label">{{ option.label }}</span>
+            </button>
+            <div class="work-filter-empty" *ngIf="!visibleFilterOptions(key).length">No matching {{ filterLabels[key].toLowerCase() }}.</div>
+          </div>
+          <button type="button" class="work-filter-show-all" *ngIf="hasMoreFilterOptions(key)" (click)="toggleFilterList(key, $event)">{{ expandedFilterLists.has(key) ? 'Show less' : 'Show full list' }}</button>
+        </div>
+      </div>
+      <button type="button" class="work-items-more-filter" [class.is-open]="moreFiltersOpen" [attr.aria-expanded]="moreFiltersOpen" (click)="moreFiltersOpen = !moreFiltersOpen">More filters <span aria-hidden="true">⌄</span></button>
+      <button type="button" class="work-items-clear-filter" *ngIf="hasActiveFilters" (click)="clearFilters()">Clear filters</button>
+    </div>
+    <div class="work-items-extra-filters" *ngIf="moreFiltersOpen">
+      <div class="work-filter-control" *ngFor="let key of extraFilterKeys" [attr.data-filter]="key">
+        <button type="button" class="work-items-filter-trigger" [class.is-open]="activeFilter === key" [class.has-selection]="selectionForTemplate(key).size > 0" [attr.aria-expanded]="activeFilter === key" (click)="toggleFilterPopover(key, $event)">
+          <span>{{ filterButtonText(key) }}</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 7.5 5 5 5-5"></path></svg>
+        </button>
+        <div class="work-filter-popover" *ngIf="activeFilter === key" [ngStyle]="filterPopoverPosition(key)" (click)="$event.stopPropagation()" role="dialog" [attr.aria-label]="filterLabels[key] + ' filter'">
+          <div class="work-filter-operator-wrap">
+            <button type="button" class="work-filter-operator" [attr.aria-expanded]="operatorMenuOpen" (click)="operatorMenuOpen = !operatorMenuOpen">{{ filterLabels[key] }} {{ filterOperatorLabel(key) }}<svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 7.5 5 5 5-5"></path></svg></button>
+            <div class="work-filter-operator-menu" *ngIf="operatorMenuOpen">
+              <button type="button" [class.is-current]="filterOperators[key] === 'equals'" (click)="setFilterOperator(key, 'equals', $event)">Equals</button>
+              <button type="button" [class.is-current]="filterOperators[key] === 'not-equals'" (click)="setFilterOperator(key, 'not-equals', $event)">Does not equal</button>
+            </div>
+          </div>
+          <label class="work-filter-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"></circle><path d="m16 16 4.5 4.5"></path></svg><input type="search" [(ngModel)]="filterSearch" [placeholder]="'Search ' + filterLabels[key]" [attr.aria-label]="'Search ' + filterLabels[key]"></label>
+          <div class="work-filter-list-heading">{{ filterHeading(key) }}</div>
+          <div class="work-filter-options" role="listbox" [attr.aria-label]="filterLabels[key] + ' options'">
+            <button type="button" class="work-filter-option" *ngFor="let option of visibleFilterOptions(key)" [class.is-selected]="isFilterOptionSelected(key, option.value)" [attr.aria-selected]="isFilterOptionSelected(key, option.value)" (click)="toggleFilterOption(key, option.value, $event)">
+              <span class="work-filter-checkbox" [class.is-checked]="isFilterOptionSelected(key, option.value)" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="m3 8 3.2 3.2L13 4.5"></path></svg></span>
+              <span class="work-filter-avatar" [ngClass]="option.kindClass">{{ option.initials || initials(option.label) }}</span>
+              <span class="work-filter-option-label">{{ option.label }}</span>
+            </button>
+            <div class="work-filter-empty" *ngIf="!visibleFilterOptions(key).length">No matching {{ filterLabels[key].toLowerCase() }}.</div>
+          </div>
+          <button type="button" class="work-filter-show-all" *ngIf="hasMoreFilterOptions(key)" (click)="toggleFilterList(key, $event)">{{ expandedFilterLists.has(key) ? 'Show less' : 'Show full list' }}</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="work-items-selection-bar" *ngIf="selectedCount">
+    <div class="work-items-selection-count"><span class="selection-checkmark" aria-hidden="true">✓</span><strong>{{ selectedCount }} selected</strong></div>
+    <div class="work-items-bulk-status"><span>Change status to</span><div class="work-items-status-picker" (click)="$event.stopPropagation()">
+      <button type="button" class="work-items-status-trigger" [class.is-open]="bulkStatusMenuOpen" [attr.aria-expanded]="bulkStatusMenuOpen" aria-haspopup="listbox" (click)="toggleBulkStatusMenu($event)">{{ bulkStatusValue || 'Choose status' }}<svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 7.5 5 5 5-5"></path></svg></button>
+      <div class="work-items-status-menu" *ngIf="bulkStatusMenuOpen" role="listbox" aria-label="Status options">
+        <div class="work-items-status-menu-heading">Choose status</div>
+        <button type="button" role="option" *ngFor="let status of bulkStatusOptions" [attr.aria-selected]="bulkStatusValue === status" [class.is-selected]="bulkStatusValue === status" (click)="chooseBulkStatus(status, $event)"><span class="work-status-dot" [ngClass]="statusClass(status)"></span><span>{{ status }}</span><svg *ngIf="bulkStatusValue === status" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 8 3 3 7-7"></path></svg></button>
+      </div>
+    </div></div>
+    <button type="button" class="work-items-apply-status" (click)="applyBulkStatus()" [disabled]="!bulkStatusValue || bulkUpdating">{{ bulkUpdating ? 'Updating…' : 'Apply to selected' }}</button>
+    <button type="button" class="work-items-clear-selection" (click)="selectedItemIds.clear()" [disabled]="bulkUpdating">Clear selection</button>
+  </div>
+  <div class="work-items-action-message" [class.is-error]="actionMessageIsError" *ngIf="actionMessage" role="status">{{ actionMessage }}</div>
+
+  <div class="work-items-state" *ngIf="loading" role="status"><span class="work-items-spinner"></span><strong>Loading work items</strong><span>Gathering your projects and their work…</span></div>
+  <div class="work-items-state work-items-error" *ngIf="errorMessage && !loading" role="status"><strong>{{ errorMessage }}</strong><button *ngIf="items.length" type="button" (click)="errorMessage = ''">Dismiss</button></div>
+
+  <section class="work-items-table-card" *ngIf="!loading && items.length" aria-label="Work items table">
+    <div class="work-items-table-scroll">
+      <table mat-table [dataSource]="visibleItems" [trackBy]="trackByItem" class="work-items-table">
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef class="work-select-column"><mat-checkbox [checked]="allVisibleSelected" [indeterminate]="partiallyVisibleSelected && !allVisibleSelected" [disabled]="!visibleItems.length" (change)="toggleVisibleSelection($event.checked)" aria-label="Select all visible work items"></mat-checkbox></th>
+          <td mat-cell *matCellDef="let item" class="work-select-column"><mat-checkbox [checked]="selectedItemIds.has(item.id)" (click)="$event.stopPropagation()" (change)="toggleItemSelection(item, $event.checked)" [attr.aria-label]="'Select ' + item.key"></mat-checkbox></td>
+        </ng-container>
+
+        <ng-container matColumnDef="work">
+          <th mat-header-cell *matHeaderCellDef>Work</th>
+          <td mat-cell *matCellDef="let item" class="work-title-cell">
+            <span class="work-type-mark" [ngClass]="kindClass(item.kind)" [attr.aria-label]="kindLabel(item.kind)" [title]="kindLabel(item.kind)">
+              <svg *ngIf="item.kind === 'EPIC'" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M8.4 14.8a7 7 0 1 1 7.2 0c-.7.5-1.1 1.3-1.1 2.2h-5c0-.9-.4-1.7-1.1-2.2Z"></path></svg>
+              <svg *ngIf="item.kind === 'STORY'" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v16l-6-3-6 3z"></path></svg>
+              <svg *ngIf="item.kind === 'TASK'" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"></rect><path d="m8 12 2.5 2.5L16 9"></path></svg>
+              <svg *ngIf="item.kind === 'ISSUE'" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 22 20H2z"></path><path d="M12 9v5M12 17h.01"></path></svg>
+            </span>
+            <button type="button" class="work-item-open" (click)="$event.stopPropagation(); openWorkItem(item)"><span class="work-item-key">{{ item.key }}</span><strong [title]="item.title">{{ item.title }}</strong><span class="work-item-project">{{ item.projectName }}</span></button>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="assignee">
+          <th mat-header-cell *matHeaderCellDef>Assignee</th>
+          <td mat-cell *matCellDef="let item"><div class="work-person-cell" *ngIf="item.assigneeId !== null; else unassignedCell"><img *ngIf="item.assigneeAvatarUrl" [src]="item.assigneeAvatarUrl" alt=""><span *ngIf="!item.assigneeAvatarUrl">{{ initials(item.assigneeName) }}</span><strong [title]="item.assigneeName">{{ item.assigneeName }}</strong></div><ng-template #unassignedCell><span class="work-unassigned"><span aria-hidden="true">♙</span> Unassigned</span></ng-template></td>
+        </ng-container>
+
+        <ng-container matColumnDef="reporter">
+          <th mat-header-cell *matHeaderCellDef>Reporter</th>
+          <td mat-cell *matCellDef="let item"><div class="work-person-cell" *ngIf="item.reporterId !== null; else noReporter"><img *ngIf="item.reporterAvatarUrl" [src]="item.reporterAvatarUrl" alt=""><span *ngIf="!item.reporterAvatarUrl">{{ initials(item.reporterName) }}</span><strong [title]="item.reporterName">{{ item.reporterName }}</strong></div><ng-template #noReporter><span class="work-muted-value">—</span></ng-template></td>
+        </ng-container>
+
+        <ng-container matColumnDef="priority"><th mat-header-cell *matHeaderCellDef>Priority</th><td mat-cell *matCellDef="let item"><span class="work-priority" [ngClass]="priorityClass(item.priority)">{{ item.priority }}</span></td></ng-container>
+        <ng-container matColumnDef="status"><th mat-header-cell *matHeaderCellDef>Status</th><td mat-cell *matCellDef="let item"><span class="work-status" [ngClass]="statusClass(item.status)">{{ item.status }}</span></td></ng-container>
+        <ng-container matColumnDef="resolution"><th mat-header-cell *matHeaderCellDef>Resolution</th><td mat-cell *matCellDef="let item"><span class="work-resolution" [class.is-resolved]="item.resolution !== 'Unresolved'">{{ item.resolution }}</span></td></ng-container>
+        <ng-container matColumnDef="created"><th mat-header-cell *matHeaderCellDef>Created</th><td mat-cell *matCellDef="let item" class="work-created-cell">{{ formatDate(item.createdAt) }}</td></ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns" [class.is-selected]="selectedItemIds.has(row.id)" (click)="openWorkItem(row)"></tr>
+        <tr class="work-items-no-results" *matNoDataRow><td [attr.colspan]="displayedColumns.length"><strong>No work items match these filters.</strong><span>Change your filters or search for another item.</span></td></tr>
+      </table>
+    </div>
+    <footer class="work-items-table-footer">
+      <span>Showing {{ visibleItems.length }} of {{ filteredItems.length }} items</span>
+      <span>Epics · Stories · Tasks · Issues</span>
+      <button type="button" class="work-items-load-more" *ngIf="hasMoreItems" (click)="loadMoreItems()">Load 50 more <span aria-hidden="true">↓</span></button>
+    </footer>
+  </section>
+</section>

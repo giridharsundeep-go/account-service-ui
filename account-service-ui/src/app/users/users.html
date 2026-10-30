@@ -1,287 +1,663 @@
 <div class="saas-container">
-  
-  <!-- TOAST ALERTS SYSTEM -->
-  <div class="system-toast-banner" *ngIf="showSuccessToast" style="position: fixed; top: 24px; right: 24px; z-index: 9999; background: #0f172a; color: #ffffff; padding: 14px 20px; border-radius: 8px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3); font-size: 13px; font-weight: 500; border-left: 4px solid #10b981;">
-    <span>{{ successMessage }}</span>
+  <div class="system-toast-banner" *ngIf="showSuccessToast" role="status">
+    {{ successMessage }}
   </div>
-  
-  <header class="saas-header">
-    <div class="header-title-block">
-      <h2>Active Directory Node</h2>
-      <p class="header-subtitle">Provision access matrix configurations, map global physical facilities, and balance organizational workspace dependencies.</p>
-    </div>
-    <div class="header-actions">
-      <button class="gp-button gp-primary" (click)="resetForm(); editingUserId = 0">
-        <span class="btn-indicator-pulse"></span> Register Teammate
-      </button>
-    </div>
-  </header>
 
-  <!-- FORM DRAWER CONTROL STRUCTURE -->
-  <div class="form-drawer-wrapper" [class.open]="editingUserId !== null">
-    <div class="drawer-card">
-      <div class="drawer-header">
-        <h3>{{ (editingUserId && editingUserId > 0) ? 'Modify System Target Profile' : 'Configure New System Node Entry' }}</h3>
-        <p>Set basic identity variables, select security clearance protocols, and map reporting lines.</p>
+  <section class="users-illustration-wall" *ngIf="!selectedProfileUser">
+    <div class="users-wall-copy">
+      <span class="users-wall-eyebrow">PEOPLE · TALENT · GROWTH</span>
+      <h2>Users</h2>
+      <p class="users-wall-tagline">Great people build great products.</p>
+      <p class="users-wall-description">
+        Manage organization members, roles, reporting lines and workplace details.
+      </p>
+    </div>
+    <div class="users-wall-art" role="img" aria-label="Illustration of colleagues collaborating"></div>
+  </section>
+
+  <ng-container *ngIf="selectedProfileUser as profile; else usersDirectory">
+    <section class="user-profile-page atlassian-profile-layout">
+      <div class="user-profile-breadcrumb">
+        <button mat-stroked-button type="button" class="user-back-button" (click)="closeUserProfile()" aria-label="Back to users">←</button>
+        <span>People</span><span class="breadcrumb-separator">/</span>
+        <button mat-button type="button" class="breadcrumb-link" (click)="closeUserProfile()">Users</button>
+        <span class="breadcrumb-separator">/</span><strong>{{ profile.fullName }}</strong>
       </div>
 
-      <div class="drawer-body">
-        
-        <!-- PROFILE PICTURE WORKSPACE -->
-        <div class="drawer-section-divider">Teammate Media Identity</div>
-        <div class="avatar-upload-workspace" style="margin-bottom: 24px; display: flex; align-items: center; gap: 18px;">
-          
-          <div class="form-preview-avatar-circle" style="width: 74px; height: 74px; border-radius: 50%; background-color: #f8fafc; border: 2px dashed #cbd5e1; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; flex-shrink: 0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
-            <img *ngIf="localPreviewUrl" [src]="localPreviewUrl" alt="Preview Profile" style="width: 100%; height: 100%; object-fit: cover;" />
-            <span *ngIf="!localPreviewUrl" style="font-size: 26px; color: #94a3b8; font-weight: 700;">{{ getAvatarInitials(name) }}</span>
+      <section class="users-profile-cover-wall atlassian-profile-cover" aria-label="Profile cover">
+        <div class="users-profile-cover-copy"><span>PEOPLE · TALENT · GROWTH</span><h1>Great people build great products.</h1><p>People, skills and ideas come together here.</p></div>
+        <button class="profile-cover-camera" type="button" (click)="editProfileUser(profile)" aria-label="Edit profile cover" title="Edit profile">📷</button>
+      </section>
+
+      <section class="user-profile-hero atlassian-profile-hero">
+        <div class="user-profile-identity-wrap">
+          <div class="user-profile-avatar-wrap">
+            <div class="user-profile-avatar">
+              <img *ngIf="profile.profile_picture_url" [src]="getAvatarDisplaySrc(profile.profile_picture_url)" [alt]="profile.fullName" />
+              <span *ngIf="!profile.profile_picture_url">{{ getAvatarInitials(profile.fullName) }}</span>
+            </div>
+            <button class="profile-avatar-camera" type="button" (click)="editProfileUser(profile)" aria-label="Change profile photo" title="Edit profile photo">📷</button>
+          </div>
+          <div class="atlassian-profile-identity">
+            <div class="profile-name-pronouns">
+              <h2>{{ profile.fullName }}</h2>
+            </div>
+            <p class="user-profile-role">{{ getDesignation(profile) || profile.org_role || 'Designation not assigned' }}</p>
+            <div class="profile-contact-line">
+              <span><ng-container *ngIf="profile.locationCity || profile.locationState || profile.locationCountry; else noProfileLocation">
+                {{ profile.locationCity }}<span *ngIf="profile.locationCity && profile.locationState">, </span>{{ profile.locationState }}<span *ngIf="(profile.locationCity || profile.locationState) && profile.locationCountry">, </span>{{ profile.locationCountry }}
+              </ng-container>
+              <ng-template #noProfileLocation>Location not added</ng-template></span>
+              <span class="profile-contact-dot">·</span>
+              <a [href]="'mailto:' + profile.email">{{ profile.email }}</a>
+            </div>
+            <div class="profile-quick-meta">
+              <span class="profile-status-dot" [class.inactive]="!profile.is_active"></span>
+              <span>{{ profile.is_active ? 'Active account' : 'Inactive account' }}</span>
+              <span class="profile-meta-separator">·</span>
+              <span>{{ profile.employee_id_prefix || 'EMP' }}-{{ profile.employee_id_number || '—' }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="user-profile-actions">
+          <ng-container *ngIf="!profileEditMode; else profileEditActions">
+            <button class="profile-edit-icon" mat-icon-button type="button" (click)="editProfileUser(profile)" aria-label="Edit profile" title="Edit profile">✎</button>
+            <button mat-stroked-button type="button" (click)="closeUserProfile()">Back</button>
+            <button *ngIf="profile.is_active" mat-stroked-button type="button" class="user-deactivate-button" (click)="deactivateUser(profile)">Deactivate</button>
+          </ng-container>
+          <ng-template #profileEditActions>
+            <button mat-stroked-button type="button" (click)="cancelProfileEdit()" [disabled]="loading">Cancel</button>
+            <button mat-flat-button color="primary" type="button" (click)="saveUser()" [disabled]="loading || !canSave">{{ loading ? 'Saving…' : 'Save changes' }}</button>
+          </ng-template>
+        </div>
+      </section>
+
+      <nav class="user-profile-tabs" aria-label="User profile sections"><button mat-button type="button" class="active">Overview</button></nav>
+
+      <div class="user-profile-content user-profile-overview atlassian-profile-overview">
+        <main class="user-overview-main-column">
+          <ng-container *ngIf="!profileEditMode; else profileEditMain">
+            <section class="atlassian-overview-block">
+              <h3 class="user-overview-section-title">Personal information</h3>
+              <div class="atlassian-readonly-grid">
+                <div class="atlassian-readonly-field"><label>First name</label><strong>{{ profile.firstName || '—' }}</strong></div>
+                <div class="atlassian-readonly-field"><label>Last name</label><strong>{{ profile.lastName || '—' }}</strong></div>
+                <div class="atlassian-readonly-field"><label>Email</label><strong>{{ profile.email || '—' }}</strong></div>
+                <div class="atlassian-readonly-field"><label>Phone</label><strong>{{ profile.phone || '—' }}</strong></div>
+                <div class="atlassian-readonly-field"><label>Gender</label><strong>{{ profile.gender || '—' }}</strong></div>
+              </div>
+            </section>
+            <section class="atlassian-overview-block">
+              <h3 class="user-overview-section-title">Employment details</h3>
+              <div class="atlassian-readonly-grid">
+                <div class="atlassian-readonly-field"><label>Designation</label><strong>{{ getDesignation(profile) || 'Not assigned' }}</strong></div>
+                <div class="atlassian-readonly-field"><label>Employee ID</label><strong>{{ (profile.employee_id_prefix || 'EMP') + '-' + (profile.employee_id_number || '—') }}</strong></div>
+              </div>
+              <h4 class="user-overview-subtitle">Work location</h4>
+              <div class="atlassian-readonly-grid">
+                <div class="atlassian-readonly-field"><label>Country</label><strong>{{ profile.locationCountry || '—' }}</strong></div>
+                <div class="atlassian-readonly-field"><label>State</label><strong>{{ profile.locationState || '—' }}</strong></div>
+                <div class="atlassian-readonly-field"><label>City</label><strong>{{ profile.locationCity || '—' }}</strong></div>
+                <div class="atlassian-readonly-field"><label>Work model</label><strong>{{ profile.locationWorkModel || '—' }}</strong></div>
+                <div class="atlassian-readonly-field"><label>Desk code</label><strong>{{ profile.locationDeskCode || '—' }}</strong></div>
+              </div>
+            </section>
+          </ng-container>
+          <ng-template #profileEditMain>
+            <section class="atlassian-overview-block profile-edit-section">
+              <h3 class="user-overview-section-title">Personal information</h3>
+              <div class="profile-edit-grid">
+                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>First name</mat-label><input matInput [(ngModel)]="firstName" name="profileFirstName" required maxlength="100" /></mat-form-field>
+                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Last name</mat-label><input matInput [(ngModel)]="lastName" name="profileLastName" required maxlength="100" /></mat-form-field>
+                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Email</mat-label><input matInput type="email" [(ngModel)]="email" name="profileEmail" required maxlength="150" /></mat-form-field>
+                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Phone</mat-label><input matInput type="tel" [(ngModel)]="phone" name="profilePhone" required maxlength="15" /></mat-form-field>
+                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Gender</mat-label><mat-select [(ngModel)]="gender" name="profileGender" required><mat-option value="male">Male</mat-option><mat-option value="female">Female</mat-option><mat-option value="other">Other</mat-option></mat-select></mat-form-field>
+              </div>
+            </section>
+            <section class="atlassian-overview-block profile-edit-section">
+              <h3 class="user-overview-section-title">Employment details</h3>
+              <div class="profile-edit-grid">
+                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Designation</mat-label><mat-select [(ngModel)]="roleId" name="profileRole"><mat-option [value]="null">Not assigned</mat-option><mat-option *ngFor="let role of (roles$ | async)" [value]="+(role.id ?? role.roleId ?? role.role_id)">{{ role.roleName ?? role.role_name ?? role.name ?? role.title }}</mat-option></mat-select></mat-form-field>
+                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Organization role</mat-label><input matInput [(ngModel)]="orgRole" name="profileOrgRole" maxlength="100" /></mat-form-field>
+                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Employee ID prefix</mat-label><mat-select [(ngModel)]="employeeIdPrefix" name="profileEmployeePrefix"><mat-option value="EMP">EMP</mat-option><mat-option value="CON">CON</mat-option><mat-option value="EXC">EXC</mat-option></mat-select></mat-form-field>
+                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Employee ID number</mat-label><input matInput [(ngModel)]="employeeIdNumber" name="profileEmployeeNumber" maxlength="50" /></mat-form-field>
+                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Account status</mat-label><mat-select [(ngModel)]="isActive" name="profileIsActive"><mat-option [value]="true">Active</mat-option><mat-option [value]="false">Inactive</mat-option></mat-select></mat-form-field>
+              </div>
+              <h4 class="user-overview-subtitle">Work location</h4>
+              <div class="profile-edit-grid">
+                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Country</mat-label><mat-select [(ngModel)]="locationCountry" name="profileCountry"><mat-option value="IN">India</mat-option><mat-option value="US">United States</mat-option><mat-option value="GB">United Kingdom</mat-option><mat-option value="CA">Canada</mat-option><mat-option value="AU">Australia</mat-option></mat-select></mat-form-field>
+                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>State</mat-label><input matInput [(ngModel)]="locationState" name="profileState" maxlength="100" /></mat-form-field>
+                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>City</mat-label><input matInput [(ngModel)]="locationCity" name="profileCity" maxlength="100" /></mat-form-field>
+                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Work model</mat-label><mat-select [(ngModel)]="locationWorkModel" name="profileWorkModel"><mat-option value="HQ">Office / HQ</mat-option><mat-option value="HYBRID">Hybrid</mat-option><mat-option value="REMOTE">Remote</mat-option></mat-select></mat-form-field>
+                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Desk code</mat-label><input matInput [(ngModel)]="locationDeskCode" name="profileDeskCode" maxlength="50" [disabled]="locationWorkModel === 'REMOTE'" /></mat-form-field>
+              </div>
+              <div class="profile-photo-edit-row">
+                <div class="profile-photo-preview"><img *ngIf="localPreviewUrl || profilePictureUrl" [src]="localPreviewUrl || getAvatarDisplaySrc(profilePictureUrl)" alt="Profile photo preview" /><span *ngIf="!localPreviewUrl && !profilePictureUrl">{{ getAvatarInitials(fullName) }}</span></div>
+                <div><strong>Profile photo</strong><p>Update the profile picture if needed.</p><input #profilePhotoInput type="file" accept="image/*" hidden (change)="onFileSelected($event)" /><button mat-stroked-button type="button" (click)="profilePhotoInput.click()">Choose photo</button><button *ngIf="profilePictureUrl || localPreviewUrl" mat-button type="button" (click)="clearProfilePicture()">Remove</button></div>
+              </div>
+            </section>
+          </ng-template>
+        </main>
+
+        <aside class="user-overview-side-column">
+          <section class="atlassian-overview-block reporting-hierarchy-block">
+            <h3 class="user-overview-section-title">Reporting line</h3>
+            <div class="profile-manager-edit" *ngIf="profileEditMode">
+              <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Manager</mat-label><input matInput [(ngModel)]="managerSearchText" name="profileManager" [matAutocomplete]="profileManagerAuto" (input)="onManagerSearchInput()" /><button *ngIf="managerId" matSuffix mat-icon-button type="button" aria-label="Clear manager" (click)="clearManagerSelection()">×</button><mat-autocomplete #profileManagerAuto="matAutocomplete" [displayWith]="displayManager" (optionSelected)="onManagerSelected($event)"><mat-option *ngFor="let manager of filteredManagers" [value]="manager"><div class="profile-manager-option"><strong>{{ manager.fullName }}</strong><small>{{ manager.email }}</small></div></mat-option></mat-autocomplete></mat-form-field>
+              <p class="profile-edit-hint">Choose a manager to update this user's reporting line.</p>
+            </div>
+            <div class="reporting-line-visual" *ngIf="getManagerName(profile) !== 'Not assigned'; else noManager">
+              <div class="reporting-person reporting-manager"><div class="reporting-avatar">{{ getAvatarInitials(getManagerName(profile)) }}</div><div><strong>{{ getManagerName(profile) }}</strong><small>Manager</small></div></div>
+              <div class="reporting-connector reporting-connector-down"></div>
+              <div class="reporting-person reporting-current"><div class="reporting-avatar">{{ getAvatarInitials(profile.fullName) }}</div><div><strong>{{ profile.fullName }}</strong><small>{{ getDesignation(profile) || 'Team member' }}</small></div></div>
+              <div class="reporting-directs" *ngIf="getDirectReports(profile).length > 0">
+                <div class="reporting-connector reporting-connector-down"></div>
+                <div class="reporting-directs-list"><div class="reporting-person" *ngFor="let person of getDirectReports(profile)"><div class="reporting-avatar">{{ getAvatarInitials(person.fullName) }}</div><div><strong>{{ person.fullName }}</strong><small>{{ getDesignation(person) || 'Direct report' }}</small></div></div></div>
+              </div>
+            </div>
+            <ng-template #noManager>
+              <div class="reporting-empty"><div class="reporting-empty-icon">↗</div><strong>No reporting line configured</strong><p>Assign a manager to display the reporting hierarchy for this user.</p></div>
+            </ng-template>
+          </section>
+        </aside>
+      </div>
+    </section>
+  </ng-container>
+
+  <section class="form-drawer-wrapper" *ngIf="!selectedProfileUser" [class.open]="isDrawerOpen">
+    <mat-card class="drawer-card" appearance="outlined">
+      <section class="create-user-profile-cover users-profile-cover-wall" aria-label="User profile cover">
+        <div class="users-profile-cover-copy">
+          <span>PEOPLE · TALENT · GROWTH</span>
+          <h1>{{ editingUserId ? 'Update user profile' : 'Create a user profile' }}</h1>
+          <p>Build a complete profile with identity, access and workplace details.</p>
+        </div>
+      </section>
+      <section class="create-user-profile-heading">
+        <div class="create-user-avatar">{{ getAvatarInitials(fullName || 'New User') }}</div>
+        <div class="create-user-heading-copy">
+          <h2>{{ fullName || (editingUserId ? 'Edit user profile' : 'New user') }}</h2>
+          <p>{{ email || 'Add contact details below' }}</p>
+          <span class="create-user-status"><span></span>{{ editingUserId ? 'Profile editing' : 'New account setup' }}</span>
+        </div>
+      </section>
+
+      <mat-card-content class="drawer-body">
+        <section class="form-section-card form-section-1">
+          <div class="form-section-heading">
+            <span class="form-section-index">01</span>
+            <div>
+              <h4>Profile picture</h4>
+              <p>Personalize the user profile with an optional photo.</p>
+            </div>
           </div>
 
-          <div class="upload-action-stack" style="flex-grow: 1;">
-            <span class="upload-title" style="display: block; font-size: 14px; font-weight: 600; color: #1e293b;">Profile Picture Resource</span>
-            <p style="margin: 0 0 10px 0; font-size: 11px; color: #64748b;">Loads instantly using local memory rendering to maximize performance.</p>
-            
-            <input type="file" #fileInput style="display: none;" accept="image/*" (change)="onFileSelected($event)" />
-            
-            <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 6px;">
-              <button type="button" class="gp-button" (click)="fileInput.click()" style="background: #ffffff; border: 1px solid #cbd5e1; font-size: 12px; padding: 7px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; color: #334155; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                Select Image
+          <div class="avatar-upload-workspace"
+               style="margin-bottom:24px;display:flex;align-items:center;gap:18px;">
+            <div class="form-preview-avatar-circle"
+                 style="width:74px;height:74px;border-radius:50%;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
+              <img *ngIf="localPreviewUrl"
+                   [src]="localPreviewUrl"
+                   alt="Profile preview"
+                   style="width:100%;height:100%;object-fit:cover;" />
+              <span *ngIf="!localPreviewUrl"
+                    style="font-size:24px;font-weight:700;">
+                {{ getAvatarInitials(fullName) }}
+              </span>
+            </div>
+
+            <div class="upload-action-stack" style="flex:1;">
+              <strong class="upload-title">Profile photo</strong>
+              <p style="margin:5px 0 10px;font-size:12px;">
+                Choose an image for this user's profile.
+              </p>
+
+              <input #fileInput
+                     type="file"
+                     accept="image/*"
+                     hidden
+                     (change)="onFileSelected($event)" />
+
+              <button type="button" class="gp-button" (click)="fileInput.click()">
+                Select image
+              </button>
+
+              <button *ngIf="localPreviewUrl || profilePictureUrl"
+                      type="button"
+                      class="gp-button"
+                      (click)="clearProfilePicture()">
+                Remove image
               </button>
             </div>
           </div>
-        </div>
+        </section>
 
-        <div class="drawer-section-divider">Identity & Node Lifecycle</div>
-        <div class="form-grid-three-col">
-          <mat-form-field appearance="outline" class="saas-form-field">
-            <mat-label>Legal Full Name</mat-label>
-            <input matInput [(ngModel)]="name" placeholder="Alex Rivera" />
-          </mat-form-field>
-          <mat-form-field appearance="outline" class="saas-form-field">
-            <mat-label>System Email Matrix</mat-label>
-            <input matInput type="email" [(ngModel)]="email" placeholder="alex.rivera@enterprise.io" />
-          </mat-form-field>
-          
-          <div class="status-toggle-container">
-            <span class="toggle-label-meta">Node Lifecycle State</span>
-            <label class="matrix-switch">
-              <input type="checkbox" [(ngModel)]="isActive" />
-              <span class="matrix-slider"></span>
-            </label>
-            <span class="toggle-status-value" [class.active-txt]="isActive">
-              {{ isActive ? 'ACTIVE NODE' : 'INACTIVE BLOCKED' }}
+        <section class="form-section-card form-section-2">
+          <div class="form-section-heading">
+            <span class="form-section-index">02</span>
+            <div>
+              <h4>Account details</h4>
+              <p>Basic identity and contact information.</p>
+            </div>
+          </div>
+
+          <div class="form-grid-two-col">
+            <mat-form-field appearance="outline" class="saas-form-field">
+              <mat-label>First name</mat-label>
+              <input matInput
+                     [(ngModel)]="firstName"
+                     name="firstName"
+                     autocomplete="given-name"
+                     required
+                     maxlength="100" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="saas-form-field">
+              <mat-label>Last name</mat-label>
+              <input matInput
+                     [(ngModel)]="lastName"
+                     name="lastName"
+                     autocomplete="family-name"
+                     required
+                     maxlength="100" />
+            </mat-form-field>
+          </div>
+
+          <div class="form-grid-two-col">
+            <mat-form-field appearance="outline" class="saas-form-field">
+              <mat-label>Email</mat-label>
+              <input matInput
+                     type="email"
+                     [(ngModel)]="email"
+                     name="email"
+                     autocomplete="email"
+                     required
+                     maxlength="150" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="saas-form-field">
+              <mat-label>Phone</mat-label>
+              <input matInput
+                     type="tel"
+                     [(ngModel)]="phone"
+                     name="phone"
+                     autocomplete="tel"
+                     required
+                     maxlength="15" />
+            </mat-form-field>
+          </div>
+
+          <div class="form-grid-two-col">
+            <mat-form-field appearance="outline" class="saas-form-field">
+              <mat-label>Gender</mat-label>
+              <mat-select [(ngModel)]="gender" name="gender" required>
+                <mat-option value="male">Male</mat-option>
+                <mat-option value="female">Female</mat-option>
+                <mat-option value="other">Other</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <div class="registration-email-action">
+              <span class="chip-label">Password setup</span>
+              <button type="button"
+                      class="gp-button gp-action"
+                      (click)="sendRegistrationEmail()"
+                      [disabled]="loading || sendingRegistrationEmail || !email.trim() || !email.includes('@')">
+                {{ sendingRegistrationEmail
+                  ? 'Sending email…'
+                  : 'Send email for registration' }}
+              </button>
+              <small>
+                A secure registration link lets the user set their own password.
+              </small>
+            </div>
+          </div>
+        </section>
+
+        <section class="form-section-card form-section-3">
+          <div class="form-section-heading">
+            <span class="form-section-index">03</span>
+            <div>
+              <h4>Access and reporting</h4>
+              <p>Assign access, reporting line, employee code and account status.</p>
+            </div>
+          </div>
+
+          <div class="form-grid-two-col">
+            <mat-form-field appearance="outline" class="saas-form-field">
+              <mat-label>Designation</mat-label>
+              <mat-select [(ngModel)]="roleId" name="roleId">
+                <mat-option [value]="null">Not assigned</mat-option>
+                <mat-option
+                  *ngFor="let role of (roles$ | async)"
+                  [value]="+(role.id ?? role.roleId ?? role.role_id)">
+                  {{ role.roleName ?? role.role_name ?? role.name ?? role.title }}
+                </mat-option>
+              </mat-select>
+              <mat-hint>Select the user's application role/designation.</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="saas-form-field">
+              <mat-label>Manager</mat-label>
+              <input matInput
+                     [(ngModel)]="managerSearchText"
+                     name="managerSearchText"
+                     [matAutocomplete]="managerAuto"
+                     (input)="onManagerSearchInput()" />
+
+              <button *ngIf="managerId"
+                      matSuffix
+                      mat-icon-button
+                      type="button"
+                      aria-label="Clear manager"
+                      (click)="clearManagerSelection()">
+                ×
+              </button>
+
+              <mat-autocomplete
+                #managerAuto="matAutocomplete"
+                [displayWith]="displayManager"
+                (optionSelected)="onManagerSelected($event)">
+                <mat-option *ngFor="let manager of filteredManagers" [value]="manager">
+                  <div style="display:flex;flex-direction:column;line-height:1.35;padding:4px 0;">
+                    <strong>{{ manager.fullName }}</strong>
+                    <small class="manager-id-hint">Manager ID: {{ manager.id }}</small>
+                    <small>
+                      {{ manager.email }}
+                      <span *ngIf="manager.employee_id_number">
+                        · {{ manager.employee_id_prefix }}-{{ manager.employee_id_number }}
+                      </span>
+                    </small>
+                  </div>
+                </mat-option>
+              </mat-autocomplete>
+            </mat-form-field>
+          </div>
+
+          <div class="form-grid-two-col">
+            <mat-form-field appearance="outline" class="saas-form-field">
+              <mat-label>Employee ID prefix</mat-label>
+              <mat-select [(ngModel)]="employeeIdPrefix" name="employeeIdPrefix">
+                <mat-option value="EMP">EMP</mat-option>
+                <mat-option value="CON">CON</mat-option>
+                <mat-option value="EXC">EXC</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="saas-form-field">
+              <mat-label>Employee ID number</mat-label>
+              <input matInput
+                     [(ngModel)]="employeeIdNumber"
+                     name="employeeIdNumber"
+                     maxlength="50" />
+            </mat-form-field>
+          </div>
+
+          <div class="form-grid-two-col">
+            <div class="status-toggle-container">
+              <span class="toggle-label-meta">Account status</span>
+              <label class="matrix-switch">
+                <input type="checkbox" [(ngModel)]="isActive" name="isActive" />
+                <span class="matrix-slider"></span>
+              </label>
+              <span class="toggle-status-value" [class.active-txt]="isActive">
+                {{ isActive ? 'ACTIVE' : 'INACTIVE' }}
+              </span>
+            </div>
+
+            <div class="read-only-meta-chip">
+              <span class="chip-label">Organization</span>
+              <span class="chip-value">Resolved from sign-in</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="form-section-card form-section-4">
+          <div class="form-section-heading">
+            <span class="form-section-index">04</span>
+            <div>
+              <h4>Work location</h4>
+              <p>Set the user’s location and preferred work arrangement.</p>
+            </div>
+          </div>
+
+          <div class="form-grid-three-col">
+            <mat-form-field appearance="outline" class="saas-form-field">
+              <mat-label>Country</mat-label>
+              <mat-select [(ngModel)]="locationCountry" name="locationCountry">
+                <mat-option value="IN">India</mat-option>
+                <mat-option value="US">United States</mat-option>
+                <mat-option value="GB">United Kingdom</mat-option>
+                <mat-option value="CA">Canada</mat-option>
+                <mat-option value="AU">Australia</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="saas-form-field">
+              <mat-label>State</mat-label>
+              <input matInput
+                     [(ngModel)]="locationState"
+                     name="locationState"
+                     maxlength="100" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="saas-form-field">
+              <mat-label>City</mat-label>
+              <input matInput
+                     [(ngModel)]="locationCity"
+                     name="locationCity"
+                     maxlength="100" />
+            </mat-form-field>
+          </div>
+
+          <div class="form-grid-two-col">
+            <mat-form-field appearance="outline" class="saas-form-field">
+              <mat-label>Work model</mat-label>
+              <mat-select [(ngModel)]="locationWorkModel" name="locationWorkModel">
+                <mat-option value="HQ">Office / HQ</mat-option>
+                <mat-option value="HYBRID">Hybrid</mat-option>
+                <mat-option value="REMOTE">Remote</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="saas-form-field">
+              <mat-label>Desk code</mat-label>
+              <input matInput
+                     [(ngModel)]="locationDeskCode"
+                     name="locationDeskCode"
+                     maxlength="50"
+                     [disabled]="locationWorkModel === 'REMOTE'" />
+            </mat-form-field>
+          </div>
+        </section>
+      </mat-card-content>
+
+      <mat-card-actions class="drawer-footer" align="end">
+        <button type="button"
+                class="gp-button gp-cancel"
+                (click)="closeDrawerAndCancel()"
+                [disabled]="loading">
+          Cancel
+        </button>
+
+        <button type="button"
+                class="gp-button gp-action"
+                (click)="saveUser()"
+                [disabled]="loading || !canSave">
+          {{ loading
+            ? 'Saving…'
+            : (editingUserId ? 'Save changes' : 'Create user') }}
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </section>
+
+
+  <ng-template #usersDirectory>
+  <mat-card class="matrix-table-workspace"
+            appearance="outlined"
+            role="region"
+            aria-label="Users directory">
+    <mat-card-header class="gp-material-card-header directory-card-header directory-card-header-compact">
+      <span class="directory-result-summary">Organization members</span>
+      <button type="button"
+              class="gp-button gp-primary directory-register-button"
+              (click)="openCreateForm()">
+        <span class="btn-indicator-pulse"></span>
+        Create user
+      </button>
+    </mat-card-header>
+
+    <mat-card-content class="directory-card-content">
+      <div class="matrix-filter-header">
+        <div class="directory-tabs-frame">
+          <button type="button"
+                  class="directory-tab-btn"
+                  [class.active]="currentStatusTab === 'active'"
+                  (click)="currentStatusTab = 'active'">
+            <span class="tab-indicator state-active"></span>
+            Active
+            <span class="tab-counter-badge">
+              {{ getCount(cachedUsersArray, true) }}
             </span>
-          </div>
+          </button>
+
+          <button type="button"
+                  class="directory-tab-btn"
+                  [class.active]="currentStatusTab === 'inactive'"
+                  (click)="currentStatusTab = 'inactive'">
+            <span class="tab-indicator state-inactive"></span>
+            Inactive
+            <span class="tab-counter-badge">
+              {{ getCount(cachedUsersArray, false) }}
+            </span>
+          </button>
         </div>
 
-        <div class="form-grid-three-col">
-          <mat-form-field appearance="outline" class="saas-form-field">
-            <mat-label>ID Designation Prefix</mat-label>
-            <mat-select [(ngModel)]="employeeIdPrefix">
-              <mat-option value="EMP">EMP (Internal)</mat-option>
-              <mat-option value="CON">CON (Contractor)</mat-option>
-              <mat-option value="EXC">EXC (Executive)</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field appearance="outline" class="saas-form-field">
-            <mat-label>Node ID Sequence</mat-label>
-            <input matInput type="text" [(ngModel)]="employeeIdNumber" placeholder="88421" />
-          </mat-form-field>
-          <div class="read-only-meta-chip">
-            <span class="chip-label">Computed Value: </span>
-            <span class="chip-value">{{ employeeIdPrefix || '???' }}-{{ employeeIdNumber || '00000' }}</span>
-          </div>
+      <div class="matrix-search-input-frame">
+        <span class="search-lens">
+          <svg xmlns="http://www.w3.org/2000/svg"
+               fill="none"
+               viewBox="0 0 24 24"
+               stroke-width="2.5"
+               stroke="currentColor"
+               class="icon-svg">
+            <path stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.602 10.602Z" />
+          </svg>
+        </span>
+
+        <input type="text"
+               [(ngModel)]="searchTerm"
+               [placeholder]="'Search ' + currentStatusTab + ' users…'"
+               autocomplete="off" />
+
+        <button *ngIf="searchTerm"
+                type="button"
+                class="clear-search-btn"
+                aria-label="Clear search"
+                (click)="searchTerm = ''">
+          ×
+        </button>
+      </div>
+
+      </div>
+
+      <div class="matrix-data-frame" *ngIf="users$ | async as users">
+        <div class="matrix-row matrix-header-row">
+          <div class="cell">User</div>
+          <div class="cell">Designation</div>
+          <div class="cell">Location</div>
+          <div class="cell">Reports to</div>
         </div>
 
-        <div class="form-grid-two-col">
-          <mat-form-field appearance="outline" class="saas-form-field">
-            <mat-label>System Access Clearance</mat-label>
-            <mat-select [(ngModel)]="roleId">
-              <mat-option *ngFor="let role of (roles$ | async)" [value]="role.id">{{ role.name }}</mat-option>
-            </mat-select>
-          </mat-form-field>
-          
-          <mat-form-field appearance="outline" class="saas-form-field">
-            <mat-label>Reporting Core Manager Node</mat-label>
-            <input 
-              type="text" 
-              placeholder="Search by identity parameter..." 
-              matInput 
-              [(ngModel)]="managerSearchText" 
-              [matAutocomplete]="auto" 
-              (input)="filterManagerAutocomplete()" />
-            <span matSuffix *ngIf="managerId" (click)="clearManagerSelection()" style="cursor: pointer; padding-right: 8px; color: #94a3b8; font-weight: bold; font-size: 16px;">&times;</span>
-            
-            <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onManagerSelected($event)">
-              <mat-option *ngFor="let manager of filteredManagers" [value]="manager" style="height: 64px !important; border-bottom: 1px solid #f1f5f9;">
-                <div style="display: flex; align-items: center; gap: 12px; height: 100%; padding: 4px 0;">
-                  
-                  <div style="width: 36px; height: 36px; border-radius: 50%; background: #ebeef2; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #475569; overflow: hidden; flex-shrink: 0; border: 1px solid #cbd5e1;">
-                    <img *ngIf="manager.profile_picture_url" [src]="getAvatarDisplaySrc(manager.profile_picture_url)" style="width: 100%; height: 100%; object-fit: cover;" />
-                    <span *ngIf="!manager.profile_picture_url">{{ getAvatarInitials(manager.name) }}</span>
-                  </div>
-
-                  <div style="display: flex; flex-direction: column; justify-content: center; line-height: 1.25;">
-                    <span style="color: #0f172a; font-weight: 600; font-size: 13px; display: block;">{{ manager.name }}</span>
-                    <span style="color: #64748b; font-size: 11px; display: block; font-weight: 400;">
-                      Code: <span style="color: #0f172a; font-weight:500;">{{manager.employee_id_prefix}}-{{manager.employee_id_number}}</span> 
-                      &bull; Base: <span style="color: #2563eb; font-weight:500;">{{ manager.locationCity || 'Remote' }}</span>
-                    </span>
-                    <span style="color: #94a3b8; font-size: 10px; display: block; font-weight: 400; margin-top: 1px;">{{ manager.email }}</span>
-                  </div>
-
+        <div class="matrix-row-scroller"
+             *ngIf="filterUsersByStatusAndSearch(users).length; else noUsers">
+          <article class="matrix-row data-row user-directory-row"
+                   *ngFor="let user of filterUsersByStatusAndSearch(users); trackBy: trackByUserId"
+                   role="button" tabindex="0"
+                   [attr.aria-label]="'Open profile for ' + user.fullName"
+                   (click)="viewUser(user)"
+                   (keydown.enter)="viewUser(user)"
+                   (keydown.space)="$event.preventDefault(); viewUser(user)">
+            <div class="cell primary-identity-cell">
+              <div class="matrix-identity-avatar"
+                   [attr.data-initials]="user.profile_picture_url ? null : getAvatarInitials(user.fullName)">
+                <img *ngIf="user.profile_picture_url"
+                     [src]="getAvatarDisplaySrc(user.profile_picture_url)"
+                     alt="User profile"
+                     style="width:100%;height:100%;object-fit:cover;display:block;border-radius:50%;" />
+                <div class="status-indicator"
+                     [class.online]="user.is_active"
+                     [class.offline]="!user.is_active">
                 </div>
-              </mat-option>
-            </mat-autocomplete>
-          </mat-form-field>
-        </div>
-
-        <div class="drawer-section-divider">Geographic Operations Workspace</div>
-        <div class="form-grid-three-col">
-          <mat-form-field appearance="outline" class="saas-form-field">
-            <mat-label>Country Domain</mat-label>
-            <mat-select [(ngModel)]="locationCountry">
-              <mat-option value="US">United States</mat-option>
-              <mat-option value="IN">India</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field appearance="outline" class="saas-form-field">
-            <mat-label>State Anchor</mat-label>
-            <input matInput [(ngModel)]="locationState" placeholder="California" />
-          </mat-form-field>
-          <mat-form-field appearance="outline" class="saas-form-field">
-            <mat-label>Target City Center</mat-label>
-            <input matInput [(ngModel)]="locationCity" placeholder="San Francisco" />
-          </mat-form-field>
-        </div>
-
-        <div class="form-grid-two-col">
-          <mat-form-field appearance="outline" class="saas-form-field">
-            <mat-label>Deployment Working Blueprint</mat-label>
-            <mat-select [(ngModel)]="locationWorkModel">
-              <mat-option value="HQ">Corporate On-site HQ</mat-option>
-              <mat-option value="REMOTE">Fully Distributed Network</mat-option>
-              <mat-option value="HYBRID">Fluid Hybrid Accord</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field appearance="outline" class="saas-form-field">
-            <mat-label>Allocated Station Desk Address</mat-label>
-            <input matInput [(ngModel)]="locationDeskCode" placeholder="Floor 4-Desk 99" [disabled]="locationWorkModel === 'REMOTE'" />
-          </mat-form-field>
-        </div>
-      </div>
-
-      <div class="drawer-footer">
-        <button class="gp-button gp-action" (click)="saveUser()" [disabled]="loading || !name.trim() || !email.trim() || !roleId">
-          Commit Operational State
-        </button>
-        <button class="gp-button gp-cancel" (click)="closeDrawerAndCancel()">Abort</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- METRICS DATA LAYOUT DISPLAY INDEX -->
-  <main class="matrix-table-workspace">
-    <div class="matrix-filter-header">
-      <div class="directory-tabs-frame">
-        <button class="directory-tab-btn" [class.active]="currentStatusTab === 'active'" (click)="currentStatusTab = 'active'">
-          <span class="tab-indicator state-active"></span> ACTIVE DIRECTORY 
-          <span class="tab-counter-badge">{{ getCount(cachedUsersArray, true) }}</span>
-        </button>
-        <button class="directory-tab-btn" [class.active]="currentStatusTab === 'inactive'" (click)="currentStatusTab = 'inactive'">
-          <span class="tab-indicator state-inactive"></span> INACTIVE ARCHIVED 
-          <span class="tab-counter-badge">{{ getCount(cachedUsersArray, false) }}</span>
-        </button>
-      </div>
-    </div>
-
-    <div class="matrix-search-input-frame">
-      <span class="search-lens">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="icon-svg"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.602 10.602Z" /></svg>
-      </span>
-      <input type="text" [(ngModel)]="searchTerm" placeholder="Query {{ currentStatusTab }} directory index matrix..." autocomplete="off" />
-      <button *ngIf="searchTerm" class="clear-search-btn" (click)="searchTerm = ''">&times;</button>
-    </div>
-
-    <div class="matrix-data-frame" *ngIf="users$ | async as users">
-      <div class="matrix-row matrix-header-row">
-        <div class="cell">Teammate Cluster Identifier</div>
-        <div class="cell">System Clearances</div>
-        <div class="cell">Operations Location Matrix</div>
-        <div class="cell">Reporting Framework Nodes</div>
-        <div class="cell text-right">System Interventions</div>
-      </div>
-
-      <div class="matrix-row-scroller" *ngIf="filterUsersByStatusAndSearch(users).length > 0; else noDataFallback">
-        <article class="matrix-row data-row" *ngFor="let user of filterUsersByStatusAndSearch(users)" [class.node-suspended]="!user.is_active">
-          
-          <div class="cell primary-identity-cell">
-            <div class="matrix-identity-avatar" [attr.data-initials]="user.profile_picture_url ? null : getAvatarInitials(user.name)">
-              <img *ngIf="user.profile_picture_url" [src]="getAvatarDisplaySrc(user.profile_picture_url)" alt="User Profile" style="width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 50%;" />
-              <div class="status-indicator" [class.online]="user.is_active" [class.offline]="!user.is_active"></div>
-            </div>
-            <div class="matrix-identity-details">
-              <div class="identity-top-row">
-                <h4>{{ user.name }}</h4>
-                <code class="matrix-tag-id" *ngIf="user.employee_id_prefix">{{ user.employee_id_prefix }}//{{ user.employee_id_number }}</code>
               </div>
-              <span class="identity-sub-email">{{ user.email }}</span>
-            </div>
-          </div>
 
-          <div class="cell">
-            <span class="clearance-pill" [attr.data-clearance-level]="user.role_name">{{ user.role_name || 'Level 0' }}</span>
-          </div>
-
-          <div class="cell location-matrix-cell">
-            <div class="loc-matrix-cluster" *ngIf="user.locationCity; else blankLoc">
-              <div class="loc-primary">
-                <span class="geo-pin-icon"></span> {{ user.locationCity }}
-                <span class="country-sub-tag">{{ user.locationCountry }}</span>
-              </div>
-              <div class="loc-secondary">
-                <span class="model-badge" [attr.data-model]="user.locationWorkModel">{{ user.locationWorkModel }}</span>
-                <span class="desk-coordinate">{{ user.locationDeskCode || 'Fluid Allocation' }}</span>
+              <div class="matrix-identity-details">
+                <div class="identity-top-row">
+                  <h4>{{ user.fullName }}</h4>
+                  <code class="matrix-tag-id" *ngIf="user.employee_id_prefix">
+                    {{ user.employee_id_prefix }}-{{ user.employee_id_number || '—' }}
+                  </code>
+                </div>
+                <span class="identity-sub-email">{{ user.email }}</span>
               </div>
             </div>
-            <ng-template #blankLoc><span class="empty-cell-text">Unmapped Geographic Domain</span></ng-template>
-          </div>
 
-          <div class="cell management-hierarchy-cell">
-            <div class="hierarchy-tree-node" *ngIf="user.manager_name; else icNode">
-              <div class="hierarchy-connector-branch"></div>
-              <div class="manager-profile-stub">
+            <div class="cell">
+              <span class="clearance-pill">{{ getDesignation(user) }}</span>
+            </div>
+
+            <div class="cell location-matrix-cell">
+              <div class="loc-matrix-cluster"
+                   *ngIf="user.locationCity || user.locationState || user.locationCountry; else noLocation">
+                <div class="loc-primary">
+                  {{ user.locationCity || 'City not set' }}
+                  <span class="country-sub-tag">{{ user.locationCountry }}</span>
+                </div>
+                <div class="loc-secondary">
+                  <span class="model-badge">
+                    {{ user.locationWorkModel || 'Work model not set' }}
+                  </span>
+                  <span class="desk-coordinate" *ngIf="user.locationDeskCode">
+                    {{ user.locationDeskCode }}
+                  </span>
+                </div>
+                <span>{{ user.locationState }}</span>
+              </div>
+
+              <ng-template #noLocation>
+                <span class="empty-cell-text">No location set</span>
+              </ng-template>
+            </div>
+
+            <div class="cell management-hierarchy-cell">
+              <div class="manager-profile-stub"
+                   *ngIf="getManagerName(user) !== 'Not assigned'; else noManager">
                 <span class="stub-icon"></span>
                 <div class="stub-meta">
-                  <span class="stub-label">Reporting Line</span>
-                  <span class="stub-value">{{ user.manager_name }}</span>
+                  <span class="stub-label">Reports to</span>
+                  <span class="stub-value">{{ getManagerName(user) }}</span>
                 </div>
               </div>
+
+              <ng-template #noManager>
+                <span class="stub-value standalone">Not assigned</span>
+              </ng-template>
             </div>
-            <ng-template #icNode>
-              <div class="hierarchy-tree-node independent">
-                <div class="manager-profile-stub">
-                  <span class="stub-icon autonomous"></span>
-                  <span class="stub-value standalone">Autonomous Terminal Node</span>
-                </div>
-              </div>
-            </ng-template>
-          </div>
 
-          <div class="cell action-runtime-cell text-right">
-            <button class="gp-action-trigger edit-trigger" (click)="editUser(user)"><span class="trigger-label">Modify</span></button>
-            <button class="gp-action-trigger delete-trigger" (click)="deleteUser(user.id)"><span class="trigger-label">{{ user.is_active ? 'Deactivate' : 'Purge' }}</span></button>
-          </div>
-
-        </article>
-      </div>
-
-      <ng-template #noDataFallback>
-        <div class="matrix-empty-viewport">
-          <div class="empty-icon-radar"></div>
-          <h4>Zero operational clusters identified</h4>
-          <p>No records found inside the directory index matching current parameters.</p>
+          </article>
         </div>
-      </ng-template>
-    </div>
-  </main>
+
+        <ng-template #noUsers>
+          <div class="matrix-empty-viewport">
+            <h4>No users found</h4>
+            <p>Try changing the status tab or search query.</p>
+          </div>
+        </ng-template>
+      </div>
+    </mat-card-content>
+  </mat-card>
+  </ng-template>
 </div>

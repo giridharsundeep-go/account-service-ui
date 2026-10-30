@@ -1,6 +1,81 @@
 /* You can add global styles to this file, and also import other style files */
 @import '@angular/material/prebuilt-themes/indigo-pink.css';
 
+:root {
+  --gp-field-height: 42px;
+  --gp-field-radius: 10px;
+  --gp-field-border: #d5dbe4;
+  --gp-field-border-hover: #aeb9c8;
+  --gp-field-border-focus: #2878e8;
+  --gp-field-focus-ring: 0 0 0 3px rgba(40, 120, 232, .14);
+  --gp-field-background: #fff;
+  --gp-field-text: #303846;
+  --gp-field-muted: #748094;
+  --gp-popover-radius: 14px;
+  --gp-popover-shadow: 0 14px 34px rgba(25, 39, 61, .16), 0 2px 8px rgba(25, 39, 61, .08);
+}
+
+/* Material overlay panels live outside component hosts, so keep these rules global. */
+app-root .mat-mdc-form-field.mat-mdc-form-field {
+  --mdc-outlined-text-field-outline-color: var(--gp-field-border);
+  --mdc-outlined-text-field-focus-outline-color: var(--gp-field-border-focus);
+  --mdc-outlined-text-field-hover-outline-color: var(--gp-field-border-hover);
+  --mdc-outlined-text-field-container-shape: var(--gp-field-radius);
+  --mdc-outlined-text-field-input-text-color: var(--gp-field-text);
+  --mdc-outlined-text-field-label-text-color: var(--gp-field-muted);
+  --mdc-outlined-text-field-focus-label-text-color: var(--gp-field-border-focus);
+}
+
+.mat-mdc-select-panel,
+.mat-mdc-autocomplete-panel,
+.mat-mdc-menu-panel {
+  overflow: hidden !important;
+  border: 1px solid var(--gp-field-border) !important;
+  border-radius: var(--gp-popover-radius) !important;
+  background: #fff !important;
+  box-shadow: var(--gp-popover-shadow) !important;
+}
+
+.mat-mdc-option {
+  min-height: 42px !important;
+  color: var(--gp-field-text) !important;
+  font-family: "Google Sans", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 13px !important;
+}
+
+.mat-mdc-option:hover:not(.mdc-list-item--disabled),
+.mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+  background: #eef4ff !important;
+  color: #175fc2 !important;
+}
+
+/* The attach-test-cases dialog uses inline component styles rather than a CSS file. */
+app-test-case-attach-dialog .search-wrapper {
+  height: var(--gp-field-height) !important;
+  border: 1px solid var(--gp-field-border) !important;
+  border-radius: var(--gp-field-radius) !important;
+  background: var(--gp-field-background) !important;
+  box-shadow: none !important;
+}
+
+app-test-case-attach-dialog .search-wrapper:focus-within {
+  border-color: var(--gp-field-border-focus) !important;
+  box-shadow: var(--gp-field-focus-ring) !important;
+}
+
+app-test-case-attach-dialog .search-input {
+  box-sizing: border-box !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--gp-field-text) !important;
+  font-family: "Google Sans", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 13px !important;
+  box-shadow: none !important;
+}
+
 :host {
     --bright-blue: oklch(51.01% 0.274 263.83);
     --electric-violet: oklch(53.18% 0.28 296.97);

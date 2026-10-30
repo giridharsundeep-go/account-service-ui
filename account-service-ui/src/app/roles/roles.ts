@@ -1,3 +1,4 @@
+
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { environment } from '../../environment';
@@ -6,7 +7,6 @@ import { CommonModule } from '@angular/common';
 import { AuthService } from '../auth.service';
 import { map, Observable, catchError, of } from 'rxjs';
 
-// Angular Material Layout Module System
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -22,7 +22,7 @@ import { MatInputModule } from '@angular/material/input';
     MatButtonModule
   ],
   templateUrl: './roles.html',
-  styleUrls: ['./roles.css']
+  styleUrls: ['./roles.css', '../shared/field-controls.css']
 })
 export class Roles implements OnInit {
   baseUrl = environment.apiBaseUrlM;
@@ -38,90 +38,129 @@ export class Roles implements OnInit {
   errorMessage = '';
   successMessage = '';
 
-  constructor(private http: HttpClient, private auth: AuthService) {}
+  constructor(
+    private http: HttpClient,
+    private auth: AuthService
+  ) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.loadRoles();
   }
 
-  // ✅ LOAD ROLES (Reactive stream fetcher)
-  loadRoles() {
-    // The backend derives orgId from the authenticated principal/JWT.
-    // Do not send orgId from the browser or trust a client-supplied orgId.
+  loadRoles(): void {
+    // The backend resolves the organization from the authenticated principal.
+    // Do not send an organization ID from the browser.
     this.roles$ = this.http.get<any>(`${this.baseUrl}/roles`, {
       headers: this.auth.getAuthHeaders()
     }).pipe(
       map(res => Array.isArray(res?.data) ? res.data : []),
       catchError(error => {
-        this.errorMessage = this.getErrorMessage(error, 'Unable to load roles.');
+        this.errorMessage = this.getErrorMessage(
+          error,
+          'Unable to load roles.'
+        );
         return of([] as any[]);
       })
     );
   }
 
-  // ✅ CREATE / UPDATE
-  saveRole() {
+  saveRole(): void {
     const name = this.roleName.trim();
-    if (!name || this.loading) return;
+
+    if (!name || this.loading) {
+      return;
+    }
 
     this.errorMessage = '';
     this.successMessage = '';
 
-    // Intentionally omit orgId: the authenticated backend resolves the user's
-    // organization and scopes create/update operations to that organization.
-    const payload = { name, description: this.roleDesc.trim() };
-    const isEditingExistingRole = this.editingRoleId !== null && this.editingRoleId > 0;
+    // The authenticated backend scopes this operation to the user's
+    // organization. Do not send orgId from the client.
+    const payload = {
+      name,
+      description: this.roleDesc.trim()
+    };
+
+    const isEditingExistingRole =
+      this.editingRoleId !== null && this.editingRoleId > 0;
 
     this.loading = true;
+
     const request = isEditingExistingRole
-      ? this.http.put<any>(`${this.baseUrl}/roles/${this.editingRoleId}`, payload, { headers: this.auth.getAuthHeaders() })
-      : this.http.post<any>(`${this.baseUrl}/roles`, payload, { headers: this.auth.getAuthHeaders() });
+      ? this.http.put<any>(
+          `${this.baseUrl}/roles/${this.editingRoleId}`,
+          payload,
+          { headers: this.auth.getAuthHeaders() }
+        )
+      : this.http.post<any>(
+          `${this.baseUrl}/roles`,
+          payload,
+          { headers: this.auth.getAuthHeaders() }
+        );
 
     request.subscribe({
-      next: (res) => {
-        this.successMessage = res?.message || (isEditingExistingRole ? 'Role updated successfully.' : 'Role created successfully.');
+      next: res => {
+        this.successMessage = res?.message || (
+          isEditingExistingRole
+            ? 'Role updated successfully.'
+            : 'Role created successfully.'
+        );
+
         this.resetForm();
         this.loadRoles();
         this.loading = false;
       },
-      error: (error) => {
-        this.errorMessage = this.getErrorMessage(error, 'Unable to save role.');
+      error: error => {
+        this.errorMessage = this.getErrorMessage(
+          error,
+          'Unable to save role.'
+        );
         this.loading = false;
       }
     });
   }
 
-  // ✅ DELETE
-  deleteRole(id: number) {
-    if (!confirm('Are you sure you want to permanently delete this system access role?')) return;
+  deleteRole(id: number): void {
+    if (!confirm(
+      'Are you sure you want to permanently delete this system access role?'
+    )) {
+      return;
+    }
 
     this.errorMessage = '';
     this.successMessage = '';
+
     this.http.delete<any>(`${this.baseUrl}/roles/${id}`, {
       headers: this.auth.getAuthHeaders()
     }).subscribe({
-      next: (res) => {
+      next: res => {
         this.successMessage = res?.message || 'Role deleted successfully.';
-        if (this.editingRoleId === id) this.resetForm();
+
+        if (this.editingRoleId === id) {
+          this.resetForm();
+        }
+
         this.loadRoles();
       },
-      error: (error) => {
-        this.errorMessage = this.getErrorMessage(error, 'Unable to delete role.');
+      error: error => {
+        this.errorMessage = this.getErrorMessage(
+          error,
+          'Unable to delete role.'
+        );
       }
     });
   }
 
-  // ✅ EDIT
-  editRole(role: any) {
+  editRole(role: any): void {
     this.errorMessage = '';
     this.successMessage = '';
+
     this.roleName = role.name || '';
     this.roleDesc = role.description || '';
     this.editingRoleId = Number(role.id);
   }
 
-  // ✅ RESET FORM BOUNDARIES
-  resetForm() {
+  resetForm(): void {
     this.roleName = '';
     this.roleDesc = '';
     this.editingRoleId = null;
@@ -132,19 +171,29 @@ export class Roles implements OnInit {
     if (error?.status === 401 || error?.status === 403) {
       return 'Your session is invalid or you do not have permission to access roles. Please sign in again if needed.';
     }
-    if (error?.status === 404) return error?.error?.message || 'Role not found in your organization.';
-    if (error?.status === 409) return error?.error?.message || 'A role with this name already exists in your organization.';
+
+    if (error?.status === 404) {
+      return error?.error?.message || 'Role not found in your organization.';
+    }
+
+    if (error?.status === 409) {
+      return error?.error?.message ||
+        'A role with this name already exists in your organization.';
+    }
+
     return error?.error?.message || error?.error?.error || fallback;
   }
 
-  // ✅ LOCAL SEARCH FILTER
-  filterRoles(roles: any[]) {
-    if (!this.searchTerm.trim()) return roles;
-    const cleanSearch = this.searchTerm.toLowerCase();
+  filterRoles(roles: any[]): any[] {
+    const cleanSearch = this.searchTerm.trim().toLowerCase();
 
-    return roles.filter(r =>
-      (r.name || '').toLowerCase().includes(cleanSearch) ||
-      (r.description || '').toLowerCase().includes(cleanSearch)
+    if (!cleanSearch) {
+      return roles;
+    }
+
+    return roles.filter(role =>
+      (role.name || '').toLowerCase().includes(cleanSearch) ||
+      (role.description || '').toLowerCase().includes(cleanSearch)
     );
   }
 }

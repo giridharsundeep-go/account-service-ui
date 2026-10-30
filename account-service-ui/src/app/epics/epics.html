@@ -15,138 +15,119 @@
           [value]="selectedProjectId()"
           (selectionChange)="onProjectChange($event.value)"
           aria-label="Project">
-          <mat-option *ngFor="let project of projects()" [value]="project.id">
+          <mat-option *ngFor="let project of projects(); trackBy: trackByProject" [value]="project.id">
             {{ project.name }}
           </mat-option>
         </mat-select>
       </div>
     </div>
-
     <div class="header-search">
       <div class="search-shell epics-search-shell">
         <mat-icon class="search-icon">search</mat-icon>
         <input
           #epicsSearchInput
-          [ngModel]="searchTerm()"
-          (ngModelChange)="searchTerm.set($event)"
+          [ngModel]="searchInput()"
+          (ngModelChange)="onSearchTermChange($event)"
           type="search"
-          placeholder="Search epics, stories, tasks"
+          placeholder="Search work items"
           aria-label="Search epics and work items" />
         <button
-          *ngIf="searchTerm()"
+          *ngIf="searchInput() || searchTerm()"
           class="search-clear"
           type="button"
-          (click)="searchTerm.set('')"
+          (click)="onSearchTermChange('')"
           aria-label="Clear search">
           <mat-icon>close</mat-icon>
         </button>
       </div>
     </div>
 
-    <button mat-flat-button class="primary-action epics-search-action" type="button"
-      (click)="epicsSearchInput.focus()">
-      <mat-icon>search</mat-icon>
-      <span>Search</span>
-    </button>
+    <details class="epics-create-dropdown epics-header-create-dropdown">
+      <summary class="epics-create-dropdown-trigger" aria-label="Create work item">
+        <mat-icon>add</mat-icon><span>Create</span><mat-icon class="dropdown-chevron">expand_more</mat-icon>
+      </summary>
+      <div class="epics-create-dropdown-menu" role="menu">
+        <button type="button" role="menuitem" (click)="openCreateEpic()"><mat-icon>flag</mat-icon><span>Create Epic</span></button>
+        <button type="button" role="menuitem" (click)="openCreateStory()"><mat-icon>auto_stories</mat-icon><span>Create Story</span></button>
+        <button type="button" role="menuitem" (click)="openCreateTask()"><mat-icon>task_alt</mat-icon><span>Create Task</span></button>
+        <button type="button" role="menuitem" (click)="openCreateIssue()"><mat-icon>bug_report</mat-icon><span>Create Issue</span></button>
+      </div>
+    </details>
   </header>
 
-  <!-- Board-style directory tabs and right-aligned create actions -->
-  <div class="directory-heading epics-directory-heading">
-    <nav class="project-filter-tools epics-view-tabs" aria-label="Epics views">
-      <button type="button" mat-button class="filter-button"
-        [class.active]="selectedEpicsTabIndex === 0" (click)="onEpicsTabChange(0)">
-        <mat-icon>view_kanban</mat-icon><span>Board</span>
-      </button>
-      <button type="button" mat-button class="filter-button"
-        [class.active]="selectedEpicsTabIndex === 1" (click)="onEpicsTabChange(1)">
-        <mat-icon>flag</mat-icon><span>Epics</span>
-      </button>
-      <button type="button" mat-button class="filter-button"
-        [class.active]="selectedEpicsTabIndex === 2" (click)="onEpicsTabChange(2)">
-        <mat-icon>auto_stories</mat-icon><span>Stories</span>
-      </button>
-      <button type="button" mat-button class="filter-button"
-        [class.active]="selectedEpicsTabIndex === 3" (click)="onEpicsTabChange(3)">
-        <mat-icon>task_alt</mat-icon><span>Tasks</span>
-      </button>
-      <button type="button" mat-button class="filter-button"
-        [class.active]="selectedEpicsTabIndex === 4" (click)="onEpicsTabChange(4)">
-        <mat-icon>bug_report</mat-icon><span>Issues</span>
-      </button>
-    </nav>
-
-    <div class="epics-create-actions" aria-label="Create work item">
-      <button mat-stroked-button type="button" class="epics-create-button epics-create-epic" (click)="openCreateEpic()">
-        <mat-icon>add</mat-icon><span>Create Epic</span>
-      </button>
-      <button mat-stroked-button type="button" class="epics-create-button epics-create-secondary" (click)="openCreateStory()">
-        <mat-icon>add</mat-icon><span>Create Story</span>
-      </button>
-      <button mat-stroked-button type="button" class="epics-create-button epics-create-secondary" (click)="openCreateTask()">
-        <mat-icon>add</mat-icon><span>Create Task</span>
-      </button>
-      <button mat-flat-button type="button" class="primary-action epics-create-issue" (click)="openCreateIssue()">
-        <mat-icon>add</mat-icon><span>Create Issue</span>
-      </button>
+  <section class="epics-current-sprint-strip epics-cycle-toolbar" *ngIf="activeTab() === 'KANBAN'">
+    <div class="epics-current-sprint-copy">
+      <span class="eyebrow">CURRENT CYCLE</span>
+      <strong>{{ displayedKanbanSprint()?.name || 'All sprints' }}</strong>
+      <span class="epics-sprint-dates" *ngIf="displayedKanbanSprint()?.startDate || displayedKanbanSprint()?.endDate">
+        {{ displayedKanbanSprint()?.startDate || 'Start date not set' }} <span>—</span> {{ displayedKanbanSprint()?.endDate || 'End date not set' }}
+      </span>
     </div>
-  </div>
 
-  <section class="epics-current-sprint-strip" *ngIf="activeTab() === 'KANBAN'">
-      <div class="epics-current-sprint-copy">
-        <span class="eyebrow">CURRENT CYCLE</span>
-        <strong>{{ displayedKanbanSprint()?.name || 'All sprints' }}</strong>
-        <span class="epics-sprint-dates" *ngIf="displayedKanbanSprint()?.startDate || displayedKanbanSprint()?.endDate">
-          {{ displayedKanbanSprint()?.startDate || 'Start date not set' }} <span>—</span> {{ displayedKanbanSprint()?.endDate || 'End date not set' }}
-        </span>
-      </div>
-      <div class="epics-sprint-members">
-        <div class="people-strip-heading">
-          <div>
-            <span class="eyebrow">TEAM</span>
-            <strong>Who's working on this sprint?</strong>
-            <span>{{ activeSprintUsers().length }} members · {{ kanbanTotalItems() }} items</span>
-          </div>
-          <button mat-button *ngIf="selectedUserFilter() !== null" (click)="filterByUser(null)">Clear</button>
-        </div>
+    <div class="epics-cycle-toolbar-actions" aria-label="Sprint team and actions">
+      <div class="epics-sprint-members" aria-label="People working on this sprint">
         <mat-chip-set class="people-chips epics-people-chips" aria-label="Filter sprint items by assignee">
-          <mat-chip [highlighted]="selectedUserFilter() === null" (click)="filterByUser(null)">
+          <mat-chip class="epics-person-avatar-chip" [highlighted]="selectedUserFilter() === null"
+            (click)="filterByUser(null)" matTooltip="Everyone">
             <span class="mini-avatar">ALL</span>
-            Everyone
-            <b>{{ kanbanTotalItems() }}</b>
           </mat-chip>
-          <mat-chip *ngFor="let user of activeSprintUsers()"
-            [highlighted]="isUserSelected(user.id)" (click)="filterByUser(user.id)">
-            <span class="mini-avatar">{{ getUserInitials(user.name || user.first_name || user.email || '') }}</span>
-            {{ user.name || user.first_name || user.email }}
-            <b>{{ sprintItemsForUser(user.id) }}</b>
+          <mat-chip class="epics-person-avatar-chip" *ngFor="let user of activeSprintUsers() | slice:0:5"
+            [highlighted]="isUserSelected(user.id)" (click)="filterByUser(user.id)"
+            [matTooltip]="user.name || user.full_name || user.fullName || ('User ' + user.id)">
+            <span class="mini-avatar">{{ getUserInitials(user.name || user.full_name || user.fullName || ((user.first_name || user.firstName || '') + ((user.last_name || user.lastName) ? ' ' + (user.last_name || user.lastName) : '')) || ('User ' + user.id)) }}</span>
           </mat-chip>
         </mat-chip-set>
+        <details class="epics-people-overflow" *ngIf="activeSprintUsers().length > 5">
+          <summary aria-label="Show more sprint members" matTooltip="More people"><mat-icon>more_horiz</mat-icon></summary>
+          <div class="epics-people-overflow-menu">
+            <button type="button" *ngFor="let user of activeSprintUsers() | slice:5"
+              [class.selected]="isUserSelected(user.id)" (click)="filterByUser(user.id)">
+              <span class="mini-avatar">{{ getUserInitials(user.name || user.full_name || user.fullName || ((user.first_name || user.firstName || '') + ((user.last_name || user.lastName) ? ' ' + (user.last_name || user.lastName) : '')) || ('User ' + user.id)) }}</span>
+              <span>{{ user.name || user.full_name || user.fullName || ('User ' + user.id) }}</span>
+              <b>{{ sprintItemsForUser(user.id) }}</b>
+            </button>
+          </div>
+        </details>
       </div>
-      <div class="epics-sprint-strip-actions" *ngIf="activeTab() === 'KANBAN'">
-        <button mat-stroked-button type="button" class="sprint-progress-button"
-          *ngIf="displayedKanbanSprint() as sprint"
-          (click)="openSprintProgress(sprint)"
-          aria-label="View sprint progress"
-          matTooltip="View sprint progress">
-          <mat-icon>analytics</mat-icon> Sprint progress
-        </button>
-        <button mat-stroked-button type="button" class="epics-board-fullscreen-trigger"
-          (click)="toggleKanbanFullscreen()" [attr.aria-pressed]="isKanbanFullscreen()"
-          [attr.aria-label]="isKanbanFullscreen() ? 'Exit full screen board' : 'Open full screen board'">
-          <mat-icon>{{ isKanbanFullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
-          {{ isKanbanFullscreen() ? 'Exit full screen' : 'Full screen' }}
-        </button>
-        <button mat-stroked-button type="button" class="epics-board-filter-trigger"
-          [class.active]="showBoardSprintFilters()" (click)="toggleBoardSprintFilters()"
-          [attr.aria-expanded]="showBoardSprintFilters()">
-          <mat-icon>filter_list</mat-icon> Filters
-          <span class="epics-filter-count" *ngIf="selectedBoardSprintFilter() !== 'ALL'">1</span>
-        </button>
-      </div>
+
+      <details class="epics-cycle-more-menu">
+        <summary aria-label="More sprint actions" matTooltip="More actions"><mat-icon>more_horiz</mat-icon></summary>
+        <div class="epics-cycle-more-content">
+          <button type="button" (click)="toggleKanbanFullscreen()">
+            <mat-icon>{{ isKanbanFullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+            <span>{{ isKanbanFullscreen() ? 'Exit full screen' : 'Full screen' }}</span>
+          </button>
+          <button type="button" *ngIf="selectedUserFilter() !== null" (click)="filterByUser(null)">
+            <mat-icon>group</mat-icon><span>Clear people filter</span>
+          </button>
+        </div>
+      </details>
+
+      <button mat-stroked-button type="button" class="sprint-progress-button epics-cycle-action-button"
+        *ngIf="displayedKanbanSprint() as sprint" (click)="openSprintProgress(sprint)"
+        aria-label="View sprint progress" matTooltip="View sprint progress">
+        <mat-icon>analytics</mat-icon><span>Progress</span>
+      </button>
+      <button mat-stroked-button type="button" class="epics-board-filter-trigger epics-cycle-action-button"
+        [class.active]="showBoardSprintFilters()" (click)="toggleBoardSprintFilters()"
+        [attr.aria-expanded]="showBoardSprintFilters()">
+        <mat-icon>filter_list</mat-icon><span>Filters</span>
+        <span class="epics-filter-count" *ngIf="selectedBoardSprintFilter() !== 'ALL'">1</span>
+      </button>
+    </div>
   </section>
 
   <!-- ========================= FILTERS ========================= -->
-  <section class="filters-panel" *ngIf="showFilters()">
+  <section class="filters-panel epics-filter-drawer" *ngIf="showBoardSprintFilters()">
+    <div class="epics-filter-drawer-header">
+      <div><h2>Filters</h2><p>Find work items by keyword and sprint</p></div>
+      <button mat-icon-button type="button" aria-label="Close filters" (click)="toggleBoardSprintFilters()"><mat-icon>close</mat-icon></button>
+    </div>
+    <label class="epics-filter-search">
+      <mat-icon>search</mat-icon>
+      <input type="search" [ngModel]="searchInput()" (ngModelChange)="onSearchTermChange($event)" placeholder="Search work items" aria-label="Search work items" />
+      <button type="button" *ngIf="searchInput() || searchTerm()" (click)="onSearchTermChange('')" aria-label="Clear search"><mat-icon>close</mat-icon></button>
+    </label>
     <div class="filter-row">
 
       <label class="filter-control">
@@ -234,8 +215,8 @@
   <main class="workspace workspace-directory compact-directory" *ngIf="activeTab() === 'TREE'">
   <ng-container *ngIf="workItemMode() === 'EPICS'">
     <section class="work-table-section">
-      <div class="work-table-heading"><div><h2>Epics</h2><p>{{ epicTableRows().length }} items · filter from the column headers</p></div><button mat-stroked-button type="button" class="clear-table-filters" (click)="clearDirectoryColumnFilters()"><mat-icon>filter_alt_off</mat-icon> Clear filters</button></div>
-      <div class="compact-table-scroll"><table mat-table [dataSource]="epicTableRows()" class="compact-work-table">
+      <div class="work-table-heading"><div><h2>Epics</h2><p>{{ epicPageTotalElements() }} total epics · page {{ epicPageIndex() + 1 }} of {{ epicPageTotalPages() || 1 }}</p></div><button mat-stroked-button type="button" class="clear-table-filters" (click)="clearDirectoryColumnFilters()"><mat-icon>filter_alt_off</mat-icon> Clear filters</button></div>
+      <div class="compact-table-scroll" [attr.aria-busy]="epicPageLoading()"><table mat-table [dataSource]="epicPageTableRows()" class="compact-work-table">
       <ng-container matColumnDef="key">
       <th mat-header-cell *matHeaderCellDef class="filter-header-cell"><span>Key</span><input aria-label="Filter by key" placeholder="Filter" [ngModel]="directoryColumnFilters().key" (ngModelChange)="updateDirectoryColumnFilter('key', $event)"></th>
       <td mat-cell *matCellDef="let row"><span class="work-item-key">{{ row.code }}</span></td>
@@ -263,12 +244,29 @@
     </ng-container>
       <tr mat-header-row *matHeaderRowDef="['key', 'summary', 'status', 'sprint', 'priority', 'assignee', 'reporter', 'actions']"></tr><tr mat-row *matRowDef="let row; columns: ['key', 'summary', 'status', 'sprint', 'priority', 'assignee', 'reporter', 'actions'];" class="work-item-clickable-row" (click)="openDirectoryRow(row)"></tr>
       <tr class="mat-row" *matNoDataRow><td class="mat-cell table-empty-cell" colspan="8">No matching epics found.</td></tr>
-      </table></div></section>
+      </table></div>
+      <div class="epic-pagination" aria-label="Epic table pagination">
+        <span *ngIf="epicPageLoading()" class="epic-pagination-status">Loading epics…</span>
+        <span *ngIf="!epicPageLoading()" class="epic-pagination-status">
+          Showing {{ epicPageTableRows().length }} on this page · {{ epicPageTotalElements() }} total
+        </span>
+        <div class="epic-pagination-controls">
+          <button mat-stroked-button type="button" (click)="changeEpicPage(-1)"
+            [disabled]="epicPageLoading() || epicPageIndex() <= 0">
+            <mat-icon>chevron_left</mat-icon> Previous
+          </button>
+          <span>Page {{ epicPageIndex() + 1 }} / {{ epicPageTotalPages() || 1 }}</span>
+          <button mat-stroked-button type="button" (click)="changeEpicPage(1)"
+            [disabled]="epicPageLoading() || epicPageIndex() + 1 >= epicPageTotalPages()">
+            Next <mat-icon>chevron_right</mat-icon>
+          </button>
+        </div>
+      </div></section>
   </ng-container>
   <ng-container *ngIf="workItemMode() === 'STORIES'">
     <section class="work-table-section">
       <div class="work-table-heading"><div><h2>Stories</h2><p>{{ storyTableRows().length }} items · filter from the column headers</p></div><button mat-stroked-button type="button" class="clear-table-filters" (click)="clearDirectoryColumnFilters()"><mat-icon>filter_alt_off</mat-icon> Clear filters</button></div>
-      <div class="compact-table-scroll"><table mat-table [dataSource]="storyTableRows()" class="compact-work-table">
+      <div class="compact-table-scroll"><table mat-table [dataSource]="storyTableRows().slice(0, tableVisibleCount())" class="compact-work-table">
       <ng-container matColumnDef="key">
       <th mat-header-cell *matHeaderCellDef class="filter-header-cell"><span>Key</span><input aria-label="Filter by key" placeholder="Filter" [ngModel]="directoryColumnFilters().key" (ngModelChange)="updateDirectoryColumnFilter('key', $event)"></th>
       <td mat-cell *matCellDef="let row"><span class="work-item-key">{{ row.code }}</span></td>
@@ -296,12 +294,16 @@
     </ng-container>
       <tr mat-header-row *matHeaderRowDef="['key', 'summary', 'status', 'sprint', 'priority', 'assignee', 'reporter', 'actions']"></tr><tr mat-row *matRowDef="let row; columns: ['key', 'summary', 'status', 'sprint', 'priority', 'assignee', 'reporter', 'actions'];" class="work-item-clickable-row" (click)="openDirectoryRow(row)"></tr>
       <tr class="mat-row" *matNoDataRow><td class="mat-cell table-empty-cell" colspan="8">No matching stories found.</td></tr>
-      </table></div></section>
+      </table></div>
+      <button mat-stroked-button type="button" class="table-load-more"
+        *ngIf="tableHasMore(storyTableRows())" (click)="loadMoreTableRows()">
+        Load 100 more ({{ storyTableRows().length - tableVisibleCount() }} remaining)
+      </button></section>
   </ng-container>
   <ng-container *ngIf="workItemMode() === 'TASKS'">
     <section class="work-table-section">
       <div class="work-table-heading"><div><h2>Tasks</h2><p>{{ taskTableRows().length }} items · filter from the column headers</p></div><button mat-stroked-button type="button" class="clear-table-filters" (click)="clearDirectoryColumnFilters()"><mat-icon>filter_alt_off</mat-icon> Clear filters</button></div>
-      <div class="compact-table-scroll"><table mat-table [dataSource]="taskTableRows()" class="compact-work-table">
+      <div class="compact-table-scroll"><table mat-table [dataSource]="taskTableRows().slice(0, tableVisibleCount())" class="compact-work-table">
       <ng-container matColumnDef="key">
       <th mat-header-cell *matHeaderCellDef class="filter-header-cell"><span>Key</span><input aria-label="Filter by key" placeholder="Filter" [ngModel]="directoryColumnFilters().key" (ngModelChange)="updateDirectoryColumnFilter('key', $event)"></th>
       <td mat-cell *matCellDef="let row"><span class="work-item-key">{{ row.code }}</span></td>
@@ -329,12 +331,16 @@
     </ng-container>
       <tr mat-header-row *matHeaderRowDef="['key', 'summary', 'status', 'sprint', 'priority', 'assignee', 'reporter', 'actions']"></tr><tr mat-row *matRowDef="let row; columns: ['key', 'summary', 'status', 'sprint', 'priority', 'assignee', 'reporter', 'actions'];" class="work-item-clickable-row" (click)="openDirectoryRow(row)"></tr>
       <tr class="mat-row" *matNoDataRow><td class="mat-cell table-empty-cell" colspan="8">No matching tasks found.</td></tr>
-      </table></div></section>
+      </table></div>
+      <button mat-stroked-button type="button" class="table-load-more"
+        *ngIf="tableHasMore(taskTableRows())" (click)="loadMoreTableRows()">
+        Load 100 more ({{ taskTableRows().length - tableVisibleCount() }} remaining)
+      </button></section>
   </ng-container>
   <ng-container *ngIf="workItemMode() === 'ISSUES'">
     <section class="work-table-section">
       <div class="work-table-heading"><div><h2>Issues</h2><p>{{ issueTableItems().length }} items · filter from the column headers</p></div><button mat-stroked-button type="button" (click)="clearDirectoryColumnFilters()"><mat-icon>filter_alt_off</mat-icon> Clear filters</button></div>
-      <div class="compact-table-scroll"><table mat-table [dataSource]="filteredIssueTableRows()" class="compact-work-table">
+      <div class="compact-table-scroll"><table mat-table [dataSource]="filteredIssueTableRows().slice(0, tableVisibleCount())" class="compact-work-table">
         <ng-container matColumnDef="key"><th mat-header-cell *matHeaderCellDef class="filter-header-cell"><span>Key</span><input placeholder="Filter" aria-label="Filter issue key" [ngModel]="directoryColumnFilters().key" (ngModelChange)="updateDirectoryColumnFilter('key', $event)"></th><td mat-cell *matCellDef="let row"><span class="work-item-key">{{ row.code }}</span></td></ng-container>
         <ng-container matColumnDef="summary"><th mat-header-cell *matHeaderCellDef class="filter-header-cell"><span>Summary</span><input placeholder="Filter summary" aria-label="Filter issue summary" [ngModel]="directoryColumnFilters().summary" (ngModelChange)="updateDirectoryColumnFilter('summary', $event)"></th><td mat-cell *matCellDef="let row"><button class="table-summary-link" type="button" (click)="openViewIssue(row.item); $event.stopPropagation()">{{ row.title }}</button></td></ng-container>
         <ng-container matColumnDef="status"><th mat-header-cell *matHeaderCellDef class="filter-header-cell"><span>Status</span><mat-select [value]="directoryColumnFilters().status" (selectionChange)="updateDirectoryColumnFilter('status', $event.value)"><mat-option value="ALL">All</mat-option><mat-option *ngFor="let status of statusPipeline" [value]="status">{{ status.replace('_', ' ') }}</mat-option></mat-select></th><td mat-cell *matCellDef="let row"><span class="status-chip mat-status" [ngClass]="statusClass(row.status)">{{ row.status }}</span></td></ng-container>
@@ -345,6 +351,10 @@
         <ng-container matColumnDef="actions"><th mat-header-cell *matHeaderCellDef class="actions-header"><button mat-icon-button type="button" (click)="clearDirectoryColumnFilters()" matTooltip="Clear column filters"><mat-icon>filter_alt_off</mat-icon></button></th><td mat-cell *matCellDef="let row" class="actions-cell"><button mat-icon-button type="button" (click)="openViewIssue(row.item); $event.stopPropagation()" matTooltip="Open"><mat-icon>open_in_new</mat-icon></button><button mat-icon-button type="button" (click)="openEditIssue(row.item); $event.stopPropagation()" matTooltip="Edit"><mat-icon>edit</mat-icon></button></td></ng-container>
         <tr mat-header-row *matHeaderRowDef="issueDirectoryColumns"></tr><tr mat-row *matRowDef="let row; columns: issueDirectoryColumns;" class="work-item-clickable-row" (click)="openDirectoryRow(row)"></tr><tr class="mat-row" *matNoDataRow><td class="mat-cell table-empty-cell" colspan="8">No matching issues found.</td></tr>
       </table></div>
+      <button mat-stroked-button type="button" class="table-load-more"
+        *ngIf="tableHasMore(filteredIssueTableRows())" (click)="loadMoreTableRows()">
+        Load 100 more ({{ filteredIssueTableRows().length - tableVisibleCount() }} remaining)
+      </button>
     </section>
   </ng-container>
 </main>
@@ -358,41 +368,63 @@
       <mat-icon>close</mat-icon>
     </button>
 
-    <div class="epics-create-actions epics-fullscreen-create-actions" *ngIf="isKanbanFullscreen()" aria-label="Create work item">
-      <button mat-stroked-button type="button" class="epics-create-button epics-create-epic" (click)="openCreateEpic()">
-        <mat-icon>add</mat-icon><span>Create Epic</span>
-      </button>
-      <button mat-stroked-button type="button" class="epics-create-button epics-create-secondary" (click)="openCreateStory()">
-        <mat-icon>add</mat-icon><span>Create Story</span>
-      </button>
-      <button mat-stroked-button type="button" class="epics-create-button epics-create-secondary" (click)="openCreateTask()">
-        <mat-icon>add</mat-icon><span>Create Task</span>
-      </button>
-      <button mat-flat-button type="button" class="primary-action epics-create-issue" (click)="openCreateIssue()">
-        <mat-icon>add</mat-icon><span>Create Issue</span>
-      </button>
+    <div class="epics-fullscreen-toolbar" *ngIf="isKanbanFullscreen()">
+      <div class="epics-fullscreen-board-title">
+        <strong>Epics board: {{ activeProjectName() }}</strong>
+        <span *ngIf="displayedKanbanSprint() as sprint">{{ sprint.name }}</span>
+      </div>
+
+      <div class="epics-create-actions epics-fullscreen-create-actions" aria-label="Create work item">
+        <button mat-stroked-button type="button" class="epics-create-button" (click)="openCreateEpic()">
+          <mat-icon>add</mat-icon><span>Epic</span>
+        </button>
+        <button mat-stroked-button type="button" class="epics-create-button" (click)="openCreateStory()">
+          <mat-icon>add</mat-icon><span>Story</span>
+        </button>
+        <button mat-stroked-button type="button" class="epics-create-button" (click)="openCreateTask()">
+          <mat-icon>add</mat-icon><span>Task</span>
+        </button>
+        <button mat-stroked-button type="button" class="epics-create-button" (click)="openCreateIssue()">
+          <mat-icon>add</mat-icon><span>Issue</span>
+        </button>
+        <button mat-stroked-button type="button" class="epics-create-button epics-sprint-progress-fullscreen"
+          *ngIf="displayedKanbanSprint() as sprint" (click)="openSprintProgress(sprint)">
+          <mat-icon>analytics</mat-icon><span>Sprint progress</span>
+        </button>
+      </div>
     </div>
 
     <section class="epics-fullscreen-people-panel" *ngIf="isKanbanFullscreen()" aria-label="Sprint members">
-      <div class="epics-fullscreen-people-heading">
-        <div>
-          <span class="eyebrow">TEAM</span>
-          <strong>Who's working on this sprint?</strong>
-          <span>{{ activeSprintUsers().length }} members · {{ kanbanTotalItems() }} items</span>
-        </div>
-        <button mat-button type="button" *ngIf="selectedUserFilter() !== null" (click)="filterByUser(null)">Clear</button>
-      </div>
       <mat-chip-set class="people-chips epics-people-chips epics-fullscreen-people-chips" aria-label="Filter sprint items by assignee">
-        <mat-chip [highlighted]="selectedUserFilter() === null" (click)="filterByUser(null)">
-          <span class="mini-avatar">ALL</span> Everyone <b>{{ kanbanTotalItems() }}</b>
+        <mat-chip class="epics-fullscreen-person-chip" [highlighted]="selectedUserFilter() === null"
+          (click)="filterByUser(null)" matTooltip="Everyone">
+          <span class="mini-avatar">ALL</span>
+          <span>Everyone</span>
+          <b>{{ kanbanTotalItems() }}</b>
         </mat-chip>
-        <mat-chip *ngFor="let user of activeSprintUsers()"
-          [highlighted]="isUserSelected(user.id)" (click)="filterByUser(user.id)">
-          <span class="mini-avatar">{{ getUserInitials(user.name || user.first_name || user.email || '') }}</span>
-          {{ user.name || user.first_name || user.email }}
+        <mat-chip class="epics-fullscreen-person-chip" *ngFor="let user of activeSprintUsers() | slice:0:5"
+          [highlighted]="isUserSelected(user.id)" (click)="filterByUser(user.id)"
+          [matTooltip]="user.name || user.full_name || user.fullName || ('User ' + user.id)">
+          <span class="mini-avatar">{{ getUserInitials(user.name || user.full_name || user.fullName || ((user.first_name || user.firstName || '') + ((user.last_name || user.lastName) ? ' ' + (user.last_name || user.lastName) : '')) || ('User ' + user.id)) }}</span>
+          <span>{{ user.name || user.full_name || user.fullName || ((user.first_name || user.firstName || '') + ((user.last_name || user.lastName) ? ' ' + (user.last_name || user.lastName) : '')) || ('User ' + user.id) }}</span>
           <b>{{ sprintItemsForUser(user.id) }}</b>
         </mat-chip>
       </mat-chip-set>
+
+      <details class="epics-people-overflow" *ngIf="activeSprintUsers().length > 5">
+        <summary aria-label="Show more sprint members" matTooltip="More people">
+          <mat-icon>more_horiz</mat-icon>
+          <span>+{{ activeSprintUsers().length - 5 }}</span>
+        </summary>
+        <div class="epics-people-overflow-menu">
+          <button type="button" *ngFor="let user of activeSprintUsers() | slice:5"
+            [class.selected]="isUserSelected(user.id)" (click)="filterByUser(user.id)">
+            <span class="mini-avatar">{{ getUserInitials(user.name || user.full_name || user.fullName || ((user.first_name || user.firstName || '') + ((user.last_name || user.lastName) ? ' ' + (user.last_name || user.lastName) : '')) || ('User ' + user.id)) }}</span>
+            <span>{{ user.name || user.full_name || user.fullName || ('User ' + user.id) }}</span>
+            <b>{{ sprintItemsForUser(user.id) }}</b>
+          </button>
+        </div>
+      </details>
     </section>
 
     <section class="epics-board-sprint-filter-panel" *ngIf="showBoardSprintFilters()">
@@ -436,18 +468,27 @@
           </div>
 
           <div class="column-content" cdkDropList [id]="'epics-kanban-' + status"
-            [cdkDropListData]="kanbanItemsByStatus()[status]"
+            [cdkDropListData]="visibleKanbanItemsByStatus()[status]"
             (cdkDropListDropped)="onKanbanDrop($event, status)">
             <mat-card class="product-card kanban-work-item-card" appearance="outlined"
-              cdkDrag [cdkDragData]="item" *ngFor="let item of kanbanItemsByStatus()[status]"
+              cdkDrag [cdkDragData]="item" cdkDragPreviewContainer="parent"
+              *ngFor="let item of visibleKanbanItemsByStatus()[status]; trackBy: trackByKanbanItem"
               (click)="openEditKanbanItem(item)">
+              <div class="kanban-card-meta-row">
+                <span class="kanban-card-points" *ngIf="item.pointsOrHours">{{ item.pointsOrHours }} Points</span>
+                <span class="kanban-card-priority" *ngIf="item.priority"
+                  [ngClass]="'priority-' + (item.priority || 'medium').toLowerCase()">{{ item.priority }}</span>
+                <span class="kanban-card-type">{{ item.type }}</span>
+              </div>
               <mat-card-header class="work-item-card-header minimal-work-item-header">
                 <mat-card-title class="work-item-card-id">
                   <span class="work-item-code-link">{{ item.code || ('#' + item.id) }}</span>
                 </mat-card-title>
-                <mat-card-title class="work-item-card-title" [title]="item.title">{{ item.title }}</mat-card-title>
-                
+                <mat-card-title class="work-item-card-title" [title]="item.title">{{ item.title || 'Untitled work item' }}</mat-card-title>
               </mat-card-header>
+              <p class="kanban-card-description" *ngIf="item.originalItem?.description">
+                {{ item.originalItem.description }}
+              </p>
 
               <mat-card-content class="minimal-work-item-content">
                 <div class="parent-tags">
@@ -482,17 +523,73 @@
               <mat-card-actions class="minimal-work-item-actions">
                 <button mat-button type="button" class="assignee-avatar-button"
                   (click)="$event.stopPropagation()"
-                  [attr.aria-label]="'Assignee: ' + (userMap().get(toNumber(item.assignee_user_id))?.name || 'Unassigned')">
+                  [attr.aria-label]="'Assignee: ' + getUserName(item.assignee_user_id)">
                   <span class="assignee-avatar"
                     [class.unassigned-avatar]="!item.assignee_user_id">
-                    {{ getUserInitials(userMap().get(toNumber(item.assignee_user_id))?.name || 'Unassigned') }}
+                    {{ getUserInitials(getUserName(item.assignee_user_id)) }}
                   </span>
                   <span class="assignee-avatar-name">
-                    {{ userMap().get(toNumber(item.assignee_user_id))?.name || 'Unassigned' }}
+                    {{ getUserName(item.assignee_user_id) }}
                   </span>
                 </button>
               </mat-card-actions>
+
+              <!-- The CDK preview explicitly matches the rendered source-card dimensions.
+                   This keeps the card identical while dragging in normal and full-screen modes. -->
+              <ng-template cdkDragPreview [matchSize]="true">
+                <mat-card class="product-card kanban-work-item-card kanban-work-item-drag-preview" appearance="outlined">
+                  <div class="kanban-card-meta-row">
+                    <span class="kanban-card-points" *ngIf="item.pointsOrHours">{{ item.pointsOrHours }} Points</span>
+                    <span class="kanban-card-priority" *ngIf="item.priority"
+                      [ngClass]="'priority-' + (item.priority || 'medium').toLowerCase()">{{ item.priority }}</span>
+                    <span class="kanban-card-type">{{ item.type }}</span>
+                  </div>
+                  <mat-card-header class="work-item-card-header minimal-work-item-header">
+                    <mat-card-title class="work-item-card-id">
+                      <span class="work-item-code-link">{{ item.code || ('#' + item.id) }}</span>
+                    </mat-card-title>
+                    <mat-card-title class="work-item-card-title" [title]="item.title">{{ item.title || 'Untitled work item' }}</mat-card-title>
+                  </mat-card-header>
+                  <p class="kanban-card-description" *ngIf="item.originalItem?.description">
+                    {{ item.originalItem.description }}
+                  </p>
+                  <mat-card-content class="minimal-work-item-content">
+                    <div class="parent-tags">
+                      <span *ngIf="item.type !== 'EPIC'" class="parent-tag epic-parent-tag">
+                        {{ item.parentEpicCode || 'EPIC' }} · {{ item.parentEpicName || 'Parent Epic' }}
+                      </span>
+                      <span *ngIf="item.type === 'TASK'" class="parent-tag story-parent-tag">
+                        STORY · {{ item.parentStoryTitle || 'Parent Story' }}
+                      </span>
+                    </div>
+                    <div class="work-item-metrics">
+                      <span class="work-item-metric story-points-metric" *ngIf="item.type !== 'TASK' || item.pointsOrHours">
+                        <mat-icon>speed</mat-icon><strong>{{ item.pointsOrHours || 0 }}</strong><span>points</span>
+                      </span>
+                      <span class="work-item-metric issue-count-metric">
+                        <mat-icon>bug_report</mat-icon><strong>{{ item.issues?.length || 0 }}</strong><span>issues</span>
+                      </span>
+                      <span class="work-item-metric test-count-metric" *ngIf="item.testCases?.length">
+                        <mat-icon>fact_check</mat-icon><strong>{{ item.testCases?.length || 0 }}</strong><span>tests</span>
+                      </span>
+                    </div>
+                  </mat-card-content>
+                  <mat-card-actions class="minimal-work-item-actions">
+                    <span class="assignee-avatar-button">
+                      <span class="assignee-avatar" [class.unassigned-avatar]="!item.assignee_user_id">
+                        {{ getUserInitials(getUserName(item.assignee_user_id)) }}
+                      </span>
+                      <span class="assignee-avatar-name">{{ getUserName(item.assignee_user_id) }}</span>
+                    </span>
+                  </mat-card-actions>
+                </mat-card>
+              </ng-template>
             </mat-card>
+
+            <button mat-stroked-button type="button" class="kanban-load-more"
+              *ngIf="kanbanHasMore(status)" (click)="loadMoreKanban(status)">
+              Load 100 more ({{ (kanbanItemsByStatus()[status] || []).length - (visibleKanbanItemsByStatus()[status] || []).length }} remaining)
+            </button>
 
             <div class="column-empty" *ngIf="!(kanbanItemsByStatus()[status] || []).length">
               <mat-icon>inbox</mat-icon><strong>Nothing here</strong><span>No items in this stage.</span>

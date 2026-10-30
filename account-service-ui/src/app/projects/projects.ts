@@ -36,6 +36,9 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatTableModule } from '@angular/material/table';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatStepperModule } from '@angular/material/stepper';
 
 import { UserSelectDialog } from '../user-select-dialog/user-select-dialog';
 
@@ -141,7 +144,7 @@ export interface SprintItem {
   standalone: true,
 
   templateUrl: './projects.html',
-  styleUrl: './projects.css',
+  styleUrls: ['./projects.css', '../shared/field-controls.css'],
 
   imports: [
     CommonModule,
@@ -163,7 +166,10 @@ export interface SprintItem {
     MatDatepickerModule,
     MatNativeDateModule,
     MatProgressBarModule,
-    MatMenuModule
+    MatMenuModule,
+    MatTableModule,
+    MatTabsModule,
+    MatStepperModule
   ]
 })
 export class Projects implements OnInit {
@@ -273,6 +279,10 @@ export class Projects implements OnInit {
       email: string;
       employeeCode: string;
       profilePictureUrl?: string | null;
+      designation?: string | null;
+      jobTitle?: string | null;
+      title?: string | null;
+      role?: string | null;
       isFromTeam: boolean;
       teamName?: string;
     }> = [];
@@ -322,6 +332,13 @@ export class Projects implements OnInit {
 
   public selectedProject:
     StrategicInitiative | null = null;
+
+  public selectedProjectTabIndex = 0;
+  public isProfileEditing = false;
+  public isProfileCreating = false;
+  public projectDisplayedColumns = ['project', 'status', 'deadline', 'actions'];
+  public profileSprintDisplayedColumns = ['sprint', 'sprintStatus', 'start', 'end', 'velocity'];
+  private profileEditSnapshot: StrategicInitiative | null = null;
 Math: any;
 
 
@@ -804,28 +821,144 @@ Math: any;
      PROJECT DETAILS
   ============================================================ */
 
+  /** Normalize API/project objects before assigning them to strongly typed form state.
+   * Some API responses omit fields or return nulls, so a plain object spread is unsafe.
+   */
+  private normalizeProject(project: Partial<StrategicInitiative> | null | undefined): StrategicInitiative {
+    const source = project ?? {};
+    return {
+      ...(source as any),
+      id: source.id,
+      user_id: source.user_id,
+      product_id: source.product_id ?? null,
+      name: source.name ?? '',
+      project_code: source.project_code ?? '',
+      description: source.description ?? '',
+      status: source.status ?? 'ACTIVE',
+      methodology: source.methodology ?? 'AGILE_SCRUM',
+      priority: source.priority ?? 'MEDIUM',
+      total_backlog_points: source.total_backlog_points ?? 120,
+      sprint_duration_weeks: source.sprint_duration_weeks ?? 2,
+      target_velocity: source.target_velocity ?? 30,
+      auto_rollover_backlog: source.auto_rollover_backlog ?? true,
+      computed_sprint_count: source.computed_sprint_count ?? 0,
+      computed_total_duration_weeks: source.computed_total_duration_weeks ?? 0,
+      associatedTeamIds: [...(source.associatedTeamIds ?? [])],
+      associatedUserIds: [...(source.associatedUserIds ?? [])]
+    };
+  }
+
   public openProjectDetails(
     project: StrategicInitiative
   ): void {
-
-    this.selectedProject =
-      project;
-
-    this.selectedSprint =
-      null;
-
+    const normalized = this.normalizeProject(project);
+    this.selectedProject = normalized;
+    this.selectedSprint = null;
+    this.selectedProjectTabIndex = 0;
+    this.isProfileCreating = false;
+    this.isProfileEditing = false;
+    this.profileEditSnapshot = this.normalizeProject(normalized);
+    this.projectForm = this.normalizeProject(normalized);
+    this.selectedTeamIds = [...(normalized.associatedTeamIds || [])];
+    this.selectedUsers = [...(normalized.associatedUserIds || [])];
+    this.chipUserObjects = [];
+    this.loadComposerResources(Number(normalized.id), normalized);
     this.cdr.detectChanges();
   }
 
 
   public closeProjectDetails(): void {
-
-    this.selectedProject =
-      null;
-
+    this.selectedProject = null;
+    this.selectedProjectTabIndex = 0;
+    this.isProfileCreating = false;
+    this.isProfileEditing = false;
+    this.profileEditSnapshot = null;
     this.cdr.detectChanges();
   }
 
+
+
+  public getProjectProfileValue(project: any, keys: string[]): string {
+    for (const key of keys) {
+      const value = project?.[key];
+      if (value !== null && value !== undefined && String(value).trim() !== '') {
+        const date = new Date(value);
+        if (/date|deadline|due/i.test(key) && !Number.isNaN(date.getTime())) {
+          return date.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+        return String(value);
+      }
+    }
+    return '—';
+  }
+
+  public getProjectDeadline(project: any): string {
+    const value = project?.deadline || project?.due_date || project?.target_end_date || project?.end_date;
+    if (!value) return 'Not set';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  public getProjectProfileSprints(project: StrategicInitiative): SprintItem[] {
+    return this.globalSprintsCollection
+      .filter(sprint => Number(sprint.project_id) === Number(project.id))
+      .sort((a, b) => Number(a.sprint_number) - Number(b.sprint_number));
+  }
+
+  public editProjectInProfile(project: StrategicInitiative): void {
+    const normalized = this.normalizeProject(project);
+    this.selectedProject = normalized;
+    this.selectedSprint = null;
+    this.profileEditSnapshot = this.normalizeProject(normalized);
+    this.projectForm = this.normalizeProject(normalized);
+    this.selectedProjectTabIndex = 0;
+    this.isProfileCreating = false;
+    this.isProfileEditing = true;
+    this.selectedUsers = [];
+    this.selectedTeamIds = [];
+    this.chipUserObjects = [];
+    this.loadComposerResources(Number(project.id), project);
+    this.cdr.detectChanges();
+  }
+
+  public cancelProfileEdit(): void {
+    if (this.isProfileCreating) {
+      this.closeProjectDetails();
+      return;
+    }
+    if (this.profileEditSnapshot) this.projectForm = this.normalizeProject(this.profileEditSnapshot);
+    this.selectedProjectTabIndex = 0;
+    this.isProfileEditing = false;
+    this.cdr.detectChanges();
+  }
+
+  public saveProfileProject(): void {
+    if (!this.projectForm.name?.trim() || this.isSaving) return;
+    if (this.isProfileCreating || !this.projectForm.id) {
+      this.commitProjectToSystem();
+      return;
+    }
+    this.isSaving = true;
+    const body = { ...this.projectForm };
+    this.http.put<any>(`${this.baseUrl}/projects/${this.projectForm.id}`, body, {
+      headers: this.auth.getAuthHeaders()
+    }).pipe(finalize(() => {
+      this.isSaving = false;
+      this.cdr.detectChanges();
+    })).subscribe({
+      next: (response: any) => {
+        const updated = response?.data || response?.project || body;
+        const mergedProject = { ...(this.selectedProject || body), ...body, ...updated };
+        this.selectedProject = this.normalizeProject(mergedProject);
+        this.profileEditSnapshot = this.normalizeProject(this.selectedProject);
+        this.selectedProjectTabIndex = 0;
+        this.isProfileEditing = false;
+        this.projectsRefresh$.next();
+        this.cdr.detectChanges();
+      },
+      error: error => console.error('Failed to update project:', error, error?.error)
+    });
+  }
 
   /* ============================================================
      SPRINT DETAILS
@@ -928,31 +1061,22 @@ Math: any;
 
 
   public initiateNewProject(): void {
-
     this.resetProjectForm();
-
     this.selectedUsers = [];
-
     this.selectedTeamIds = [];
-
     this.chipUserObjects = [];
-
     this.projectForm.associatedUserIds = [];
-
     this.projectForm.associatedTeamIds = [];
-
     this.activeBuilderStep = 1;
-
-    this.isComposerOpen = true;
-
+    this.isComposerOpen = false;
+    this.isProfileCreating = true;
+    this.isProfileEditing = true;
+    this.selectedProjectTabIndex = 0;
+    this.selectedSprint = null;
+    this.profileEditSnapshot = null;
+    this.selectedProject = this.normalizeProject(this.projectForm);
     this.calculateAgileMetrics();
-
-    /*
-     * Explicitly load the current users/teams when the composer opens.
-     * This avoids a race with page-level background loading.
-     */
     this.loadComposerResources();
-
     this.cdr.detectChanges();
   }
 
@@ -1458,6 +1582,7 @@ Math: any;
       previewActivationType: this.previewActivationType
     };
 
+    let savedProjectSnapshot: any = null;
     const request$ = isExistingProject
       ? this.http.put(
           `${this.baseUrl}/projects/${this.projectForm.id}`,
@@ -1477,6 +1602,7 @@ Math: any;
           const responseData =
             projectRes?.data ||
             projectRes;
+          savedProjectSnapshot = responseData?.project || responseData;
 
           const confirmedProjectId = Number(
             this.projectForm.id ||
@@ -1558,7 +1684,22 @@ Math: any;
         next: () => {
           this.isComposerOpen = false;
           this.sprintLoadError = '';
+          if (this.isProfileCreating && savedProjectSnapshot) {
+            const created = this.normalizeProject({
+              ...this.projectForm,
+              ...savedProjectSnapshot,
+              id: savedProjectSnapshot?.id ?? savedProjectSnapshot?.project_id ?? savedProjectSnapshot?.projectId
+            });
+            this.selectedProject = created;
+            this.projectForm = this.normalizeProject(created);
+            this.profileEditSnapshot = this.normalizeProject(created);
+            this.isProfileCreating = false;
+            this.isProfileEditing = false;
+            this.selectedProjectTabIndex = 0;
+            this.loadComposerResources(Number(created.id), created);
+          }
           this.projectsRefresh$.next();
+          this.cdr.detectChanges();
         },
 
         error: err => {
@@ -3273,6 +3414,18 @@ Math: any;
      USER DIALOG
   ============================================================ */
 
+  public removeProfileMember(userId: number, event?: Event): void {
+    event?.stopPropagation();
+    const id = Number(userId);
+    this.selectedUsers = this.selectedUsers.filter(selectedId => Number(selectedId) !== id);
+    if (this.projectForm) {
+      this.projectForm.associatedUserIds = (this.projectForm.associatedUserIds || [])
+        .filter(selectedId => Number(selectedId) !== id);
+    }
+    this.chipUserObjects = this.chipUserObjects.filter(member => Number(member.id) !== id);
+    this.cdr.detectChanges();
+  }
+
   public openUserSelectionDialog(): void {
 
     const dialogRef =
@@ -3464,6 +3617,10 @@ Math: any;
           email: string;
           employeeCode: string;
           profilePictureUrl?: string | null;
+          designation?: string | null;
+          jobTitle?: string | null;
+          title?: string | null;
+          role?: string | null;
           isFromTeam: boolean;
           teamName?: string;
         }
@@ -3517,6 +3674,10 @@ Math: any;
                 employeeCode: identity.employeeCode,
                 profilePictureUrl:
                   identity.profilePictureUrl,
+                designation: member?.designation ?? member?.jobTitle ?? member?.title ?? member?.role ?? null,
+                jobTitle: member?.jobTitle ?? null,
+                title: member?.title ?? null,
+                role: member?.role ?? null,
                 isFromTeam: true,
                 teamName:
                   team.name ||
@@ -3562,6 +3723,10 @@ Math: any;
             employeeCode: identity.employeeCode,
             profilePictureUrl:
               identity.profilePictureUrl,
+            designation: existing?.designation ?? null,
+            jobTitle: existing?.jobTitle ?? null,
+            title: existing?.title ?? null,
+            role: existing?.role ?? null,
             isFromTeam:
               existing?.isFromTeam ?? false,
             teamName:

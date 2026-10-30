@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, effect, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -6,6 +6,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
 import { environment } from '../../environment';
 import { AuthService } from '../auth.service';
+import { ProjectContextService } from '../project-context.service';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -37,11 +38,12 @@ type ReleaseStatus = ReleaseRecord['status'];
 @Component({
   selector: 'app-releases', standalone: true,
   imports: [CommonModule, FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatIconModule, MatTooltipModule, MatProgressBarModule, MatCardModule, MatTableModule, MatCheckboxModule, MatDatepickerModule, MatNativeDateModule],
-  templateUrl: './releases.html', styleUrls: ['./releases.css'], changeDetection: ChangeDetectionStrategy.OnPush
+  templateUrl: './releases.html', styleUrls: ['./releases.css', '../shared/field-controls.css'], changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Releases implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
+  private readonly projectContext = inject(ProjectContextService);
   readonly baseUrl = environment.apiBaseUrlM;
   readonly projects = signal<ReleaseProject[]>([]);
   readonly sprints = signal<ReleaseSprint[]>([]);
@@ -52,6 +54,12 @@ export class Releases implements OnInit {
   readonly itemsLoading = signal(false);
   readonly selectedWorkItemIds = signal<string[]>([]);
   readonly selectedProjectId = signal<number | null>(null);
+  private readonly projectContextSync = effect(() => {
+    const sharedProjectId = this.projectContext.selectedProjectId();
+    const projects = this.projects();
+    if (!sharedProjectId || !projects.length || this.selectedProjectId() === sharedProjectId) return;
+    if (projects.some(project => Number(project.id) === sharedProjectId)) this.onProjectChange(sharedProjectId);
+  });
   readonly selectedReleaseId = signal<number | null>(null);
   readonly searchTerm = signal('');
   readonly statusFilter = signal('ALL');
@@ -211,8 +219,10 @@ export class Releases implements OnInit {
           .filter(p => Number.isFinite(p.id) && p.id > 0);
         this.projects.set(list);
         if (!list.length) { this.selectedProjectId.set(null); this.releases.set([]); this.loading.set(false); return; }
-        const chosen = list.find(p => p.id === this.selectedProjectId()) ?? list[0];
+        const sharedId = this.projectContext.selectedProjectId();
+        const chosen = list.find(p => p.id === sharedId) ?? list.find(p => p.id === this.selectedProjectId()) ?? list[0];
         this.selectedProjectId.set(chosen.id);
+        this.projectContext.setSelectedProject(chosen.id);
         this.loadProjectData(chosen.id);
       },
       error: () => { this.projects.set([]); this.loading.set(false); this.errorMessage.set('Projects could not be loaded. Check the projects API and authentication.'); }
@@ -252,6 +262,7 @@ export class Releases implements OnInit {
   onProjectChange(value: number | string | null): void {
     const id = Number(value);
     this.selectedProjectId.set(Number.isFinite(id) && id > 0 ? id : null);
+    if (Number.isFinite(id) && id > 0) this.projectContext.setSelectedProject(id);
     this.selectedReleaseId.set(null); this.releaseItems.set([]);
     if (this.selectedProjectId()) this.loadProjectData(this.selectedProjectId()!);
     else { this.releases.set([]); this.sprints.set([]); this.loading.set(false); }

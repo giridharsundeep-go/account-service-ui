@@ -26,7 +26,7 @@ export interface AgileProductNode {
   selector: 'app-products',
   standalone: true,
   templateUrl: './products.html',
-  styleUrl: './products.css',
+  styleUrls: ['./products.css', '../shared/field-controls.css'],
   imports: [
     CommonModule, 
     FormsModule, 

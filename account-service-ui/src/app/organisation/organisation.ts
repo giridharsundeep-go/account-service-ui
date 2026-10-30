@@ -25,7 +25,7 @@ import { CreateOrgDialog } from '../create-org-dialog/create-org-dialog';
     HttpClientModule
   ],
   templateUrl: './organisation.html',
-  styleUrl: './organisation.css'
+  styleUrls: ['./organisation.css', '../shared/field-controls.css']
 })
 export class Organisation implements OnInit {
 

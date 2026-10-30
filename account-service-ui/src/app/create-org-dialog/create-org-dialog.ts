@@ -20,7 +20,7 @@ import { AuthService } from '../auth.service';
     MatIconModule
   ],
   templateUrl: './create-org-dialog.html',
-  styleUrls: ['./create-org-dialog.css']
+  styleUrls: ['./create-org-dialog.css', '../shared/field-controls.css']
 })
 export class CreateOrgDialog {
 

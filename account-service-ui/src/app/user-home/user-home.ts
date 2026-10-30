@@ -3,8 +3,12 @@ import {
   OnInit,
   Inject,
   PLATFORM_ID,
-  HostListener
+  HostListener,
+  effect
 } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { forkJoin, Observable, of } from 'rxjs';
+import { catchError, switchMap } from 'rxjs/operators';
 
 import { FormsModule } from '@angular/forms';
 import {
@@ -25,6 +29,18 @@ import {
 
 import { EditProfileDialog } from '../edit-profile-dialog/edit-profile-dialog';
 import { AuthService } from '../auth.service';
+import { ProjectContextService } from '../project-context.service';
+import { environment } from '../../environment';
+
+interface GlobalWorkItemSuggestion {
+  id: number;
+  type: 'EPIC' | 'STORY' | 'TASK' | 'ISSUE';
+  typeLabel: string;
+  key: string;
+  title: string;
+  projectId: number;
+  projectName: string;
+}
 
 import { Dashboard } from '../dashboard/dashboard';
 import { Roles } from '../roles/roles';
@@ -32,12 +48,14 @@ import { Users } from '../users/users';
 import { Teams } from '../teams/teams';
 import { Products } from '../products/products';
 import { Projects } from '../projects/projects';
-import { Epics } from '../epics/epics';
+import { WorkItems } from '../work-items/work-items';
 import { Issues } from '../issues/issues';
 import { Testcases } from '../testcases/testcases';
 import { Releases } from '../releases/releases';
 import { Docs } from '../docs/docs';
 import { Boards } from '../boards/boards';
+import { KanbanBoard } from '../kanban-board/kanban-board';
+import { SprintPlanning } from '../sprint-planning/sprint-planning';
 
 @Component({
   selector: 'app-user-home',
@@ -54,8 +72,10 @@ import { Boards } from '../boards/boards';
     Teams,
     Products,
     Projects,
-    Epics,
+    WorkItems,
     Boards,
+    KanbanBoard,
+    SprintPlanning,
     Issues,
     Testcases,
     Releases,
@@ -63,9 +83,11 @@ import { Boards } from '../boards/boards';
   ],
 
   templateUrl: './user-home.html',
-  styleUrls: ['./user-home.css']
+  styleUrls: ['./user-home.css', '../shared/field-controls.css']
 })
 export class UserHome implements OnInit {
+
+  private readonly baseUrl = String(environment.apiBaseUrlM || '').replace(/\/$/, '');
 
   // =========================================================
   // APPLICATION STATE
@@ -73,6 +95,7 @@ export class UserHome implements OnInit {
 
   activeMenu = 'dashboard';
 
+  // Workspace navigation is private to this browser tab; unlike auth, it must not be shared.
   private readonly ACTIVE_MENU_STORAGE_KEY = 'greatley-poshley-active-menu';
 
   currentYear =
@@ -85,6 +108,14 @@ export class UserHome implements OnInit {
   createMenuOpen = false;
 
   profileMenuOpen = false;
+  globalProjectMenuOpen = false;
+  globalProjectSearch = '';
+  globalWorkSearch = '';
+  globalWorkSearchOpen = false;
+  globalWorkSearchLoading = false;
+  globalWorkItems: GlobalWorkItemSuggestion[] = [];
+  private loadedWorkSearchProjectId: number | null = null;
+  private workSearchRequestProjectId: number | null = null;
 
   // =========================================================
   // USER
@@ -110,12 +141,13 @@ export class UserHome implements OnInit {
     { id: 'products', label: 'Products', icon: 'products' },
     { id: 'projects', label: 'Projects', icon: 'projects' },
     { id: 'boards', label: 'Boards', icon: 'boards' },
-    { id: 'epics', label: 'Epics & Backlogs', icon: 'epics' }
+    { id: 'kanban-board', label: 'Kanban Board', icon: 'kanban' },
+    { id: 'sprint-planning', label: 'Sprint Planning', icon: 'sprint' },
+    { id: 'work-items', label: 'Work Items', icon: 'work-items' }
   ];
 
   readonly qualityNavigation = [
     { id: 'test-cases', label: 'Test Cases', icon: 'tests' },
-    { id: 'issues', label: 'Issues', icon: 'issues' }
   ];
 
   readonly deliveryNavigation = [
@@ -185,18 +217,28 @@ export class UserHome implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private auth: AuthService,
+    readonly projectContext: ProjectContextService,
+    private http: HttpClient,
     @Inject(PLATFORM_ID)
     private platformId: Object
-  ) {}
+  ) {
+    effect(() => {
+      const projectId = this.projectContext.selectedProjectId();
+      if (projectId && projectId !== this.loadedWorkSearchProjectId && projectId !== this.workSearchRequestProjectId) {
+        this.loadGlobalWorkItems(projectId);
+      }
+    });
+  }
 
   // =========================================================
   // INIT
   // =========================================================
 
   ngOnInit(): void {
+    this.projectContext.loadProjects();
 
-    // Restore the last selected workspace tab before route/query
-    // synchronization so a browser reload does not fall back to Dashboard.
+    // Restore this browser tab's last selected workspace page before route/query
+    // synchronization so a reload does not fall back to Dashboard.
     this.restoreActiveMenu();
 
     this.syncActiveRoute();
@@ -208,10 +250,12 @@ export class UserHome implements OnInit {
 
       if (!menu) return;
 
+      const requestedMenu = menu === 'epics' ? 'work-items' : menu;
+
       const valid = this.allNavigationItems.map(item => item.id);
 
-      if (valid.includes(menu)) {
-        this.setActive(menu, false);
+      if (valid.includes(requestedMenu)) {
+        this.setActive(requestedMenu);
       }
     });
 
@@ -260,7 +304,7 @@ export class UserHome implements OnInit {
     this.activeMenu = menu;
 
     if (persist && isPlatformBrowser(this.platformId)) {
-      localStorage.setItem(
+      sessionStorage.setItem(
         this.ACTIVE_MENU_STORAGE_KEY,
         menu
       );
@@ -277,7 +321,7 @@ export class UserHome implements OnInit {
     }
 
     const storedMenu =
-      localStorage.getItem(
+      sessionStorage.getItem(
         this.ACTIVE_MENU_STORAGE_KEY
       );
 
@@ -287,8 +331,9 @@ export class UserHome implements OnInit {
 
     const valid = this.allNavigationItems.map(item => item.id);
 
-    if (valid.includes(storedMenu)) {
-      this.activeMenu = storedMenu;
+    const restoredMenu = storedMenu === 'epics' ? 'work-items' : storedMenu;
+    if (valid.includes(restoredMenu)) {
+      this.activeMenu = restoredMenu;
     }
   }
 
@@ -335,27 +380,17 @@ export class UserHome implements OnInit {
 
     this.createMenuOpen = false;
 
-    /*
-     * Epic / Story / Task creation is
-     * handled from the Epics workspace.
-     */
     if (
       type === 'epic' ||
       type === 'story' ||
       type === 'task'
     ) {
-
-      this.activeMenu =
-        'epics';
-
+      this.openKanbanCreate(type);
       return;
     }
 
     if (type === 'issue') {
-
-      this.activeMenu =
-        'issues';
-
+      this.openKanbanCreate('issue');
       return;
     }
 
@@ -433,10 +468,7 @@ export class UserHome implements OnInit {
 
     event?.stopPropagation();
 
-    const element =
-      document.querySelector(
-        '.gmail-search-input'
-      ) as HTMLInputElement | null;
+    const element = document.querySelector('.global-work-search-input') as HTMLInputElement | null;
 
     element?.focus();
   }
@@ -446,6 +478,20 @@ export class UserHome implements OnInit {
     this.searchQuery = '';
 
     this.focusSearch();
+  }
+
+  private openKanbanCreate(type: string): void {
+    const projectId = this.projectContext.selectedProjectId();
+    this.router.navigate(['/user-home'], {
+      queryParams: {
+        menu: 'kanban-board',
+        createType: type,
+        openType: null,
+        openId: null,
+        projectId: projectId ?? null
+      },
+      queryParamsHandling: 'merge'
+    });
   }
 
   // =========================================================
@@ -484,6 +530,8 @@ export class UserHome implements OnInit {
 
       this.createMenuOpen = false;
       this.profileMenuOpen = false;
+      this.globalProjectMenuOpen = false;
+      this.globalWorkSearchOpen = false;
     }
   }
 
@@ -519,6 +567,155 @@ export class UserHome implements OnInit {
 
       this.profileMenuOpen = false;
     }
+
+    if (!target.closest('.global-project-picker')) {
+      this.globalProjectMenuOpen = false;
+    }
+    if (!target.closest('.global-work-search')) {
+      this.globalWorkSearchOpen = false;
+    }
+  }
+
+  get filteredGlobalProjects() {
+    const query = this.globalProjectSearch.trim().toLowerCase();
+    return this.projectContext.projects().filter(project => !query || project.name.toLowerCase().includes(query));
+  }
+
+  get globalProjectName(): string {
+    return this.projectContext.selectedProject()?.name ?? 'Select project';
+  }
+
+  selectGlobalProject(projectId: number): void {
+    this.projectContext.setSelectedProject(projectId);
+    this.globalWorkItems = [];
+    this.loadedWorkSearchProjectId = null;
+    this.globalProjectMenuOpen = false;
+    this.globalProjectSearch = '';
+  }
+
+  get filteredGlobalWorkItems(): GlobalWorkItemSuggestion[] {
+    const query = this.globalWorkSearch.trim().toLowerCase();
+    if (query.length < 2) return [];
+    return this.globalWorkItems
+      .filter(item => `${item.key} ${item.title} ${item.typeLabel}`.toLowerCase().includes(query))
+      .slice(0, 8);
+  }
+
+  trackGlobalWorkItem(_index: number, item: GlobalWorkItemSuggestion): string {
+    return `${item.type}:${item.id}`;
+  }
+
+  clearGlobalWorkSearch(): void {
+    this.globalWorkSearch = '';
+    this.globalWorkSearchOpen = false;
+    this.focusSearch();
+  }
+
+  openFirstGlobalWorkItem(): void {
+    const first = this.filteredGlobalWorkItems[0];
+    if (first) this.openGlobalWorkItem(first);
+  }
+
+  openGlobalWorkItem(item: GlobalWorkItemSuggestion): void {
+    this.globalWorkSearchOpen = false;
+    this.globalWorkSearch = '';
+    this.router.navigate(['/user-home'], {
+      queryParams: {
+        menu: 'kanban-board',
+        openType: item.type,
+        openId: item.id,
+        createType: null,
+        projectId: item.projectId
+      }
+    });
+  }
+
+  private loadGlobalWorkItems(projectId: number): void {
+    if (!this.baseUrl) return;
+    this.workSearchRequestProjectId = projectId;
+    this.globalWorkSearchLoading = true;
+    const issueUrls = [...new Set([
+      `${this.baseUrl}/v1/issues?projectId=${projectId}`,
+      `${environment.apiBaseUrl2 || ''}/v1/issues?projectId=${projectId}`,
+      `${environment.apiBaseUrl || ''}/v1/issues?projectId=${projectId}`
+    ].filter(Boolean))];
+    forkJoin({
+      epics: this.http.get<any>(`${this.baseUrl}/projects/${projectId}/epics`, { headers: this.auth.getAuthHeaders() }).pipe(catchError(() => of([]))),
+      stories: this.http.get<any>(`${this.baseUrl}/projects/${projectId}/stories`, { headers: this.auth.getAuthHeaders() }).pipe(catchError(() => of([]))),
+      tasks: this.http.get<any>(`${this.baseUrl}/tasks`, { headers: this.auth.getAuthHeaders() }).pipe(catchError(() => of([]))),
+      issues: this.globalWorkCollection(issueUrls)
+    }).subscribe(({ epics, stories, tasks, issues }) => {
+      if (this.projectContext.selectedProjectId() !== projectId) return;
+      const epicRows = this.extractGlobalArray(epics);
+      const storyRows = this.extractGlobalArray(stories);
+      const storyIds = new Set(storyRows.map(row => this.globalNumber(row?.id ?? row?.story_id ?? row?.storyId)).filter((id): id is number => id !== null));
+      const taskRows = this.extractGlobalArray(tasks).filter(row => {
+        const rowProject = this.globalNumber(row?.project_id ?? row?.projectId ?? row?.project?.id);
+        const storyId = this.globalNumber(row?.story_id ?? row?.storyId ?? row?.story?.id);
+        return rowProject === projectId || (rowProject === null && storyId !== null && storyIds.has(storyId));
+      });
+      const issueRows = this.extractGlobalArray(issues).filter(row => {
+        const rowProject = this.globalNumber(row?.project_id ?? row?.projectId ?? row?.project?.id);
+        return rowProject === null || rowProject === projectId;
+      });
+      const project = this.projectContext.projects().find(candidate => candidate.id === projectId);
+      const suggestions = [
+        ...epicRows.map(row => this.normalizeGlobalWorkItem(row, 'EPIC', projectId, project?.name || '')),
+        ...storyRows.map(row => this.normalizeGlobalWorkItem(row, 'STORY', projectId, project?.name || '')),
+        ...taskRows.map(row => this.normalizeGlobalWorkItem(row, 'TASK', projectId, project?.name || '')),
+        ...issueRows.map(row => this.normalizeGlobalWorkItem(row, 'ISSUE', projectId, project?.name || ''))
+      ].filter((item): item is GlobalWorkItemSuggestion => item !== null);
+      this.globalWorkItems = suggestions;
+      this.loadedWorkSearchProjectId = projectId;
+      this.workSearchRequestProjectId = null;
+      this.globalWorkSearchLoading = false;
+    }, () => {
+      if (this.projectContext.selectedProjectId() !== projectId) return;
+      this.globalWorkItems = [];
+      this.loadedWorkSearchProjectId = projectId;
+      this.workSearchRequestProjectId = null;
+      this.globalWorkSearchLoading = false;
+    });
+  }
+
+  private globalWorkCollection(urls: string[]): Observable<any> {
+    const attempt = (index: number): Observable<any> => {
+      if (index >= urls.length) return of([]);
+      return this.http.get<any>(urls[index], { headers: this.auth.getAuthHeaders() }).pipe(
+        switchMap(response => this.extractGlobalArray(response).length ? of(response) : attempt(index + 1)),
+        catchError(() => attempt(index + 1))
+      );
+    };
+    return attempt(0);
+  }
+
+  private extractGlobalArray(value: any, depth = 0): any[] {
+    if (Array.isArray(value)) return value;
+    if (!value || typeof value !== 'object' || depth > 5) return [];
+    for (const key of ['content', 'data', 'items', 'results', 'records', 'epics', 'stories', 'tasks', 'issues']) {
+      const candidate = value[key];
+      if (Array.isArray(candidate)) return candidate;
+      if (candidate && typeof candidate === 'object') {
+        const nested = this.extractGlobalArray(candidate, depth + 1);
+        if (nested.length) return nested;
+      }
+    }
+    return [];
+  }
+
+  private globalNumber(value: any): number | null {
+    if (value === null || value === undefined || value === '') return null;
+    const number = Number(value);
+    return Number.isFinite(number) && number > 0 ? number : null;
+  }
+
+  private normalizeGlobalWorkItem(raw: any, type: GlobalWorkItemSuggestion['type'], projectId: number, projectName: string): GlobalWorkItemSuggestion | null {
+    const id = this.globalNumber(raw?.id ?? raw?.epic_id ?? raw?.epicId ?? raw?.story_id ?? raw?.storyId ?? raw?.task_id ?? raw?.taskId ?? raw?.issue_id ?? raw?.issueId);
+    if (id === null) return null;
+    const typeLabel = type === 'ISSUE' ? 'Issue' : type[0] + type.slice(1).toLowerCase();
+    const title = String(raw?.title ?? raw?.name ?? raw?.summary ?? raw?.description ?? `${typeLabel} ${id}`).trim();
+    const key = String(raw?.epic_code ?? raw?.epicCode ?? raw?.story_code ?? raw?.storyCode ?? raw?.task_code ?? raw?.taskCode ?? raw?.issue_code ?? raw?.issueCode ?? raw?.key ?? `${typeLabel.toUpperCase()}-${id}`).trim();
+    return { id, type, typeLabel, key, title, projectId, projectName };
   }
 
   // =========================================================
@@ -570,7 +767,7 @@ export class UserHome implements OnInit {
     if (
       url.includes('/epics')
     ) {
-      this.setActive('epics');
+      this.setActive('work-items');
     }
     else if (
       url.includes('/issues')
@@ -586,6 +783,16 @@ export class UserHome implements OnInit {
       url.includes('/projects')
     ) {
       this.setActive('projects');
+    }
+    else if (
+      url.includes('/sprint-planning')
+    ) {
+      this.setActive('sprint-planning');
+    }
+    else if (
+      url.includes('/kanban-board')
+    ) {
+      this.setActive('kanban-board');
     }
     else if (
       url.includes('/boards')

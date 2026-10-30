@@ -29,7 +29,7 @@ type ViewerType = 'EPIC' | 'STORY' | 'TASK' | 'ISSUE';
   standalone: true,
   imports: [CommonModule, FormsModule, MatDialogModule],
   templateUrl: './viewer.html',
-  styleUrls: ['./viewer.css'],
+  styleUrls: ['./viewer.css', '../shared/field-controls.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Viewer implements OnInit {
@@ -112,7 +112,7 @@ export class Viewer implements OnInit {
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
     { id: 'products', label: 'Products', icon: 'products' },
     { id: 'projects', label: 'Projects', icon: 'projects' },
-    { id: 'epics', label: 'Epics & Backlogs', icon: 'epics' },
+    { id: 'work-items', label: 'Work Items', icon: 'work-items' },
     { id: 'issues', label: 'Issues', icon: 'issues' },
     { id: 'test-cases', label: 'Test Cases', icon: 'tests' },
     { id: 'releases', label: 'Releases', icon: 'releases' },
@@ -2095,7 +2095,7 @@ export class Viewer implements OnInit {
       case 'EPIC':
       case 'STORY':
       case 'TASK':
-        return 'epics';
+        return 'work-items';
       case 'ISSUE':
         return 'issues';
       default:
@@ -2117,7 +2117,7 @@ export class Viewer implements OnInit {
     this.createMenuOpen = false;
 
     if (type === 'epic' || type === 'story' || type === 'task') {
-      this.setActive('epics');
+      this.setActive('work-items');
       return;
     }
 

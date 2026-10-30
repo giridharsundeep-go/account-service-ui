@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener, signal, computed, ChangeDetectionStrategy, Pipe, PipeTransform, inject } from '@angular/core';
+import { Component, OnInit, HostListener, signal, computed, effect, ChangeDetectionStrategy, Pipe, PipeTransform, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -6,6 +6,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../environment';
 import { AuthService } from '../auth.service';
+import { ProjectContextService } from '../project-context.service';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -106,12 +107,13 @@ export interface IssueRecord {
     MatIconModule
   ],
   templateUrl: './issues.html',
-  styleUrls: ['./issues.css'],
+  styleUrls: ['./issues.css', '../shared/field-controls.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Issues implements OnInit {
   private http = inject(HttpClient);
   private auth = inject(AuthService);
+  private readonly projectContext = inject(ProjectContextService);
 
   baseUrl = environment.apiBaseUrlM;
   baseUrl2 = environment.apiBaseUrlM
@@ -129,6 +131,12 @@ export class Issues implements OnInit {
   rawTasks = signal<AllocatableItem[]>([]);
 
   selectedProjectId = signal<number | null>(null);
+  private readonly projectContextSync = effect(() => {
+    const sharedProjectId = this.projectContext.selectedProjectId();
+    const projects = this.projects();
+    if (!sharedProjectId || !projects.length || this.selectedProjectId() === sharedProjectId) return;
+    if (projects.some(project => Number(project.id) === sharedProjectId)) this.onProjectChange(sharedProjectId);
+  });
   selectedSprintFilter = signal<number | 'ALL'>('ALL');
   selectedStatusFilter = signal<string | 'ALL'>('ALL');
   searchTerm = signal<string>('');
@@ -548,13 +556,16 @@ export class Issues implements OnInit {
         const projs = this.extractArray(res);
         this.projects.set(projs);
         if (projs.length > 0) {
-          this.onProjectChange(projs[0].id);
+          const sharedId = this.projectContext.selectedProjectId();
+          const selected = projs.find((project: any) => Number(project.id ?? project.project_id ?? project.projectId) === sharedId) ?? projs[0];
+          this.onProjectChange(Number(selected.id ?? selected.project_id ?? selected.projectId));
         }
       });
   }
 
   onProjectChange(projId: number) {
     this.selectedProjectId.set(projId);
+    this.projectContext.setSelectedProject(projId);
     this.selectedSprintFilter.set('ALL');
     this.loadAllIssues();
     this.loadAllocatables(projId);

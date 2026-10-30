@@ -62,7 +62,7 @@ function passwordMatchValidator(group: AbstractControl): ValidationErrors | null
     MatOption
   ],
   templateUrl: './create-account.html',
-  styleUrls: ['./create-account.css'],
+  styleUrls: ['./create-account.css', '../shared/field-controls.css'],
 })
 export class CreateAccount {
 

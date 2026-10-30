@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatIconModule } from '@angular/material/icon';
 
 export interface UserPayload {
   id: number;
@@ -32,10 +33,11 @@ export interface UserSelectDialogData {
     MatButtonModule,
     MatDialogModule,
     MatFormFieldModule,
-    MatInputModule
+    MatInputModule,
+    MatIconModule
   ],
   templateUrl: './user-select-dialog.html',
-  styleUrls: ['./user-select-dialog.css']
+  styleUrls: ['./user-select-dialog.css', '../shared/field-controls.css']
 })
 export class UserSelectDialog implements OnInit {
   localSelectedIds: number[] = [];
@@ -71,66 +73,208 @@ export class UserSelectDialog implements OnInit {
     this.usersLoadError = '';
 
     this.http.get<any>(
-      `${this.baseUrl}/users`,
-      {
-        headers: this.auth.getAuthHeaders()
-      }
+      `${this.baseUrl.replace(/\/+$/, '')}/users`,
+      { headers: this.auth.getAuthHeaders() }
     ).subscribe({
       next: (response: any) => {
-        const rawUsers =
-          Array.isArray(response?.data)
-            ? response.data
-            : Array.isArray(response)
-              ? response
-              : [];
-
-        this.users = rawUsers
+        const rawUsers = this.extractUsers(response);
+        const normalized = rawUsers
           .map((user: any) => this.normalizeUser(user))
           .filter((user: UserPayload) =>
             Number.isFinite(user.id) && user.id > 0
           );
 
-        this.mergeMissingSelectedUsersFromParent();
-
+        // Prefer freshly fetched user details, while preserving selected users
+        // supplied by the caller if the API response omits them.
+        this.users = this.mergeUsers(normalized, this.data?.users ?? []);
         this.loadingUsers = false;
+        this.usersLoadError = this.users.length
+          ? ''
+          : 'No users were returned by the users API.';
       },
       error: (error) => {
         console.error('Failed to load users for team member selection:', error);
-
-        this.users = this.data?.users ?? [];
-        this.mergeMissingSelectedUsersFromParent();
-
-        this.usersLoadError =
-          'Unable to load users. Please try again.';
+        this.users = this.mergeUsers([], this.data?.users ?? []);
+        this.usersLoadError = this.users.length
+          ? ''
+          : 'Unable to load users. Check the users API response and permissions.';
         this.loadingUsers = false;
       }
     });
   }
 
+  /**
+   * Accepts common API envelope shapes without assuming a single backend DTO:
+   * [], {data: []}, {data: {users: []}}, {result: []}, {content: []}, etc.
+   */
+  private extractUsers(response: any): any[] {
+    const queue: any[] = [response];
+    const visited = new Set<any>();
+
+    while (queue.length) {
+      const value = queue.shift();
+      if (!value || typeof value !== 'object' || visited.has(value)) continue;
+      visited.add(value);
+
+      if (Array.isArray(value)) {
+        if (value.length === 0) return value;
+        const first = value[0];
+        if (first && typeof first === 'object' &&
+            ('id' in first || 'user_id' in first || 'userId' in first ||
+             'email' in first || 'username' in first)) {
+          return value;
+        }
+        queue.push(...value);
+        continue;
+      }
+
+      for (const key of [
+        'data', 'users', 'content', 'results', 'result',
+        'payload', 'items', 'records', 'employees'
+      ]) {
+        if (value[key] !== undefined && value[key] !== null) {
+          if (Array.isArray(value[key])) {
+            const candidate = value[key];
+            if (!candidate.length ||
+                (candidate[0] && typeof candidate[0] === 'object' &&
+                 ('id' in candidate[0] || 'user_id' in candidate[0] ||
+                  'userId' in candidate[0] || 'email' in candidate[0] ||
+                  'username' in candidate[0]))) {
+              return candidate;
+            }
+          }
+          queue.push(value[key]);
+        }
+      }
+    }
+
+    return [];
+  }
+
+  private mergeUsers(primary: UserPayload[], fallback: UserPayload[]): UserPayload[] {
+    const byId = new Map<number, UserPayload>();
+    [...fallback, ...primary].forEach(user => {
+      const id = Number(user?.id);
+      if (Number.isFinite(id) && id > 0) {
+        const previous = byId.get(id);
+        const merged = { ...previous, ...user };
+        if (!user.name || user.name === 'Name not provided' || user.name === 'Unknown User') {
+          merged.name = previous?.name || user.name || 'Name not provided';
+        }
+        if (!user.email) merged.email = previous?.email || '';
+        if (!user.profilePictureUrl) merged.profilePictureUrl = previous?.profilePictureUrl ?? null;
+        if (!user.employeeIdPrefix) merged.employeeIdPrefix = previous?.employeeIdPrefix ?? null;
+        if (user.employeeIdNumber == null) merged.employeeIdNumber = previous?.employeeIdNumber ?? null;
+        byId.set(id, merged);
+      }
+    });
+    return [...byId.values()].sort((a, b) =>
+      (a.name || '').localeCompare(b.name || '')
+    );
+  }
+
   private normalizeUser(user: any): UserPayload {
+    const employeeCode = user?.employeeCode ?? user?.employee_code ??
+      user?.employeeId ?? user?.employee_id ?? user?.empCode ?? user?.emp_code;
+    const prefix = user?.employeeIdPrefix ?? user?.employee_id_prefix ??
+      user?.employeeCodePrefix ?? user?.employee_code_prefix ??
+      (employeeCode ? String(employeeCode).replace(/[0-9]+$/, '') : null);
+    const number = user?.employeeIdNumber ?? user?.employee_id_number ??
+      user?.employeeCodeNumber ?? user?.employee_code_number ??
+      (employeeCode ? String(employeeCode).match(/[0-9]+$/)?.[0] : null);
+
+    const email = String(
+      user?.email ?? user?.emailAddress ?? user?.email_address ?? ''
+    ).trim();
+
+    const firstName = String(
+      user?.firstName ?? user?.first_name ?? user?.givenName ?? user?.given_name ?? ''
+    ).trim();
+    const lastName = String(
+      user?.lastName ?? user?.last_name ?? user?.surname ?? user?.familyName ?? user?.family_name ?? ''
+    ).trim();
+
+    const rawName = [
+      user?.name,
+      user?.fullName,
+      user?.full_name,
+      user?.displayName,
+      user?.display_name,
+      user?.preferredName,
+      user?.preferred_name,
+      [firstName, lastName].filter(Boolean).join(' '),
+      user?.username,
+      user?.userName,
+      user?.user_name
+    ].find((candidate: any) =>
+      typeof candidate === 'string' &&
+      candidate.trim() &&
+      !this.looksLikeEmail(candidate.trim()) &&
+      !this.isSyntheticUsername(candidate.trim())
+    );
+
+    const name = rawName
+      ? String(rawName).trim()
+      : this.friendlyNameFallback(user, email, employeeCode, number);
+
     return {
-      id: Number(user?.id ?? user?.user_id),
-      name:
-        user?.name ||
-        user?.username ||
-        user?.email ||
-        'Unknown User',
-      email:
-        user?.email ||
-        'No email available',
-      profilePictureUrl:
-        user?.profilePictureUrl ??
-        user?.profile_picture_url ??
-        null,
-      employeeIdPrefix:
-        user?.employeeIdPrefix ??
-        user?.employee_id_prefix ??
-        null,
-      employeeIdNumber:
-        user?.employeeIdNumber ??
-        user?.employee_id_number ??
-        null
+      id: Number(user?.id ?? user?.user_id ?? user?.userId ?? user?.user_account_id),
+      name,
+      email,
+      profilePictureUrl: user?.profilePictureUrl ??
+        user?.profile_picture_url ?? user?.avatarUrl ?? user?.avatar_url ??
+        user?.photoUrl ?? user?.photo_url ?? user?.imageUrl ??
+        user?.image_url ?? user?.profileImage ?? user?.profile_image ?? null,
+      employeeIdPrefix: prefix != null ? String(prefix) : null,
+      employeeIdNumber: number != null ? String(number) : null
     };
+  }
+
+  private looksLikeEmail(value: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  }
+
+  private isSyntheticUsername(value: string): boolean {
+    return /^(?:seed\d+[._-]?)?user\d+(?:@.*)?$/i.test(value) ||
+      /^user\d+$/i.test(value);
+  }
+
+  /**
+   * Do not render an email address or generated seed username as the person's
+   * display name. If the API has no real name fields, use a readable fallback.
+   */
+  private friendlyNameFallback(user: any, email: string, employeeCode: any, number: any): string {
+    const candidates = [
+      user?.username,
+      user?.userName,
+      user?.user_name,
+      email
+    ].filter((value: any) => typeof value === 'string' && value.trim());
+
+    for (const candidate of candidates) {
+      const localPart = String(candidate).trim().split('@')[0];
+      const seedUserMatch = localPart.match(/user\s*0*(\d+)/i);
+      if (seedUserMatch) {
+        return `User ${seedUserMatch[1].padStart(4, '0')}`;
+      }
+
+      // Convert a human-readable username such as "alex.johnson" to a name.
+      if (!/^seed\d+/i.test(localPart)) {
+        const cleaned = localPart
+          .replace(/[._-]+/g, ' ')
+          .replace(/\d+/g, ' ')
+          .trim();
+        if (cleaned && !this.looksLikeEmail(cleaned)) {
+          return cleaned.replace(/\b\w/g, (letter: string) => letter.toUpperCase());
+        }
+      }
+    }
+
+    if (employeeCode || number) {
+      return `User ${String(employeeCode ?? number)}`;
+    }
+
+    return 'Name not provided';
   }
 
   private mergeMissingSelectedUsersFromParent(): void {
@@ -224,6 +368,11 @@ export class UserSelectDialog implements OnInit {
 
   hasAvatar(user: UserPayload): boolean {
     return !!user?.profilePictureUrl?.trim();
+  }
+
+  onAvatarError(event: Event): void {
+    const image = event.target as HTMLImageElement | null;
+    if (image) image.style.display = 'none';
   }
 
   getAvatarDisplaySrc(user: UserPayload): string {

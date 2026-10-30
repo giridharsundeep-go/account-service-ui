@@ -1,0 +1,245 @@
+/* Standard form fields share one height, outline, radius, and focus state. */
+:host :is(
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="tel"],
+  select,
+  .google-input,
+  .user-autocomplete-input,
+  .drawer-select,
+  .edit-input,
+  .edit-select,
+  .detail-input,
+  .team-inline-input:not(.team-inline-description)
+):not(.mat-mdc-input-element):not(.mat-mdc-native-select):not(.title-input):not(.kb-title-edit-input):not(.work-item-header-title-input):not(.team-inline-title):not(.kb-create-type-select):not([aria-label="Paragraph style"]):not([aria-label="Font size"]):not([type="checkbox"]):not([type="radio"]):not([type="search"]) {
+  box-sizing: border-box !important;
+  height: var(--gp-field-height) !important;
+  min-height: var(--gp-field-height) !important;
+  padding: 0 12px !important;
+  border: 1px solid var(--gp-field-border) !important;
+  border-radius: var(--gp-field-radius) !important;
+  background-color: var(--gp-field-background) !important;
+  color: var(--gp-field-text) !important;
+  font-family: "Google Sans", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 13px !important;
+  transition: border-color .16s ease, box-shadow .16s ease, background-color .16s ease !important;
+}
+
+:host :is(
+  input[type="text"], input[type="email"], input[type="password"], input[type="number"],
+  input[type="date"], input[type="datetime-local"], input[type="tel"], select,
+  .google-input, .edit-input, .edit-select, .detail-input, .user-autocomplete-input, .drawer-select
+):not(.mat-mdc-input-element):not(.mat-mdc-native-select):not(.title-input):not(.kb-title-edit-input):not(.work-item-header-title-input):not(.team-inline-title):not(.kb-create-type-select):not([aria-label="Paragraph style"]):not([aria-label="Font size"]):not([type="checkbox"]):not([type="radio"]):not([type="search"]):is(:focus, :focus-visible) {
+  border-color: var(--gp-field-border-focus) !important;
+  outline: 0 !important;
+  box-shadow: var(--gp-field-focus-ring) !important;
+}
+
+:host :is(textarea, .google-textarea, .work-item-description-input, .team-inline-description):not(.mat-mdc-input-element):not(.title-input):not(.kb-title-edit-input):not(.work-item-header-title-input) {
+  box-sizing: border-box !important;
+  height: auto !important;
+  min-height: 96px !important;
+  padding: 11px 13px !important;
+  border: 1px solid var(--gp-field-border) !important;
+  border-radius: var(--gp-field-radius) !important;
+  background: var(--gp-field-background) !important;
+  color: var(--gp-field-text) !important;
+  font-family: "Google Sans", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 13px !important;
+  resize: vertical;
+}
+
+:host :is(textarea, .google-textarea, .work-item-description-input, .team-inline-description):not(.mat-mdc-input-element):not(.title-input):not(.kb-title-edit-input):not(.work-item-header-title-input):is(:focus, :focus-visible) {
+  border-color: var(--gp-field-border-focus) !important;
+  outline: 0 !important;
+  box-shadow: var(--gp-field-focus-ring) !important;
+}
+
+/* Keep Material form fields at the same corner radius across components. */
+:host ::ng-deep .mat-mdc-form-field.mat-mdc-form-field .mat-mdc-text-field-wrapper,
+:host ::ng-deep .mat-mdc-form-field.mat-mdc-form-field .mdc-notched-outline {
+  border-radius: var(--gp-field-radius) !important;
+}
+
+:host ::ng-deep .mat-mdc-form-field.mat-mdc-form-field .mdc-notched-outline__leading {
+  width: 10px !important;
+  border-radius: var(--gp-field-radius) 0 0 var(--gp-field-radius) !important;
+  border-color: var(--gp-field-border) !important;
+}
+
+:host ::ng-deep .mat-mdc-form-field.mat-mdc-form-field .mdc-notched-outline__notch,
+:host ::ng-deep .mat-mdc-form-field.mat-mdc-form-field .mdc-notched-outline__trailing {
+  border-color: var(--gp-field-border) !important;
+}
+
+:host ::ng-deep .mat-mdc-form-field.mat-mdc-form-field .mdc-notched-outline__trailing {
+  border-radius: 0 var(--gp-field-radius) var(--gp-field-radius) 0 !important;
+}
+
+:host ::ng-deep .mat-mdc-form-field.mat-mdc-form-field:not(:has(textarea)) .mat-mdc-text-field-wrapper {
+  height: var(--gp-field-height) !important;
+  min-height: var(--gp-field-height) !important;
+}
+
+:host ::ng-deep .mat-mdc-form-field.mat-mdc-form-field:not(:has(textarea)) .mat-mdc-form-field-infix {
+  min-height: var(--gp-field-height) !important;
+  padding-top: 9px !important;
+  padding-bottom: 9px !important;
+  box-sizing: border-box !important;
+}
+
+:host ::ng-deep .mat-mdc-form-field .mat-mdc-input-element,
+:host ::ng-deep .mat-mdc-form-field .mat-mdc-select-value,
+:host ::ng-deep .mat-mdc-form-field .mat-mdc-select-placeholder {
+  color: var(--gp-field-text) !important;
+  font-family: "Google Sans", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 13px !important;
+}
+
+:host ::ng-deep .mat-mdc-form-field.mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
+:host ::ng-deep .mat-mdc-form-field.mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
+:host ::ng-deep .mat-mdc-form-field.mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing {
+  border-color: var(--gp-field-border-focus) !important;
+}
+
+/* Filter triggers and native selects use the same compact control treatment. */
+:host :is(
+  .work-items-filter-trigger,
+  .work-items-filter-select,
+  .work-items-filter-select select,
+  .kb-sprint-select,
+  .kb-filter-trigger,
+  .epics-board-filter-trigger,
+  .selector-field select,
+  .filter-field select,
+  .filter-select,
+  .google-select,
+  .native-google-select,
+  .project-selector select,
+  .kb-floating-field select,
+  .material-select,
+  .filter-button,
+  .work-items-more-filter
+) {
+  height: var(--gp-field-height) !important;
+  min-height: var(--gp-field-height) !important;
+  border: 1px solid var(--gp-field-border) !important;
+  border-radius: var(--gp-field-radius) !important;
+  background-color: #fff !important;
+  color: var(--gp-field-text) !important;
+  font-family: "Google Sans", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 13px !important;
+}
+
+:host :is(.work-items-filter-trigger, .kb-filter-trigger, .epics-board-filter-trigger, .work-items-more-filter, .filter-button):is(:hover, .is-open, .is-active, .has-selection, .active),
+:host :is(.work-items-filter-select, .kb-sprint-select, .selector-field select, .filter-field select, .filter-select, .google-select, .native-google-select, .project-selector select, .kb-floating-field select, .material-select):is(:hover, :focus, :focus-visible) {
+  border-color: var(--gp-field-border-focus) !important;
+  box-shadow: var(--gp-field-focus-ring) !important;
+}
+
+:host :is(.work-items-filter-trigger, .kb-filter-trigger, .epics-board-filter-trigger, .work-items-more-filter, .filter-button):is(.is-open, .is-active, .has-selection, .active) {
+  background-color: #eaf2ff !important;
+  color: #1769d4 !important;
+}
+
+/* Search wrappers have a matching surface; their inner text remains borderless. */
+:host :is(
+  .matrix-search-input-frame,
+  .search-shell,
+  .search-box,
+  .global-search,
+  .google-search-shell,
+  .work-items-search,
+  .planning-toolbar .search-field,
+  .kb-board-search,
+  .work-filter-search,
+  .global-project-search,
+  .global-work-search-field,
+  .docs-search,
+  .team-profile-member-search,
+  .team-search,
+  .epics-filter-search,
+  .add-testcases-search
+) {
+  height: var(--gp-field-height) !important;
+  min-height: var(--gp-field-height) !important;
+  border: 1px solid var(--gp-field-border) !important;
+  border-radius: var(--gp-field-radius) !important;
+  background-color: #fff !important;
+}
+
+:host :is(
+  .matrix-search-input-frame,
+  .search-shell,
+  .search-box,
+  .global-search,
+  .google-search-shell,
+  .work-items-search,
+  .planning-toolbar .search-field,
+  .kb-board-search,
+  .work-filter-search,
+  .global-project-search,
+  .global-work-search-field,
+  .docs-search,
+  .team-profile-member-search,
+  .team-search,
+  .epics-filter-search,
+  .add-testcases-search
+):focus-within {
+  border-color: var(--gp-field-border-focus) !important;
+  box-shadow: var(--gp-field-focus-ring) !important;
+}
+
+:host :is(
+  .matrix-search-input-frame,
+  .search-shell,
+  .search-box,
+  .global-search,
+  .google-search-shell,
+  .work-items-search,
+  .planning-toolbar .search-field,
+  .kb-board-search,
+  .work-filter-search,
+  .global-project-search,
+  .global-work-search-field,
+  .docs-search,
+  .team-profile-member-search,
+  .team-search,
+  .epics-filter-search,
+  .add-testcases-search
+) input:not(.mat-mdc-input-element) {
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Project pickers are compound controls with a Material select inside. */
+:host :is(.project-switcher, .release-header-picker, .epics-project-picker) {
+  box-sizing: border-box !important;
+  height: var(--gp-field-height) !important;
+  min-height: var(--gp-field-height) !important;
+  border: 1px solid var(--gp-field-border) !important;
+  border-radius: var(--gp-field-radius) !important;
+  background: var(--gp-field-background) !important;
+  transition: border-color .16s ease, box-shadow .16s ease, background-color .16s ease !important;
+}
+
+:host :is(.project-switcher, .release-header-picker, .epics-project-picker):focus-within {
+  border-color: var(--gp-field-border-focus) !important;
+  box-shadow: var(--gp-field-focus-ring) !important;
+}
+
+:host :is(.work-filter-popover, .kb-filter-panel, .filter-suggestions, .global-work-search-popover, .epics-board-sprint-filter-panel) {
+  border: 1px solid var(--gp-field-border) !important;
+  border-radius: var(--gp-popover-radius) !important;
+  background: #fff !important;
+  box-shadow: var(--gp-popover-shadow) !important;
+}

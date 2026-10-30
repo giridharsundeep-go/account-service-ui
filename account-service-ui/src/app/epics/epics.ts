@@ -6,17 +6,19 @@ import {
   Pipe,
   PipeTransform,
   computed,
+  effect,
   inject,
   signal
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { forkJoin, of } from 'rxjs';
+import { forkJoin, of, Subscription } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { environment } from '../../environment';
 import { AuthService } from '../auth.service';
+import { ProjectContextService } from '../project-context.service';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -322,7 +324,7 @@ export class ResolveUserPipe implements PipeTransform {
     DragDropModule
   ],
   templateUrl: './epics.html',
-  styleUrls: ['./epics.css'],
+  styleUrls: ['./epics.css', '../shared/field-controls.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Epics implements OnInit {
@@ -330,6 +332,7 @@ export class Epics implements OnInit {
   readonly issueDisplayedColumns = ['issue', 'status', 'sprint', 'priority', 'linkedWork', 'assignee', 'reporter', 'actions'];
   private http = inject(HttpClient);
   private auth = inject(AuthService);
+  private readonly projectContext = inject(ProjectContextService);
 
   readonly baseUrl = environment.apiBaseUrlM;
   readonly baseUrl2 = environment.apiBaseUrlM;
@@ -346,6 +349,12 @@ export class Epics implements OnInit {
   readonly priorities = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 
   projects = signal<any[]>([]);
+  private readonly projectContextSync = effect(() => {
+    const sharedProjectId = this.projectContext.selectedProjectId();
+    const projects = this.projects();
+    if (!sharedProjectId || !projects.length || Number(this.selectedProjectId()) === sharedProjectId) return;
+    if (projects.some(project => Number(project.id) === sharedProjectId)) this.onProjectChange(sharedProjectId);
+  });
   users = signal<any[]>([]);
   teams = signal<Team[]>([]);
   teamMembers = signal<any[]>([]);
@@ -353,6 +362,22 @@ export class Epics implements OnInit {
   hierarchyTree = signal<EpicNode[]>([]);
   /** Board-only hierarchy aggregated across every project; directory views remain project-scoped. */
   boardHierarchyTree = signal<EpicNode[]>([]);
+
+  /** O(1) work-item lookups reused by issue linking and sprint resolution. */
+  hierarchyLookups = computed(() => {
+    const epicsById = new Map<number, EpicNode>();
+    const storiesById = new Map<number, StoryNode>();
+    const tasksById = new Map<number, TaskNode>();
+    for (const epic of this.hierarchyTree()) {
+      epicsById.set(Number(epic.id), epic);
+      for (const story of epic.stories || []) {
+        storiesById.set(Number(story.id), story);
+        for (const task of story.tasks || []) tasksById.set(Number(task.id), task);
+      }
+    }
+    return { epicsById, storiesById, tasksById };
+  });
+
   showBoardSprintFilters = signal(false);
   selectedBoardSprintFilter = signal<number | 'ALL'>('ALL');
   projectTestcases = signal<TestCase[]>([]);
@@ -397,6 +422,7 @@ export class Epics implements OnInit {
   }
 
   clearDirectoryColumnFilters(): void {
+    this.tableVisibleCount.set(this.tablePageSize);
     this.directoryColumnFilters.set({
       key: '', summary: '', status: 'ALL', sprint: 'ALL',
       priority: 'ALL', assignee: 'ALL', reporter: 'ALL'
@@ -406,11 +432,35 @@ export class Epics implements OnInit {
   private directoryRowMatches(row: any): boolean {
     const f = this.directoryColumnFilters();
     const norm = (value: unknown) => String(value ?? '').trim().toLowerCase();
+    const upper = (value: unknown) => norm(value).toUpperCase();
+
+    // Shared page filters apply consistently to Epics, Stories, Tasks, and Issues.
+    const sprintFilter = this.selectedSprintFilter();
+    if (sprintFilter !== 'ALL' && Number(row.sprintId || 0) !== Number(sprintFilter)) return false;
+    if (this.selectedStatusFilter() !== 'ALL' &&
+        upper(row.status) !== upper(this.selectedStatusFilter())) return false;
+    if (this.selectedPriorityFilter() !== 'ALL' &&
+        upper(row.priority) !== upper(this.selectedPriorityFilter())) return false;
+    if (this.selectedAssigneeFilter() !== 'ALL' &&
+        Number(row.assigneeId) !== Number(this.selectedAssigneeFilter())) return false;
+    if (this.selectedReporterFilter() !== 'ALL' &&
+        Number(row.reporterId) !== Number(this.selectedReporterFilter())) return false;
+    if (this.selectedUserFilter() !== null &&
+        Number(row.assigneeId) !== Number(this.selectedUserFilter())) return false;
+    if (!this.matchesTeamFilter(row.item ?? row)) return false;
+
+    const query = this.searchTerm().trim().toLowerCase();
+    if (query && ![
+      row.code, row.title, row.status, row.priority, row.sprintName,
+      row.parent, this.getUserName(row.assigneeId), this.getUserName(row.reporterId)
+    ].some(value => norm(value).includes(query))) return false;
+
+    // Preserve the table's per-column filters too.
     if (f.key && !norm(row.code).includes(norm(f.key))) return false;
     if (f.summary && !norm(row.title).includes(norm(f.summary))) return false;
-    if (f.status !== 'ALL' && norm(row.status).toUpperCase() !== f.status) return false;
+    if (f.status !== 'ALL' && upper(row.status) !== f.status) return false;
     if (f.sprint !== 'ALL' && Number(row.sprintId) !== Number(f.sprint)) return false;
-    if (f.priority !== 'ALL' && norm(row.priority).toUpperCase() !== f.priority) return false;
+    if (f.priority !== 'ALL' && upper(row.priority) !== f.priority) return false;
     if (f.assignee !== 'ALL' && Number(row.assigneeId) !== Number(f.assignee)) return false;
     if (f.reporter !== 'ALL' && Number(row.reporterId) !== Number(f.reporter)) return false;
     return true;
@@ -423,7 +473,7 @@ export class Epics implements OnInit {
       sprintId: group.sprint.id, sprintName: group.sprint.name,
       priority: (item.epic as any).priority || '',
       assigneeId: item.epic.assignee_user_id, reporterId: item.epic.reporter_user_id,
-      item: item.epic, parent: item.epic.name
+      teamId: item.epic.team_id, item: item.epic, parent: item.epic.name
     }))
   ).filter(row => this.directoryRowMatches(row)));
 
@@ -433,7 +483,7 @@ export class Epics implements OnInit {
       status: item.story.status || 'BACKLOG', sprintId: group.sprint.id,
       sprintName: group.sprint.name, priority: item.story.priority || '',
       assigneeId: item.story.assignee_user_id, reporterId: item.story.reporter_user_id,
-      item: item.story, parent: item.epicName
+      teamId: item.story.team_id, item: item.story, parent: item.epicName
     }))
   ).filter(row => this.directoryRowMatches(row)));
 
@@ -443,7 +493,8 @@ export class Epics implements OnInit {
       status: item.task.status || 'BACKLOG',
       sprintId: this.resolveItemSprintId(item.task), sprintName: group.sprint.name,
       priority: item.task.priority || '', assigneeId: item.task.assignee_user_id,
-      reporterId: item.task.reporter_user_id, item: item.task, parent: item.storyTitle
+      reporterId: item.task.reporter_user_id, teamId: item.task.team_id,
+      item: item.task, parent: item.storyTitle
     }))
   ).filter(row => this.directoryRowMatches(row)));
   searchExpanded = signal(false);
@@ -457,6 +508,8 @@ export class Epics implements OnInit {
   selectedReporterFilter = signal<number | 'ALL'>('ALL');
   selectedUserFilter = signal<number | null>(null);
   searchTerm = signal('');
+  searchInput = signal('');
+  private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   collapsedSprintIds = signal<Set<number>>(new Set());
   selectedItems = signal<Set<string>>(new Set());
@@ -773,15 +826,14 @@ export class Epics implements OnInit {
     const effectiveSprintId = this.resolveItemSprintId(item, parentSprintId);
     const currentId = this.currentSprintId();
 
-    // A selected sprint always wins over the default current-sprint scope.
-    // ALL keeps the existing mode behaviour: current sprint for the main views,
-    // and outside-current-sprint work for OTHER.
+    // Directory views are complete project inventories: ALL means every sprint,
+    // including backlog/unassigned items. The Board has its own sprint scope.
+    // OTHER remains a special view that excludes the current sprint only when
+    // the user has not explicitly selected a sprint.
     if (sprintFilter !== 'ALL') {
       if (effectiveSprintId !== Number(sprintFilter)) return false;
     } else if (this.workItemMode() === 'OTHER') {
       if (currentId !== null && effectiveSprintId === Number(currentId)) return false;
-    } else if (!this.matchesCurrentSprintScope(item, parentSprintId)) {
-      return false;
     }
 
     if (
@@ -999,38 +1051,42 @@ export class Epics implements OnInit {
   setWorkItemMode(
     mode: 'EPICS' | 'STORIES' | 'TASKS' | 'ALL' | 'OTHER' | 'ISSUES'
   ): void {
+    const modeChanged = this.workItemMode() !== mode || this.activeTab() !== 'TREE';
     this.workItemMode.set(mode);
+    this.tableVisibleCount.set(this.tablePageSize);
     this.activeTab.set('TREE');
+    // Keep shared filters when switching tabs so the same selection scopes
+    // Epics, Stories, Tasks, Issues, and the Board.
     this.showFilters.set(false);
     this.clearDirectoryColumnFilters();
-    this.selectedSprintFilter.set('ALL');
-    this.selectedStatusFilter.set('ALL');
-    this.selectedPriorityFilter.set('ALL');
-    this.selectedTeamFilter.set('ALL');
-    this.selectedAssigneeFilter.set('ALL');
-    this.selectedReporterFilter.set('ALL');
     this.issueLinkFilter.set(null);
     this.clearSelection();
 
     if (mode === 'OTHER') {
-      this.selectedSprintFilter.set('ALL');
-      return;
-    }
-
-    if (mode === 'ISSUES') {
-      // Issues starts with all sprint cycles; the Sprint column and filter
-      // make each issue's sprint visible without hiding older/future issues.
-      this.selectedSprintFilter.set('ALL');
       this.sprintStartPromptOpen.set(false);
       return;
     }
 
-    // Directory tables show work across sprints; the Sprint column filter scopes rows.
-    this.selectedSprintFilter.set('ALL');
+    if (mode === 'ISSUES') {
+      this.sprintStartPromptOpen.set(false);
+      return;
+    }
+
+    // Preserve the shared sprint selection when switching between directory tabs.
     this.sprintStartPromptOpen.set(false);
+
+    if (mode === 'EPICS' && modeChanged) {
+      this.fetchEpicPage(0);
+    }
   }
 
   onEpicsTabChange(index: number): void {
+    if (index === this.selectedEpicsTabIndex &&
+        ((index === 0 && this.activeTab() === 'KANBAN') ||
+         (index > 0 && this.activeTab() === 'TREE' &&
+          this.workItemMode() === (['', 'EPICS', 'STORIES', 'TASKS', 'ISSUES'][index] as any)))) {
+      return;
+    }
     this.selectedEpicsTabIndex = index;
     switch (index) {
       case 0:
@@ -1059,7 +1115,6 @@ export class Epics implements OnInit {
     // The Board view is the default landing view and must remain available
     // even when the project has no active sprint.
     this.selectedBoardSprintFilter.set(active ? Number(active.id) : 'ALL');
-    this.selectedSprintFilter.set('ALL');
     this.selectedEpicsTabIndex = 0;
     this.activeTab.set('KANBAN');
     this.isKanbanFullscreen.set(false);
@@ -1335,6 +1390,152 @@ export class Epics implements OnInit {
     return groups;
   });
 
+  /** Keep the board DOM bounded even when a project contains many thousands of work items. */
+  readonly kanbanPageSize = 100;
+  readonly tablePageSize = 100;
+  readonly epicPageSize = 100;
+  tableVisibleCount = signal(100);
+  kanbanVisibleCounts = signal<Record<string, number>>({});
+
+  // Server-side pagination state for the Epics directory.
+  epicPageItems = signal<EpicNode[]>([]);
+  epicPageIndex = signal(0);
+  epicPageTotalElements = signal(0);
+  epicPageTotalPages = signal(0);
+  epicPageLoading = signal(false);
+  private epicPageRequest?: Subscription;
+  private hierarchyRequest?: Subscription;
+  private hierarchyRequestId = 0;
+
+  epicPageTableRows = computed(() => {
+    const sprintById = new Map<number, Sprint>();
+    for (const sprint of this.projectSprints()) sprintById.set(Number(sprint.id), sprint);
+
+    return this.epicPageItems().map(epic => {
+      const sprintId = Number(epic.sprint_id ?? 0);
+      const sprint = sprintById.get(sprintId);
+      return {
+        type: 'EPIC',
+        code: epic.epic_code || `E-${epic.id}`,
+        title: epic.name,
+        status: epic.status || 'BACKLOG',
+        sprintId: sprintId || null,
+        sprintName: sprint?.name || (sprintId ? `Sprint ${sprintId}` : 'Backlog / Unassigned'),
+        priority: (epic as any).priority || '',
+        assigneeId: epic.assignee_user_id,
+        reporterId: epic.reporter_user_id,
+        teamId: epic.team_id,
+        item: epic,
+        parent: epic.name
+      };
+    }).filter(row => this.directoryRowMatches(row));
+  });
+
+  onSearchTermChange(value: string): void {
+    this.searchInput.set(value);
+    if (this.searchDebounceTimer !== null) clearTimeout(this.searchDebounceTimer);
+    this.searchDebounceTimer = setTimeout(() => {
+      this.searchTerm.set(String(value || '').trimStart());
+      this.tableVisibleCount.set(this.tablePageSize);
+      this.kanbanVisibleCounts.set({});
+      if (this.activeTab() === 'TREE' && this.workItemMode() === 'EPICS') {
+        this.fetchEpicPage(0);
+      }
+      this.searchDebounceTimer = null;
+    }, 180);
+  }
+
+  loadMoreTableRows(): void {
+    this.tableVisibleCount.update(value => value + this.tablePageSize);
+  }
+
+  fetchEpicPage(page = 0): void {
+    const projectId = Number(this.selectedProjectId());
+    if (!Number.isFinite(projectId) || projectId <= 0) return;
+
+    const safePage = Math.max(0, page);
+    this.epicPageRequest?.unsubscribe();
+    this.epicPageLoading.set(true);
+
+    this.epicPageRequest = this.http.get<any>(
+      `${this.baseUrl}/projects/${projectId}/epics/page`,
+      {
+        ...this.headers(),
+        params: {
+          page: String(safePage),
+          size: String(this.epicPageSize)
+        }
+      }
+    ).pipe(
+      catchError(error => {
+        console.error('Failed to load paginated epics', error);
+        return of(null);
+      })
+    ).subscribe(res => {
+      // The controller wraps results in { data, message, success }.
+      const body = res?.data ?? res;
+      const content = Array.isArray(body?.content) ? body.content : [];
+      this.epicPageItems.set(content
+        .map((raw: any) => this.normalizeEpic(raw))
+        .filter((epic: EpicNode) => !!epic.id));
+
+      this.epicPageIndex.set(Number.isFinite(Number(body?.page))
+        ? Number(body.page) : safePage);
+      this.epicPageTotalElements.set(Number(body?.totalElements ?? body?.total_elements ?? content.length));
+      this.epicPageTotalPages.set(Number(body?.totalPages ?? body?.total_pages ??
+        Math.ceil(this.epicPageTotalElements() / this.epicPageSize)));
+      this.epicPageLoading.set(false);
+    });
+  }
+
+  changeEpicPage(delta: number): void {
+    const nextPage = this.epicPageIndex() + delta;
+    if (this.epicPageLoading() || nextPage < 0 || nextPage >= this.epicPageTotalPages()) return;
+    this.fetchEpicPage(nextPage);
+  }
+
+  tableHasMore(rows: any[]): boolean {
+    return rows.length > this.tableVisibleCount();
+  }
+  visibleKanbanItemsByStatus = computed<Record<string, KanbanItem[]>>(() => {
+    const all = this.kanbanItemsByStatus();
+    const counts = this.kanbanVisibleCounts();
+    const visible: Record<string, KanbanItem[]> = {};
+    for (const status of this.statusPipeline) {
+      visible[status] = (all[status] || []).slice(0, counts[status] || this.kanbanPageSize);
+    }
+    return visible;
+  });
+
+  trackByProject(index: number, project: any): number | string {
+    return project?.id ?? index;
+  }
+
+  trackByKanbanItem(index: number, item: KanbanItem): string {
+    return `${item.type}_${item.id ?? item.code ?? index}`;
+  }
+
+  /** Stable cover selection so each work item gets one of the ten bundled illustrations. */
+  cardCoverIndex(item: KanbanItem): number {
+    const key = `${item.type || ''}-${item.id ?? item.code ?? item.title ?? ''}`;
+    let hash = 0;
+    for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+    return hash % 10;
+  }
+
+  loadMoreKanban(status: string): void {
+    const total = (this.kanbanItemsByStatus()[status] || []).length;
+    this.kanbanVisibleCounts.update(current => ({
+      ...current,
+      [status]: Math.min(total, (current[status] || this.kanbanPageSize) + this.kanbanPageSize)
+    }));
+  }
+
+  kanbanHasMore(status: string): boolean {
+    return (this.visibleKanbanItemsByStatus()[status] || []).length <
+      (this.kanbanItemsByStatus()[status] || []).length;
+  }
+
   kanbanItemsByStatus = computed<Record<string, KanbanItem[]>>(() => {
     const map: Record<string, KanbanItem[]> = {};
     for (const status of this.statusPipeline) map[status] = [];
@@ -1349,9 +1550,13 @@ export class Epics implements OnInit {
     const add = (item: any, type: 'EPIC' | 'STORY' | 'TASK', parent?: any, story?: any) => {
       const status = String(item.status || 'BACKLOG').toUpperCase();
       if (!map[status]) return;
+      const globalStatus = this.selectedStatusFilter();
+      const globalPriority = this.selectedPriorityFilter();
+      if (globalStatus !== 'ALL' && status !== String(globalStatus).toUpperCase()) return;
+      if (globalPriority !== 'ALL' &&
+          String(item.priority || '').toUpperCase() !== String(globalPriority).toUpperCase()) return;
       const sid = this.resolveItemSprintId(item, story?.sprint_id ?? parent?.sprint_id);
       if (sprintFilter !== 'ALL' && sid !== Number(sprintFilter)) return;
-      if (assigneeFilter !== 'ALL' && Number(item.assignee_user_id) !== Number(assigneeFilter)) return;
       if (reporterFilter !== 'ALL' && Number(item.reporter_user_id) !== Number(reporterFilter)) return;
       if (userFilter !== null && Number(item.assignee_user_id) !== Number(userFilter)) return;
       if (teamFilter !== 'ALL' && Number(item.team_id) !== Number(teamFilter)) return;
@@ -1793,54 +1998,51 @@ export class Epics implements OnInit {
     );
     if (direct) return direct;
 
-    const taskIds = this.getIssueLinkedIds(issue, 'TASK');
-    const task = this.hierarchyTree()
-      .flatMap(epic => (epic.stories || []).flatMap(story => story.tasks || []))
-      .find(candidate => taskIds.includes(Number(candidate.id)));
-    if (task?.sprint_id) return Number(task.sprint_id);
-
-    const storyIds = this.getIssueLinkedIds(issue, 'STORY');
-    const story = this.hierarchyTree()
-      .flatMap(epic => epic.stories || [])
-      .find(candidate => storyIds.includes(Number(candidate.id)));
-    if (story?.sprint_id) return Number(story.sprint_id);
-
-    const epicIds = this.getIssueLinkedIds(issue, 'EPIC');
-    const epic = this.hierarchyTree().find(candidate => epicIds.includes(Number(candidate.id)));
-    return epic?.sprint_id ? Number(epic.sprint_id) : 0;
+    const lookup = this.hierarchyLookups();
+    for (const id of this.getIssueLinkedIds(issue, 'TASK')) {
+      const task = lookup.tasksById.get(id);
+      if (task?.sprint_id) return Number(task.sprint_id);
+      if (task?.story_id) {
+        const parentStory = lookup.storiesById.get(Number(task.story_id));
+        if (parentStory?.sprint_id) return Number(parentStory.sprint_id);
+      }
+    }
+    for (const id of this.getIssueLinkedIds(issue, 'STORY')) {
+      const story = lookup.storiesById.get(id);
+      if (story?.sprint_id) return Number(story.sprint_id);
+    }
+    for (const id of this.getIssueLinkedIds(issue, 'EPIC')) {
+      const epic = lookup.epicsById.get(id);
+      if (epic?.sprint_id) return Number(epic.sprint_id);
+    }
+    return 0;
   }
 
   getIssueLinkedEpicNames(issue: Issue | Partial<Issue>): string {
-    const ids = this.getIssueLinkedIds(issue, 'EPIC');
-    return ids.length
-      ? this.hierarchyTree()
-          .filter(epic => ids.includes(Number(epic.id)))
-          .map(epic => `${epic.epic_code} · ${epic.name}`)
-          .join(', ')
-      : '—';
+    const lookup = this.hierarchyLookups();
+    const names = this.getIssueLinkedIds(issue, 'EPIC')
+      .map(id => lookup.epicsById.get(id))
+      .filter((item): item is EpicNode => !!item)
+      .map(item => `${item.epic_code} · ${item.name}`);
+    return names.join(', ') || '—';
   }
 
   getIssueLinkedStoryNames(issue: Issue | Partial<Issue>): string {
-    const ids = this.getIssueLinkedIds(issue, 'STORY');
-    return ids.length
-      ? this.hierarchyTree()
-          .flatMap(epic => epic.stories || [])
-          .filter(story => ids.includes(Number(story.id)))
-          .map(story => story.title)
-          .join(', ')
-      : '—';
+    const lookup = this.hierarchyLookups();
+    const names = this.getIssueLinkedIds(issue, 'STORY')
+      .map(id => lookup.storiesById.get(id))
+      .filter((item): item is StoryNode => !!item)
+      .map(item => item.title);
+    return names.join(', ') || '—';
   }
 
   getIssueLinkedTaskNames(issue: Issue | Partial<Issue>): string {
-    const ids = this.getIssueLinkedIds(issue, 'TASK');
-    return ids.length
-      ? this.hierarchyTree()
-          .flatMap(epic => epic.stories || [])
-          .flatMap(story => story.tasks || [])
-          .filter(task => ids.includes(Number(task.id)))
-          .map(task => task.title)
-          .join(', ')
-      : '—';
+    const lookup = this.hierarchyLookups();
+    const names = this.getIssueLinkedIds(issue, 'TASK')
+      .map(id => lookup.tasksById.get(id))
+      .filter((item): item is TaskNode => !!item)
+      .map(item => item.title);
+    return names.join(', ') || '—';
   }
 
   getIssueLinkSummary(issue: Issue | Partial<Issue>): string {
@@ -1890,7 +2092,17 @@ export class Epics implements OnInit {
             id,
             user_id: id,
             team_id: this.nullableNumber(u?.team_id ?? u?.teamId ?? u?.team?.id),
-            name: u?.name ?? u?.full_name ?? u?.fullName ?? u?.username ?? u?.email ?? `User ${index + 1}`,
+            name: String(
+              u?.name
+              || u?.full_name
+              || u?.fullName
+              || [u?.first_name ?? u?.firstName, u?.last_name ?? u?.lastName]
+                .filter((part: any) => part !== null && part !== undefined && String(part).trim() !== '')
+                .map((part: any) => String(part).trim())
+                .join(' ')
+              || u?.username
+              || `User ${index + 1}`
+            ).trim() || `User ${index + 1}`,
             role: u?.role ?? u?.job_title ?? u?.jobTitle ?? u?.designation ?? defaults[index % defaults.length],
             avatarUrl: u?.avatarUrl ?? u?.avatar_url ?? u?.photoUrl ?? null
           };
@@ -1949,51 +2161,36 @@ export class Epics implements OnInit {
         return;
       }
 
+      const sharedProjectId = this.projectContext.selectedProjectId();
       const currentId = Number(this.selectedProjectId());
-      const selected = projects.find((p: any) => Number(p.id) === currentId)
+      const selected = projects.find((p: any) => Number(p.id) === sharedProjectId)
+        ?? projects.find((p: any) => Number(p.id) === currentId)
         ?? projects.find((p: any) => Number(p.id) === 1)
         ?? projects[0];
 
       this.selectedProjectId.set(Number(selected.id));
       this.sprintPromptDismissedProjectId = null;
       this.syncSprintContext(false);
+      this.selectedSprintFilter.set('ALL');
       this.loadFullHierarchy();
-      this.loadAllProjectsBoardData(projects);
     });
   }
 
-  /** Load each project's Epics and Stories before grouping all items on the board by sprint. */
-  private loadAllProjectsBoardData(projects = this.projects()): void {
-    if (!projects.length) { this.boardHierarchyTree.set([]); return; }
-    const projectRequests = projects.map((project: any) => forkJoin({
-      epics: this.http.get<any>(`${this.baseUrl}/projects/${Number(project.id)}/epics`, this.headers()).pipe(catchError(() => of([]))),
-      stories: this.http.get<any>(`${this.baseUrl}/projects/${Number(project.id)}/stories`, this.headers()).pipe(catchError(() => of([])))
-    }).pipe());
-    const tasks$ = this.http.get<any>(`${this.baseUrl}/tasks`, this.headers()).pipe(catchError(() => of([])));
-    forkJoin({ projects: forkJoin(projectRequests), tasks: tasks$ }).subscribe(({ projects: results, tasks: taskRes }) => {
-      const allTasks = this.extractArray(taskRes).map(v => this.normalizeTask(v)).filter(v => !!v.id);
-      const tree: EpicNode[] = [];
-      results.forEach((result: any, index: number) => {
-        const project = projects[index];
-        const projectId = Number(project.id);
-        const epics = this.extractArray(result.epics).map(v => this.normalizeEpic({ ...v, project_id: v?.project_id ?? v?.projectId ?? projectId })).filter(v => !!v.id);
-        const stories = this.extractArray(result.stories).map(v => this.normalizeStory({ ...v, project_id: v?.project_id ?? v?.projectId ?? projectId })).filter(v => !!v.id);
-        const projectTasks = allTasks.filter((task: any) => stories.some(story => Number(story.id) === Number(task.story_id)));
-        for (const epic of epics) {
-          const epicStories = stories.filter(story => Number(story.epic_id) === Number(epic.id)).map(story => ({
-            ...story, project_id: projectId,
-            tasks: projectTasks.filter((task: any) => Number(task.story_id) === Number(story.id)).map((task: any) => ({ ...task, project_id: projectId }))
-          }));
-          tree.push({ ...epic, project_id: projectId, stories: epicStories });
-        }
-      });
-      this.boardHierarchyTree.set(tree);
-    });
+  /**
+   * The board uses the selected project's hierarchy. Loading every project and
+   * every task in parallel caused large memory spikes and duplicate API traffic.
+   * Keep this method as a compatibility shim for any existing caller.
+   */
+  private loadAllProjectsBoardData(_projects = this.projects()): void {
+    this.boardHierarchyTree.set(this.hierarchyTree());
   }
 
   loadFullHierarchy(): void {
     const projectId = this.selectedProjectId();
     if (!projectId) return;
+
+    this.hierarchyRequest?.unsubscribe();
+    const requestId = ++this.hierarchyRequestId;
 
     const epics$ = this.http
       .get<any>(`${this.baseUrl}/projects/${projectId}/epics`, this.headers())
@@ -2025,7 +2222,7 @@ export class Epics implements OnInit {
       .get<any>(`${this.baseUrl2}/v1/issues?projectId=${projectId}`, this.headers())
       .pipe(catchError(() => of([])));
 
-    forkJoin({
+    this.hierarchyRequest = forkJoin({
       epics: epics$,
       stories: stories$,
       tasks: tasks$,
@@ -2033,6 +2230,9 @@ export class Epics implements OnInit {
       issues: issues$
     })
       .subscribe(({ epics: epicRes, stories: storyRes, tasks: taskRes, testCases: tcRes, issues: issueRes }) => {
+        if (requestId !== this.hierarchyRequestId || Number(this.selectedProjectId()) !== Number(projectId)) {
+          return;
+        }
         const epics = this.extractArray(epicRes)
           .map(v => this.normalizeEpic(v))
           .filter(v => !!v.id);
@@ -2062,26 +2262,93 @@ export class Epics implements OnInit {
           ? testCasesWithProject.filter(tc => Number(tc.projectId ?? tc.project_id ?? tc.project?.id) === Number(projectId))
           : allTestCases;
 
-        const issues = this.extractArray(issueRes)
-          .map(v => this.normalizeIssue(v));
+        const allIssues = this.extractArray(issueRes)
+          .map(v => this.normalizeIssue(v))
+          .filter(issue => Number(issue.id) > 0);
+
+        // Some deployments ignore the projectId query parameter. When issue
+        // project identity is returned, enforce the selected project locally.
+        const issuesWithProject = allIssues.filter(issue =>
+          issue.projectId !== null && issue.projectId !== undefined
+        );
+        const issues = issuesWithProject.length
+          ? issuesWithProject.filter(issue => Number(issue.projectId ?? issue.project_id) === Number(projectId))
+          : allIssues;
 
         this.projectTestcases.set(testCases);
         this.projectIssues.set(issues);
         this.projectStories.set(stories);
 
+        // Index once; avoid O(epics × stories × tasks × test cases) filtering.
+        const storiesByEpic = new Map<number, StoryNode[]>();
+        for (const story of stories) {
+          const key = Number(story.epic_id);
+          const list = storiesByEpic.get(key) || [];
+          list.push(story);
+          storiesByEpic.set(key, list);
+        }
+        const tasksByStory = new Map<number, TaskNode[]>();
+        for (const task of tasks) {
+          const key = Number(task.story_id);
+          const list = tasksByStory.get(key) || [];
+          list.push(task);
+          tasksByStory.set(key, list);
+        }
+        const testCasesByStory = new Map<number, TestCase[]>();
+        const testCasesByTask = new Map<number, TestCase[]>();
+        const testCasesByEpic = new Map<number, TestCase[]>();
+        for (const tc of testCases) {
+          if (tc.storyId != null) {
+            const key = Number(tc.storyId);
+            const list = testCasesByStory.get(key) || [];
+            list.push(tc);
+            testCasesByStory.set(key, list);
+          }
+          if (tc.taskId != null) {
+            const key = Number(tc.taskId);
+            const list = testCasesByTask.get(key) || [];
+            list.push(tc);
+            testCasesByTask.set(key, list);
+          }
+          if (tc.epicId != null) {
+            const key = Number(tc.epicId);
+            const list = testCasesByEpic.get(key) || [];
+            list.push(tc);
+            testCasesByEpic.set(key, list);
+          }
+        }
+        const issuesByTask = new Map<number, Issue[]>();
+        const issuesByStory = new Map<number, Issue[]>();
+        const issuesByEpic = new Map<number, Issue[]>();
+        for (const issue of issues) {
+          for (const taskId of this.getIssueLinkedIds(issue, 'TASK')) {
+            const list = issuesByTask.get(taskId) || [];
+            list.push(issue);
+            issuesByTask.set(taskId, list);
+          }
+          for (const storyId of this.getIssueLinkedIds(issue, 'STORY')) {
+            const list = issuesByStory.get(storyId) || [];
+            list.push(issue);
+            issuesByStory.set(storyId, list);
+          }
+          for (const epicId of this.getIssueLinkedIds(issue, 'EPIC')) {
+            const list = issuesByEpic.get(epicId) || [];
+            list.push(issue);
+            issuesByEpic.set(epicId, list);
+          }
+        }
+
         const tree = epics.map(epic => {
-          const epicStories = stories
-            .filter(story => Number(story.epic_id) === Number(epic.id))
+          const epicStories = (storiesByEpic.get(Number(epic.id)) || [])
             .map(story => ({
               ...story,
               expanded: story.expanded ?? true,
-              testCases: testCases.filter(tc => Number(tc.storyId) === Number(story.id)),
-              tasks: tasks
-                .filter(task => Number(task.story_id) === Number(story.id))
+              testCases: testCasesByStory.get(Number(story.id)) || [],
+              tasks: (tasksByStory.get(Number(story.id)) || [])
                 .map(task => ({
                   ...task,
-                  issues: issues.filter(issue => this.isIssueLinkedTo(issue, 'TASK', task.id)),
-                  testCases: testCases.filter(tc => Number(tc.taskId) === Number(task.id))
+                  issues: issuesByTask.get(Number(task.id)) || [],
+                  testCases: testCasesByTask.get(Number(task.id)) || []
                 }))
             }));
 
@@ -2093,38 +2360,38 @@ export class Epics implements OnInit {
             .flatMap(story => (story.tasks || []).map(task => Number(task.id)))
             .filter(Number.isFinite);
 
-          const epicIssues = issues.filter(issue =>
-            this.isIssueLinkedTo(issue, 'EPIC', epic.id) ||
-            descendantStoryIds.some(id => this.isIssueLinkedTo(issue, 'STORY', id)) ||
-            descendantTaskIds.some(id => this.isIssueLinkedTo(issue, 'TASK', id))
+          const epicIssues = [
+            ...(issuesByEpic.get(Number(epic.id)) || []),
+            ...descendantStoryIds.flatMap(id => issuesByStory.get(id) || []),
+            ...descendantTaskIds.flatMap(id => issuesByTask.get(id) || [])
+          ].filter((issue, index, list) =>
+            list.findIndex(candidate => Number(candidate.id) === Number(issue.id)) === index
           );
 
           const mappedStories = epicStories.map(story => {
-            const storyTaskIds = (story.tasks || [])
-              .map(task => Number(task.id))
-              .filter(Number.isFinite);
-
-            const storyIssues = issues.filter(issue =>
-              this.isIssueLinkedTo(issue, 'STORY', story.id) ||
-              storyTaskIds.some(id => this.isIssueLinkedTo(issue, 'TASK', id))
+            const storyTaskIds = (story.tasks || []).map(task => Number(task.id));
+            const storyIssues = [
+              ...(issuesByStory.get(Number(story.id)) || []),
+              ...storyTaskIds.flatMap(id => issuesByTask.get(id) || [])
+            ].filter((issue, index, list) =>
+              list.findIndex(candidate => Number(candidate.id) === Number(issue.id)) === index
             );
 
-            return {
-              ...story,
-              issues: storyIssues
-            };
+            return { ...story, issues: storyIssues };
           });
 
           return {
             ...epic,
             expanded: epic.expanded ?? true,
             issues: epicIssues,
-            testCases: testCases.filter(tc => Number(tc.epicId) === Number(epic.id)),
+            testCases: testCasesByEpic.get(Number(epic.id)) || [],
             stories: mappedStories
           };
         });
 
         this.hierarchyTree.set(tree);
+        this.boardHierarchyTree.set(tree);
+        this.kanbanVisibleCounts.set({});
       });
   }
 
@@ -2133,22 +2400,54 @@ export class Epics implements OnInit {
     if (!Number.isFinite(id) || id <= 0) return;
 
     this.selectedProjectId.set(id);
+    this.projectContext.setSelectedProject(id);
+    this.epicPageItems.set([]);
+    this.epicPageIndex.set(0);
+    this.epicPageTotalElements.set(0);
+    this.epicPageTotalPages.set(0);
+    this.epicPageRequest?.unsubscribe();
+    this.epicPageLoading.set(false);
+    this.kanbanVisibleCounts.set({});
+    // Clear old project data immediately so the previous project's epics are not shown.
+    this.hierarchyTree.set([]);
+    this.boardHierarchyTree.set([]);
+    this.projectTestcases.set([]);
+    this.projectIssues.set([]);
+    this.projectStories.set([]);
     this.selectedBoardSprintFilter.set('ALL');
     this.showBoardSprintFilters.set(false);
     this.selectedUserFilter.set(null);
     this.selectedAssigneeFilter.set('ALL');
     this.selectedReporterFilter.set('ALL');
     this.selectedTeamFilter.set('ALL');
+    this.selectedPriorityFilter.set('ALL');
+    this.selectedStatusFilter.set('ALL');
+    this.searchTerm.set('');
+    this.searchInput.set('');
+    if (this.searchDebounceTimer !== null) clearTimeout(this.searchDebounceTimer);
+    this.searchDebounceTimer = null;
+    this.tableVisibleCount.set(this.tablePageSize);
     this.teamMembers.set([]);
     this.selectedSprintFilter.set('ALL');
+    this.clearDirectoryColumnFilters();
     this.storyModalEpics.set([]);
     this.projectStories.set([]);
 
     this.sprintPromptDismissedProjectId = null;
     this.fetchSprints(() => {
       this.syncSprintContext(true);
-      this.loadFullHierarchy();
-      this.loadAllProjectsBoardData();
+      // Directory views start with all sprints; the Board keeps its own cycle scope.
+      this.selectedSprintFilter.set('ALL');
+      // The Epics directory has its own server-paginated endpoint. Do not fetch
+      // every story, task, test case and issue just to display the Epics table.
+      if (this.activeTab() === 'TREE' && this.workItemMode() === 'EPICS') {
+        this.fetchEpicPage(0);
+        return;
+      }
+
+      // Let the project picker finish its selection/paint before starting the
+      // heavier hierarchy request; stale requests are cancelled in loadFullHierarchy.
+      setTimeout(() => this.loadFullHierarchy(), 0);
     });
   }
 
@@ -2182,16 +2481,21 @@ export class Epics implements OnInit {
   }
 
   onSprintFilterChange(sprintId: number | string | 'ALL'): void {
+    this.kanbanVisibleCounts.set({});
     if (sprintId === 'ALL' || sprintId === null || sprintId === undefined || sprintId === '') {
       this.selectedSprintFilter.set('ALL');
+      this.selectedBoardSprintFilter.set('ALL');
       return;
     }
 
     const id = Number(sprintId);
-    this.selectedSprintFilter.set(Number.isFinite(id) ? id : 'ALL');
+    const value = Number.isFinite(id) ? id : 'ALL';
+    this.selectedSprintFilter.set(value);
+    this.selectedBoardSprintFilter.set(value);
   }
 
   onTeamFilterChange(teamId: number | 'ALL'): void {
+    this.kanbanVisibleCounts.set({});
     this.selectedTeamFilter.set(teamId);
     this.selectedUserFilter.set(null);
 
@@ -2221,6 +2525,11 @@ export class Epics implements OnInit {
   }
 
   clearAllFilters(): void {
+    this.searchInput.set('');
+    if (this.searchDebounceTimer !== null) clearTimeout(this.searchDebounceTimer);
+    this.searchDebounceTimer = null;
+    this.tableVisibleCount.set(this.tablePageSize);
+    this.kanbanVisibleCounts.set({});
     this.selectedSprintFilter.set('ALL');
     this.selectedPriorityFilter.set('ALL');
     this.selectedStatusFilter.set('ALL');
@@ -2234,6 +2543,7 @@ export class Epics implements OnInit {
   }
 
   filterByUser(userId: number | null): void {
+    this.kanbanVisibleCounts.set({});
     if (userId === null) {
       this.selectedUserFilter.set(null);
       return;

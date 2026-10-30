@@ -2,6 +2,7 @@ import {
   Component,
   ChangeDetectorRef,
   OnInit,
+  effect,
   inject
 } from '@angular/core';
 
@@ -10,6 +11,7 @@ import { FormsModule } from '@angular/forms';
 
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../auth.service';
+import { ProjectContextService } from '../project-context.service';
 
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -172,13 +174,14 @@ export interface TestSuite {
   ],
 
   templateUrl: './testcases.html',
-  styleUrls: ['./testcases.css']
+  styleUrls: ['./testcases.css', '../shared/field-controls.css']
 })
 export class Testcases implements OnInit {
 
   private http = inject(HttpClient);
   private auth = inject(AuthService);
   private cdr = inject(ChangeDetectorRef);
+  private readonly projectContext = inject(ProjectContextService);
 
   /*
    * KEEP EXISTING API CONFIGURATION
@@ -213,6 +216,11 @@ export class Testcases implements OnInit {
   ============================================================ */
 
   selectedProjectId: number | null = null;
+  private readonly projectContextSync = effect(() => {
+    const sharedProjectId = this.projectContext.selectedProjectId();
+    if (!sharedProjectId || !this.projects.length || sharedProjectId === this.selectedProjectId) return;
+    if (this.projects.some(project => Number(this.getOptionId(project)) === sharedProjectId)) this.onProjectChange(sharedProjectId);
+  });
 
   /** Identifies the newest project load so stale responses are ignored. */
   private projectLoadToken = 0;
@@ -912,24 +920,14 @@ private finishAddingTestCases(
         this.projects =
           this.extractArray(data);
 
-        /*
-         * Automatically select first project
-         * only when nothing is selected.
-         */
-        if (
-          !this.selectedProjectId &&
-          this.projects.length
-        ) {
-
-          const first =
-            this.projects[0];
-
-          this.selectedProjectId =
-            Number(
-              this.getOptionId(first)
-            );
-
-          this.applyProjectSelection();
+        const sharedProjectId = this.projectContext.selectedProjectId();
+        const selectedProject = this.projects.find(project => Number(this.getOptionId(project)) === sharedProjectId)
+          ?? this.projects.find(project => Number(this.getOptionId(project)) === this.selectedProjectId)
+          ?? this.projects[0];
+        if (selectedProject) {
+          const projectId = Number(this.getOptionId(selectedProject));
+          if (projectId !== this.selectedProjectId) this.onProjectChange(projectId);
+          else this.projectContext.setSelectedProject(projectId);
         }
 
         this.cdr.detectChanges();
@@ -969,6 +967,7 @@ private finishAddingTestCases(
 
     this.selectedProjectId =
       projectId;
+    this.projectContext.setSelectedProject(projectId);
 
     this.applyProjectSelection();
   }

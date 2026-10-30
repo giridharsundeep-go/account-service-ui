@@ -3,6 +3,7 @@ import {
   Component,
   OnInit,
   computed,
+  effect,
   inject,
   signal
 } from '@angular/core';
@@ -23,6 +24,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { environment } from '../../environment';
+import { ProjectContextService } from '../project-context.service';
 import { AuthService } from '../auth.service';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -135,12 +137,13 @@ interface BoardCard {
     MatListModule
   ],
   templateUrl: './boards.html',
-  styleUrls: ['./boards.css'],
+  styleUrls: ['./boards.css', '../shared/field-controls.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Boards implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
+  private readonly projectContext = inject(ProjectContextService);
 
   readonly baseUrl = environment.apiBaseUrlM;
 
@@ -154,6 +157,12 @@ export class Boards implements OnInit {
   ];
 
   projects = signal<Project[]>([]);
+  private readonly projectContextSync = effect(() => {
+    const sharedProjectId = this.projectContext.selectedProjectId();
+    const projects = this.projects();
+    if (!sharedProjectId || !projects.length || Number(this.selectedProjectId()) === sharedProjectId) return;
+    if (projects.some(project => Number(project.id) === sharedProjectId)) this.onProjectChange(sharedProjectId);
+  });
   sprints = signal<Sprint[]>([]);
   users = signal<User[]>([]);
   teams = signal<Team[]>([]);
@@ -603,6 +612,15 @@ export class Boards implements OnInit {
           .map(v => this.normalizeProject(v))
           .filter(project => Number.isFinite(project.id) && project.id > 0);
         this.projects.set(projects);
+        if (projects.length) {
+          const sharedId = this.projectContext.selectedProjectId();
+          const selected = projects.find(project => Number(project.id) === sharedId)
+            ?? projects.find(project => Number(project.id) === Number(this.selectedProjectId()))
+            ?? projects.find(project => Number(project.id) === 1)
+            ?? projects[0];
+          this.selectedProjectId.set(selected.id);
+          this.projectContext.setSelectedProject(selected.id);
+        }
 
         // Project IDs are now known. Load supporting board configuration next.
         forkJoin({
@@ -629,11 +647,6 @@ export class Boards implements OnInit {
             this.boards.set(boards);
             this.selectedBoardProjectTab.set('ALL');
             this.loadAllBoardFilters(boards);
-
-            if (!this.selectedProjectId() && projects.length) {
-              const projectOne = projects.find(project => Number(project.id) === 1) || projects[0];
-              this.selectedProjectId.set(projectOne.id);
-            }
 
             this.selectedSprintId.set('ALL');
             this.selectDefaultBoard();
@@ -870,6 +883,7 @@ export class Boards implements OnInit {
     if (!Number.isFinite(projectId) || projectId <= 0) return;
     this.createProjectFilter.set(projectId);
     this.selectedProjectId.set(projectId);
+    this.projectContext.setSelectedProject(projectId);
     this.createSprintFilter.set('ALL');
   }
 
@@ -1762,6 +1776,7 @@ export class Boards implements OnInit {
     const id = Number(value);
 
     this.selectedProjectId.set(Number.isFinite(id) ? id : null);
+    if (Number.isFinite(id) && id > 0) this.projectContext.setSelectedProject(id);
     this.selectedBoardProjectTab.set('ALL');
     this.resetViewFilters();
     this.cards.set([]);

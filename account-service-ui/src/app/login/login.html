@@ -1,5 +1,48 @@
 <main class="main">
 
+  <!-- Outline typography inspired by the supplied reference. -->
+  <div class="login-line-art" aria-hidden="true">
+    <svg viewBox="0 0 1200 650" role="presentation" focusable="false">
+      <g class="art-flow">
+        <path class="line-orange" d="M28 160 C80 110 130 112 165 145 S215 185 255 150" />
+        <path class="line-blue" d="M945 150 C990 112 1035 115 1065 147 S1115 185 1170 145" />
+        <path class="line-red" d="M35 510 C90 468 137 470 175 502 S223 544 260 510" />
+        <path class="line-green" d="M940 510 C990 468 1038 470 1076 502 S1124 544 1170 510" />
+      </g>
+
+      <!-- Words are placed outside the central login card, not behind it. -->
+      <g class="headline">
+        <text class="word-build" x="52" y="300">BUILD</text>
+        <text class="word-better" x="1148" y="300" text-anchor="end">BETTER</text>
+        <text class="word-work" x="600" y="555" text-anchor="middle">WORK</text>
+      </g>
+
+      <g class="art-ink">
+        <circle cx="130" cy="365" r="25" />
+        <circle cx="130" cy="365" r="16" />
+        <path d="M115 372 C117 355 126 350 131 351 C144 352 149 364 145 376" />
+        <path d="M108 400 C113 385 121 381 131 381 C141 381 150 387 155 400" />
+
+        <path d="M1050 350 L1078 378 L1050 406 L1022 378 Z" />
+        <path d="M1038 378 C1038 366 1046 361 1053 365 C1061 370 1059 381 1052 387" />
+
+        <path d="M250 420 C232 401 236 383 251 372 C266 388 265 405 250 420 Z" />
+        <path d="M251 420 C270 401 286 403 298 410 C286 426 269 431 251 420 Z" />
+        <path d="M251 420 L251 443" />
+
+        <path d="M950 420 C932 401 936 383 951 372 C966 388 965 405 950 420 Z" />
+        <path d="M951 420 C970 401 986 403 998 410 C986 426 969 431 951 420 Z" />
+        <path d="M951 420 L951 443" />
+
+        <path d="M435 590 C475 608 725 608 765 590" />
+        <circle cx="415" cy="590" r="3" />
+        <circle cx="785" cy="590" r="3" />
+      </g>
+    </svg>
+  </div>
+
+
+
   <header class="site-header">
     <a class="site-brand" routerLink="/login" aria-label="Greatley Poshley home">Greatley Poshley</a>
     <button class="header-create-account" type="button" (click)="goToCreateAccount()">

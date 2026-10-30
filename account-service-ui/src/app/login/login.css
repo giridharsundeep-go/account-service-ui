@@ -82,10 +82,9 @@
   width: 100%;
   max-width: 440px;
   padding: 32px;
-  border: 1px solid #dadce0;
+  border: 1px solid #c6c6c6;
   border-radius: 20px;
   background: #ffffff;
-  box-shadow: 0 2px 8px rgba(60, 64, 67, 0.08);
   text-align: left;
 }
 
@@ -399,5 +398,398 @@
 
   .login-card {
     padding: 20px 16px;
+  }
+}
+
+
+/* ===== OUTLINE-ONLY LOGIN ILLUSTRATION ===== */
+.main {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.login-line-art {
+  position: absolute;
+  z-index: -1;
+  inset: 82px 0 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: .72;
+}
+
+.login-line-art svg {
+  display: block;
+  width: min(100%, 1120px);
+  height: auto;
+  max-height: 100%;
+  overflow: visible;
+}
+
+.login-line-art .art-ink {
+  fill: none;
+  stroke: #3c4043;
+  stroke-width: 1.35;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.login-line-art .art-flow {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.2;
+}
+
+.login-line-art .line-orange {
+  stroke: #f9ab00;
+}
+
+.login-line-art .line-blue {
+  stroke: #4285f4;
+}
+
+.login-line-art .line-orange.thin {
+  stroke: #ea4335;
+  stroke-width: 1.6;
+}
+
+.site-header,
+.container,
+.login-footer {
+  position: relative;
+  z-index: 1;
+}
+
+.login-card {
+  box-shadow: 0 8px 30px rgba(60, 64, 67, .035);
+}
+
+@media (max-width: 768px) {
+  .login-line-art {
+    inset: 90px -180px 76px;
+    opacity: .38;
+  }
+
+  .login-line-art svg {
+    width: 900px;
+    max-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-line-art {
+    inset: 90px -310px 72px;
+    opacity: .25;
+  }
+}
+
+
+/* ===== BUILD BETTER WORK — OUTLINE TYPOGRAPHY ===== */
+.login-line-art {
+  position: absolute;
+  z-index: 0;
+  inset: 110px 0 82px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: .82;
+}
+
+.login-line-art svg {
+  display: block;
+  width: min(100%, 1180px);
+  height: auto;
+  max-height: 100%;
+  overflow: visible;
+}
+
+.login-line-art .headline {
+  fill: none;
+  stroke: #3c4043;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+
+.login-line-art .headline text {
+  font-family: Inter, Roboto, Arial, sans-serif;
+  font-size: 76px;
+  font-weight: 750;
+  letter-spacing: 2px;
+  stroke: #3c4043;
+  stroke-width: 1.25px;
+}
+
+.login-line-art .art-ink {
+  fill: none;
+  stroke: #5f6368;
+  stroke-width: 1.45;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.login-line-art .art-flow {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.2;
+}
+
+.login-line-art .line-orange { stroke: #f9ab00; }
+.login-line-art .line-blue { stroke: #4285f4; }
+.login-line-art .line-red { stroke: #ea4335; }
+.login-line-art .line-green { stroke: #34a853; }
+
+.site-header,
+.container,
+.login-footer {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 768px) {
+  .login-line-art {
+    inset: 110px -140px 90px;
+    opacity: .34;
+  }
+  .login-line-art svg {
+    width: 940px;
+    max-width: none;
+  }
+  .login-line-art .headline text {
+    font-size: 68px;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-line-art {
+    inset: 120px -300px 90px;
+    opacity: .2;
+  }
+}
+
+
+/* ===== BUILD | LOGIN CARD | BETTER composition, with WORK below ===== */
+.main {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.login-line-art {
+  position: absolute;
+  z-index: 0;
+  inset: 76px 0 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: .82;
+}
+
+.login-line-art svg {
+  display: block;
+  width: min(100%, 1240px);
+  height: 100%;
+  max-height: 690px;
+  overflow: visible;
+}
+
+.login-line-art .headline {
+  fill: none;
+  stroke: #3c4043;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.login-line-art .headline text {
+  font-family: Inter, Roboto, Arial, sans-serif;
+  font-size: 65px;
+  font-weight: 750;
+  letter-spacing: 1.5px;
+  stroke: #3c4043;
+  stroke-width: 1.25px;
+}
+
+.login-line-art .art-ink {
+  fill: none;
+  stroke: #5f6368;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.login-line-art .art-flow {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.2;
+}
+
+.login-line-art .line-orange { stroke: #f9ab00; }
+.login-line-art .line-blue { stroke: #4285f4; }
+.login-line-art .line-red { stroke: #ea4335; }
+.login-line-art .line-green { stroke: #34a853; }
+
+/* Keep the form above the line art. */
+.site-header,
+.container,
+.login-footer {
+  position: relative;
+  z-index: 1;
+}
+
+.login-card {
+  position: relative;
+  z-index: 2;
+  background: #fff;
+  box-shadow: 0 8px 30px rgba(60, 64, 67, .05);
+}
+
+@media (max-width: 900px) {
+  .login-line-art {
+    inset: 90px -90px 76px;
+    opacity: .42;
+  }
+
+  .login-line-art svg {
+    width: 1100px;
+    max-width: none;
+  }
+
+  .login-line-art .headline text {
+    font-size: 58px;
+  }
+}
+
+@media (max-width: 600px) {
+  .login-line-art {
+    inset: 90px -280px 76px;
+    opacity: .22;
+  }
+
+  .login-line-art svg {
+    width: 1000px;
+  }
+
+  .login-line-art .headline text {
+    font-size: 52px;
+  }
+}
+
+
+/* ===== FINAL FIX: BUILD | LOGIN CARD | BETTER, WITH WORK BELOW ===== */
+.main {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.login-line-art {
+  position: absolute;
+  inset: 76px 0 72px;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: .9;
+}
+
+.login-line-art svg {
+  display: block;
+  width: min(100%, 1240px);
+  height: 100%;
+  max-height: 690px;
+  overflow: visible;
+}
+
+.login-line-art .headline {
+  fill: none;
+  stroke: #3c4043;
+  stroke-width: 1.45;
+  stroke-linejoin: round;
+}
+
+.login-line-art .headline text {
+  font-family: Inter, Roboto, Arial, sans-serif;
+  font-size: 58px;
+  font-weight: 750;
+  letter-spacing: 1px;
+  stroke: #3c4043;
+  stroke-width: 1.15px;
+}
+
+.login-line-art .art-ink {
+  fill: none;
+  stroke: #5f6368;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.login-line-art .art-flow {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.2;
+}
+
+.login-line-art .line-orange { stroke: #f9ab00; }
+.login-line-art .line-blue { stroke: #4285f4; }
+.login-line-art .line-red { stroke: #ea4335; }
+.login-line-art .line-green { stroke: #34a853; }
+
+.site-header,
+.container,
+.login-footer {
+  position: relative;
+  z-index: 1;
+}
+
+.container {
+  position: relative;
+  z-index: 2;
+}
+
+.login-card {
+  position: relative;
+  z-index: 3;
+  background: #fff;
+  box-shadow: 0 8px 30px rgba(60, 64, 67, .06);
+}
+
+@media (max-width: 1000px) {
+  .login-line-art {
+    opacity: .48;
+  }
+
+  .login-line-art svg {
+    width: 1150px;
+    max-width: none;
+  }
+
+  .login-line-art .headline text {
+    font-size: 52px;
+  }
+}
+
+@media (max-width: 700px) {
+  .login-line-art {
+    inset: 78px -250px 72px;
+    opacity: .22;
+  }
+
+  .login-line-art svg {
+    width: 1050px;
+  }
+
+  .login-line-art .headline text {
+    font-size: 48px;
   }
 }

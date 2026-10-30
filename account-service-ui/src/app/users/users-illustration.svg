@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="360" viewBox="0 0 980 360" fill="none">
+<defs>
+ <linearGradient id="bg" x1="0" y1="0" x2="980" y2="360" gradientUnits="userSpaceOnUse"><stop stop-color="#EAF5FF"/><stop offset="1" stop-color="#D9EBFF"/></linearGradient>
+ <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#4C91F7"/><stop offset="1" stop-color="#0759C7"/></linearGradient>
+</defs>
+<circle cx="710" cy="180" r="176" fill="#D1E6FF"/><circle cx="870" cy="45" r="18" fill="#FFC857"/><circle cx="625" cy="55" r="10" fill="#F28B68"/><circle cx="940" cy="230" r="13" fill="#65B891"/>
+<rect x="618" y="26" width="210" height="160" rx="18" fill="#fff" stroke="#C7DDF8" stroke-width="4"/>
+<circle cx="666" cy="72" r="23" fill="#DDEBFF"/><circle cx="666" cy="66" r="8" fill="#3478E5"/><path d="M650 88c2-13 30-13 32 0" fill="#3478E5"/>
+<rect x="702" y="57" width="91" height="10" rx="5" fill="#80B2F5"/><rect x="702" y="76" width="70" height="8" rx="4" fill="#D2E3FC"/><rect x="648" y="112" width="145" height="8" rx="4" fill="#D2E3FC"/><rect x="648" y="130" width="119" height="8" rx="4" fill="#D2E3FC"/><rect x="648" y="148" width="132" height="8" rx="4" fill="#D2E3FC"/>
+<rect x="856" y="83" width="68" height="56" rx="14" fill="#fff" stroke="#D2E3FC" stroke-width="3"/><circle cx="890" cy="101" r="8" fill="#4C91F7"/><path d="M876 121c2-11 26-11 28 0" fill="#4C91F7"/>
+<!-- left colleague -->
+<path d="M420 360c8-73 20-105 61-118h70c44 18 61 53 68 118" fill="#F6B94F"/>
+<path d="M468 244c-12-17-10-42 0-58 10-17 26-24 43-22 20 2 37 19 37 43 0 28-15 50-38 53-18 2-32-4-42-16Z" fill="#B8754F"/>
+<path d="M466 204c-5-33 18-56 48-54 21 1 39 17 40 41l-12-7-12-17c-20 17-37 20-64 18Z" fill="#24334C"/>
+<path d="M477 215c8-6 16-6 23 0M513 215c8-6 16-6 23 0" stroke="#24334C" stroke-width="4" stroke-linecap="round"/><path d="M493 232c9 8 19 8 28 0" stroke="#7C4436" stroke-width="4" stroke-linecap="round"/>
+<path d="M425 360c8-49 15-76 38-91l36 32 24-32c29 14 46 43 55 91" fill="#3478E5"/><path d="M495 300l13 19 14-19" fill="#fff"/>
+<!-- central colleague -->
+<path d="M588 360c8-63 18-98 51-114h62c39 18 52 52 60 114" fill="#2E9D75"/>
+<path d="M620 239c-14-17-14-43-4-61 10-18 27-27 47-25 22 2 38 21 36 45-2 26-18 47-41 49-14 1-28-2-38-8Z" fill="#E8AE82"/>
+<path d="M611 201c-5-33 17-58 48-56 24 2 43 21 40 45l-17-6-11-20c-17 16-36 20-59 18Z" fill="#26344D"/>
+<path d="M620 216c7-5 14-5 21 0M655 216c7-5 14-5 21 0" stroke="#26344D" stroke-width="4" stroke-linecap="round"/><path d="M637 233c7 6 15 6 22 0" stroke="#9B5B4B" stroke-width="4" stroke-linecap="round"/>
+<path d="M590 360c8-47 18-75 42-92l33 26 33-26c27 15 42 42 49 92" fill="#F26F5B"/>
+<!-- right colleague -->
+<path d="M760 360c6-54 21-86 50-102h63c31 15 48 48 54 102" fill="#F4B942"/>
+<path d="M785 244c-10-14-12-37-3-54 9-19 28-29 48-26 21 3 37 21 34 43-2 23-17 42-37 44-17 2-32-1-42-7Z" fill="#8A543C"/>
+<path d="M780 206c-3-28 17-48 43-47 20 0 36 15 39 35l-14-5-9-15c-16 13-33 16-56 15Z" fill="#182B45"/>
+<path d="M790 218c6-5 12-5 18 0M821 218c6-5 12-5 18 0" stroke="#182B45" stroke-width="4" stroke-linecap="round"/><path d="M803 235c7 5 14 5 21 0" stroke="#60372E" stroke-width="4" stroke-linecap="round"/>
+<path d="M759 360c6-42 20-69 43-84l30 24 29-24c27 14 39 40 46 84" fill="#3478E5"/>
+<!-- decorative plant -->
+<path d="M933 360c2-56-1-91-14-129" stroke="#388B68" stroke-width="6" stroke-linecap="round"/><path d="M919 270c-38 1-49-20-47-43 26-1 45 12 47 43Z" fill="#56B78D"/><path d="M925 303c36-8 49-31 43-53-26 6-42 22-43 53Z" fill="#2D9D74"/><path d="M918 235c-31-12-39-35-29-53 24 10 35 26 29 53Z" fill="#71C7A1"/>
+<!-- user card icon -->
+<rect x="550" y="218" width="60" height="49" rx="12" fill="#fff" stroke="#C7DDF8" stroke-width="3"/><circle cx="580" cy="235" r="8" fill="#4C91F7"/><path d="M566 254c2-12 26-12 28 0" fill="#4C91F7"/>
+</svg>

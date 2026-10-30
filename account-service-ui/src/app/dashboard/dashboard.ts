@@ -139,7 +139,7 @@ export interface TeamAggressivenessMetric {
   selector: 'app-dashboard',
   standalone: true,
   templateUrl: './dashboard.html',
-  styleUrl: './dashboard.css',
+  styleUrls: ['./dashboard.css', '../shared/field-controls.css'],
   imports: [
     CommonModule,
     FormsModule,

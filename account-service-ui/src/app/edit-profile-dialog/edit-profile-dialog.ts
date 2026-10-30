@@ -17,7 +17,7 @@ import { CommonModule } from '@angular/common';
     MatIconModule
   ],
   templateUrl: './edit-profile-dialog.html',
-  styleUrl: './edit-profile-dialog.css',
+  styleUrls: ['./edit-profile-dialog.css', '../shared/field-controls.css'],
 })
 export class EditProfileDialog {
 

@@ -44,7 +44,7 @@ function emailOrPhoneValidator(control: AbstractControl): ValidationErrors | nul
     HttpClientModule
   ],
   templateUrl: './login.html',
-  styleUrls: ['./login.css']
+  styleUrls: ['./login.css', '../shared/field-controls.css']
 })
 export class Login {
 

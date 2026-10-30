@@ -43,28 +43,22 @@
       }}
     </div>
 
-    <div class="users-list" *ngIf="!loadingUsers && getFilteredUsers().length > 0">
+    <div class="users-list people-card-grid" *ngIf="!loadingUsers && getFilteredUsers().length > 0">
 
       <div
-        class="user-row"
+        class="user-row people-card"
         *ngFor="let user of getFilteredUsers()"
         [class.selected]="localSelectedIds.includes(user.id)"
         (click)="toggleUserSelection(user.id)">
 
         <div class="user-left">
 
-          <input
-            type="checkbox"
-            class="styled-checkbox"
-            [checked]="localSelectedIds.includes(user.id)"
-            (click)="$event.stopPropagation()"
-            (change)="toggleUserSelection(user.id)" />
-
           <div class="avatar">
             <img
               *ngIf="hasAvatar(user)"
               [src]="getAvatarDisplaySrc(user)"
-              [alt]="user.name" />
+              [alt]="user.name"
+              (error)="onAvatarError($event)" />
             <span *ngIf="!hasAvatar(user)">
               {{ getInitials(user.name) }}
             </span>
@@ -88,9 +82,16 @@
 
         </div>
 
-        <div class="selected-indicator" *ngIf="localSelectedIds.includes(user.id)">
+        <span class="selected-indicator" *ngIf="localSelectedIds.includes(user.id)" aria-label="Selected">
           ✓
-        </div>
+        </span>
+        <input
+          type="checkbox"
+          class="styled-checkbox card-checkbox"
+          [checked]="localSelectedIds.includes(user.id)"
+          [attr.aria-label]="'Select ' + user.name"
+          (click)="$event.stopPropagation()"
+          (change)="toggleUserSelection(user.id)" />
 
       </div>
 
