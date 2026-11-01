@@ -13,7 +13,7 @@
     </button>
   </app-workspace-hero>
 
-  <header class="planning-header"><button *ngIf="fullscreenMode" type="button" class="fullscreen-toggle" (click)="toggleFullscreen()">Exit full screen</button>
+  <header class="planning-header"><button *ngIf="fullscreenMode || projectScope" type="button" class="fullscreen-toggle" (click)="toggleFullscreen()" [attr.aria-pressed]="fullscreenMode">{{ fullscreenMode ? 'Exit full screen' : 'Full screen' }}</button>
     <div class="planning-selectors">
       <label *ngIf="!projectScope" class="selector-field team-selector">
         <span>Team</span>

@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild, inject, OnDestroy, effect, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../auth.service';
 import { environment } from '../../environment';
 import { WorkspaceHeroComponent } from '../shared/workspace-hero';
+import { ProjectContextService } from '../project-context.service';
 
 type TabKey = 'pages' | 'services' | 'api' | 'permissions' | 'activity';
 // API payloads are dynamic JSON objects; `any` avoids TS4111 dot-access errors
@@ -21,12 +22,108 @@ type FolderNode = AnyRecord & { children: FolderNode[]; expanded?: boolean; dept
   templateUrl: './docs.html',
   styleUrls: ['./docs.css', '../shared/field-controls.css'],
 })
-export class Docs implements OnInit {
+export class Docs implements OnInit, OnDestroy {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly baseUrl = `${environment.apiBaseUrlM}/docs`;
+  readonly projectContext = inject(ProjectContextService);
+  private initialized = false;
+  private loadedProjectId: number | null = null;
+  private libraryRequest = 0;
+  creatingDocument = false;
+  loadingDocumentId: number | null = null;
+  documentSort: 'recent' | 'title' | 'updated' = 'recent';
+  private documentTouches: Record<string, string> = {};
+  readonly documentTemplates = [
+    { id: 'blank', name: 'Blank document', code: '', accent: '#2563eb', content: '' },
+    { id: 'brief', name: 'Project brief', code: 'BRIEF', accent: '#7c3aed', content: '<h1>Project brief</h1><h2>Purpose</h2><p>What problem are we solving?</p><h2>Goals and success measures</h2><p></p><h2>Scope</h2><p></p><h2>Milestones and owners</h2><p></p>' },
+    { id: 'requirements', name: 'Product requirements', code: 'PRD', accent: '#16a34a', content: '<h1>Product requirements</h1><h2>Customer problem</h2><p></p><h2>Proposed experience</h2><p></p><h2>Requirements</h2><ul><li>Requirement and acceptance criteria</li></ul><h2>Open questions</h2><p></p>' },
+    { id: 'design', name: 'Technical design', code: 'RFC', accent: '#4f46e5', content: '<h1>Technical design</h1><h2>Context and constraints</h2><p></p><h2>Proposed architecture</h2><p></p><h2>Alternatives considered</h2><p></p><h2>Risks and rollout</h2><p></p>' },
+    { id: 'meeting', name: 'Meeting notes', code: 'NOTES', accent: '#ea580c', content: '<h1>Meeting notes</h1><h2>Agenda</h2><ul><li>Discussion topic</li></ul><h2>Decisions</h2><p></p><h2>Actions and owners</h2><ul><li>Action · Owner · Due date</li></ul>' },
+    { id: 'release', name: 'Release notes', code: 'RELEASE', accent: '#dc2626', content: '<h1>Release notes</h1><h2>What is new</h2><p></p><h2>Improvements</h2><p></p><h2>Fixes</h2><p></p><h2>Known limitations</h2><p></p>' },
+  ];
+  private projectSync = effect(() => {
+    const id = this.projectContext.selectedProjectId();
+    untracked(() => { if (this.initialized && id !== this.loadedProjectId) void this.loadInitialData(); });
+  });
 
+  get projectName(): string { return this.projectContext.selectedProject()?.name || 'Select a project'; }
+  get documentOpen(): boolean { return this.pageViewMode === 'edit' && (!!this.selectedPage || this.editorMode === 'create'); }
+  get galleryDocuments(): AnyRecord[] {
+    const query = this.searchText.trim().toLowerCase();
+    return this.pages.filter(page => !query || `${page.title} ${page.pageType || ''}`.toLowerCase().includes(query)).slice().sort((a,b) =>
+      this.documentSort === 'title' ? a.title.localeCompare(b.title) :
+      this.documentTime(b) - this.documentTime(a));
+  }
+  private documentTime(page: AnyRecord): number { return Date.parse((this.documentSort === 'recent' ? this.documentTouches[String(page.id)] : '') || page.updatedAt || page.createdAt || '') || 0; }
+  documentOpenedAt(page: AnyRecord): string { return this.documentTouches[String(page.id)] || page.updatedAt || page.createdAt || ''; }
+  private get documentRecentKey(): string { return `greatley-docs-recent-${this.auth.getCurrentUserId()}-${this.projectContext.selectedProjectId()}`; }
+  private touchDocument(page: AnyRecord): void {
+    this.documentTouches = {...this.documentTouches, [page.id]: new Date().toISOString()};
+    try { localStorage.setItem(this.documentRecentKey, JSON.stringify(this.documentTouches)); } catch {}
+  }
+  private belongsToProject(space: AnyRecord, id: number): boolean {
+    const explicit = space.projectId ?? space.project_id ?? space.project?.id;
+    return explicit != null ? Number(explicit) === id : space.slug === `project-${id}`;
+  }
+  async createFromTemplate(templateId = 'blank'): Promise<void> {
+    const projectId = this.projectContext.selectedProjectId();
+    if (!projectId || this.loading || this.creatingDocument) return;
+    this.creatingDocument = true; this.clearMessages();
+    try {
+      if (!this.selectedSpace) {
+        const result = await this.request<AnyRecord>('post', '/spaces', { name: `${this.projectName} documents`, slug: `project-${projectId}`, projectId, project_id: projectId, visibility: 'ORGANIZATION', status: 'ACTIVE' });
+        if (projectId !== this.projectContext.selectedProjectId()) return;
+        this.selectedSpace = this.normalizeSpace(result?.data ?? result);
+        if (!this.selectedSpace?.id) throw new Error('The document service did not return a project library ID.');
+      }
+      if (projectId !== this.projectContext.selectedProjectId()) return;
+      const template = this.documentTemplates.find(row => row.id === templateId) || this.documentTemplates[0];
+      this.startNewPage();
+      const date = new Date().toLocaleDateString('en-CA');
+      this.pageDraft.title = template.code ? `[${template.code}] ${this.projectName} · ${date}` : 'Untitled document';
+      this.pageDraft.slug = `document-${Date.now()}`;
+      this.editorHtml = template.content;
+    } catch (error) { if (projectId === this.projectContext.selectedProjectId()) this.setError(error, 'Could not create the document.'); }
+    finally { this.creatingDocument=false; this.cdr.markForCheck(); }
+  }
+  async openDocument(page: AnyRecord): Promise<void> {
+    const projectId = this.projectContext.selectedProjectId();
+    this.loadingDocumentId = Number(page.id);
+    const session = ++this.editorSession;
+    try {
+      const response = await this.request<AnyRecord>('get', `/pages/${page.id}`);
+      if (session !== this.editorSession || projectId !== this.projectContext.selectedProjectId()) return;
+      const record = response?.data ?? response;
+      if (!record || Array.isArray(record) || typeof record !== 'object') throw new Error('The document could not be loaded.');
+      const docProject = record.projectId ?? record.project_id;
+      if ((docProject != null && Number(docProject) !== projectId) || (record.spaceId != null && !this.sameId(record.spaceId,this.selectedSpace?.id))) throw new Error('This document belongs to a different project.');
+      this.selectedPage = this.normalizePage({...page,...record});
+      this.startEditingPage(); this.touchDocument(this.selectedPage);
+    } catch(error) { if (projectId === this.projectContext.selectedProjectId()) this.setError(error, 'Could not open the document.'); }
+    finally { this.loadingDocumentId=null;this.cdr.markForCheck(); }
+  }
+  async closeDocument(): Promise<void> {
+    if(this.saving)return;
+    if(this.editorMode==='create' || this.editorSaveLabel==='Unsaved changes'){
+      await this.savePage();if(this.errorMessage)return;
+    }
+    this.beginEditorSession();this.selectedPage=null;this.pageViewMode='view';this.editorMode='edit';this.docFullScreen=false;
+  }
+
+  versionHistoryOpen = false;
+  cloudView: 'list'|'grid'='grid';
+  private autosaveTimer:ReturnType<typeof setTimeout>|null=null;
+  private documentRevision=0;
+  private editorSession=0;
+  private beginEditorSession():void{this.editorSession++;this.saving=false;if(this.autosaveTimer)clearTimeout(this.autosaveTimer);this.autosaveTimer=null;}
+  ngOnDestroy():void {if(this.autosaveTimer)clearTimeout(this.autosaveTimer);}
+  scheduleDocumentSave():void {
+    this.documentRevision++;this.editorSaveLabel='Unsaved changes';if(this.autosaveTimer)clearTimeout(this.autosaveTimer);
+    if(this.selectedSpace && this.pageDraft.title?.trim() && this.pageDraft.status!=='PUBLISHED')this.autosaveTimer=setTimeout(()=>{if(!this.saving && this.pageViewMode==='edit')void this.savePage();},1800);
+  }
+  exportDocument():void {const title=this.pageDraft.title||this.selectedPage?.title||'Document';const content=this.editorHtml||this.contentToEditorHtml(this.selectedPage?.content||'',this.selectedPage?.contentFormat);const blob=new Blob(['<!doctype html><html><meta charset="utf-8"><body>'+content+'</body></html>'],{type:'text/html'});const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download=this.slugify(title)+'.html';link.click();URL.revokeObjectURL(url);}
   activeTab: TabKey = 'pages';
   loading = false;
   loadingLibrary = false;
@@ -111,7 +208,16 @@ export class Docs implements OnInit {
 
   toggleDocFullScreen(): void { this.docFullScreen = !this.docFullScreen; }
 
+  trackDocumentId(index: number, row: AnyRecord): number | string {
+    return row.id ?? index;
+  }
+  setDocumentFolder(value: string): void {
+    this.pageDraft.folderId = value === '' ? null : Number(value);
+    this.scheduleDocumentSave();
+  }
+
   ngOnInit(): void {
+    this.initialized = true;
     void this.loadInitialData();
   }
 
@@ -200,52 +306,27 @@ private getRequestedUserId(): number | null {
   return this.getAuthenticatedUserId();
 }
 
-  async loadInitialData(retryOnce = true): Promise<void> {
-    this.loading = true;
+  async loadInitialData(_retryOnce = true): Promise<void> {
+    const projectId = this.projectContext.selectedProjectId();
+    this.loadedProjectId = projectId;
+    const request = ++this.libraryRequest;
+    this.spaceLoadSequence++;
+    this.beginEditorSession();
+    this.selectedSpace=null;this.selectedPage=null;this.pages=[];this.folders=[];
+    this.pageViewMode='view';this.editorMode='edit';this.docFullScreen=false;
     this.clearMessages();
+    this.documentTouches={};
+    try { this.documentTouches=JSON.parse(localStorage.getItem(this.documentRecentKey)||'{}'); } catch {}
+    if (!projectId) {this.loading=false;this.loadingLibrary=false;return;}
+    this.loading=true;
     try {
-      const results = await Promise.allSettled([
-        this.request<AnyRecord[]>('get', '/spaces'),
-        this.request<AnyRecord[]>('get', '/services'),
-        this.request<AnyRecord[]>('get', '/audit-logs'),
-      ]);
-
-      if (results[0].status === 'fulfilled') {
-        this.spaces = this.asArray(results[0].value).map(space => this.normalizeSpace(space)).filter(space => space.id != null);
-        const current = this.selectedSpace
-          ? this.spaces.find(space => this.sameId(space.id, this.selectedSpace.id))
-          : null;
-        const nextSpace = current || this.spaces[0] || null;
-        if (nextSpace) {
-          // Await this chain: the first render must not race the initial pages/folders request.
-          await this.selectSpace(nextSpace);
-        } else {
-          this.selectedSpace = null;
-          this.selectedPage = null;
-          this.selectedFolderId = null;
-          this.pages = [];
-          this.folders = [];
-          this.loadedSpaceKey = null;
-        }
-      } else {
-        // Authentication can finish hydrating just after this component mounts.
-        // Retry the first library request once so the user does not need to change tabs.
-        if (retryOnce) {
-          await new Promise<void>(resolve => setTimeout(resolve, 250));
-          this.loading = false;
-          await this.loadInitialData(false);
-          return;
-        }
-        this.setError(results[0].reason, 'Could not load documentation shelves. Use Refresh or check your session and API connection.');
-      }
-
-      if (results[1].status === 'fulfilled') this.services = this.asArray(results[1].value);
-      if (results[2].status === 'fulfilled') this.auditLogs = this.asArray(results[2].value);
-      this.cdr.detectChanges();
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges();
-    }
+      const result=await this.request<AnyRecord[]>('get','/spaces');
+      if(request!==this.libraryRequest || projectId!==this.projectContext.selectedProjectId())return;
+      this.spaces=this.asArray(result).map(space=>this.normalizeSpace(space)).filter(space=>space.id!=null && this.belongsToProject(space,projectId));
+      const space=this.spaces[0];
+      if(space)await this.selectSpace(space);
+    } catch(error) { if(request===this.libraryRequest)this.setError(error,'Could not load project documents.'); }
+    finally { if(request===this.libraryRequest){this.loading=false;this.cdr.markForCheck();} }
   }
 
   sameId(a: unknown, b: unknown): boolean {
@@ -285,58 +366,29 @@ private getRequestedUserId(): number | null {
     return {
       ...space,
       id: space?.id ?? space?.spaceId ?? space?.space_id ?? space?.shelfId ?? space?.shelf_id,
-      name: space?.name ?? space?.title ?? 'Untitled shelf',
+      name: space?.name ?? space?.title ?? 'Project documents',
       slug: space?.slug ?? space?.urlSlug ?? space?.url_slug ?? '',
       description: space?.description ?? '',
     };
   }
 
   async selectSpace(space: AnyRecord): Promise<void> {
-    if (space?.id == null) return;
-    const requestSequence = ++this.spaceLoadSequence;
-    this.selectedSpace = space;
-    this.folderBackStack = [];
-    this.folderForwardStack = [];
-    this.selectedPage = null;
-    this.selectedFolderId = null;
-    this.editorMode = 'edit';
-    this.pageViewMode = 'view';
-    this.pageDraft = this.emptyPage();
-    this.pages = [];
-    // Keep the previous tree on screen while refreshing the same shelf. The loading
-    // state below prevents a temporary empty response from looking like an empty shelf.
-    if (this.loadedSpaceKey !== String(space.id)) this.folders = [];
-    this.loadingLibrary = true;
-    this.clearMessages();
-
+    if(!space?.id)return;
+    this.beginEditorSession();
+    const request=++this.spaceLoadSequence;
+    const projectId=this.projectContext.selectedProjectId();
+    this.selectedSpace=space;this.selectedPage=null;this.selectedFolderId=null;
+    this.pageViewMode='view';this.editorMode='edit';this.loadingLibrary=true;
     try {
-      const pagesPromise = this.request<AnyRecord[]>('get', `/pages?spaceId=${encodeURIComponent(space.id)}&space_id=${encodeURIComponent(space.id)}`);
-      const foldersPromise = this.loadFolders(space.id);
-      const [pageResult, folderResult] = await Promise.allSettled([pagesPromise, foldersPromise]);
-      // Ignore a slower response if the user selected another shelf in the meantime.
-      if (requestSequence !== this.spaceLoadSequence) return;
-      if (pageResult.status === 'fulfilled') {
-        this.pages = this.asArray(pageResult.value).map(page => this.normalizePage(page)).filter(page => page.id != null && (page.spaceId == null || this.sameId(page.spaceId, space.id)));
-      } else {
-        this.setError(pageResult.reason, 'Could not load pages for this shelf.');
-      }
-      if (folderResult.status === 'fulfilled') {
-        this.folders = folderResult.value;
-        // Show the complete book hierarchy immediately after choosing a shelf.
-        const expandAll = (nodes: FolderNode[]): void => nodes.forEach(node => { node.expanded = true; expandAll(node.children || []); });
-        expandAll(this.folders);
-      } else {
-        this.folders = [];
-        if (pageResult.status === 'fulfilled') this.setError(folderResult.reason, 'Pages loaded, but books could not be loaded.');
-      }
-      this.loadedSpaceKey = String(space.id);
-    } finally {
-      if (requestSequence === this.spaceLoadSequence) this.loadingLibrary = false;
-      this.cdr.detectChanges();
-    }
+      const result=await this.request<AnyRecord[]>('get',`/pages?spaceId=${encodeURIComponent(space.id)}&space_id=${encodeURIComponent(space.id)}`);
+      if(request!==this.spaceLoadSequence || projectId!==this.projectContext.selectedProjectId())return;
+      this.pages=this.asArray(result).map(page=>this.normalizePage(page)).filter(page=>page.id!=null && (page.spaceId==null || this.sameId(page.spaceId,space.id)) && (page.projectId==null && page.project_id==null || Number(page.projectId??page.project_id)===projectId));
+    } catch(error) {if(request===this.spaceLoadSequence)this.setError(error,'Could not load project documents.');}
+    finally {if(request===this.spaceLoadSequence){this.loadingLibrary=false;this.cdr.markForCheck();}}
   }
 
   async selectPage(page: AnyRecord): Promise<void> {
+    this.beginEditorSession();
     this.docFullScreen = false;
     this.selectedPage = page;
     this.editorMode = 'edit';
@@ -350,9 +402,11 @@ private getRequestedUserId(): number | null {
     } catch {
       this.pageVersions = [];
     }
+    this.cdr.markForCheck();
   }
 
   startEditingPage(): void {
+    this.beginEditorSession();
     if (!this.selectedPage) return;
     this.editorMode = 'edit';
     this.pageViewMode = 'edit';
@@ -362,6 +416,7 @@ private getRequestedUserId(): number | null {
   }
 
   cancelPageEditing(): void {
+    this.beginEditorSession();
     if (this.selectedPage) {
       this.pageDraft = { ...this.emptyPage(), ...this.selectedPage };
       this.editorHtml = this.contentToEditorHtml(this.pageDraft.content || '', this.pageDraft.contentFormat);
@@ -374,6 +429,7 @@ private getRequestedUserId(): number | null {
   }
 
   startNewPage(): void {
+    this.beginEditorSession();
     if (!this.selectedSpace) {
       this.errorMessage = 'Create or select a shelf first.';
       return;
@@ -381,7 +437,7 @@ private getRequestedUserId(): number | null {
     this.selectedPage = null;
     this.editorMode = 'create';
     this.pageViewMode = 'edit';
-    this.pageDraft = { ...this.emptyPage(), spaceId: this.selectedSpace.id, folderId: this.selectedFolderId };
+    this.pageDraft = { ...this.emptyPage(), spaceId: this.selectedSpace.id, folderId: null };
     this.editorHtml = '';
     this.editorSaveLabel = 'New document';
     this.pageVersions = [];
@@ -397,7 +453,7 @@ private getRequestedUserId(): number | null {
     this.editorHtml = editor.innerHTML;
     this.pageDraft.content = this.editorHtml;
     this.pageDraft.contentFormat = 'HTML';
-    this.editorSaveLabel = 'Unsaved changes';
+    this.scheduleDocumentSave();
   }
 
   rememberEditorSelection(): void {
@@ -424,7 +480,7 @@ private getRequestedUserId(): number | null {
       this.editorHtml = editor.innerHTML;
       this.pageDraft.content = this.editorHtml;
       this.pageDraft.contentFormat = 'HTML';
-      this.editorSaveLabel = 'Unsaved changes';
+      this.scheduleDocumentSave();
       editor.focus();
     }
   }
@@ -477,7 +533,7 @@ private getRequestedUserId(): number | null {
     this.editorHtml = editor.innerHTML;
     this.pageDraft.content = this.editorHtml;
     this.pageDraft.contentFormat = 'HTML';
-    this.editorSaveLabel = 'Unsaved changes';
+    this.scheduleDocumentSave();
     editor.focus();
   }
 
@@ -486,13 +542,18 @@ private getRequestedUserId(): number | null {
       this.errorMessage = 'Select a space and enter a page title.';
       return;
     }
+    const session=this.editorSession;
+    const revision=this.documentRevision;
+    if(this.autosaveTimer)clearTimeout(this.autosaveTimer);
     this.saving = true;
+    this.editorSaveLabel='Saving to cloud…';
     this.clearMessages();
     this.pageDraft.content = this.editorHtml;
     this.pageDraft.contentFormat = 'HTML';
     const payload = {
       ...this.pageDraft,
       spaceId: this.selectedSpace.id,
+      projectId: this.projectContext.selectedProjectId(),
       title: this.pageDraft.title.trim(),
       slug: this.pageDraft.slug?.trim() || this.slugify(this.pageDraft.title),
       contentFormat: this.pageDraft.contentFormat || 'MARKDOWN',
@@ -504,14 +565,22 @@ private getRequestedUserId(): number | null {
       const result = this.editorMode === 'edit' && this.selectedPage
         ? await this.request<AnyRecord>('put', `/pages/${this.selectedPage.id}`, payload)
         : await this.request<AnyRecord>('post', '/pages', payload);
+      if(session!==this.editorSession)return;
       this.successMessage = this.editorMode === 'edit' ? 'Page updated.' : 'Page created.';
-      await this.selectSpace(this.selectedSpace);
-      const saved = result?.id ? result : this.pages.find(p => p.slug === payload.slug || p.title === payload.title);
-      if (saved) await this.selectPage(saved);
+      const response=result?.data??result;
+      const saved=this.normalizePage({...payload,...response,id:response?.id??this.selectedPage?.id});
+      if(!saved.id)throw new Error('The document service did not return a saved document ID.');
+      if(saved.id){this.selectedPage=saved;this.editorMode='edit';this.pages=[saved,...this.pages.filter(page=>!this.sameId(page.id,saved.id))];}
+      this.touchDocument(saved);
+      this.editorSaveLabel=revision===this.documentRevision?'Saved to cloud':'Unsaved changes';
+      if(revision!==this.documentRevision)this.scheduleDocumentSave();
+      this.cdr.markForCheck();
     } catch (error) {
-      this.setError(error, 'Could not save the page.');
+      if(session!==this.editorSession)return;
+      this.editorSaveLabel='Not saved — retry Save draft';
+      this.setError(error, 'Could not save the document. Your changes remain in the editor.');
     } finally {
-      this.saving = false;
+      if(session===this.editorSession){this.saving = false;this.cdr.markForCheck();}
     }
   }
 
@@ -694,7 +763,7 @@ private getRequestedUserId(): number | null {
     this.editorMode = 'edit';
     this.pageViewMode = 'view';
     this.docFullScreen = false;
-    this.pageDraft = { ...this.emptyPage(), spaceId: this.selectedSpace?.id, folderId: this.selectedFolderId };
+    this.pageDraft = { ...this.emptyPage(), spaceId: this.selectedSpace?.id, folderId: null };
     // Keep the selected book visible in the tree even when it was nested.
     const expandPath = (nodes: FolderNode[]): boolean => {
       for (const node of nodes) {
@@ -1031,6 +1100,9 @@ private getRequestedUserId(): number | null {
 
 
   private getAuthenticatedUserId(): number | null {
+    const authenticatedId = this.auth.getCurrentUserId();
+    if (authenticatedId !== null) return authenticatedId;
+
     if (typeof localStorage === 'undefined') {
       return null;
     }

@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { BehaviorSubject, Observable, map, of, catchError, tap } from 'rxjs';
+import { BehaviorSubject, Observable, map, of, catchError, tap, shareReplay } from 'rxjs';
 import { environment } from '../../environment';
 import { AuthService } from '../auth.service';
 import { WorkspaceHeroComponent } from '../shared/workspace-hero';
@@ -329,8 +329,9 @@ export class Users implements OnInit, OnChanges, OnDestroy {
         this.roleOptions = [];
         this.triggerToastAlert('Unable to load application roles.', true);
         return of([]);
-      })
+      }), shareReplay(1)
     );
+    this.roles$.subscribe();
   }
 
   openCreateForm(): void {

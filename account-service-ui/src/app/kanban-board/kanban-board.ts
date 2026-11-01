@@ -1,6 +1,7 @@
+import { RecentWorkService } from '../shared/recent-work.service';
 import { CommonModule } from '@angular/common';
 import { A11yModule } from '@angular/cdk/a11y';
-import { ChangeDetectorRef, Component, EventEmitter, Input, Output, OnInit, effect, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, Output, OnInit, HostListener, effect, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -62,7 +63,13 @@ interface WorkItem {
 })
 export class KanbanBoard implements OnInit {
   @Input() dialogRequest: WorkItemDialogRequest | null = null;
+  fullscreenMode = false;
+  @HostListener('document:keydown.escape') closeOnEscape(): void {
+    if (this.dialogRequest) return;
+    if (!this.selectedItem && !this.showCreateForm) this.fullscreenMode = false;
+  }
   @Output() dialogClosed = new EventEmitter<void>();
+  private readonly recentWork = inject(RecentWorkService);
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -156,7 +163,8 @@ export class KanbanBoard implements OnInit {
   ngOnInit(): void {
     if (this.dialogRequest) {
       this.requestedProjectId = this.dialogRequest.projectId;
-      this.pendingOpenItem = { type: this.dialogRequest.type, id: this.dialogRequest.id };
+      if (this.dialogRequest.create) this.pendingCreateType = this.dialogRequest.type === 'ISSUE' ? 'Bug' : this.dialogRequest.type === 'EPIC' ? 'Epic' : this.dialogRequest.type === 'STORY' ? 'Story' : 'Task';
+      else this.pendingOpenItem = { type: this.dialogRequest.type, id: this.dialogRequest.id };
       this.selectedProjectId = this.dialogRequest.projectId;
       this.projects = [...this.projectContext.projects()];
       if (!this.projects.some(project => project.id === this.selectedProjectId)) {
@@ -483,7 +491,7 @@ export class KanbanBoard implements OnInit {
     this.loadError = '';
     const projectId = this.selectedProjectId;
     forkJoin({
-      requested: this.dialogRequest ? this.http.get<any>(`${this.baseUrl}/${this.dialogRequest.type === 'ISSUE' ? 'v1/issues' : this.dialogRequest.type.toLowerCase() + 's'}/${this.dialogRequest.id}`, this.headers()).pipe(catchError(() => of(null))) : of(null),
+      requested: this.dialogRequest && !this.dialogRequest.create ? this.http.get<any>(`${this.baseUrl}/${this.dialogRequest.type === 'ISSUE' ? 'v1/issues' : this.dialogRequest.type.toLowerCase() + 's'}/${this.dialogRequest.id}`, this.headers()).pipe(catchError(() => of(null))) : of(null),
       epics: this.http.get<any>(`${this.baseUrl}/projects/${projectId}/epics`, this.headers()).pipe(catchError(() => of([]))),
       stories: this.http.get<any>(`${this.baseUrl}/projects/${projectId}/stories`, this.headers()).pipe(catchError(() => of([]))),
       tasks: this.http.get<any>(`${this.baseUrl}/tasks`, this.headers()).pipe(catchError(() => of([]))),
@@ -858,6 +866,7 @@ export class KanbanBoard implements OnInit {
     if (this.creatingItem) return;
     this.showCreateForm = false;
     this.createError = '';
+    if (this.dialogRequest) { this.dialogClosed.emit(); return; }
     this.clearCreateTypeQueryParam();
     window.setTimeout(() => window.scrollTo(0, this.boardScrollY), 0);
   }
@@ -909,6 +918,7 @@ export class KanbanBoard implements OnInit {
 
   openItemDetails(item: WorkItem): void {
     if (!this.selectedItem) this.boardScrollY = window.scrollY;
+    this.recentWork.remember({id:item.sourceId,type:item.sourceType,projectId:item.projectId,key:item.key,title:item.title});
     this.selectedItem = item;
     this.detailEditError = '';
     this.detailEditMode = false;
@@ -1518,6 +1528,7 @@ export class KanbanBoard implements OnInit {
       this.items = this.items.map(existing => existing.id === item.id ? item : existing);
       this.selectedItem = item;
       this.detailDraft = this.toDetailDraft(item);
+      this.recentWork.remember({id:item.sourceId,type:item.sourceType,projectId:item.projectId,key:item.key,title:item.title,action:'Updated'});
       this.detailEditMode = false;
       this.editingDetailField = null;
       this.detailSaving = false;
@@ -1628,6 +1639,7 @@ export class KanbanBoard implements OnInit {
       this.cdr.markForCheck();
       if (result === null) return;
       this.showCreateForm = false;
+      if (this.dialogRequest) { this.dialogClosed.emit(); return; }
       this.clearCreateTypeQueryParam();
       this.cdr.markForCheck();
       this.loadProjectData();

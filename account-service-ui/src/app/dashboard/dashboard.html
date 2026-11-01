@@ -50,6 +50,98 @@
         ><span>Project release milestones</span>
       </article>
     </section>
+    <section class="agile-signal-strip" aria-label="This week">
+      <article>
+        <b>{{ freshness.created }}</b
+        ><span>Created in 7 days</span>
+      </article>
+      <article>
+        <b>{{ freshness.updated }}</b
+        ><span>Updated in 7 days</span>
+      </article>
+      <article>
+        <b>{{ freshness.due }}</b
+        ><span>Due in the next 7 days</span>
+      </article>
+    </section>
+    <div class="agile-chart-grid">
+      <section class="agile-panel">
+        <h2>Status overview</h2>
+        <p>Every work item in this project scope.</p>
+        <div class="agile-donut-layout">
+          <div
+            class="agile-donut"
+            [style.background]="donutBackground"
+            role="img"
+            [attr.aria-label]="items.length + ' work items, broken down by status'"
+          >
+            <div>
+              <strong>{{ items.length }}</strong
+              ><span>Work items</span>
+            </div>
+          </div>
+          <ul class="agile-chart-legend">
+            <li *ngFor="let row of distribution">
+              <i [style.background]="row.color"></i><span>{{ row.name }}</span
+              ><strong>{{ row.count }}</strong>
+            </li>
+          </ul>
+        </div>
+      </section>
+      <section class="agile-panel">
+        <h2>Priority balance</h2>
+        <p>See which work needs attention first.</p>
+        <div class="agile-column-chart" role="img" aria-label="Work item priority counts">
+          <div *ngFor="let row of priorities">
+            <strong>{{ row.count }}</strong>
+            <div><i [style.height.%]="row.height" [style.background]="row.color"></i></div>
+            <span>{{ row.name | titlecase }}</span>
+          </div>
+        </div>
+      </section>
+      <section class="agile-panel">
+        <h2>Work distribution</h2>
+        <p>A clear breakdown of scope by work type.</p>
+        <div class="agile-flow">
+          <div *ngFor="let row of typeMix">
+            <span>{{ row.name | titlecase }}</span>
+            <div class="agile-track">
+              <i
+                [style.width.%]="items.length ? (row.count / items.length) * 100 : 0"
+                [style.background]="row.color"
+              ></i>
+            </div>
+            <b>{{ row.count }}</b>
+          </div>
+        </div>
+      </section>
+      <section class="agile-panel">
+        <h2>Creation and update pulse</h2>
+        <p>
+          14 days of creation dates and each item’s latest update. Older update history is not
+          inferred.
+        </p>
+        <div
+          class="agile-pulse-chart"
+          role="img"
+          aria-label="Created items and latest item updates by day"
+        >
+          <div
+            *ngFor="let day of activityBars"
+            [title]="
+              day.label + ': ' + day.created + ' created, ' + day.updated + ' latest updates'
+            "
+          >
+            <div>
+              <i [style.height.%]="(day.created / activityMax) * 100"></i
+              ><b [style.height.%]="(day.updated / activityMax) * 100"></b>
+            </div>
+            <span>{{ day.label }}</span>
+          </div>
+        </div>
+        <small class="agile-pulse-key"><i></i>Created <b></b>Latest update</small>
+      </section>
+    </div>
     <div class="agile-grid">
       <section class="agile-panel">
         <h2>Delivery flow</h2>

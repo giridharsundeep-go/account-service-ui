@@ -558,6 +558,7 @@
         <button type="button" class="project-profile-tab" [class.active]="selectedProjectTabIndex === 1" [attr.aria-selected]="selectedProjectTabIndex === 1" (click)="selectedProjectTabIndex = 1">Allocations · team members</button>
         <button type="button" class="project-profile-tab" [class.active]="selectedProjectTabIndex === 2" [attr.aria-selected]="selectedProjectTabIndex === 2" (click)="selectedProjectTabIndex = 2">Parameters</button>
         <button type="button" class="project-profile-tab" [class.active]="selectedProjectTabIndex === 3" [attr.aria-selected]="selectedProjectTabIndex === 3" (click)="selectedProjectTabIndex = 3">Sprints preview</button>
+        <button type="button" class="project-profile-tab" [class.active]="selectedProjectTabIndex === 4" (click)="openProjectPlanning(profile)">Project planning</button>
       </nav>
 
       <ng-container *ngIf="selectedProjectTabIndex === 0">
@@ -635,6 +636,7 @@
       
       </ng-container>
 
+      <section class="project-planning-tab" [hidden]="selectedProjectTabIndex !== 4"><app-sprint-planning *ngIf="planningVisited" [projectScope]="true" [planningProjectId]="profile.id || null"></app-sprint-planning></section>
     </div>
 
     <div *ngIf="isProfileEditing" class="project-profile-view-tabs project-profile-edit-tabs">
@@ -643,7 +645,7 @@
         <button type="button" class="project-profile-tab" [class.active]="selectedProjectTabIndex === 1" [attr.aria-selected]="selectedProjectTabIndex === 1" (click)="selectedProjectTabIndex = 1">Allocations · team members</button>
         <button type="button" class="project-profile-tab" [class.active]="selectedProjectTabIndex === 2" [attr.aria-selected]="selectedProjectTabIndex === 2" (click)="selectedProjectTabIndex = 2">Parameters</button>
         <button type="button" class="project-profile-tab" [class.active]="selectedProjectTabIndex === 3" [attr.aria-selected]="selectedProjectTabIndex === 3" (click)="selectedProjectTabIndex = 3">Sprints preview</button>
-      </nav>
+      <button type="button" class="project-profile-tab" [class.active]="selectedProjectTabIndex === 4" (click)="openProjectPlanning(profile)">Project planning</button></nav>
 
       <ng-container *ngIf="selectedProjectTabIndex === 0">
 
@@ -735,6 +737,10 @@
       
       </ng-container>
 
+      <section class="project-planning-tab" *ngIf="selectedProjectTabIndex === 4">
+        <ng-container *ngIf="profile.id && !isProfileCreating; else planningAfterCreation"><app-sprint-planning [projectScope]="true" [planningProjectId]="profile.id"></app-sprint-planning></ng-container>
+        <ng-template #planningAfterCreation><div class="project-planning-create"><h2>Plan your project</h2><p>Create this project to plan its items across sprints. Your teams, delivery parameters, and generated sprint preview will be saved together.</p><div><span>{{projectForm.computed_sprint_count || 0}} planned sprints</span><span>{{projectForm.target_velocity}} points per sprint</span><span>{{projectForm.sprint_duration_weeks}} weeks per sprint</span></div><button type="button" mat-flat-button color="primary" [disabled]="isSaving || !projectForm.name.trim()" (click)="createAndOpenPlanning()">{{isSaving ? 'Creating project…' : 'Create project and start planning'}}</button></div></ng-template>
+      </section>
     </div>
   </section>
 

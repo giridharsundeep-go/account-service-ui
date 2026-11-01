@@ -1,3 +1,4 @@
+import { SprintPlanning } from '../sprint-planning/sprint-planning';
 import { untracked, effect } from '@angular/core';
 import { Router } from '@angular/router';
 import { ProjectContextService } from '../project-context.service';
@@ -173,6 +174,7 @@ export interface SprintItem {
     MatDialogModule,
     MatListModule,
     MatExpansionModule,
+    SprintPlanning,
     MatDatepickerModule,
     MatNativeDateModule,
     MatProgressBarModule,
@@ -184,6 +186,12 @@ export interface SprintItem {
 })
 export class Projects implements OnInit {
   projectRoles: any[] = [];
+  planningVisited=false;
+  private openPlanningAfterCreate = false;
+  createAndOpenPlanning(): void {
+    this.openPlanningAfterCreate = true;
+    this.saveProfileProject();
+  }
   private readonly projectWork = inject(ProjectWorkService);
   private readonly itemDialog = inject(WorkItemDialogService);
   private lastItemRevision = this.itemDialog.revision();
@@ -206,7 +214,7 @@ export class Projects implements OnInit {
   }
   sprintPreviewItems(sprint: SprintItem): ProjectWorkItem[] { return this.projectWorkItems.filter(item=>item.sprintId===Number(sprint.id)); }
   openProjectWorkItem(item: ProjectWorkItem): void { this.itemDialog.open(item.projectId,item.kind,item.id); }
-  openProjectPlanning(project: StrategicInitiative): void { const id=Number(project.id);if(!id)return;this.projectContext.setSelectedProject(id);this.projectRouter.navigate(['/user-home'],{queryParams:{menu:'project-planning',projectId:id}}); }
+  openProjectPlanning(project: StrategicInitiative): void { this.planningVisited=true; this.selectedProjectTabIndex=4; }
   memberDesignation(member:any): string {
     const user:any=this.organizationPersonnel.find(u=>Number(u.id)===Number(member.id));
     const assignedRole=this.projectRoles.find(r=>Number(r.id??r.role_id)===Number(user?.roleId));
@@ -898,6 +906,7 @@ Math: any;
     this.loadProjectWork(Number(normalized.id));
     this.selectedSprint = null;
     this.selectedProjectTabIndex = 0;
+    this.planningVisited = false;
     this.isProfileCreating = false;
     this.isProfileEditing = false;
     this.profileEditSnapshot = this.normalizeProject(normalized);
@@ -1740,7 +1749,9 @@ Math: any;
             this.profileEditSnapshot = this.normalizeProject(created);
             this.isProfileCreating = false;
             this.isProfileEditing = false;
-            this.selectedProjectTabIndex = 0;
+            this.selectedProjectTabIndex = this.openPlanningAfterCreate ? 4 : 0;
+            this.planningVisited = this.openPlanningAfterCreate;
+            this.openPlanningAfterCreate = false;
             this.loadComposerResources(Number(created.id), created);
           }
           this.projectsRefresh$.next();

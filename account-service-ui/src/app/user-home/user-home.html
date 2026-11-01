@@ -66,7 +66,7 @@
           <div class="global-project-list" role="listbox" aria-label="Projects and spaces">
             <button type="button" *ngFor="let project of filteredGlobalProjects" role="option" [attr.aria-selected]="project.id === projectContext.selectedProjectId()" [class.is-selected]="project.id === projectContext.selectedProjectId()" (click)="selectGlobalProject(project.id)">
               <img *ngIf="project.avatarUrl" [src]="project.avatarUrl" alt="">
-              <span *ngIf="!project.avatarUrl" class="global-project-avatar">{{ project.name.slice(0, 1).toUpperCase() }}</span>
+              <span *ngIf="!project.avatarUrl" class="global-project-avatar" [attr.data-tone]="avatarTone(project.id)">{{ projectInitials(project.name) }}</span>
               <strong [title]="project.name">{{ project.name }}</strong>
               <svg *ngIf="project.id === projectContext.selectedProjectId()" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 8 3 3 7-7"></path></svg>
             </button>
@@ -86,13 +86,13 @@
             (focus)="globalWorkSearchOpen = true"
             (ngModelChange)="globalWorkSearchOpen = true"
             (keydown.enter)="openFirstGlobalWorkItem()"
-            placeholder="Search Epics, Stories, Tasks, Issues"
+            placeholder="Search by title, key, or person"
             aria-label="Search work items" />
           <button *ngIf="globalWorkSearch" type="button" class="global-work-search-clear" aria-label="Clear search" (click)="clearGlobalWorkSearch()">×</button>
           <kbd *ngIf="!globalWorkSearch">⌘ K</kbd>
         </label>
-        <div class="global-work-search-popover" *ngIf="globalWorkSearchOpen && globalWorkSearch.trim().length >= 2" role="listbox" aria-label="Work item suggestions">
-          <div class="global-work-search-heading">
+        <div class="global-work-search-popover" *ngIf="globalWorkSearchOpen" role="listbox" aria-label="Work item suggestions">
+          <ng-container *ngIf="!globalWorkSearch.trim()"><div class="global-work-search-heading">Recently opened or worked on</div><button type="button" class="global-work-search-result" *ngFor="let item of searchRecent" (click)="openRecent(item)"><span class="global-project-avatar" [attr.data-tone]="avatarTone(item.id)">{{item.type[0]}}</span><span class="global-work-result-copy"><strong>{{item.title}}</strong><span>{{item.key}} · {{item.action || 'Opened'}}</span></span></button><p class="global-work-search-state" *ngIf="!searchRecent.length">Your recently opened or updated work will appear here.</p></ng-container><ng-container *ngIf="globalWorkSearch.trim()"><div class="global-work-search-heading">
             <span>Work items</span>
             <span *ngIf="projectContext.selectedProject() as project">in {{ project.name }}</span>
           </div>
@@ -107,7 +107,7 @@
             <span class="global-work-result-copy"><strong>{{ item.key }}</strong><span [title]="item.title">{{ item.title }}</span></span>
             <span class="global-work-result-type">{{ item.typeLabel }}</span>
           </button>
-          <div class="global-work-search-state" *ngIf="!globalWorkSearchLoading && !filteredGlobalWorkItems.length">No matching work items in this project.</div>
+          <div class="global-work-search-heading" *ngIf="filteredGlobalPeople.length">People</div><button type="button" class="global-work-search-result" *ngFor="let person of filteredGlobalPeople" (click)="openSearchPerson(person)"><span class="global-project-avatar">{{person.name.slice(0,1)}}</span><span class="global-work-result-copy"><strong>{{person.name}}</strong><span>{{person.designation || person.email}}</span></span><span>Profile</span></button><div class="global-work-search-state" *ngIf="!globalWorkSearchLoading && !filteredGlobalWorkItems.length && !filteredGlobalPeople.length">No matching titles, keys, or people.</div></ng-container>
         </div>
       </div>
     </div>
@@ -269,37 +269,15 @@
       </button>
 
 
-      <!-- SETTINGS -->
-      <button
-        type="button"
-        class="icon-button desktop-only"
-        title="Settings"
-        aria-label="Settings">
-
-        <svg viewBox="0 0 24 24">
-
-          <circle
-            cx="12"
-            cy="12"
-            r="3.5">
-          </circle>
-
-          <path
-            d="M19 15l1 1-2 2-1-1
-               a7 7 0 0 1-2 1v2h-3v-2
-               a7 7 0 0 1-2-1l-1 1-2-2
-               1-1a7 7 0 0 1-1-2H4v-3h2
-               a7 7 0 0 1 1-2L6 7l2-2
-               1 1a7 7 0 0 1 2-1V3h3v2
-               a7 7 0 0 1 2 1l1-1 2 2-1 1
-               a7 7 0 0 1 1 2h2v3h-2
-               a7 7 0 0 1-1 2z">
-          </path>
-
-        </svg>
-
-      </button>
-
+      <div class="header-recent" (click)="$event.stopPropagation()">
+        <button type="button" class="icon-button" aria-label="Recent activity" title="Recently opened or worked on" [attr.aria-expanded]="recentMenuOpen" (click)="recentMenuOpen = !recentMenuOpen">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"></path></svg>
+        </button>
+        <section *ngIf="recentMenuOpen" class="header-recent-popover" aria-label="Your recent activity">
+          <header><div><strong>Your recent work</strong><span>Opened or updated by you</span></div><button type="button" aria-label="Close recent activity" (click)="recentMenuOpen=false">×</button></header>
+          <div class="header-recent-list"><button type="button" *ngFor="let item of recentWork.items()" (click)="openRecent(item)"><span class="global-project-avatar" [attr.data-tone]="avatarTone(item.id)">{{item.type[0]}}</span><span><strong>{{item.title}}</strong><small>{{item.key}} · {{item.action || 'Opened'}} · {{item.openedAt | date:'short'}}</small></span></button><p *ngIf="!recentWork.items().length">Your recent work will appear here.</p></div>
+        </section>
+      </div>
 
       <!-- PROFILE -->
       <div class="profile-wrapper">
@@ -311,7 +289,7 @@
           aria-label="Account">
 
           <span class="profile-avatar">
-            {{ userInitials }}
+            <img *ngIf="user.image" [src]="user.image" alt=""><ng-container *ngIf="!user.image">{{ userInitials }}</ng-container>
           </span>
 
         </button>
@@ -325,7 +303,7 @@
           <button type="button" class="profile-card profile-card-action" (click)="openMyProfile()" aria-label="Open your profile">
 
             <div class="profile-avatar profile-large">
-              {{ userInitials }}
+              <img *ngIf="user.image" [src]="user.image" alt=""><ng-container *ngIf="!user.image">{{ userInitials }}</ng-container>
             </div>
 
             <strong>
@@ -471,6 +449,7 @@
            NAVIGATION
       ====================================================== -->
 
+      <section class="recent-navigation" *ngIf="!isCollapsed"><button class="recent-navigation-toggle" type="button" (click)="recentCollapsed=!recentCollapsed" [attr.aria-expanded]="!recentCollapsed"><strong>Recently opened or worked on</strong><span>{{recentCollapsed ? '▸' : '▾'}}</span></button><div *ngIf="!recentCollapsed"><button type="button" *ngFor="let item of recentWork.items().slice(0,8)" (click)="openRecent(item)" [title]="item.title"><span [attr.data-tone]="avatarTone(item.id)">{{item.type === 'ISSUE' ? '!' : item.type[0]}}</span><div><strong>{{item.title}}</strong><small>{{item.key}} · {{item.action || 'Opened'}}</small></div></button><p *ngIf="!recentWork.items().length">Your recent work appears here.</p></div></section>
       <nav class="navigation" aria-label="Main navigation">
         <ng-container *ngTemplateOutlet="navigationGroup; context: { title: '', items: primaryNavigation, first: true }"></ng-container>
         <ng-container *ngTemplateOutlet="navigationGroup; context: { title: 'Plan & Track', items: planningNavigation }"></ng-container>
@@ -615,7 +594,7 @@
             *ngIf="activeMenu === 'sprint-planning'">
           </app-sprint-planning>
 
-          <app-project-planning *ngIf="activeMenu === 'project-planning'"></app-project-planning>
+
 
           <app-work-items
             *ngIf="activeMenu === 'work-items'">
@@ -690,4 +669,4 @@
 
 </div>
 
-<app-kanban-board *ngIf="itemDialog.request() as request" [dialogRequest]="request" (dialogClosed)="itemDialog.close()"></app-kanban-board>
+<div gpFullscreenDialogHost><app-kanban-board *ngIf="itemDialog.request() as request" [dialogRequest]="request" (dialogClosed)="itemDialog.close()"></app-kanban-board></div>

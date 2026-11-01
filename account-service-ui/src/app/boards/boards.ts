@@ -1162,8 +1162,6 @@ export class Boards implements OnInit {
   }
 
   closeScrumBoardView(): void {
-    this.showScrumBoard.set(false);
-    this.fullScreenBoardMode.set('BOARD');
     this.backToBoards();
   }
 
@@ -1334,6 +1332,11 @@ export class Boards implements OnInit {
     this.associatedTestsOpen.set(true);
   }
 
+  openBoardItemLink(card: BoardCard, event: MouseEvent): void {
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.button !== 0) return;
+    event.preventDefault(); event.stopPropagation(); this.openBoardItem(card);
+  }
+
   openBoardItem(card: BoardCard): void {
     if (!card?.id) return;
     if (card.type === 'TEST_CASE') {
@@ -1344,7 +1347,9 @@ export class Boards implements OnInit {
       this.boardItemModalOpen.set(true);
       return;
     }
-    this.itemDialog.open(Number(this.selectedProjectId() ?? this.selectedBoard()?.projectId ?? card.raw?.project_id), card.type, card.id);
+    const projectId=Number(card.raw?.project_id ?? card.raw?.projectId ?? card.raw?.project?.id ?? this.selectedBoard()?.projectId ?? this.selectedProjectId() ?? this.projectContext.selectedProjectId());
+    if (!projectId) { this.errorMessage.set('This item has no project. Open it from Work Items to review its details.'); return; }
+    this.itemDialog.open(projectId, card.type, card.id);
   }
 
   openCreateWorkItem(type: 'EPIC' | 'STORY' | 'TASK' | 'ISSUE' | 'TEST_CASE'): void {
@@ -1354,6 +1359,7 @@ export class Boards implements OnInit {
       return;
     }
 
+    if (type !== 'TEST_CASE') { this.itemDialog.create(projectId, type); return; }
     const currentSprint = this.currentSprint();
     const currentUserId = this.getAuthenticatedUserId();
 
@@ -1363,7 +1369,7 @@ export class Boards implements OnInit {
       code: '',
       title: '',
       description: '',
-      status: type === 'TASK' ? 'TODO' : type === 'ISSUE' ? 'OPEN' : type === 'TEST_CASE' ? 'DRAFT' : 'BACKLOG',
+      status: 'DRAFT',
       priority: 'MEDIUM',
       points: 0,
       projectId,
@@ -1373,7 +1379,7 @@ export class Boards implements OnInit {
       epicId: null,
       storyId: null,
       raw: {},
-      issueCode: type === 'ISSUE' ? `ISSUE-${Date.now().toString().slice(-6)}` : '',
+      issueCode: '',
       testCaseCode: type === 'TEST_CASE' ? `TC-${Date.now().toString().slice(-6)}` : '',
       isBlocking: false, epicIds: [], storyIds: [], taskIds: [],
       preconditions: '', steps: '', expectedResult: '', actualResult: '', executionStatus: 'DRAFT'
@@ -1383,7 +1389,7 @@ export class Boards implements OnInit {
       key: `NEW-${type}`,
       type,
       id: 0,
-      code: type === 'ISSUE' ? draft.issueCode : type === 'TEST_CASE' ? draft.testCaseCode : type,
+      code: draft.testCaseCode,
       title: 'New ' + type,
       status: draft.status,
       priority: draft.priority,

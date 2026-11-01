@@ -1,7 +1,15 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, forkJoin, from, of } from 'rxjs';
-import { catchError, map, mergeMap, switchMap, toArray } from 'rxjs/operators';
+import {
+  catchError,
+  map,
+  mergeMap,
+  switchMap,
+  toArray,
+  finalize,
+  shareReplay,
+} from 'rxjs/operators';
 import { environment } from '../../environment';
 import { AuthService } from '../auth.service';
 export interface ProjectWorkItem {
@@ -27,8 +35,18 @@ export interface ProjectWorkSnapshot {
   users: any[];
   unavailable: string[];
 }
+
+export function workItemTitle(row: any, kind: ProjectWorkItem['kind']): string {
+  const candidates = kind === 'EPIC'
+    ? [row.name, row.epic_name, row.epicName, row.title]
+    : [row.title, row[`${kind.toLowerCase()}_title`], row[`${kind.toLowerCase()}Title`], row.name];
+  return [...candidates, row.summary, row.display_name, row.displayName].find(
+    value => typeof value === 'string' && value.trim(),
+  )?.trim() || 'Untitled item';
+}
 @Injectable({ providedIn: 'root' })
 export class ProjectWorkService {
+  private inFlight = new Map<number, Observable<ProjectWorkSnapshot>>();
   private http = inject(HttpClient);
   private auth = inject(AuthService);
   private base = String(environment.apiBaseUrlM || '').replace(/\/$/, '');
@@ -63,6 +81,8 @@ export class ProjectWorkService {
     return Number(r?.project_id ?? r?.projectId ?? r?.project?.id ?? 0);
   }
   load(projectId: number): Observable<ProjectWorkSnapshot> {
+    const pending = this.inFlight.get(projectId);
+    if (pending) return pending;
     const unavailable: string[] = [];
     const read = (label: string, path: string) => {
       const unavailableSource = () => {
@@ -77,11 +97,12 @@ export class ProjectWorkService {
         );
       return getPage().pipe(
         switchMap((response) => {
-          const page = response?.data?.totalPages !== undefined ? response.data : response;
-          const total = Number(page?.totalPages ?? page?.page?.totalPages ?? 1);
           const first = this.rows(response);
+          const page = response?.data && !Array.isArray(response.data) ? response.data : response;
+          const total = Number(page?.totalPages ?? page?.total_pages ?? page?.page?.totalPages ?? page?.pagination?.totalPages ??
+            Math.ceil(Number(page?.totalElements ?? page?.total_elements ?? 0) / Math.max(1, Number(page?.size ?? page?.pageSize ?? first.length))));
           if (!Number.isFinite(total) || total <= 1) return of(first);
-          return from(Array.from({ length: Math.floor(total) - 1 }, (_, index) => index + 1)).pipe(
+          return from(Array.from({ length: Math.ceil(total) - 1 }, (_, index) => index + 1)).pipe(
             mergeMap(
               (page) =>
                 getPage(page).pipe(
@@ -103,7 +124,7 @@ export class ProjectWorkService {
         }),
       );
     };
-    return forkJoin({
+    const request = forkJoin({
       epics: read('Epics', `/projects/${projectId}/epics`),
       stories: read('Stories', `/projects/${projectId}/stories`),
       tasks: read('Tasks', `/tasks`),
@@ -180,7 +201,7 @@ export class ProjectWorkService {
                 r.issue_code ??
                 `${kind}-${r.id}`,
             ),
-            title: String(r.title ?? r.name ?? r.summary ?? 'Untitled item'),
+            title: workItemTitle(r, kind),
             status: String(r.status ?? 'BACKLOG')
               .toUpperCase()
               .replace(/[ -]/g, '_'),
@@ -234,7 +255,11 @@ export class ProjectWorkService {
           unavailable,
         };
       }),
+      finalize(() => this.inFlight.delete(projectId)),
+      shareReplay({ bufferSize: 1, refCount: true }),
     );
+    this.inFlight.set(projectId, request);
+    return request;
   }
   done(status: string): boolean {
     return ['DONE', 'COMPLETED', 'CLOSED', 'RESOLVED', 'RELEASED'].includes(

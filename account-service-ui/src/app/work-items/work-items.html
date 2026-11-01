@@ -103,13 +103,7 @@
         <ng-container matColumnDef="work">
           <th mat-header-cell *matHeaderCellDef>Work</th>
           <td mat-cell *matCellDef="let item" class="work-title-cell">
-            <span class="work-type-mark" [ngClass]="kindClass(item.kind)" [attr.aria-label]="kindLabel(item.kind)" [title]="kindLabel(item.kind)">
-              <svg *ngIf="item.kind === 'EPIC'" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M8.4 14.8a7 7 0 1 1 7.2 0c-.7.5-1.1 1.3-1.1 2.2h-5c0-.9-.4-1.7-1.1-2.2Z"></path></svg>
-              <svg *ngIf="item.kind === 'STORY'" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v16l-6-3-6 3z"></path></svg>
-              <svg *ngIf="item.kind === 'TASK'" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"></rect><path d="m8 12 2.5 2.5L16 9"></path></svg>
-              <svg *ngIf="item.kind === 'ISSUE'" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 22 20H2z"></path><path d="M12 9v5M12 17h.01"></path></svg>
-            </span>
-            <button type="button" class="work-item-open" (click)="$event.stopPropagation(); openWorkItem(item)"><span class="work-item-key">{{ item.key }}</span><strong [title]="item.title">{{ item.title }}</strong><span class="work-item-project">{{ item.projectName }}</span></button>
+            <button type="button" class="work-item-open" (click)="$event.stopPropagation(); openWorkItem(item)"><strong [title]="item.title">{{ item.title }}</strong></button>
           </td>
         </ng-container>
 

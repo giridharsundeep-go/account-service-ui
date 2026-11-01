@@ -1,8 +1,10 @@
-<section class="kb-page">
+<section class="kb-page" [class.kb-fullscreen]="fullscreenMode">
   <div class="kb-board-view" [class.is-hidden]="!!selectedItem || showCreateForm || !!dialogRequest">
-  <app-workspace-hero [compact]="true" eyebrow="PLAN · PRIORITIZE · MOVE" title="Kanban board" subtitle="See the flow, focus on the next step, and keep work moving." image="assets/covers/kanban.png" imageAlt="A team moving work through a kanban board"></app-workspace-hero>
+  <app-workspace-hero *ngIf="!fullscreenMode" [compact]="true" eyebrow="PLAN · PRIORITIZE · MOVE" title="Kanban board" subtitle="See the flow, focus on the next step, and keep work moving." image="assets/covers/kanban.png" imageAlt="A team moving work through a kanban board"></app-workspace-hero>
 
 
+  <div class="kb-fullscreen-context" *ngIf="fullscreenMode"><strong>{{selectedProject?.name}}</strong><span>{{currentSprintName}}</span><small>{{cycleDates}}</small></div>
+  <button type="button" class="gp-button gp-outline kb-fullscreen-toggle" (click)="fullscreenMode = !fullscreenMode">{{fullscreenMode ? 'Exit full screen' : 'Full screen'}}</button>
   <section class="kb-cycle-panel">
     <div class="kb-cycle-copy">
       <label for="kb-sprint-select" class="visually-hidden">Select sprint cycle</label>
@@ -134,7 +136,7 @@
 
   </div>
 
-  <div *ngIf="dialogRequest && !selectedItem" class="shared-item-loading" role="dialog" aria-modal="true" aria-label="Loading work item"><div><button type="button" (click)="dialogClosed.emit()" aria-label="Close work item">×</button><h2>{{ loading ? 'Loading work item…' : 'Work item unavailable' }}</h2><p>{{ loadError || (loading ? 'Getting the latest project details.' : 'This item was not returned by the project API. Refresh the project or check your access.') }}</p></div></div>
+  <div *ngIf="dialogRequest && !selectedItem && !showCreateForm" class="shared-item-loading" role="dialog" aria-modal="true" aria-label="Loading work item"><div><button type="button" (click)="dialogClosed.emit()" aria-label="Close work item">×</button><h2>{{ loading ? 'Loading work item…' : 'Work item unavailable' }}</h2><p>{{ loadError || (loading ? 'Getting the latest project details.' : 'This item was not returned by the project API. Refresh the project or check your access.') }}</p></div></div>
   <div class="kb-item-dialog-backdrop" *ngIf="selectedItem || showCreateForm" aria-hidden="true"></div>
 
   <section class="kb-item-page kb-create-item-page kb-work-item-dialog" role="dialog" aria-modal="true" aria-label="Create work item" cdkTrapFocus [cdkTrapFocusAutoCapture]="true" *ngIf="showCreateForm" (window:keydown.escape)="cancelCreate()">

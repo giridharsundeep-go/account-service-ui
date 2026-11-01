@@ -325,8 +325,8 @@
                 <mat-card-header class="work-item-card-header minimal-work-item-header">
                   <mat-card-title class="work-item-card-id">
                     <a class="work-item-code-link" [href]="workItemHref(card)" target="_blank" rel="noopener noreferrer"
-                      (click)="$event.stopPropagation()"
-                      [attr.aria-label]="'Open ' + card.type + ' ID ' + card.id + ' in a new tab'">{{ card.id }}</a>
+                      (click)="openBoardItemLink(card, $event)"
+                      [attr.aria-label]="'Open ' + card.type + ' ID ' + card.id + ' details'">{{ card.id }}</a>
                   </mat-card-title>
                   <mat-card-title class="work-item-card-title" [title]="card.title">{{ card.title }}</mat-card-title>
                 </mat-card-header>
@@ -656,7 +656,7 @@
 
         <div class="scrum-list">
           <mat-card class="scrum-item-card" appearance="outlined" *ngFor="let card of scrumItems()"
-            (click)="openBoardItem(card); closeScrum()">
+            (click)="openBoardItem(card)">
             <mat-card-header>
               <mat-card-title>{{ card.title }}</mat-card-title>
               <mat-card-subtitle>{{ card.type }} · {{ card.code }}</mat-card-subtitle>
@@ -1134,8 +1134,8 @@
               <mat-card-header class="work-item-card-header minimal-work-item-header">
                 <mat-card-title class="work-item-card-id">
                   <a class="work-item-code-link" [href]="workItemHref(card)" target="_blank" rel="noopener noreferrer"
-                    (click)="$event.stopPropagation()"
-                    [attr.aria-label]="'Open ' + card.type + ' ID ' + card.id + ' in a new tab'">{{ card.id }}</a>
+                    (click)="openBoardItemLink(card, $event)"
+                    [attr.aria-label]="'Open ' + card.type + ' ID ' + card.id + ' details'">{{ card.id }}</a>
                 </mat-card-title>
                 <mat-card-title class="work-item-card-title" [title]="card.title">{{ card.title }}</mat-card-title>
               </mat-card-header>

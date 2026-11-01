@@ -105,19 +105,29 @@ interface PlanningSprintGroup {
 })
 export class SprintPlanning implements OnInit {
   @Input() projectScope = false;
+  @Input() planningProjectId: number|null = null;
   readonly itemDialog = inject(WorkItemDialogService);
   private lastItemRevision = this.itemDialog.revision();
   private readonly itemRefresh = effect(() => {
     const revision = this.itemDialog.revision();
     if (revision === this.lastItemRevision) return;
     this.lastItemRevision = revision;
-    untracked(() => { if (this.selectedProjectId) this.loadProjectItems(this.selectedProjectId); });
+    untracked(() => { if (this.selectedProjectId) this.loadProjectItems(this.selectedProjectId, true); });
   });
   userReview: PlanningAssigneeGroup | null = null;
   private previousSelection = new Set<string>();
   private previousFocus: number|null=null;
-  openUserReview(group: PlanningAssigneeGroup): void { this.previousSelection = new Set(this.selectedItemIds); this.selectedItemIds.clear(); this.previousFocus=this.selectedSprintId; this.selectedSprintId=group.items[0]?.sprintId ?? null; this.userReview = group; }
-  closeUserReview(): void { if(this.saving) return; this.userReview = null; this.selectedSprintId=this.previousFocus; this.selectedItemIds = new Set(this.previousSelection); }
+  openUserReview(group: PlanningAssigneeGroup): void {
+    this.previousSelection=new Set(this.selectedItemIds);this.previousFocus=this.selectedSprintId;
+    this.selectedItemIds=new Set(group.items.filter(item=>this.previousSelection.has(item.id)).map(item=>item.id));this.userReview=group;
+  }
+  closeUserReview(): void {
+    if(this.saving)return;
+    const reviewedIds=new Set(this.userReview?.items.map(item=>item.id)??[]);
+    const validIds=new Set(this.items.map(item=>item.id));
+    this.selectedItemIds=new Set([...this.previousSelection].filter(id=>!reviewedIds.has(id)&&validIds.has(id)).concat([...this.selectedItemIds].filter(id=>validIds.has(id))));
+    this.userReview=null;this.selectedSprintId=this.previousFocus;
+  }
   get reviewedItems(): PlanningItem[] { return this.userReview ? this.teamItems.filter(i => i.assigneeId === this.userReview!.personId && i.sprintId === (this.userReview!.items[0]?.sprintId ?? null)) : []; }
   openPlanningItem(item: PlanningItem): void { this.itemDialog.open(Number(this.selectedProjectId), item.kind, item.sourceId); }
 
@@ -188,12 +198,13 @@ export class SprintPlanning implements OnInit {
   draggedItemId: string | null = null;
   dropTarget: 'backlog' | number | null = null;
   private readonly projectContextSync = effect(() => {
-    const sharedProjectId = this.projectContext.selectedProjectId();
+    const sharedProjectId = this.planningProjectId || this.projectContext.selectedProjectId();
     if (!sharedProjectId || !this.projects.length || sharedProjectId === this.selectedProjectId) return;
     if (this.projects.some(project => project.id === sharedProjectId)) this.onProjectChange(sharedProjectId);
   });
 
   ngOnInit(): void {
+    if (this.planningProjectId) this.projectContext.setSelectedProject(this.planningProjectId);
     this.loadProjects();
   }
 
@@ -699,8 +710,8 @@ export class SprintPlanning implements OnInit {
     this.dropTarget = null;
   }
 
-  private loadProjectItems(projectId: number): void {
-    this.loadingItems = true;
+  private loadProjectItems(projectId: number, background = false): void {
+    if (!background) this.loadingItems = true;
     this.loadError = '';
     const projectAtRequest = projectId;
     forkJoin({
@@ -863,7 +874,8 @@ export class SprintPlanning implements OnInit {
           return order[a.kind] - order[b.kind] || a.title.localeCompare(b.title);
         });
         this.loadingItems = false;
-        this.selectedItemIds.clear();
+        const validIds=new Set(next.map(item=>item.id));
+        this.selectedItemIds=new Set([...this.selectedItemIds].filter(id=>validIds.has(id)));
         if (!this.items.length) this.loadError = 'This project has no Epics, Stories, Tasks, or Issues yet.';
         this.cdr.markForCheck();
       },
@@ -1229,7 +1241,8 @@ export class SprintPlanning implements OnInit {
   }
   get nextPlanningSprint(): SprintOption | undefined {
     const upcoming = this.planningSprints.filter(sprint => !this.isSprintActive(sprint));
-    const selectedIndex = upcoming.findIndex(sprint => sprint.id === this.selectedSprintId);
+    const sourceId=this.userReview ? this.userReview.items[0]?.sprintId : this.selectedSprintId;
+    const selectedIndex = upcoming.findIndex(sprint => sprint.id === sourceId);
     return selectedIndex >= 0 ? upcoming[selectedIndex + 1] : upcoming[0];
   }
 
@@ -1289,16 +1302,17 @@ export class SprintPlanning implements OnInit {
     forkJoin(requests).subscribe(results => {
       this.saving = false;
       const failed = results.filter(result => result?.__planningError);
-      this.selectedItemIds.clear();
+      const succeeded=new Set(items.filter(item=>!failed.some(result=>result.item.id===item.id)).map(item=>item.id));
+      this.selectedItemIds=new Set([...this.selectedItemIds].filter(id=>!succeeded.has(id)));
       if (failed.length) {
         this.saveError = `${failed.length} item${failed.length === 1 ? '' : 's'} could not be updated. The board has been refreshed with the latest saved values.`;
       } else {
         const destination = sprintId === null ? 'the backlog' : this.sprints.find(sprint => sprint.id === sprintId)?.name ?? 'the selected sprint';
         this.notice = `${items.length} item${items.length === 1 ? '' : 's'} moved to ${destination}.`;
       }
-      this.moveDestinationSprintId = null;
+      if(!failed.length)this.moveDestinationSprintId = null;
       this.cdr.markForCheck();
-      if (this.selectedProjectId !== null) this.loadProjectItems(this.selectedProjectId);
+      if (this.selectedProjectId !== null) this.loadProjectItems(this.selectedProjectId, true);
     });
   }
 

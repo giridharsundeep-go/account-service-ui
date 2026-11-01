@@ -1,3 +1,7 @@
+import { ChangeDetectorRef } from '@angular/core';
+import { ProjectWorkService } from '../shared/project-work.service';
+import { RecentWorkService, RecentWork } from '../shared/recent-work.service';
+import { FullscreenDialogHost } from '../shared/fullscreen-dialog-host';
 import {
   Component,
   OnInit,
@@ -33,6 +37,7 @@ interface GlobalWorkItemSuggestion {
   typeLabel: string;
   key: string;
   title: string;
+  searchText?: string;
   projectId: number;
   projectName: string;
 }
@@ -42,7 +47,6 @@ import { Roles } from '../roles/roles';
 import { Users } from '../users/users';
 import { Teams } from '../teams/teams';
 import { Products } from '../products/products';
-import { ProjectPlanning } from '../projects/project-planning';
 import { Projects } from '../projects/projects';
 import { WorkItems } from '../work-items/work-items';
 import { Issues } from '../issues/issues';
@@ -58,6 +62,7 @@ import { SprintPlanning } from '../sprint-planning/sprint-planning';
   standalone: true,
 
   imports: [
+    FullscreenDialogHost,
     CommonModule,
     FormsModule,
     RouterOutlet,
@@ -67,7 +72,6 @@ import { SprintPlanning } from '../sprint-planning/sprint-planning';
     Teams,
     Products,
     Projects,
-    ProjectPlanning,
     WorkItems,
     Boards,
     KanbanBoard,
@@ -83,6 +87,18 @@ import { SprintPlanning } from '../sprint-planning/sprint-planning';
 })
 export class UserHome implements OnInit {
   readonly itemDialog = inject(WorkItemDialogService);
+  readonly recentWork = inject(RecentWorkService);
+  private readonly workData = inject(ProjectWorkService);
+  private readonly cdr=inject(ChangeDetectorRef);
+  globalPeople:any[]=[];
+  recentMenuOpen = false;
+  recentCollapsed = false;
+  openRecent(item:RecentWork):void { this.recentMenuOpen=false; this.globalWorkSearchOpen=false; this.itemDialog.open(item.projectId,item.type,item.id); }
+  avatarTone(id: number): string { return ['violet','indigo','blue','green','yellow','orange','red'][Math.abs(Number(id)||0)%7]; }
+  projectInitials(name: string): string { return name.split(/\s+/).filter(Boolean).slice(0,2).map(word=>word[0]).join('').toUpperCase(); }
+  get searchRecent(): RecentWork[] { const query=this.globalWorkSearch.trim().toLocaleLowerCase();return this.recentWork.items().filter(item=>!query || `${item.title} ${item.key}`.toLocaleLowerCase().includes(query)).slice(0,8); }
+  get filteredGlobalPeople():any[]{const q=this.globalWorkSearch.trim().toLowerCase();return q.length<2?[]:this.globalPeople.filter(u=>(u.name+' '+u.email).toLowerCase().includes(q)).slice(0,5);}
+  openSearchPerson(person:any):void {this.globalWorkSearchOpen=false;this.currentUserProfileId=person.id;this.profileOpenRequest++;this.setActive('users');}
 
   private readonly baseUrl = String(environment.apiBaseUrlM || '').replace(/\/$/, '');
 
@@ -121,9 +137,9 @@ export class UserHome implements OnInit {
   // =========================================================
 
   user = {
-    name: 'Giridhar Sundeep',
-    email: 'giridharsundeep.pro@gmail.com',
-    phone: '7799165659',
+    name: 'Your account',
+    email: '',
+    phone: '',
     image: null as string | ArrayBuffer | null
   };
 
@@ -142,7 +158,6 @@ export class UserHome implements OnInit {
     { id: 'boards', label: 'Boards', icon: 'boards' },
     { id: 'kanban-board', label: 'Kanban Board', icon: 'kanban' },
     { id: 'sprint-planning', label: 'Sprint Planning', icon: 'sprint' },
-    { id: 'project-planning', label: 'Project Planning', icon: 'sprint' },
     { id: 'work-items', label: 'Work Items', icon: 'work-items' }
   ];
 
@@ -223,7 +238,8 @@ export class UserHome implements OnInit {
   ) {
     effect(() => {
       const projectId = this.projectContext.selectedProjectId();
-      if (projectId && projectId !== this.loadedWorkSearchProjectId && projectId !== this.workSearchRequestProjectId) {
+      this.itemDialog.revision();
+      if (projectId) {
         this.loadGlobalWorkItems(projectId);
       }
     });
@@ -234,6 +250,8 @@ export class UserHome implements OnInit {
   // =========================================================
 
   ngOnInit(): void {
+    this.recentWork.refreshForCurrentUser();
+    this.loadCurrentAccount();
     this.projectContext.loadProjects();
 
     // Restore this browser tab's last selected workspace page before route/query
@@ -467,16 +485,7 @@ export class UserHome implements OnInit {
 
   private openKanbanCreate(type: string): void {
     const projectId = this.projectContext.selectedProjectId();
-    this.router.navigate(['/user-home'], {
-      queryParams: {
-        menu: 'kanban-board',
-        createType: type,
-        openType: null,
-        openId: null,
-        projectId: projectId ?? null
-      },
-      queryParamsHandling: 'merge'
-    });
+    if (projectId) this.itemDialog.create(projectId, type);
   }
 
   // =========================================================
@@ -559,6 +568,7 @@ export class UserHome implements OnInit {
     if (!target.closest('.global-work-search')) {
       this.globalWorkSearchOpen = false;
     }
+    if (!target.closest('.header-recent')) this.recentMenuOpen = false;
   }
 
   get filteredGlobalProjects() {
@@ -580,10 +590,11 @@ export class UserHome implements OnInit {
 
   get filteredGlobalWorkItems(): GlobalWorkItemSuggestion[] {
     const query = this.globalWorkSearch.trim().toLowerCase();
-    if (query.length < 2) return [];
+    if (!query) return [];
     return this.globalWorkItems
-      .filter(item => `${item.key} ${item.title} ${item.typeLabel}`.toLowerCase().includes(query))
-      .slice(0, 8);
+      .filter(item => query.split(/\s+/).every(word=>`${item.key} ${item.title} ${item.typeLabel} ${item.searchText || ''}`.toLocaleLowerCase().includes(word)))
+      .sort((a,b)=>Number(b.title.toLowerCase().startsWith(query))-Number(a.title.toLowerCase().startsWith(query)))
+      .slice(0, 12);
   }
 
   trackGlobalWorkItem(_index: number, item: GlobalWorkItemSuggestion): string {
@@ -597,8 +608,10 @@ export class UserHome implements OnInit {
   }
 
   openFirstGlobalWorkItem(): void {
+    if(!this.globalWorkSearch.trim()){if(this.searchRecent[0])this.openRecent(this.searchRecent[0]);return;}
     const first = this.filteredGlobalWorkItems[0];
     if (first) this.openGlobalWorkItem(first);
+    else if(this.filteredGlobalPeople[0])this.openSearchPerson(this.filteredGlobalPeople[0]);
   }
 
   openGlobalWorkItem(item: GlobalWorkItemSuggestion): void {
@@ -607,51 +620,23 @@ export class UserHome implements OnInit {
     this.itemDialog.open(item.projectId, item.type, item.id);
   }
 
-  private loadGlobalWorkItems(projectId: number): void {
-    if (!this.baseUrl) return;
-    this.workSearchRequestProjectId = projectId;
-    this.globalWorkSearchLoading = true;
-    const issueUrls = [...new Set([
-      `${this.baseUrl}/v1/issues?projectId=${projectId}`,
-      `${environment.apiBaseUrl2 || ''}/v1/issues?projectId=${projectId}`,
-      `${environment.apiBaseUrl || ''}/v1/issues?projectId=${projectId}`
-    ].filter(Boolean))];
-    forkJoin({
-      epics: this.http.get<any>(`${this.baseUrl}/projects/${projectId}/epics`, { headers: this.auth.getAuthHeaders() }).pipe(catchError(() => of([]))),
-      stories: this.http.get<any>(`${this.baseUrl}/projects/${projectId}/stories`, { headers: this.auth.getAuthHeaders() }).pipe(catchError(() => of([]))),
-      tasks: this.http.get<any>(`${this.baseUrl}/tasks`, { headers: this.auth.getAuthHeaders() }).pipe(catchError(() => of([]))),
-      issues: this.globalWorkCollection(issueUrls)
-    }).subscribe(({ epics, stories, tasks, issues }) => {
-      if (this.projectContext.selectedProjectId() !== projectId) return;
-      const epicRows = this.extractGlobalArray(epics);
-      const storyRows = this.extractGlobalArray(stories);
-      const storyIds = new Set(storyRows.map(row => this.globalNumber(row?.id ?? row?.story_id ?? row?.storyId)).filter((id): id is number => id !== null));
-      const taskRows = this.extractGlobalArray(tasks).filter(row => {
-        const rowProject = this.globalNumber(row?.project_id ?? row?.projectId ?? row?.project?.id);
-        const storyId = this.globalNumber(row?.story_id ?? row?.storyId ?? row?.story?.id);
-        return rowProject === projectId || (rowProject === null && storyId !== null && storyIds.has(storyId));
-      });
-      const issueRows = this.extractGlobalArray(issues).filter(row => {
-        const rowProject = this.globalNumber(row?.project_id ?? row?.projectId ?? row?.project?.id);
-        return rowProject === null || rowProject === projectId;
-      });
-      const project = this.projectContext.projects().find(candidate => candidate.id === projectId);
-      const suggestions = [
-        ...epicRows.map(row => this.normalizeGlobalWorkItem(row, 'EPIC', projectId, project?.name || '')),
-        ...storyRows.map(row => this.normalizeGlobalWorkItem(row, 'STORY', projectId, project?.name || '')),
-        ...taskRows.map(row => this.normalizeGlobalWorkItem(row, 'TASK', projectId, project?.name || '')),
-        ...issueRows.map(row => this.normalizeGlobalWorkItem(row, 'ISSUE', projectId, project?.name || ''))
-      ].filter((item): item is GlobalWorkItemSuggestion => item !== null);
-      this.globalWorkItems = suggestions;
-      this.loadedWorkSearchProjectId = projectId;
-      this.workSearchRequestProjectId = null;
-      this.globalWorkSearchLoading = false;
-    }, () => {
-      if (this.projectContext.selectedProjectId() !== projectId) return;
-      this.globalWorkItems = [];
-      this.loadedWorkSearchProjectId = projectId;
-      this.workSearchRequestProjectId = null;
-      this.globalWorkSearchLoading = false;
+  private loadGlobalWorkItems(projectId:number):void {
+    this.workSearchRequestProjectId=projectId;this.globalWorkSearchLoading=true;
+    this.workData.load(projectId).subscribe(snapshot=>{
+      if(this.projectContext.selectedProjectId()!==projectId)return;
+      this.globalWorkItems=snapshot.items.map(item=>({id:item.id,type:item.kind,typeLabel:item.kind[0]+item.kind.slice(1).toLowerCase(),key:item.key,title:item.title,searchText:[item.raw.title,item.raw.name,item.raw.summary,item.raw.epic_name,item.raw.story_title,item.raw.task_title,item.raw.issue_title].filter(Boolean).join(' '),projectId,projectName:this.globalProjectName}));
+      this.globalPeople=snapshot.users.map(u=>({id:Number(u.user_account_id??u.user_id??u.id),name:u.full_name??u.fullName??u.name??[u.first_name??u.firstName,u.last_name??u.lastName].filter(Boolean).join(' '),email:u.email??'',designation:u.designation??u.role_name??u.role?.name??''}));
+      this.loadedWorkSearchProjectId=projectId;this.workSearchRequestProjectId=null;this.globalWorkSearchLoading=false;this.cdr.markForCheck();
+    });
+  }
+  private loadCurrentAccount():void {
+    const apply=(response:any)=>{const u=response?.data?.user??response?.data??response?.user??response;if(!u||typeof u!=='object')return;
+      const name=u.fullName??u.full_name??u.name??[u.firstName??u.first_name,u.lastName??u.last_name].filter(Boolean).join(' ');
+      this.user={name:name||u.username||u.email||'Your account',email:u.email??u.email_address??'',phone:u.phone??'',image:u.profile_picture_url??u.profilePictureUrl??u.avatarUrl??null};this.cdr.markForCheck();};
+    apply(this.auth.getCurrentUser());const id=this.auth.getCurrentUserId();if(!id)return;
+    this.http.get<any>(this.baseUrl+'/users/'+id,{headers:this.auth.getAuthHeaders()}).pipe(catchError(()=>this.http.get<any>(this.baseUrl+'/users',{headers:this.auth.getAuthHeaders()})),catchError(()=>of(null))).subscribe(response=>{
+      const rows=Array.isArray(response)?response:Array.isArray(response?.data)?response.data:response?.content;
+      apply(rows?rows.find((u:any)=>Number(u.user_account_id??u.user_id??u.id)===id):response);
     });
   }
 
