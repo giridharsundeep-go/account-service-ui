@@ -1,1 +1,162 @@
-<p>dashboard works</p>
+<main class="dashboard-page agile-dashboard gp-workspace-canvas">
+  <app-workspace-hero
+    eyebrow="AGILITY · PEOPLE · DELIVERY"
+    title="Project performance"
+    subtitle="Understand the work, support your team, and deliver with confidence."
+    image="assets/covers/dashboard.png"
+    imageAlt="A team reviewing project progress"
+  ></app-workspace-hero>
+  <header class="agile-heading">
+    <div>
+      <span>PROJECT / SPACE</span>
+      <h1>{{ context.selectedProject()?.name || 'Choose a project from the header' }}</h1>
+      <p *ngIf="updated">Updated {{ updated | date: 'shortTime' }} · Current project scope</p>
+    </div>
+    <div class="agile-controls">
+      <select [(ngModel)]="team" aria-label="Filter dashboard by team">
+        <option value="ALL">All project teams</option>
+        <option *ngFor="let t of teams" [value]="t.id">{{ t.name }}</option></select
+      ><button
+        type="button"
+        class="gp-button gp-outline"
+        (click)="refresh()"
+        [disabled]="loading || !context.selectedProjectId()"
+      >
+        {{ loading ? 'Refreshing…' : 'Refresh' }}
+      </button>
+    </div>
+  </header>
+  <p class="agile-notice" *ngIf="snapshot.unavailable.length" role="status">
+    Some data is unavailable: {{ snapshot.unavailable.join(', ') }}. Metrics reflect the sources
+    that loaded.
+  </p>
+  <ng-container *ngIf="context.selectedProjectId()">
+    <p *ngIf="loading" role="status">Loading project delivery data…</p>
+    <section class="agile-metrics">
+      <article>
+        <small>Work items</small><strong>{{ items.length }}</strong
+        ><span>Epics, stories, tasks and issues</span>
+      </article>
+      <article>
+        <small>Execution completed</small><strong>{{ completion }}%</strong
+        ><span>{{ completed }} of {{ execution.length }} delivery items</span>
+      </article>
+      <article>
+        <small>Needs support</small><strong>{{ blocked.length }}</strong
+        ><span>Blocked or on hold · {{ unassigned }} unassigned</span>
+      </article>
+      <article>
+        <small>Releases shipped</small><strong>{{ shipped }} / {{ releases.length }}</strong
+        ><span>Project release milestones</span>
+      </article>
+    </section>
+    <div class="agile-grid">
+      <section class="agile-panel">
+        <h2>Delivery flow</h2>
+        <p>Tasks and stories without child tasks, counted once.</p>
+        <div class="agile-flow" role="img" aria-label="Current delivery work by workflow status">
+          <div *ngFor="let row of statusMix">
+            <span>{{ row.name }}</span>
+            <div class="agile-track">
+              <i
+                [style.width.%]="execution.length ? (row.count / execution.length) * 100 : 0"
+                [style.background]="row.color"
+              ></i>
+            </div>
+            <b>{{ row.count }}</b>
+          </div>
+        </div>
+        <p *ngIf="!execution.length">No delivery items in this project yet.</p>
+      </section>
+      <section class="agile-panel">
+        <h2>Sprint scope completion</h2>
+        <p>
+          Completed story points against current assigned scope. This is not a historical commitment
+          baseline.
+        </p>
+        <div class="agile-sprints">
+          <article *ngFor="let sprint of sprintMetrics">
+            <div>
+              <strong>{{ sprint.name }}</strong
+              ><span>{{ sprint.done }} / {{ sprint.points }} pts · {{ sprint.count }} items</span>
+            </div>
+            <div class="agile-track">
+              <i [style.width.%]="sprint.progress" [style.background]="sprint.color"></i>
+            </div>
+            <small
+              >{{ sprint.points ? sprint.progress + '% completed' : 'No story-point estimates' }} ·
+              {{ sprint.state }}</small
+            >
+          </article>
+        </div>
+        <p *ngIf="!sprintMetrics.length">No sprints available.</p>
+      </section>
+      <section class="agile-panel agile-wide">
+        <h2>Team delivery</h2>
+        <p>
+          Completion of current execution scope by project team. Items without a team or team-owned
+          sprint are not attributed.
+        </p>
+        <div class="agile-flow">
+          <div *ngFor="let row of teamMetrics">
+            <span>{{ row.name }}</span>
+            <div class="agile-track">
+              <i [style.width.%]="row.progress" [style.background]="row.color"></i>
+            </div>
+            <b>{{ row.done }}/{{ row.total }}</b>
+          </div>
+        </div>
+        <p *ngIf="!teamMetrics.length">
+          No project teams could be identified from the available team and sprint data.
+        </p>
+      </section>
+      <section class="agile-panel">
+        <h2>Team workload and delivery</h2>
+        <p>
+          Open and completed execution items by owner. Item counts describe workload, not individual
+          productivity.
+        </p>
+        <div class="agile-people">
+          <article *ngFor="let person of people">
+            <span class="agile-person-mark" [style.background]="person.color">{{
+              person.name.slice(0, 1)
+            }}</span
+            ><strong>{{ person.name }}</strong
+            ><span>{{ person.open }} open</span><b>{{ person.done }} completed</b>
+          </article>
+        </div>
+        <p *ngIf="!people.length">Assign work to see the ownership breakdown.</p>
+      </section>
+      <section class="agile-panel">
+        <h2>Release outlook</h2>
+        <p>Release milestones for this project, ordered by target date.</p>
+        <article class="agile-release" *ngFor="let r of releases">
+          <div>
+            <strong>{{ r.name }}</strong
+            ><span>{{ r.version_number || r.versionNumber || 'Version not set' }}</span>
+          </div>
+          <span>{{
+            r.release_date || r.releaseDate
+              ? (r.release_date || r.releaseDate | date: 'mediumDate')
+              : 'Date not set'
+          }}</span
+          ><b [class.is-shipped]="r.status === 'RELEASED'">{{ r.status.replaceAll('_', ' ') }}</b>
+        </article>
+        <p *ngIf="!releases.length">No releases planned yet.</p>
+      </section>
+      <section class="agile-panel agile-wide">
+        <h2>Delivery attention</h2>
+        <p>Blocked and overdue work that may need a team conversation.</p>
+        <button class="agile-risk" type="button" *ngFor="let item of risks" (click)="open(item)">
+          <strong>{{ item.key }}</strong
+          ><span>{{ item.title }}</span
+          ><span>{{ item.assignee }}</span
+          ><b>{{ item.status.replaceAll('_', ' ') }}</b>
+        </button>
+        <p *ngIf="!risks.length">
+          No blocked or overdue items were returned by the available data sources.
+        </p>
+      </section>
+    </div>
+  </ng-container>
+</main>

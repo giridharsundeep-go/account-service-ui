@@ -3,17 +3,7 @@
     {{ successMessage }}
   </div>
 
-  <section class="users-illustration-wall" *ngIf="!selectedProfileUser">
-    <div class="users-wall-copy">
-      <span class="users-wall-eyebrow">PEOPLE · TALENT · GROWTH</span>
-      <h2>Users</h2>
-      <p class="users-wall-tagline">Great people build great products.</p>
-      <p class="users-wall-description">
-        Manage organization members, roles, reporting lines and workplace details.
-      </p>
-    </div>
-    <div class="users-wall-art" role="img" aria-label="Illustration of colleagues collaborating"></div>
-  </section>
+  <app-workspace-hero *ngIf="!selectedProfileUser" eyebrow="PEOPLE · TALENT · GROWTH" title="Users" subtitle="Manage organization members, roles, reporting lines, and workplace details." image="assets/covers/users.png" imageAlt="Colleagues sharing ideas and building a team"></app-workspace-hero>
 
   <ng-container *ngIf="selectedProfileUser as profile; else usersDirectory">
     <section class="user-profile-page atlassian-profile-layout">
@@ -40,7 +30,7 @@
           </div>
           <div class="atlassian-profile-identity">
             <div class="profile-name-pronouns">
-              <h2>{{ profile.fullName }}</h2>
+              <h2>{{ profileCreating ? (fullName || 'New user') : profile.fullName }}</h2>
             </div>
             <p class="user-profile-role">{{ getDesignation(profile) || profile.org_role || 'Designation not assigned' }}</p>
             <div class="profile-contact-line">
@@ -67,7 +57,7 @@
           </ng-container>
           <ng-template #profileEditActions>
             <button mat-stroked-button type="button" (click)="cancelProfileEdit()" [disabled]="loading">Cancel</button>
-            <button mat-flat-button color="primary" type="button" (click)="saveUser()" [disabled]="loading || !canSave">{{ loading ? 'Saving…' : 'Save changes' }}</button>
+            <button mat-flat-button color="primary" type="button" (click)="saveUser()" [disabled]="loading || !canSave">{{ loading ? 'Saving…' : profileCreating ? 'Create user' : 'Save changes' }}</button>
           </ng-template>
         </div>
       </section>
@@ -164,7 +154,7 @@
     </section>
   </ng-container>
 
-  <section class="form-drawer-wrapper" *ngIf="!selectedProfileUser" [class.open]="isDrawerOpen">
+  <section class="form-drawer-wrapper" *ngIf="!selectedProfileUser && isDrawerOpen" [class.open]="isDrawerOpen">
     <mat-card class="drawer-card" appearance="outlined">
       <section class="create-user-profile-cover users-profile-cover-wall" aria-label="User profile cover">
         <div class="users-profile-cover-copy">
@@ -582,7 +572,7 @@
                    (keydown.enter)="viewUser(user)"
                    (keydown.space)="$event.preventDefault(); viewUser(user)">
             <div class="cell primary-identity-cell">
-              <div class="matrix-identity-avatar"
+              <div class="matrix-identity-avatar" [ngClass]="personToneClass(user.id)"
                    [attr.data-initials]="user.profile_picture_url ? null : getAvatarInitials(user.fullName)">
                 <img *ngIf="user.profile_picture_url"
                      [src]="getAvatarDisplaySrc(user.profile_picture_url)"

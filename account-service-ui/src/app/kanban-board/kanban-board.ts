@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit, effect, inject } from '@angular/core';
+import { A11yModule } from '@angular/cdk/a11y';
+import { ChangeDetectorRef, Component, EventEmitter, Input, Output, OnInit, effect, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -12,6 +13,8 @@ import { catchError } from 'rxjs/operators';
 import { environment } from '../../environment';
 import { AuthService } from '../auth.service';
 import { ProjectContextService } from '../project-context.service';
+import { WorkItemDialogRequest } from '../shared/work-item-dialog.service';
+import { WorkspaceHeroComponent } from '../shared/workspace-hero';
 
 type WorkStatus = 'Backlog' | 'To Do' | 'In Progress' | 'Testing' | 'Completed' | 'Blocked';
 type WorkPriority = 'Low' | 'Medium' | 'High' | 'Critical';
@@ -23,7 +26,7 @@ interface SprintOption {
   id: number; name: string; projectId?: number; startDate?: string; endDate?: string;
   status?: string; [key: string]: any;
 }
-interface PersonOption { id: number; lookupIds?: number[]; name: string; initials: string; color: string; avatarUrl?: string | null; }
+interface PersonOption { id: number; lookupIds?: number[]; name: string; initials: string; designation?: string; avatarUrl?: string | null; }
 interface WorkItem {
   /** Stable unique key also used for drag/drop; IDs can overlap between item types. */
   id: string;
@@ -53,11 +56,13 @@ interface WorkItem {
 @Component({
   selector: 'app-kanban-board',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatFormFieldModule, MatInputModule, MatAutocompleteModule, MatSelectModule],
+  imports: [CommonModule, A11yModule, FormsModule, MatFormFieldModule, MatInputModule, MatAutocompleteModule, MatSelectModule, WorkspaceHeroComponent],
   templateUrl: './kanban-board.html',
   styleUrls: ['./kanban-board.css', '../shared/field-controls.css']
 })
 export class KanbanBoard implements OnInit {
+  @Input() dialogRequest: WorkItemDialogRequest | null = null;
+  @Output() dialogClosed = new EventEmitter<void>();
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -143,11 +148,23 @@ export class KanbanBoard implements OnInit {
   private requestedProjectId: number | null = null;
   private readonly projectContextSync = effect(() => {
     const sharedProjectId = this.projectContext.selectedProjectId();
+    if (this.dialogRequest) return;
     if (!sharedProjectId || !this.projects.length || sharedProjectId === this.selectedProjectId) return;
     if (this.projects.some(project => project.id === sharedProjectId)) this.onProjectChange(sharedProjectId);
   });
 
   ngOnInit(): void {
+    if (this.dialogRequest) {
+      this.requestedProjectId = this.dialogRequest.projectId;
+      this.pendingOpenItem = { type: this.dialogRequest.type, id: this.dialogRequest.id };
+      this.selectedProjectId = this.dialogRequest.projectId;
+      this.projects = [...this.projectContext.projects()];
+      if (!this.projects.some(project => project.id === this.selectedProjectId)) {
+        this.projects.push({ id: this.selectedProjectId, name: `Project ${this.selectedProjectId}` });
+      }
+      this.loadProjectContext();
+      return;
+    }
     this.route.queryParamMap.subscribe(params => {
       const requestedType = String(params.get('openType') || '').toUpperCase();
       const requestedId = Number(params.get('openId'));
@@ -295,7 +312,7 @@ export class KanbanBoard implements OnInit {
         // otherwise use the shared project selected in the application header.
         this.selectedProjectId = this.projects.find(project => project.id === this.requestedProjectId)?.id ??
           this.projects.find(project => project.id === this.projectContext.selectedProjectId())?.id ?? this.projects[0].id;
-        this.projectContext.setSelectedProject(this.selectedProjectId);
+        if (!this.dialogRequest) this.projectContext.setSelectedProject(this.selectedProjectId);
         this.cdr.markForCheck();
         this.loadProjectContext();
       },
@@ -317,16 +334,23 @@ export class KanbanBoard implements OnInit {
     this.loading = true;
     this.loadError = '';
     forkJoin({
+      project: this.dialogRequest ? this.http.get<any>(`${this.baseUrl}/projects/${projectId}`, this.headers()).pipe(catchError(() => of(null))) : of(null),
       users: this.http.get<any>(`${this.baseUrl}/project-individuals/${projectId}`, this.headers()).pipe(catchError(() => of([]))),
       allUsers: this.http.get<any>(`${this.baseUrl}/users`, this.headers()).pipe(catchError(() => of([]))),
+      roles: this.http.get<any>(`${this.baseUrl}/roles`, this.headers()).pipe(catchError(() => of([]))),
       sprints: this.http.get<any>(`${this.baseUrl}/sprints`, this.headers()).pipe(catchError(() => of([])))
-    }).subscribe(({ users, allUsers, sprints }) => {
+    }).subscribe(({ project, users, allUsers, roles, sprints }) => {
       // Ignore late responses if the user switched projects while requests were in flight.
       if (projectId !== this.selectedProjectId) return;
+      const profile = project?.data ?? project?.project ?? project;
+      if (profile && !Array.isArray(profile)) {
+        const name = this.displayText(profile.name ?? profile.project_name ?? profile.projectName, '');
+        if (name) this.projects = this.projects.map(item => item.id === projectId ? { ...item, ...profile, id: projectId, name } : item);
+      }
 
-      const colors = ['#dce8ff', '#fbe1d8', '#e4e0ff', '#d9f1e5', '#f9e8bc', '#e4e9f0', '#d8f1f5'];
       const normalizePerson = (u: any, index: number): PersonOption | null => {
         const profile = u?.user ?? u?.individual ?? u?.member?.user ?? u?.member ?? u;
+        const role = this.extractArray(roles).find(role => Number(role.id ?? role.role_id) === Number(profile?.role_id ?? profile?.roleId ?? u?.role_id ?? u?.roleId));
         const hasAccountReference = u?.user_account_id != null || u?.userAccountId != null;
         const name = String(profile?.name || profile?.display_name || profile?.displayName || profile?.full_name || profile?.fullName || profile?.user_name || profile?.userName ||
           [profile?.first_name ?? profile?.firstName, profile?.last_name ?? profile?.lastName].filter(Boolean).join(' ') ||
@@ -352,7 +376,7 @@ export class KanbanBoard implements OnInit {
           lookupIds,
           name,
           initials: this.initials(name),
-          color: colors[index % colors.length],
+          designation: String(profile?.designation ?? profile?.job_title ?? profile?.jobTitle ?? profile?.role_name ?? profile?.roleName ?? profile?.role?.name ?? profile?.title ?? u?.designation ?? u?.job_title ?? u?.jobTitle ?? role?.name ?? role?.role_name ?? 'Team member').trim() || 'Team member',
           avatarUrl: profile?.avatarUrl ?? profile?.avatar_url ?? profile?.photoUrl ??
             profile?.user?.avatarUrl ?? profile?.user?.avatar_url ?? profile?.user?.photoUrl ??
             u?.avatarUrl ?? u?.avatar_url ?? u?.photoUrl ?? null
@@ -459,6 +483,7 @@ export class KanbanBoard implements OnInit {
     this.loadError = '';
     const projectId = this.selectedProjectId;
     forkJoin({
+      requested: this.dialogRequest ? this.http.get<any>(`${this.baseUrl}/${this.dialogRequest.type === 'ISSUE' ? 'v1/issues' : this.dialogRequest.type.toLowerCase() + 's'}/${this.dialogRequest.id}`, this.headers()).pipe(catchError(() => of(null))) : of(null),
       epics: this.http.get<any>(`${this.baseUrl}/projects/${projectId}/epics`, this.headers()).pipe(catchError(() => of([]))),
       stories: this.http.get<any>(`${this.baseUrl}/projects/${projectId}/stories`, this.headers()).pipe(catchError(() => of([]))),
       tasks: this.http.get<any>(`${this.baseUrl}/tasks`, this.headers()).pipe(catchError(() => of([]))),
@@ -468,7 +493,7 @@ export class KanbanBoard implements OnInit {
         `${environment.apiBaseUrl || ''}/v1/issues?projectId=${projectId}`
       ].filter(Boolean))
     }).subscribe({
-      next: ({ epics, stories, tasks, issues }) => {
+      next: ({ epics, stories, tasks, issues, requested }) => {
         if (projectId !== this.selectedProjectId) return;
         const epicRows = this.extractArray(epics);
         const storyRows = this.extractArray(stories);
@@ -561,6 +586,21 @@ export class KanbanBoard implements OnInit {
           addItem(issue, 'ISSUE');
         }
 
+        // A linked item may be outside the collection's first page. Load its
+        // canonical record directly so every entry point can still open it.
+        if (this.dialogRequest && requested) {
+          const raw = requested?.data ?? requested;
+          if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+            const type = this.dialogRequest.type;
+            const record = { ...raw, id: raw.id ?? this.dialogRequest.id };
+            const parent = type === 'TASK' ? storyById.get(Number(record.story_id ?? record.storyId))
+              : type === 'STORY' ? epicById.get(Number(record.epic_id ?? record.epicId)) : undefined;
+            const existing = next.findIndex(item => item.sourceType === type && item.sourceId === this.dialogRequest!.id);
+            if (existing >= 0) next.splice(existing, 1);
+            addItem(record, type, parent, type === 'TASK' ? parent : undefined);
+          }
+        }
+
         this.items = next;
         this.loading = false;
         if (typeof this.selectedSprintId === 'number' && !this.sprints.some(s => s.id === this.selectedSprintId)) {
@@ -597,7 +637,6 @@ export class KanbanBoard implements OnInit {
         id: item.assigneeId,
         name: item.assignee,
         initials: item.initials,
-        color: '#dce8ff',
         avatarUrl: null
       });
     }
@@ -878,7 +917,7 @@ export class KanbanBoard implements OnInit {
     this.commentText = '';
     this.copiedItemKey = false;
     this.detailDraft = this.toDetailDraft(item);
-    this.router.navigate([], {
+    if (!this.dialogRequest) this.router.navigate([], {
       relativeTo: this.route,
       queryParams: {
         menu: 'kanban-board',
@@ -903,6 +942,7 @@ export class KanbanBoard implements OnInit {
     this.commentText = '';
     this.savingComment = false;
     this.pendingOpenItem = null;
+    if (this.dialogRequest) { this.dialogClosed.emit(); return; }
     if (this.route.snapshot.queryParamMap.has('openId') || this.route.snapshot.queryParamMap.has('openType')) {
       this.router.navigate([], {
         relativeTo: this.route,
@@ -1637,4 +1677,8 @@ export class KanbanBoard implements OnInit {
   statusClass(status: WorkStatus): string { return status.toLowerCase().replace(/\s+/g, '-'); }
   trackById(_index: number, item: WorkItem): string { return item.id; }
   trackByPersonId(_index: number, person: PersonOption): number { return person.id; }
+
+  personToneClass(id: number): string {
+    return `person-tone-${((Math.trunc(Number(id) || 0) % 4) + 4) % 4}`;
+  }
 }

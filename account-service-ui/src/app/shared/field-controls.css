@@ -243,3 +243,44 @@
   background: #fff !important;
   box-shadow: var(--gp-popover-shadow) !important;
 }
+
+/* Keep focus visible without changing the field outline itself. */
+:host :is(
+  input[type="text"], input[type="email"], input[type="password"], input[type="number"],
+  input[type="date"], input[type="datetime-local"], input[type="tel"], input[type="search"],
+  input:not([type]), select, textarea, .google-input, .google-textarea,
+  .user-autocomplete-input, .drawer-select, .edit-input, .edit-select, .detail-input,
+  .team-inline-input, .work-item-description-input, .work-items-filter-trigger,
+  .work-items-filter-select, .kb-sprint-select, .kb-filter-trigger, .epics-board-filter-trigger,
+  .selector-field select, .filter-field select, .filter-select, .google-select,
+  .native-google-select, .project-selector select, .kb-floating-field select,
+  .material-select, .filter-button, .work-items-more-filter, .project-switcher,
+  .release-header-picker, .epics-project-picker
+):is(:focus, :focus-visible, :focus-within) {
+  border-width: 1px !important;
+  border-color: var(--gp-field-border-focus) !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+:host ::ng-deep .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper {
+  box-shadow: none !important;
+}
+
+:host ::ng-deep .mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
+:host ::ng-deep .mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
+:host ::ng-deep .mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing {
+  border-color: var(--gp-field-border-focus) !important;
+}
+
+:host :is(
+  .matrix-search-input-frame, .search-shell, .search-box, .global-search,
+  .google-search-shell, .work-items-search, .planning-toolbar .search-field,
+  .kb-board-search, .work-filter-search, .global-project-search, .global-work-search-field,
+  .docs-search, .team-profile-member-search, .team-search, .epics-filter-search,
+  .add-testcases-search
+):focus-within {
+  border-width: 1px !important;
+  border-color: var(--gp-field-border-focus) !important;
+  box-shadow: none !important;
+}

@@ -7,6 +7,7 @@ import { catchError } from 'rxjs/operators';
 import { environment } from '../../environment';
 import { AuthService } from '../auth.service';
 import { ProjectContextService } from '../project-context.service';
+import { WorkspaceHeroComponent } from '../shared/workspace-hero';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -92,6 +93,7 @@ export interface IssueRecord {
     CommonModule,
     FormsModule,
     ResolveUserPipe,
+    WorkspaceHeroComponent,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
@@ -304,6 +306,11 @@ export class Issues implements OnInit {
     if (!parts.length) return 'U';
     if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
     return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  }
+
+  personToneClass(id: number | string | null | undefined): string {
+    const numericId = Math.trunc(Number(id) || 0);
+    return `person-tone-${((numericId % 4) + 4) % 4}`;
   }
 
   getUserEmployeeCode(user: any): string {

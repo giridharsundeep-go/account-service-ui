@@ -5,6 +5,7 @@ import { environment } from '../../environment';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../auth.service';
+import { WorkspaceHeroComponent } from '../shared/workspace-hero';
 import { map, Observable, catchError, of } from 'rxjs';
 
 import { MatButtonModule } from '@angular/material/button';
@@ -17,6 +18,7 @@ import { MatInputModule } from '@angular/material/input';
   imports: [
     CommonModule,
     FormsModule,
+    WorkspaceHeroComponent,
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule
@@ -53,7 +55,14 @@ export class Roles implements OnInit {
     this.roles$ = this.http.get<any>(`${this.baseUrl}/roles`, {
       headers: this.auth.getAuthHeaders()
     }).pipe(
-      map(res => Array.isArray(res?.data) ? res.data : []),
+      map(res => {
+        if (Array.isArray(res)) return res;
+        if (Array.isArray(res?.data)) return res.data;
+        if (Array.isArray(res?.data?.roles)) return res.data.roles;
+        if (Array.isArray(res?.roles)) return res.roles;
+        if (Array.isArray(res?.items)) return res.items;
+        return [];
+      }),
       catchError(error => {
         this.errorMessage = this.getErrorMessage(
           error,
@@ -187,13 +196,9 @@ export class Roles implements OnInit {
   filterRoles(roles: any[]): any[] {
     const cleanSearch = this.searchTerm.trim().toLowerCase();
 
-    if (!cleanSearch) {
-      return roles;
-    }
+    if (!cleanSearch) return roles;
 
-    return roles.filter(role =>
-      (role.name || '').toLowerCase().includes(cleanSearch) ||
-      (role.description || '').toLowerCase().includes(cleanSearch)
-    );
+    return roles.filter(role => [role?.name, role?.roleName, role?.role_name, role?.description]
+      .some(value => String(value ?? '').toLowerCase().includes(cleanSearch)));
   }
 }

@@ -1,0 +1,482 @@
+/* Workspace refinements share the product's white surface and 50px controls. */
+#gp-app app-roles .matrix-search-input-frame,
+#gp-app app-users .matrix-search-input-frame {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 0 14px !important;
+  min-width: 0 !important;
+}
+#gp-app app-roles .matrix-search-input-frame .search-lens,
+#gp-app app-users .matrix-search-input-frame .search-lens {
+  position: static !important;
+  inset: auto !important;
+  transform: none !important;
+  display: flex !important;
+  flex: 0 0 20px !important;
+  width: 20px !important;
+  height: 20px !important;
+}
+#gp-app app-roles .matrix-search-input-frame input,
+#gp-app app-users .matrix-search-input-frame input {
+  flex: 1 1 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+#gp-app app-boards .focus-people {
+  flex: 0 0 auto !important;
+  height: auto !important;
+  max-height: 180px !important;
+  overflow: auto !important;
+  padding: 12px 16px !important;
+}
+#gp-app app-boards .focus-people-chips,
+#gp-app app-boards .focus-people-chips .mdc-evolution-chip-set__chips {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  gap: 8px !important;
+}
+#gp-app app-sprint-planning .planning-page:fullscreen > app-workspace-hero,
+#gp-app app-sprint-planning .planning-page.fullscreen-fallback > app-workspace-hero {
+  display: none !important;
+}
+#gp-app
+  app-sprint-planning
+  :is(
+    .planning-table-key-title strong,
+    .planning-group-title,
+    .planning-assignee-group-toggle strong
+  ) {
+  font-size: 16px !important;
+  line-height: 1.5 !important;
+}
+#gp-app
+  app-sprint-planning
+  :is(
+    .planning-assignee-count,
+    .planning-group-item-count,
+    .planning-table-type,
+    .planning-status-pill
+  ) {
+  font-size: 14px !important;
+  font-weight: 650 !important;
+}
+#gp-app app-sprint-planning :is(.type-filters button, .planning-create-actions button) {
+  min-height: 50px !important;
+  height: 50px !important;
+  padding: 0 16px !important;
+  font-size: 14px !important;
+  border-radius: 10px !important;
+}
+#gp-app app-sprint-planning .planning-assignee-group-heading {
+  flex-wrap: wrap !important;
+  gap: 10px !important;
+}
+#gp-app app-sprint-planning .planning-assignee-group-toggle {
+  min-width: 0 !important;
+  flex: 1 !important;
+}
+#gp-app app-sprint-planning .planning-mat-table .mat-mdc-row {
+  cursor: pointer;
+}
+#gp-app .planning-user-review-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2400;
+  background: #12203666;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+#gp-app .planning-user-review {
+  width: min(1100px, 100%);
+  max-height: calc(100dvh - 48px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #fff;
+  border: 1px solid #dce4ef;
+  border-radius: 10px;
+  padding: 24px;
+  box-sizing: border-box;
+}
+#gp-app .planning-user-review header,
+#gp-app .planning-user-review footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+#gp-app .planning-user-review h2 {
+  font-size: 22px;
+  margin: 0;
+}
+#gp-app .planning-user-review p {
+  font-size: 14px;
+  color: #69758a;
+}
+#gp-app .planning-review-table {
+  overflow: auto;
+  min-height: 0;
+}
+#gp-app .planning-review-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+#gp-app .planning-review-table :is(td, th) {
+  text-align: left;
+  padding: 14px;
+  border-bottom: 1px solid #e5eaf1;
+  font-size: 14px;
+}
+#gp-app .planning-review-item-link {
+  border: 0;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+  color: #172b4d;
+  font-size: 15px;
+  cursor: pointer;
+}
+#gp-app .planning-review-item-link strong {
+  color: #2563eb;
+}
+#gp-app .project-sprint-scope {
+  padding: 20px 0;
+  min-width: 0;
+}
+#gp-app .project-sprint-scope > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+#gp-app .project-sprint-scope h3 {
+  font-size: 18px;
+  color: #172b4d;
+}
+#gp-app .project-sprint-scope details {
+  border: 1px solid #dce4ef;
+  border-radius: 10px;
+  margin: 12px 0;
+  padding: 16px;
+}
+#gp-app .project-sprint-scope summary {
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+}
+#gp-app .project-sprint-scope summary b {
+  float: right;
+  color: #69758a;
+}
+#gp-app .project-scope-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  width: 100%;
+  text-align: left;
+  padding: 14px 0;
+  border: 0;
+  border-bottom: 1px solid #e9edf3;
+  background: #fff;
+  color: #334155;
+  font-size: 14px;
+  cursor: pointer;
+}
+#gp-app .project-scope-item strong {
+  color: #2563eb;
+}
+#gp-app .project-scope-item > span:first-of-type {
+  flex: 1;
+  min-width: 160px;
+}
+#gp-app app-releases .release-workspace-toolbar {
+  display: block !important;
+}
+#gp-app app-releases .release-filter-line {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  max-width: 100% !important;
+  margin-top: 16px !important;
+}
+#gp-app app-releases .release-status-tabs {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+}
+#gp-app app-releases .release-status-tab {
+  min-height: 50px !important;
+  height: 50px !important;
+  padding: 0 16px !important;
+  font-size: 14px !important;
+  border-radius: 10px !important;
+}
+#gp-app app-releases .release-filter-popover {
+  position: absolute;
+  z-index: 50;
+  right: 0;
+  top: calc(100% + 10px);
+  width: min(520px, calc(100vw - 64px));
+  padding: 20px;
+  border: 1px solid #dce4ef;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 16px 45px #172b4d26;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+#gp-app app-releases .release-filter-popover .release-search-field {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+#gp-app app-releases .release-filter-popover .release-header-picker {
+  flex: 0 0 50px !important;
+  height: 50px !important;
+  max-height: 50px !important;
+  max-width: 100% !important;
+}
+#gp-app app-releases .release-filter-popover {
+  max-height: min(520px, calc(100dvh - 100px));
+  overflow: auto;
+}
+#gp-app app-releases .release-date-range {
+  display: grid !important;
+  grid-template-columns: 1fr 16px 1fr !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+}
+#gp-app app-releases .date-picker-field {
+  min-width: 0 !important;
+  width: 100% !important;
+}
+#gp-app app-releases .release-filter-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+#gp-app app-releases .release-list-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 130px 155px auto;
+  gap: 20px;
+  align-items: center;
+  padding: 20px;
+  border: 1px solid #dce4ef;
+  border-radius: 10px;
+  background: #fff;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+#gp-app app-releases .release-list-title {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #172b4d;
+  text-align: left;
+  cursor: pointer;
+}
+#gp-app app-releases .release-list-title strong {
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+#gp-app app-releases .release-list-title span {
+  font-size: 15px;
+  color: #69758a;
+}
+#gp-app app-releases .release-list-title b {
+  font-size: 15px;
+}
+#gp-app app-releases .release-list-row time {
+  font-size: 14px;
+  font-weight: 600;
+  text-align: right;
+}
+#gp-app app-releases .release-list-status {
+  border: 1px solid var(--gp-field-border);
+  border-radius: 10px;
+  padding: 12px;
+  box-sizing: border-box;
+  font-size: 14px;
+}
+#gp-app app-releases .release-list-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#gp-app app-releases .release-profile-cover {
+  display: none !important;
+}
+#gp-app app-releases .release-profile-header {
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 24px !important;
+  align-items: center !important;
+}
+#gp-app app-releases .release-profile-avatar {
+  margin: 0 !important;
+  position: static !important;
+  transform: none !important;
+}
+#gp-app app-releases :is(.work-item-row, .scope-item-copy strong) {
+  font-size: 16px !important;
+  line-height: 1.5 !important;
+}
+#gp-app app-releases .work-item-row {
+  cursor: pointer;
+}
+#gp-app app-releases .work-item-row:hover {
+  background: #f6f9ff;
+}
+#gp-app app-releases .work-item-name small {
+  font-size: 15px !important;
+}
+#gp-app app-releases .scope-item-link {
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+#gp-app app-users .user-profile-page {
+  width: 100% !important;
+  max-width: 1200px !important;
+  padding: 20px !important;
+  margin: auto !important;
+  box-sizing: border-box !important;
+}
+#gp-app app-users .user-profile-page .users-profile-cover-wall {
+  height: 210px !important;
+  min-height: 210px !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+#gp-app app-users .user-profile-page .user-profile-hero {
+  position: relative !important;
+  min-height: 0 !important;
+  padding: 0 28px 28px !important;
+  display: flex !important;
+  align-items: flex-end !important;
+  gap: 24px !important;
+  flex-wrap: wrap !important;
+}
+#gp-app app-users .user-profile-page .user-profile-identity-wrap {
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 16px !important;
+  flex: 1 1 400px !important;
+}
+#gp-app app-users .user-profile-page .user-profile-avatar-wrap {
+  position: relative !important;
+  inset: auto !important;
+  flex: 0 0 140px !important;
+  width: 140px !important;
+  height: 140px !important;
+  margin: -70px 0 0 !important;
+}
+#gp-app app-users .user-profile-page .user-profile-avatar {
+  width: 140px !important;
+  height: 140px !important;
+  font-size: 40px !important;
+  border: 5px solid #fff !important;
+}
+#gp-app app-users .user-profile-page .atlassian-profile-identity {
+  padding: 0 !important;
+  min-width: 0 !important;
+}
+#gp-app app-users .user-profile-page .atlassian-profile-identity h2 {
+  font-size: 30px !important;
+  line-height: 1.3 !important;
+}
+#gp-app app-users .user-profile-page .user-profile-actions {
+  position: static !important;
+  inset: auto !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+}
+#gp-app app-users .user-profile-page .user-profile-content {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 300px !important;
+  gap: 24px !important;
+  min-width: 0 !important;
+  padding: 24px 0 !important;
+}
+#gp-app app-users .user-profile-page :is(.user-overview-main-column, .user-overview-side-column) {
+  min-width: 0 !important;
+  padding: 20px !important;
+  border: 1px solid #dce4ef !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+}
+#gp-app app-users .user-profile-page .profile-edit-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 20px 16px !important;
+}
+#gp-app app-users .user-profile-page .user-profile-actions button {
+  border-radius: 10px !important;
+  min-height: 42px !important;
+}
+@media (max-width: 1050px) {
+  #gp-app app-releases .release-list-row {
+    grid-template-columns: minmax(0, 1fr) 130px !important;
+  }
+  .release-list-actions {
+    justify-content: flex-end;
+  }
+  #gp-app app-users .user-profile-page .user-profile-content {
+    grid-template-columns: 1fr !important;
+  }
+}
+@media (max-width: 650px) {
+  #gp-app app-releases .release-filter-popover {
+    position: fixed;
+    top: 20vh;
+    left: 16px;
+    right: 16px;
+    width: auto;
+    max-height: 70vh;
+    overflow: auto;
+  }
+  #gp-app app-releases .release-list-row {
+    grid-template-columns: 1fr !important;
+  }
+  #gp-app app-releases .release-list-row time {
+    text-align: left;
+  }
+  #gp-app app-users .user-profile-page .profile-edit-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .planning-user-review {
+    padding: 16px !important;
+  }
+  .planning-review-person {
+    margin-left: 48px;
+  }
+}

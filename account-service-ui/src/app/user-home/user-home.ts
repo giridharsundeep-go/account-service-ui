@@ -4,7 +4,7 @@ import {
   Inject,
   PLATFORM_ID,
   HostListener,
-  effect
+  effect, inject
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { forkJoin, Observable, of } from 'rxjs';
@@ -22,13 +22,8 @@ import {
   ActivatedRoute
 } from '@angular/router';
 
-import {
-  MatDialog,
-  MatDialogModule
-} from '@angular/material/dialog';
-
-import { EditProfileDialog } from '../edit-profile-dialog/edit-profile-dialog';
 import { AuthService } from '../auth.service';
+import { WorkItemDialogService } from '../shared/work-item-dialog.service';
 import { ProjectContextService } from '../project-context.service';
 import { environment } from '../../environment';
 
@@ -47,6 +42,7 @@ import { Roles } from '../roles/roles';
 import { Users } from '../users/users';
 import { Teams } from '../teams/teams';
 import { Products } from '../products/products';
+import { ProjectPlanning } from '../projects/project-planning';
 import { Projects } from '../projects/projects';
 import { WorkItems } from '../work-items/work-items';
 import { Issues } from '../issues/issues';
@@ -65,13 +61,13 @@ import { SprintPlanning } from '../sprint-planning/sprint-planning';
     CommonModule,
     FormsModule,
     RouterOutlet,
-    MatDialogModule,
     Dashboard,
     Roles,
     Users,
     Teams,
     Products,
     Projects,
+    ProjectPlanning,
     WorkItems,
     Boards,
     KanbanBoard,
@@ -86,6 +82,7 @@ import { SprintPlanning } from '../sprint-planning/sprint-planning';
   styleUrls: ['./user-home.css', '../shared/field-controls.css']
 })
 export class UserHome implements OnInit {
+  readonly itemDialog = inject(WorkItemDialogService);
 
   private readonly baseUrl = String(environment.apiBaseUrlM || '').replace(/\/$/, '');
 
@@ -108,6 +105,8 @@ export class UserHome implements OnInit {
   createMenuOpen = false;
 
   profileMenuOpen = false;
+  currentUserProfileId: number | null = null;
+  profileOpenRequest = 0;
   globalProjectMenuOpen = false;
   globalProjectSearch = '';
   globalWorkSearch = '';
@@ -143,6 +142,7 @@ export class UserHome implements OnInit {
     { id: 'boards', label: 'Boards', icon: 'boards' },
     { id: 'kanban-board', label: 'Kanban Board', icon: 'kanban' },
     { id: 'sprint-planning', label: 'Sprint Planning', icon: 'sprint' },
+    { id: 'project-planning', label: 'Project Planning', icon: 'sprint' },
     { id: 'work-items', label: 'Work Items', icon: 'work-items' }
   ];
 
@@ -213,7 +213,6 @@ export class UserHome implements OnInit {
   // =========================================================
 
   constructor(
-    private dialog: MatDialog,
     private router: Router,
     private route: ActivatedRoute,
     private auth: AuthService,
@@ -302,6 +301,11 @@ export class UserHome implements OnInit {
   setActive(menu: string, persist = true): void {
 
     this.activeMenu = menu;
+
+    if (menu !== 'users') {
+      this.currentUserProfileId = null;
+      this.profileOpenRequest = 0;
+    }
 
     if (persist && isPlatformBrowser(this.platformId)) {
       sessionStorage.setItem(
@@ -432,30 +436,11 @@ export class UserHome implements OnInit {
     this.profileMenuOpen = false;
   }
 
-  openEditDialog(): void {
-
+  openMyProfile(): void {
     this.profileMenuOpen = false;
-
-    const dialogRef =
-      this.dialog.open(
-        EditProfileDialog,
-        {
-          width: '600px',
-          height: '600px',
-          data: {
-            ...this.user
-          }
-        }
-      );
-
-    dialogRef
-      .afterClosed()
-      .subscribe(result => {
-
-        if (result) {
-          this.user = result;
-        }
-      });
+    this.currentUserProfileId = this.auth.getCurrentUserId();
+    this.profileOpenRequest += 1;
+    this.setActive('users');
   }
 
   // =========================================================
@@ -619,15 +604,7 @@ export class UserHome implements OnInit {
   openGlobalWorkItem(item: GlobalWorkItemSuggestion): void {
     this.globalWorkSearchOpen = false;
     this.globalWorkSearch = '';
-    this.router.navigate(['/user-home'], {
-      queryParams: {
-        menu: 'kanban-board',
-        openType: item.type,
-        openId: item.id,
-        createType: null,
-        projectId: item.projectId
-      }
-    });
+    this.itemDialog.open(item.projectId, item.type, item.id);
   }
 
   private loadGlobalWorkItems(projectId: number): void {

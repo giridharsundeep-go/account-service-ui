@@ -1,5 +1,7 @@
 <div class="issues-container">
 
+  <app-workspace-hero eyebrow="QUALITY · TRIAGE · RESOLUTION" title="Issues" subtitle="Triage bugs, remove blockers, and keep fixes connected to the work they affect." image="assets/covers/issues.png" imageAlt="Engineering teammates reviewing and resolving issue reports"></app-workspace-hero>
+
   <!-- Google Search-style top bar -->
   <header class="google-header">
     
@@ -483,7 +485,7 @@
               <ng-container
                 *ngIf="(issue.assignee_user_id || issue.assigneeUserId) | resolveUser : userMap() as assignee; else unassigned">
                 <span class="person-cell">
-                  <span class="mini-avatar">{{ assignee?.name?.charAt(0) || '?' }}</span>
+                  <span class="mini-avatar" [ngClass]="personToneClass(assignee?.id)">{{ getUserInitials(assignee?.name || assignee?.email || '?') }}</span>
                   {{ assignee ? assignee.name : 'Unassigned' }}
                 </span>
               </ng-container>
@@ -497,7 +499,7 @@
               <ng-container
                 *ngIf="(issue.reporter_user_id || issue.reporterUserId) | resolveUser : userMap() as reporter; else noReporter">
                 <span class="person-cell">
-                  <span class="mini-avatar">{{ reporter?.name?.charAt(0) || '?' }}</span>
+                  <span class="mini-avatar" [ngClass]="personToneClass(reporter?.id)">{{ getUserInitials(reporter?.name || reporter?.email || '?') }}</span>
                   {{ reporter ? reporter.name : '—' }}
                 </span>
               </ng-container>
@@ -681,7 +683,7 @@
           <div class="field-group">
             <label>Assignee</label>
             <div class="person-autocomplete-field" (click)="$event.stopPropagation()">
-              <span class="person-field-avatar">
+              <span class="person-field-avatar" [ngClass]="personToneClass(currentIssue.assignee_user_id || currentIssue.assigneeUserId)">
                 {{ getUserInitials(getUserDisplayName(currentIssue.assignee_user_id)) }}
               </span>
               <input
@@ -709,11 +711,11 @@
                   *ngFor="let u of filteredAssigneeUsers()"
                   (mousedown)="$event.preventDefault()"
                   (click)="selectAssignee(u)">
-                  <span class="person-option-avatar">{{ getUserInitials(u.name || u.email) }}</span>
+                  <span class="person-option-avatar" [ngClass]="personToneClass(u.id)">{{ getUserInitials(u.name || u.email) }}</span>
                   <span class="person-option-copy">
                     <strong>{{ u.name || u.full_name || u.email }}</strong>
                     <span>{{ u.email || 'No email' }}</span>
-                    <small>{{ getUserEmployeeCode(u) }}</small>
+                    <small>{{ u.designation || u.job_title || u.jobTitle || u.role_name || u.roleName || u.role?.name || 'Team member' }}</small>
                   </span>
                 </button>
                 <div class="person-option-empty" *ngIf="!filteredAssigneeUsers().length">No matching users</div>
@@ -724,7 +726,7 @@
           <div class="field-group">
             <label>Reporter</label>
             <div class="person-autocomplete-field" (click)="$event.stopPropagation()">
-              <span class="person-field-avatar muted">
+              <span class="person-field-avatar" [ngClass]="personToneClass(currentIssue.reporter_user_id || currentIssue.reporterUserId)">
                 {{ getUserInitials(getUserDisplayName(currentIssue.reporter_user_id)) }}
               </span>
               <input
@@ -752,11 +754,11 @@
                   *ngFor="let u of filteredReporterUsers()"
                   (mousedown)="$event.preventDefault()"
                   (click)="selectReporter(u)">
-                  <span class="person-option-avatar">{{ getUserInitials(u.name || u.email) }}</span>
+                  <span class="person-option-avatar" [ngClass]="personToneClass(u.id)">{{ getUserInitials(u.name || u.email) }}</span>
                   <span class="person-option-copy">
                     <strong>{{ u.name || u.full_name || u.email }}</strong>
                     <span>{{ u.email || 'No email' }}</span>
-                    <small>{{ getUserEmployeeCode(u) }}</small>
+                    <small>{{ u.designation || u.job_title || u.jobTitle || u.role_name || u.roleName || u.role?.name || 'Team member' }}</small>
                   </span>
                 </button>
                 <div class="person-option-empty" *ngIf="!filteredReporterUsers().length">No matching users</div>

@@ -1,3 +1,5 @@
+import { untracked } from '@angular/core';
+import { WorkItemDialogService } from '../shared/work-item-dialog.service';
 import { ChangeDetectionStrategy, Component, OnInit, effect, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -7,6 +9,7 @@ import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
 import { environment } from '../../environment';
 import { AuthService } from '../auth.service';
 import { ProjectContextService } from '../project-context.service';
+import { WorkspaceHeroComponent } from '../shared/workspace-hero';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -37,10 +40,22 @@ type ReleaseStatus = ReleaseRecord['status'];
 
 @Component({
   selector: 'app-releases', standalone: true,
-  imports: [CommonModule, FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatIconModule, MatTooltipModule, MatProgressBarModule, MatCardModule, MatTableModule, MatCheckboxModule, MatDatepickerModule, MatNativeDateModule],
+  imports: [CommonModule, FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatIconModule, MatTooltipModule, MatProgressBarModule, MatCardModule, MatTableModule, MatCheckboxModule, MatDatepickerModule, MatNativeDateModule, WorkspaceHeroComponent],
   templateUrl: './releases.html', styleUrls: ['./releases.css', '../shared/field-controls.css'], changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Releases implements OnInit {
+  private readonly itemDialog = inject(WorkItemDialogService);
+  private lastItemRevision = this.itemDialog.revision();
+  private readonly itemRefresh = effect(() => {
+    const revision = this.itemDialog.revision();
+    if (revision === this.lastItemRevision) return;
+    this.lastItemRevision = revision;
+    untracked(() => { if (this.selectedProjectId()) this.loadProjectData(this.selectedProjectId()!); });
+  });
+  openReleaseItem(item: ReleaseItem | CandidateWorkItem): void {
+    this.itemDialog.open(Number(this.selectedProjectId()), item.item_type || 'TASK', Number((item as ReleaseItem).work_item_id ?? item.id));
+  }
+
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
   private readonly projectContext = inject(ProjectContextService);
@@ -57,34 +72,48 @@ export class Releases implements OnInit {
   private readonly projectContextSync = effect(() => {
     const sharedProjectId = this.projectContext.selectedProjectId();
     const projects = this.projects();
-    if (!sharedProjectId || !projects.length || this.selectedProjectId() === sharedProjectId) return;
+    if (!projects.length) return;
+    if (!sharedProjectId) {
+      if (this.selectedProjectId() !== null) {
+        this.selectedProjectId.set(null);
+        this.releases.set([]);
+        this.sprints.set([]);
+        this.loading.set(false);
+      }
+      return;
+    }
+    if (this.selectedProjectId() === sharedProjectId) return;
     if (projects.some(project => Number(project.id) === sharedProjectId)) this.onProjectChange(sharedProjectId);
   });
   readonly selectedReleaseId = signal<number | null>(null);
+  readonly profileMode = signal<'create' | 'view' | 'edit' | null>(null);
+  readonly profileTab = signal<'overview' | 'items'>('overview');
   readonly searchTerm = signal('');
   readonly statusFilter = signal('ALL');
   readonly sprintFilter = signal('ALL');
   readonly dateFrom = signal('');
   readonly dateTo = signal('');
   readonly filtersOpen = signal(false);
-  readonly activeFilterCount = computed(() => (this.statusFilter() !== 'ALL' ? 1 : 0) + (this.sprintFilter() !== 'ALL' ? 1 : 0) + (this.dateFrom() ? 1 : 0) + (this.dateTo() ? 1 : 0));
+  readonly activeFilterCount = computed(() => (this.searchTerm().trim() ? 1 : 0) + (this.sprintFilter() !== 'ALL' ? 1 : 0) + (this.dateFrom() ? 1 : 0) + (this.dateTo() ? 1 : 0));
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly detailLoading = signal(false);
-  readonly drawerOpen = signal(false);
-  readonly overviewOpen = signal(false);
   readonly errorMessage = signal('');
   readonly successMessage = signal('');
   readonly editingStatusId = signal<number | null>(null);
   readonly isEditing = signal(false);
   readonly filteredReleases = computed(() => {
+    const query = this.searchTerm().trim().toLocaleLowerCase();
     return this.releases().filter(r => {
       const matchesStatus = this.statusFilter() === 'ALL' || r.status === this.statusFilter();
       const matchesSprint = this.sprintFilter() === 'ALL' || String(r.sprint_id ?? '') === this.sprintFilter();
       const releaseDate = String(r.release_date ?? '').slice(0, 10);
       const matchesDateFrom = !this.dateFrom() || (!!releaseDate && releaseDate >= this.dateFrom());
       const matchesDateTo = !this.dateTo() || (!!releaseDate && releaseDate <= this.dateTo());
-      return matchesStatus && matchesSprint && matchesDateFrom && matchesDateTo;
+      const searchableText = [r.name, r.version_number, r.notes, this.projectName(r.project_id), this.sprintName(r.sprint_id)]
+        .filter(Boolean).join(' ').toLocaleLowerCase();
+      const matchesSearch = !query || searchableText.includes(query);
+      return matchesStatus && matchesSprint && matchesDateFrom && matchesDateTo && matchesSearch;
     });
   });
   readonly selectedRelease = computed(() => this.releases().find(r => r.id === this.selectedReleaseId()) ?? null);
@@ -92,7 +121,7 @@ export class Releases implements OnInit {
   readonly form = signal<Partial<ReleaseRecord>>({ status: 'PLANNED' });
   readonly formErrors = signal<Record<string, string>>({});
 
-  ngOnInit(): void { this.loadProjects(); this.loadUsers(); }
+  ngOnInit(): void { this.projectContext.loadProjects(); this.loadProjects(); this.loadUsers(); }
 
   private headers() { return { headers: this.auth.getAuthHeaders() }; }
   private url(path: string) { return `${String(this.baseUrl ?? '').replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`; }
@@ -218,12 +247,16 @@ export class Releases implements OnInit {
         const list = this.extractArray(response).map(p => ({ ...p, id: Number(p?.id ?? p?.project_id ?? p?.projectId), name: p?.name ?? p?.project_name ?? p?.projectName ?? p?.title ?? `Project ${p?.id ?? ''}` }))
           .filter(p => Number.isFinite(p.id) && p.id > 0);
         this.projects.set(list);
-        if (!list.length) { this.selectedProjectId.set(null); this.releases.set([]); this.loading.set(false); return; }
         const sharedId = this.projectContext.selectedProjectId();
-        const chosen = list.find(p => p.id === sharedId) ?? list.find(p => p.id === this.selectedProjectId()) ?? list[0];
-        this.selectedProjectId.set(chosen.id);
-        this.projectContext.setSelectedProject(chosen.id);
-        this.loadProjectData(chosen.id);
+        const sharedProject = list.find(project => project.id === sharedId);
+        if (sharedProject) {
+          if (this.selectedProjectId() !== sharedProject.id) this.onProjectChange(sharedProject.id);
+        } else {
+          this.selectedProjectId.set(null);
+          this.releases.set([]);
+          this.sprints.set([]);
+          this.loading.set(false);
+        }
       },
       error: () => { this.projects.set([]); this.loading.set(false); this.errorMessage.set('Projects could not be loaded. Check the projects API and authentication.'); }
     });
@@ -261,8 +294,11 @@ export class Releases implements OnInit {
 
   onProjectChange(value: number | string | null): void {
     const id = Number(value);
-    this.selectedProjectId.set(Number.isFinite(id) && id > 0 ? id : null);
-    if (Number.isFinite(id) && id > 0) this.projectContext.setSelectedProject(id);
+    const projectId = Number.isFinite(id) && id > 0 ? id : null;
+    const projectChanged = this.selectedProjectId() !== projectId;
+    this.selectedProjectId.set(projectId);
+    if (projectChanged) this.sprintFilter.set('ALL');
+    this.profileMode.set(null);
     this.selectedReleaseId.set(null); this.releaseItems.set([]);
     if (this.selectedProjectId()) this.loadProjectData(this.selectedProjectId()!);
     else { this.releases.set([]); this.sprints.set([]); this.loading.set(false); }
@@ -274,37 +310,58 @@ export class Releases implements OnInit {
       releases: this.http.get<any>(this.url(`/releases/project/${projectId}`), this.headers()).pipe(catchError(err => { this.errorMessage.set(err?.error?.message ?? `Releases could not be loaded (HTTP ${err?.status ?? 'unknown'}). Check GET /releases/project/${projectId}.`); return of([]); })),
       sprints: this.loadSprintsForProject(projectId).pipe(catchError(() => of([])))
     }).pipe(finalize(() => this.loading.set(false))).subscribe(({ releases, sprints }) => {
-      const releaseRows = this.extractArray(releases).map(r => this.normalizeRelease(r)).filter(r => Number.isFinite(r.id) && r.id > 0);
+      if (this.selectedProjectId() !== projectId) return;
+      let releaseRows = this.extractArray(releases).map(r => this.normalizeRelease(r)).filter(r => Number.isFinite(r.id) && r.id > 0);
+      const selectedId = this.selectedReleaseId();
+      const locallySavedSelection = selectedId ? this.releases().find(release => release.id === selectedId) : undefined;
+      if (locallySavedSelection && !releaseRows.some(release => release.id === selectedId)) releaseRows = [locallySavedSelection, ...releaseRows];
       this.releases.set(releaseRows);
-      if (!releaseRows.length && !this.errorMessage()) this.errorMessage.set('No releases were returned for this project. Verify the GET /releases/project/{projectId} response in the Network tab.');
+
       this.sprints.set(this.extractArray(sprints).map(s => ({ ...s, id: Number(s?.id ?? s?.sprint_id ?? s?.sprintId), name: s?.name ?? s?.sprint_name ?? s?.sprintName ?? s?.title ?? `Sprint ${s?.id ?? ''}` })).filter(s => s.id > 0));
-      // Keep the release list collapsed on load, like a settings-style accordion.
-      // Details are fetched only when the user expands a release row.
-      this.selectedReleaseId.set(null);
-      this.releaseItems.set([]);
-      this.detailLoading.set(false);
+      // Keep a just-created or edited release open when refreshing its directory.
+      if (selectedId && releaseRows.some(release => release.id === selectedId) && this.profileMode() === 'view') {
+        this.loadReleaseItems(selectedId);
+      } else if (selectedId && !releaseRows.some(release => release.id === selectedId)) {
+        this.selectedReleaseId.set(null);
+        this.releaseItems.set([]);
+        this.detailLoading.set(false);
+      }
     });
   }
 
   openCreate(): void {
     this.errorMessage.set(''); this.successMessage.set(''); this.formErrors.set({}); this.isEditing.set(false);
+    this.selectedReleaseId.set(null);
+    this.profileTab.set('overview');
     const loggedInUserId = this.getAuthenticatedUserId();
     this.form.set({ project_id: this.selectedProjectId() ?? undefined, sprint_id: undefined, user_id: loggedInUserId ?? undefined, assignee_id: loggedInUserId ?? undefined, name: '', version_number: '', status: 'PLANNED', release_date: null, notes: '' });
     this.candidateItems.set([]); this.selectedWorkItemIds.set([]);
     if (this.selectedProjectId()) this.loadSprintsForProject(this.selectedProjectId()!).pipe(catchError(() => of([]))).subscribe(items => { if (Number(this.form().project_id) === this.selectedProjectId()) this.sprints.set(items); });
-    this.drawerOpen.set(true);
+    this.profileMode.set('create');
   }
 
   openEdit(release: ReleaseRecord): void {
-    this.overviewOpen.set(false);
     this.errorMessage.set(''); this.successMessage.set(''); this.formErrors.set({}); this.isEditing.set(true);
+    this.selectedReleaseId.set(release.id);
+    this.profileTab.set('overview');
     const loggedInUserId = this.getAuthenticatedUserId();
     this.form.set({ ...release, user_id: loggedInUserId ?? undefined, assignee_id: loggedInUserId ?? undefined, release_date: release.release_date ? String(release.release_date).slice(0, 10) : null });
     this.selectedWorkItemIds.set([]); this.loadCandidateItems(Number(release.sprint_id), Number(release.project_id), release.id);
-    this.drawerOpen.set(true);
+    this.profileMode.set('edit');
   }
 
-  closeDrawer(): void { if (this.saving()) return; this.drawerOpen.set(false); }
+  closeDrawer(): void {
+    if (this.saving()) return;
+    if (this.profileMode() === 'edit' && this.selectedRelease()) {
+      this.profileMode.set('view');
+      this.isEditing.set(false);
+      this.formErrors.set({});
+      this.loadReleaseItems(this.selectedRelease()!.id);
+      return;
+    }
+    this.profileMode.set(null);
+    this.isEditing.set(false);
+  }
   updateForm<K extends keyof ReleaseRecord>(key: K, value: ReleaseRecord[K] | null): void {
     this.form.update(current => ({ ...current, [key]: value }));
     if (key === 'sprint_id') this.loadCandidateItems(Number(value), Number(this.form().project_id));
@@ -361,23 +418,13 @@ export class Releases implements OnInit {
   workItemsByType(type: CandidateWorkItem['item_type']): CandidateWorkItem[] { return this.candidateItems().filter(item => item.item_type === type); }
   trackCandidate(_: number, item: CandidateWorkItem): string { return `${item.item_type}:${item.id}`; }
 
-  onFormProjectChange(value: number | string | null): void {
-    const id = Number(value);
-    this.updateForm('project_id', (Number.isFinite(id) && id > 0 ? id : null) as any);
-    this.updateForm('sprint_id', null as any);
-    if (!Number.isFinite(id) || id <= 0) { this.sprints.set([]); return; }
-    this.sprints.set([]); this.candidateItems.set([]); this.selectedWorkItemIds.set([]);
-    this.loadSprintsForProject(id).pipe(catchError(() => of([]))).subscribe(sprints => {
-      // Ignore a late response if the user has already switched projects again.
-      if (Number(this.form().project_id) !== id) return;
-      this.sprints.set(sprints);
-    });
-  }
-
   saveRelease(): void {
     if (this.saving()) return;
-    const f = this.form(); const errors: Record<string, string> = {};
-    if (!Number(f.project_id)) errors['project_id'] = 'Choose a project.';
+    // The header owns project scope for the whole application. Bind the form
+    // to that shared selection at save time so stale page state cannot leak.
+    const f = { ...this.form(), project_id: this.projectContext.selectedProjectId() ?? this.selectedProjectId() ?? undefined };
+    const errors: Record<string, string> = {};
+    if (!Number(f.project_id)) errors['project_id'] = 'Choose a project from the top header.';
     if (!Number(f.sprint_id)) errors['sprint_id'] = 'Choose a sprint.';
     if (!String(f.name ?? '').trim()) errors['name'] = 'Enter a release name.';
     if (!String(f.version_number ?? '').trim()) errors['version_number'] = 'Enter a version.';
@@ -443,7 +490,11 @@ export class Releases implements OnInit {
       finalize(() => this.saving.set(false))
     ).subscribe({
       next: result => {
-        this.drawerOpen.set(false);
+        const savedRecord = this.extractArray(result.saved)[0] ?? result.saved;
+        const savedRelease = this.normalizeRelease(savedRecord);
+        if (savedRelease.id) this.releases.update(list => [savedRelease, ...list.filter(release => release.id !== savedRelease.id)]);
+        this.profileMode.set('view');
+        this.isEditing.set(false);
         this.successMessage.set(result.linkError ? result.linkMessage : (editing ? `Release updated${result.linkedCount ? ` with ${result.linkedCount} scoped work item${result.linkedCount === 1 ? '' : 's'}` : ' with no work items selected'}.` : (result.linkedCount ? `Release created with ${result.linkedCount} work item${result.linkedCount === 1 ? '' : 's'}.` : 'Release created.')));
         // Preserve the newly saved release as the selection when the refreshed
         // release list arrives; loadProjectData will then load its linked items.
@@ -462,15 +513,17 @@ export class Releases implements OnInit {
       this.selectedReleaseId.set(release.id);
       this.loadReleaseItems(release.id);
     }
-    this.overviewOpen.set(true);
+    this.profileTab.set('overview');
+    this.profileMode.set('view');
   }
 
-  closeOverview(): void { this.overviewOpen.set(false); }
+  closeOverview(): void { this.profileMode.set(null); this.profileTab.set('overview'); }
 
   editOverviewRelease(release: ReleaseRecord): void {
-    this.closeOverview();
     this.openEdit(release);
   }
+
+  setProfileTab(tab: 'overview' | 'items'): void { this.profileTab.set(tab); }
 
   selectRelease(id: number): void {
     // Clicking the open row collapses it; clicking another row opens that release.
@@ -520,14 +573,15 @@ export class Releases implements OnInit {
       finalize(() => this.detailLoading.set(false))
     ).subscribe({
       next: (result: { linked: ReleaseItem[]; workItems: any[] }) => {
+        if (this.selectedReleaseId() !== id) return;
         const { linked, workItems } = result;
-        const byId = new Map<number, any>();
+        const byId = new Map<string, any>();
         for (const raw of workItems) {
           const workId = Number(raw?.id ?? raw?.work_item_id ?? raw?.workItemId);
-          if (workId > 0 && !byId.has(workId)) byId.set(workId, raw);
+          if (workId > 0) byId.set(`${raw.__type}:${workId}`, raw);
         }
         const resolved = linked.map((item: ReleaseItem) => {
-          const detail = item.work_item_id ? byId.get(Number(item.work_item_id)) : null;
+          const detail = item.work_item_id ? byId.get(`${item.item_type}:${item.work_item_id}`) : null;
           return {
             ...detail,
             ...item,
@@ -539,13 +593,11 @@ export class Releases implements OnInit {
           } as ReleaseItem;
         });
         this.releaseItems.set(resolved);
-        if (!resolved.length) {
-          this.errorMessage.set('No linked items were returned for this release. Verify GET /release-items/release/' + id + ' and ensure its response contains release_items records.');
-        }
+
       },
       error: (err: any) => {
         this.releaseItems.set([]);
-        this.errorMessage.set(err?.error?.message ?? 'Could not load linked items. Check the release-items API response and authentication.');
+        this.errorMessage.set(err?.error?.message ?? 'Could not load linked items. Please try again.');
       }
     });
   }
@@ -553,10 +605,12 @@ export class Releases implements OnInit {
   updateStatus(release: ReleaseRecord, value: ReleaseStatus): void {
     if (release.status === value || this.editingStatusId() === release.id) return;
     this.editingStatusId.set(release.id); this.errorMessage.set('');
+    const previous=release.status;
+    this.releases.update(list=>list.map(r=>r.id===release.id?{...r,status:value}:r));
     this.http.patch<ReleaseRecord>(this.url(`/releases/${release.id}/status?status=${encodeURIComponent(value)}`), {}, this.headers())
       .pipe(finalize(() => this.editingStatusId.set(null))).subscribe({
         next: updated => { this.releases.update(list => list.map(r => r.id === release.id ? { ...r, ...updated, status: updated?.status ?? value } : r)); if (this.selectedReleaseId() === release.id) this.loadReleaseItems(release.id); },
-        error: err => this.errorMessage.set(err?.error?.message ?? 'Status update failed. The backend must accept PATCH /releases/{id}/status?status=...')
+        error: err => { this.releases.update(list=>list.map(r=>r.id===release.id?{...r,status:previous}:r)); this.errorMessage.set(err?.error?.message ?? 'Status update failed. Please try again.'); }
       });
   }
 

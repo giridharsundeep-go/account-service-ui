@@ -1,13 +1,10 @@
 <section class="epics-page">
 
+  <app-workspace-hero eyebrow="STRATEGY · SCOPE · OUTCOMES" title="Epics &amp; work" subtitle="Connect the larger outcomes to the stories and tasks that move them forward." image="assets/covers/epics.png" imageAlt="A product team mapping a strategic initiative across a roadmap"></app-workspace-hero>
+
 <!-- Same Google-style header structure as Boards -->
   <header class="google-header epics-google-header">
     <div class="header-brand epics-header-brand">
-      <div class="epics-heading-copy">
-        <h1>Epics</h1>
-        <p>Project work items and workflow</p>
-      </div>
-
       <div class="epics-project-picker" aria-label="Select project">
         <mat-icon class="project-picker-icon">folder_open</mat-icon>
         <mat-select
@@ -886,7 +883,7 @@
                         <span class="avatar">{{ getUserInitials(user.name) }}</span>
                         <span class="person-suggestion-copy">
                           <strong>{{ user.name }}</strong>
-                          <small>{{ user.email || 'No email available' }}{{ userEmployeeCode(user) ? ' · ' + userEmployeeCode(user) : '' }}</small>
+                          <small>{{ user.role || user.designation || user.job_title || user.title || "Team member" }}</small>
                         </span>
                       </button>
                       <div class="person-autocomplete-empty" *ngIf="!filteredAssigneeUsers().length">No matching users</div>
@@ -929,7 +926,7 @@
                         <span class="avatar">{{ getUserInitials(user.name) }}</span>
                         <span class="person-suggestion-copy">
                           <strong>{{ user.name }}</strong>
-                          <small>{{ user.email || 'No email available' }}{{ userEmployeeCode(user) ? ' · ' + userEmployeeCode(user) : '' }}</small>
+                          <small>{{ user.role || user.designation || user.job_title || user.title || "Team member" }}</small>
                         </span>
                       </button>
                       <div class="person-autocomplete-empty" *ngIf="!filteredReporterUsers().length">No matching users</div>
@@ -1134,7 +1131,7 @@
                         <span class="avatar">{{ getUserInitials(user.name) }}</span>
                         <span class="person-suggestion-copy">
                           <strong>{{ user.name }}</strong>
-                          <small>{{ user.email || 'No email available' }}{{ userEmployeeCode(user) ? ' · ' + userEmployeeCode(user) : '' }}</small>
+                          <small>{{ user.role || user.designation || user.job_title || user.title || "Team member" }}</small>
                         </span>
                       </button>
                       <div class="person-autocomplete-empty" *ngIf="!filteredAssigneeUsers().length">No matching users</div>
@@ -1177,7 +1174,7 @@
                         <span class="avatar">{{ getUserInitials(user.name) }}</span>
                         <span class="person-suggestion-copy">
                           <strong>{{ user.name }}</strong>
-                          <small>{{ user.email || 'No email available' }}{{ userEmployeeCode(user) ? ' · ' + userEmployeeCode(user) : '' }}</small>
+                          <small>{{ user.role || user.designation || user.job_title || user.title || "Team member" }}</small>
                         </span>
                       </button>
                       <div class="person-autocomplete-empty" *ngIf="!filteredReporterUsers().length">No matching users</div>
@@ -1339,7 +1336,7 @@
                         <span class="avatar">{{ getUserInitials(user.name) }}</span>
                         <span class="person-suggestion-copy">
                           <strong>{{ user.name }}</strong>
-                          <small>{{ user.email || 'No email available' }}{{ userEmployeeCode(user) ? ' · ' + userEmployeeCode(user) : '' }}</small>
+                          <small>{{ user.role || user.designation || user.job_title || user.title || "Team member" }}</small>
                         </span>
                       </button>
                       <div class="person-autocomplete-empty" *ngIf="!filteredAssigneeUsers().length">No matching users</div>
@@ -1382,7 +1379,7 @@
                         <span class="avatar">{{ getUserInitials(user.name) }}</span>
                         <span class="person-suggestion-copy">
                           <strong>{{ user.name }}</strong>
-                          <small>{{ user.email || 'No email available' }}{{ userEmployeeCode(user) ? ' · ' + userEmployeeCode(user) : '' }}</small>
+                          <small>{{ user.role || user.designation || user.job_title || user.title || "Team member" }}</small>
                         </span>
                       </button>
                       <div class="person-autocomplete-empty" *ngIf="!filteredReporterUsers().length">No matching users</div>
@@ -1538,7 +1535,7 @@
                         <span class="avatar">{{ getUserInitials(user.name) }}</span>
                         <span class="person-suggestion-copy">
                           <strong>{{ user.name }}</strong>
-                          <small>{{ user.email || 'No email available' }}{{ userEmployeeCode(user) ? ' · ' + userEmployeeCode(user) : '' }}</small>
+                          <small>{{ user.role || user.designation || user.job_title || user.title || "Team member" }}</small>
                         </span>
                       </button>
                       <div class="person-autocomplete-empty" *ngIf="!filteredAssigneeUsers().length">
@@ -1583,7 +1580,7 @@
                         <span class="avatar">{{ getUserInitials(user.name) }}</span>
                         <span class="person-suggestion-copy">
                           <strong>{{ user.name }}</strong>
-                          <small>{{ user.email || 'No email available' }}{{ userEmployeeCode(user) ? ' · ' + userEmployeeCode(user) : '' }}</small>
+                          <small>{{ user.role || user.designation || user.job_title || user.title || "Team member" }}</small>
                         </span>
                       </button>
                       <div class="person-autocomplete-empty" *ngIf="!filteredReporterUsers().length">

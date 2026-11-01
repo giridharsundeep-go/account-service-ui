@@ -4,6 +4,7 @@ import { UserHome } from './user-home/user-home';
 import { AuthGuard } from './auth.guard';
 
 export const routes: Routes = [
+  { path: '__agile_review', loadComponent: () => import('./agile-review').then(m => m.AgileReview) },
 
   // =========================================================
   // LOGIN

@@ -1,0 +1,204 @@
+:root {
+  --gp-workspace-canvas: #ffffff;
+  --gp-workspace-soft: #f6f9ff;
+  --gp-workspace-line: #dce4ef;
+  --gp-workspace-radius: 16px;
+  --gp-workspace-shadow: 0 3px 12px rgba(31, 58, 100, .045);
+  --gp-workspace-motion: cubic-bezier(.2, .75, .25, 1);
+}
+
+html,
+body {
+  background: #fff;
+}
+
+app-dashboard,
+app-products,
+app-projects,
+app-boards,
+app-epics,
+app-issues,
+app-kanban-board,
+app-sprint-planning,
+app-work-items,
+app-testcases,
+app-releases,
+app-teams,
+app-users,
+app-roles,
+app-docs {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  color: var(--gp-brand-ink, #172b4d);
+  box-sizing: border-box;
+}
+
+:is(app-dashboard, app-products, app-projects, app-boards, app-kanban-board,
+    app-epics, app-issues, app-sprint-planning, app-work-items, app-testcases, app-releases, app-teams,
+    app-users, app-roles, app-docs) *,
+:is(app-dashboard, app-products, app-projects, app-boards, app-kanban-board,
+    app-epics, app-issues, app-sprint-planning, app-work-items, app-testcases, app-releases, app-teams,
+    app-users, app-roles, app-docs) *::before,
+:is(app-dashboard, app-products, app-projects, app-boards, app-kanban-board,
+    app-epics, app-issues, app-sprint-planning, app-work-items, app-testcases, app-releases, app-teams,
+    app-users, app-roles, app-docs) *::after {
+  box-sizing: border-box;
+}
+
+.gp-workspace-canvas,
+.products-page,
+.projects-dashboard,
+.boards-page,
+.epics-page,
+.issues-container,
+.planning-page,
+.work-items-page,
+.testcases-page,
+.docs-shell,
+.saas-container {
+  min-width: 0;
+  max-width: 100%;
+  color: var(--gp-brand-ink, #172b4d);
+  background-color: #fff;
+}
+
+.epics-page,
+.issues-container {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  color: var(--gp-brand-ink, #172b4d);
+  background-color: #fff;
+}
+
+.dashboard-welcome-panel {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 94px;
+  padding: 18px 22px;
+  border: 1px solid var(--gp-workspace-line);
+  border-radius: var(--gp-workspace-radius);
+  background: linear-gradient(110deg, #f7faff, #fff 72%);
+  box-shadow: var(--gp-workspace-shadow);
+}
+
+.dashboard-welcome-mark {
+  display: grid;
+  place-items: center;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  color: #2166cf;
+  background: #eaf1ff;
+}
+
+.dashboard-welcome-mark mat-icon { width: 24px; height: 24px; font-size: 24px; }
+.dashboard-welcome-panel h2 { margin: 0; color: #172b4d; font-size: 16px; font-weight: 700; }
+.dashboard-welcome-panel p { margin: 5px 0 0; color: #66758a; font-size: 13px; line-height: 1.5; }
+
+:is(.teams-page, .releases-page) :is(.overview-metric, .pulse-tile, .teams-workspace),
+:is(.projects-dashboard, .work-items-page, .testcases-page) :is(.project-table-shell, .work-items-table-shell, .directory-panel, .work-items-filter-panel) {
+  border-color: var(--gp-workspace-line, #dce4ef);
+  border-radius: var(--gp-workspace-radius, 16px);
+  box-shadow: var(--gp-workspace-shadow, 0 3px 12px rgba(31, 58, 100, .045));
+}
+
+.gp-workspace-canvas :is(button, a, input, select, textarea),
+.products-page :is(button, a, input, select, textarea),
+.projects-dashboard :is(button, a, input, select, textarea),
+.epics-page :is(button, a, input, select, textarea),
+.issues-container :is(button, a, input, select, textarea),
+.work-items-page :is(button, a, input, select, textarea),
+.testcases-page :is(button, a, input, select, textarea),
+.saas-container :is(button, a, input, select, textarea) {
+  transition-timing-function: var(--gp-workspace-motion, cubic-bezier(.2, .75, .25, 1));
+}
+
+:is(.gp-workspace-canvas, .products-page, .projects-dashboard, .work-items-page,
+    .epics-page, .issues-container, .testcases-page, .saas-container) :is(button, a, input, select, textarea):focus-visible {
+  outline: 3px solid rgba(57, 116, 231, .24);
+  outline-offset: 2px;
+}
+
+.testcase-hero-actions {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+}
+
+.testcase-hero-actions .project-control {
+  min-width: 210px;
+  margin: 0;
+}
+
+.testcase-hero-actions .project-field { width: 230px; max-width: 100%; }
+
+.testcase-hero-actions .banner-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+}
+
+.testcase-hero-actions .banner-create { white-space: nowrap; }
+
+.planning-page > app-workspace-hero { margin-bottom: 16px; }
+.kb-board-view > app-workspace-hero { margin-bottom: 10px; }
+.kb-board-view > app-workspace-hero .gp-workspace-hero--compact { min-height: 126px; }
+.kb-board-view > app-workspace-hero .gp-workspace-hero--compact .gp-workspace-hero__copy { padding-top: 11px; padding-bottom: 11px; }
+.planning-header { justify-content: flex-start; margin: 0 0 18px; }
+.planning-selectors { margin-left: auto; }
+
+/* Profile and detail covers use the same artwork family as their directory pages. */
+.users-profile-cover-wall {
+  background-image: linear-gradient(90deg, rgba(242,247,255,.93), rgba(255,255,255,.2)), url('../../assets/covers/users.png') !important;
+  background-position: center, right 52%;
+  background-size: cover, auto 185%;
+}
+
+.team-profile-cover-wall {
+  background-image: linear-gradient(90deg, rgba(242,247,255,.9), rgba(255,255,255,.12)), url('../../assets/covers/teams.jpeg') !important;
+  background-position: center, right 52%;
+  background-size: cover, auto 190%;
+}
+
+.release-profile-cover {
+  background-image: linear-gradient(90deg, rgba(242,247,255,.93), rgba(255,255,255,.12)), url('../../assets/covers/releases.png') !important;
+  background-position: center, right 52%;
+  background-size: cover, auto 185%;
+}
+
+.project-profile-cover-wall {
+  background-image: linear-gradient(90deg, rgba(242,247,255,.92), rgba(255,255,255,.12)), url('../../assets/covers/projects.png') !important;
+  background-position: center, right 52%;
+  background-size: cover, auto 185%;
+}
+
+@media (max-width: 760px) {
+  .dashboard-welcome-panel { align-items: flex-start; padding: 16px; }
+  .planning-selectors { width: 100%; margin-left: 0; flex-wrap: wrap; }
+  .planning-selectors .selector-field { flex: 1 1 180px; min-width: min(100%, 180px); }
+  .testcase-hero-actions .project-field { width: min(230px, 100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-workspace-canvas *,
+  .products-page *,
+  .projects-dashboard *,
+  .epics-page *,
+  .issues-container *,
+  .work-items-page *,
+  .testcases-page *,
+  .saas-container * {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}

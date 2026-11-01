@@ -720,3 +720,77 @@
     right: 24px;
   }
 }
+
+/* Keep the role search as one stable control; the text never sits under its icon. */
+#gp-app .roles-page .matrix-search-input-frame {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  height: var(--gp-field-height) !important;
+  min-height: var(--gp-field-height) !important;
+  margin: 0 !important;
+  padding: 0 16px !important;
+  border: 1px solid var(--gp-field-border) !important;
+  border-radius: var(--gp-field-radius) !important;
+  background: #fff !important;
+  box-sizing: border-box !important;
+  transition: border-color .16s ease, box-shadow .16s ease !important;
+}
+
+#gp-app .roles-page .matrix-search-input-frame:focus-within {
+  border-width: 1px !important;
+  border-color: var(--gp-field-border-focus) !important;
+  box-shadow: none !important;
+}
+
+#gp-app .roles-page .matrix-search-input-frame .search-lens {
+  position: static !important;
+  flex: 0 0 20px !important;
+  width: 20px !important;
+  height: 20px !important;
+  padding: 0 !important;
+  transform: none !important;
+}
+
+#gp-app .roles-page .matrix-search-input-frame .icon-svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+#gp-app .roles-page .matrix-search-input-frame input {
+  flex: 1 1 auto !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  color: var(--gp-field-text) !important;
+  box-shadow: none !important;
+  font: inherit !important;
+  font-size: 14px !important;
+}
+
+#gp-app .roles-page .matrix-search-input-frame input:focus {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+#gp-app .roles-page .matrix-search-input-frame .clear-search-btn {
+  position: static !important;
+  flex: 0 0 30px !important;
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px !important;
+  padding: 0 !important;
+  transform: none !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+}

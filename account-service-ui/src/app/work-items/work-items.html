@@ -3,20 +3,9 @@
     <span>Plan &amp; Track</span><span aria-hidden="true">/</span><strong>Work items</strong>
   </nav>
 
-  <header class="work-items-heading work-items-hero">
-    <div class="work-items-title-wrap">
-      <span class="work-items-eyebrow">WORKSPACE</span>
-      <div><h1>All work items</h1><button type="button" class="work-items-star" aria-label="Add work items to favourites" title="Add to favourites">☆</button></div>
-      <p>Search, filter, and review Epics, Stories, Tasks, and Issues across your spaces.</p>
-    </div>
-    <img class="work-items-cover-art" src="assets/work-items-cover.png" alt="A team planning and tracking work together">
-    <div class="work-items-heading-actions">
-      <span class="work-items-total">{{ filteredItems.length }} of {{ items.length }} items</span>
-      <button type="button" class="work-items-refresh" (click)="loadWorkItems()" [disabled]="loading" aria-label="Refresh work items" title="Refresh">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"></path><path d="M5.5 9a7 7 0 0 1 11.7-2L20 12M4 12l2.8 5a7 7 0 0 0 11.7-2"></path></svg>
-      </button>
-    </div>
-  </header>
+  <app-workspace-hero eyebrow="PLAN · TRACK · CONNECT" title="All work items" subtitle="Search, filter, and review epics, stories, tasks, and issues across your spaces." image="assets/covers/work-items.png" imageAlt="A team organizing work items together">
+    <div workspace-actions class="work-items-heading-actions"><span class="work-items-total">{{ filteredItems.length }} of {{ items.length }} items</span><button type="button" class="work-items-refresh" (click)="loadWorkItems()" [disabled]="loading" aria-label="Refresh work items" title="Refresh"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"></path><path d="M5.5 9a7 7 0 0 1 11.7-2L20 12M4 12l2.8 5a7 7 0 0 0 11.7-2"></path></svg></button></div>
+  </app-workspace-hero>
 
   <section class="work-items-filter-panel" aria-label="Work item filters">
     <div class="work-items-filter-row">
@@ -44,8 +33,9 @@
             <button type="button" class="work-filter-option" *ngFor="let option of visibleFilterOptions(key)" [class.is-selected]="isFilterOptionSelected(key, option.value)" [attr.aria-selected]="isFilterOptionSelected(key, option.value)" (click)="toggleFilterOption(key, option.value, $event)">
               <span class="work-filter-checkbox" [class.is-checked]="isFilterOptionSelected(key, option.value)" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="m3 8 3.2 3.2L13 4.5"></path></svg></span>
               <img *ngIf="option.avatarUrl" class="work-filter-avatar" [ngClass]="option.kindClass" [src]="option.avatarUrl" alt="">
-              <span *ngIf="!option.avatarUrl" class="work-filter-avatar" [ngClass]="option.kindClass">{{ option.initials || initials(option.label) }}</span>
-              <span class="work-filter-option-label">{{ option.label }}</span>
+              <span *ngIf="!option.avatarUrl" class="work-filter-avatar" [ngClass]="[option.kindClass, (key === 'assignee' || key === 'reporter') ? personToneClass(option.value) : '']">{{ option.initials || initials(option.label) }}</span>
+              <span *ngIf="key === 'assignee' || key === 'reporter'; else standardOptionLabel" class="work-filter-person-copy"><strong>{{ option.label }}</strong><small>{{ option.designation || 'Team member' }}</small></span>
+              <ng-template #standardOptionLabel><span class="work-filter-option-label">{{ option.label }}</span></ng-template>
             </button>
             <div class="work-filter-empty" *ngIf="!visibleFilterOptions(key).length">No matching {{ filterLabels[key].toLowerCase() }}.</div>
           </div>
@@ -73,8 +63,9 @@
           <div class="work-filter-options" role="listbox" [attr.aria-label]="filterLabels[key] + ' options'">
             <button type="button" class="work-filter-option" *ngFor="let option of visibleFilterOptions(key)" [class.is-selected]="isFilterOptionSelected(key, option.value)" [attr.aria-selected]="isFilterOptionSelected(key, option.value)" (click)="toggleFilterOption(key, option.value, $event)">
               <span class="work-filter-checkbox" [class.is-checked]="isFilterOptionSelected(key, option.value)" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="m3 8 3.2 3.2L13 4.5"></path></svg></span>
-              <span class="work-filter-avatar" [ngClass]="option.kindClass">{{ option.initials || initials(option.label) }}</span>
-              <span class="work-filter-option-label">{{ option.label }}</span>
+              <span class="work-filter-avatar" [ngClass]="[option.kindClass, (key === 'assignee' || key === 'reporter') ? personToneClass(option.value) : '']">{{ option.initials || initials(option.label) }}</span>
+              <span *ngIf="key === 'assignee' || key === 'reporter'; else extraStandardOptionLabel" class="work-filter-person-copy"><strong>{{ option.label }}</strong><small>{{ option.designation || 'Team member' }}</small></span>
+              <ng-template #extraStandardOptionLabel><span class="work-filter-option-label">{{ option.label }}</span></ng-template>
             </button>
             <div class="work-filter-empty" *ngIf="!visibleFilterOptions(key).length">No matching {{ filterLabels[key].toLowerCase() }}.</div>
           </div>
@@ -124,12 +115,12 @@
 
         <ng-container matColumnDef="assignee">
           <th mat-header-cell *matHeaderCellDef>Assignee</th>
-          <td mat-cell *matCellDef="let item"><div class="work-person-cell" *ngIf="item.assigneeId !== null; else unassignedCell"><img *ngIf="item.assigneeAvatarUrl" [src]="item.assigneeAvatarUrl" alt=""><span *ngIf="!item.assigneeAvatarUrl">{{ initials(item.assigneeName) }}</span><strong [title]="item.assigneeName">{{ item.assigneeName }}</strong></div><ng-template #unassignedCell><span class="work-unassigned"><span aria-hidden="true">♙</span> Unassigned</span></ng-template></td>
+          <td mat-cell *matCellDef="let item"><div class="work-person-cell" *ngIf="item.assigneeId !== null; else unassignedCell"><img *ngIf="item.assigneeAvatarUrl" [src]="item.assigneeAvatarUrl" alt=""><span *ngIf="!item.assigneeAvatarUrl" [ngClass]="personToneClass(item.assigneeId)">{{ initials(item.assigneeName) }}</span><strong [title]="item.assigneeName">{{ item.assigneeName }}</strong></div><ng-template #unassignedCell><span class="work-unassigned"><span aria-hidden="true">♙</span> Unassigned</span></ng-template></td>
         </ng-container>
 
         <ng-container matColumnDef="reporter">
           <th mat-header-cell *matHeaderCellDef>Reporter</th>
-          <td mat-cell *matCellDef="let item"><div class="work-person-cell" *ngIf="item.reporterId !== null; else noReporter"><img *ngIf="item.reporterAvatarUrl" [src]="item.reporterAvatarUrl" alt=""><span *ngIf="!item.reporterAvatarUrl">{{ initials(item.reporterName) }}</span><strong [title]="item.reporterName">{{ item.reporterName }}</strong></div><ng-template #noReporter><span class="work-muted-value">—</span></ng-template></td>
+          <td mat-cell *matCellDef="let item"><div class="work-person-cell" *ngIf="item.reporterId !== null; else noReporter"><img *ngIf="item.reporterAvatarUrl" [src]="item.reporterAvatarUrl" alt=""><span *ngIf="!item.reporterAvatarUrl" [ngClass]="personToneClass(item.reporterId)">{{ initials(item.reporterName) }}</span><strong [title]="item.reporterName">{{ item.reporterName }}</strong></div><ng-template #noReporter><span class="work-muted-value">—</span></ng-template></td>
         </ng-container>
 
         <ng-container matColumnDef="priority"><th mat-header-cell *matHeaderCellDef>Priority</th><td mat-cell *matCellDef="let item"><span class="work-priority" [ngClass]="priorityClass(item.priority)">{{ item.priority }}</span></td></ng-container>

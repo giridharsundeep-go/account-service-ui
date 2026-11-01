@@ -1,3364 +1,685 @@
-import {
-  Component,
-  ChangeDetectorRef,
-  OnInit,
-  effect,
-  inject
-} from '@angular/core';
-
+import { ChangeDetectorRef, Component, OnInit, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
 import { HttpClient } from '@angular/common/http';
+import { forkJoin, of } from 'rxjs';
+import { catchError, finalize, map } from 'rxjs/operators';
+import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../auth.service';
 import { ProjectContextService } from '../project-context.service';
-
-import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
-
 import { environment } from '../../environment';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatCardModule } from '@angular/material/card';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatTableModule } from '@angular/material/table';
+import { WorkspaceHeroComponent } from '../shared/workspace-hero';
 
-
-/* ============================================================
-   TEST CASE
-============================================================ */
+export interface TestPlan {
+  id?: number;
+  name: string;
+  description?: string;
+  project?: any;
+  projectId?: number | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 export interface TestCase {
-
   id?: number;
-
   testCaseCode?: string;
-  code?: string;
   test_case_code?: string;
-
+  code?: string;
   title?: string;
   name?: string;
-
   description?: string;
   preconditions?: string;
-
   steps?: string;
   expectedResult?: string;
   actualResult?: string;
-
   status?: string;
   priority?: string;
-
+  type?: string;
+  assignee?: any;
+  reporter?: any;
   project?: any;
   projectId?: any;
   project_id?: any;
-
-  epic?: any;
-  epicId?: any;
-  epic_id?: any;
-
-  story?: any;
-  storyId?: any;
-  story_id?: any;
-
-  task?: any;
-  taskId?: any;
-  task_id?: any;
-
-  user?: any;
-  userId?: any;
-  user_id?: any;
-
-  creator?: any;
-
-  testSuite?: any;
-  testSuiteId?: any;
-  test_suite_id?: any;
-
   testPlan?: any;
   testPlanId?: any;
   test_plan_id?: any;
-
-  createdAt?: string;
-  updatedAt?: string;
-
-  createdDate?: string;
-  updatedDate?: string;
-
-  type?: string;
-  assignee?: string;
-  reporter?: string;
-}
-
-
-/* ============================================================
-   TEST PLAN
-============================================================ */
-
-export interface TestPlan {
-
-  id?: number;
-
-  name: string;
-
-  description?: string;
-
-  project?: any;
-
-  projectId?: number | null;
-
-  expanded?: boolean;
-
-  suites?: TestSuite[];
-
+  testSuite?: any;
+  testSuiteId?: any;
+  test_suite_id?: any;
+  epic?: any;
+  epicId?: any;
+  epic_id?: any;
+  story?: any;
+  storyId?: any;
+  story_id?: any;
+  task?: any;
+  taskId?: any;
+  task_id?: any;
+  user?: any;
+  userId?: any;
+  user_id?: any;
+  creator?: any;
   createdAt?: string;
   updatedAt?: string;
 }
-
-
-/* ============================================================
-   TEST SUITE
-============================================================ */
-
-export interface TestSuite {
-
-  id?: number;
-
-  name: string;
-
-  description?: string;
-
-  project?: any;
-
-  projectId?: number | null;
-
-  testPlan?: any;
-
-  testPlanId?: number;
-
-  expanded?: boolean;
-
-  testCases?: TestCase[];
-
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-
-/* ============================================================
-   COMPONENT
-============================================================ */
 
 @Component({
   selector: 'app-testcases',
   standalone: true,
-
-  imports: [
-    CommonModule,
-    FormsModule,
-    MatIconModule,
-    MatButtonModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatCheckboxModule,
-    MatCardModule,
-    MatDividerModule,
-    MatTooltipModule,
-    MatTableModule
-  ],
-
+  imports: [CommonModule, FormsModule, MatIconModule, WorkspaceHeroComponent],
   templateUrl: './testcases.html',
   styleUrls: ['./testcases.css', '../shared/field-controls.css']
 })
 export class Testcases implements OnInit {
-
-  private http = inject(HttpClient);
-  private auth = inject(AuthService);
-  private cdr = inject(ChangeDetectorRef);
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+  private readonly cdr = inject(ChangeDetectorRef);
   private readonly projectContext = inject(ProjectContextService);
 
-  /*
-   * KEEP EXISTING API CONFIGURATION
-   */
   readonly baseUrl = environment.apiBaseUrlM || environment.apiBaseUrl;
-  readonly baseUrl2 = environment.apiBaseUrlM || environment.apiBaseUrl2 || environment.apiBaseUrl;
-
-
-  /* ============================================================
-     PAGE STATE
-  ============================================================ */
-
-  searchText = '';
-
-  showFilters = false;
-
-  showCreateTestCaseModal = false;
-  showEditTestCaseModal = false;
-
-  showCreatePlanModal = false;
-  showEditPlanModal = false;
-
-  showCreateSuiteModal = false;
-  showEditSuiteModal = false;
-
-  showSuccessToast = false;
-  successMessage = '';
-
-
-  /* ============================================================
-     PROJECT SELECTION
-  ============================================================ */
-
-  selectedProjectId: number | null = null;
-  private readonly projectContextSync = effect(() => {
-    const sharedProjectId = this.projectContext.selectedProjectId();
-    if (!sharedProjectId || !this.projects.length || sharedProjectId === this.selectedProjectId) return;
-    if (this.projects.some(project => Number(this.getOptionId(project)) === sharedProjectId)) this.onProjectChange(sharedProjectId);
-  });
-
-  /** Identifies the newest project load so stale responses are ignored. */
-  private projectLoadToken = 0;
-  isProjectLoading = false;
-
-
-  /* ============================================================
-     FILTERS
-  ============================================================ */
-
-  selectedStatus = '';
-  selectedPriority = '';
-  selectedType = '';
-  selectedAssignee = '';
-
-  statuses = [
-    'DRAFT',
-    'READY',
-    'IN_PROGRESS',
-    'PASSED',
-    'FAILED',
-    'BLOCKED'
-  ];
-
-  priorities = [
-    'LOW',
-    'MEDIUM',
-    'HIGH',
-    'CRITICAL'
-  ];
-
-  types = [
-    'Functional',
-    'Regression',
-    'Smoke',
-    'Integration',
-    'UI',
-    'API'
-  ];
-
-  assignees = [
-    'John Smith',
-    'Sarah Wilson',
-    'Michael Brown',
-    'Priya Sharma',
-    'David Miller'
-  ];
-
-
-  /* ============================================================
-     DATA
-  ============================================================ */
+  readonly testApiUrl = environment.apiBaseUrlM || environment.apiBaseUrl2 || environment.apiBaseUrl;
 
   projects: any[] = [];
-
-  epics: any[] = [];
-
-  stories: any[] = [];
-
-  tasks: any[] = [];
-
-  users: any[] = [];
-
+  selectedProjectId: number | null = null;
   testPlans: TestPlan[] = [];
-
-  testSuites: TestSuite[] = [];
-
   testCases: TestCase[] = [];
-
-
-  /* ============================================================
-     SELECTION
-  ============================================================ */
-
+  testSuites: any[] = [];
   selectedPlan: TestPlan | null = null;
+  selectedSuite: any | null = null;
 
-  selectedSuite: TestSuite | null = null;
+  isProjectLoading = false;
+  isCreatingPlan = false;
+  isCreatingSuite = false;
+  isCreatingCase = false;
+  isAddingCases = false;
+  showCreatePlanModal = false;
+  showCreateSuiteModal = false;
+  showCreateCaseModal = false;
+  showAddCasesModal = false;
+  successMessage = '';
+  showSuccessToast = false;
+  planSearch = '';
+  caseSearch = '';
+  librarySearch = '';
+  selectedCaseIds = new Set<number>();
+  planForm = { name: '', description: '' };
+  suiteForm = { name: '', description: '' };
+  caseForm = this.emptyCaseForm();
+  private loadToken = 0;
+  private toastTimer: ReturnType<typeof setTimeout> | null = null;
 
-  selectedTestCase: TestCase | null = null;
-
-  /* ============================================================
-   ADD EXISTING TEST CASES TO SUITE
-============================================================ */
-
-showAddTestCasesModal = false;
-
-availableTestCases: TestCase[] = [];
-
-displayedAvailableTestCaseColumns: string[] = ['select', 'code', 'title', 'status', 'priority', 'suite'];
-
-selectedTestCaseIds = new Set<number>();
-
-addTestCaseSearch = '';
-
-isAddingTestCases = false;
-
-
-  /* ============================================================
-     FORMS
-  ============================================================ */
-
-  testcaseForm: TestCase =
-    this.createEmptyTestCase();
-
-  planForm: TestPlan =
-    this.createEmptyPlan();
-
-  suiteForm: TestSuite =
-    this.createEmptySuite();
-
-
-  /* ============================================================
-     INIT
-  ============================================================ */
+  private readonly projectContextSync = effect(() => {
+    const projectId = this.projectContext.selectedProjectId();
+    if (!projectId || projectId === this.selectedProjectId) return;
+    if (this.projects.some(project => Number(this.getProjectOptionId(project)) === projectId)) {
+      this.onProjectChange(projectId);
+    }
+  });
 
   ngOnInit(): void {
-    // Project data is loaded only after projects resolve and a project is selected.
-    // Avoid firing unfiltered requests here and then immediately repeating them.
     this.loadProjects();
-    this.loadUsers();
-    this.loadTasks();
   }
-
-  /* ============================================================
-   ADD EXISTING TEST CASES TO SUITE
-============================================================ */
-
-openAddTestCasesToSuite(): void {
-
-  if (!this.selectedSuite?.id) {
-    this.showToast('Please select a test suite first');
-    return;
-  }
-
-  if (!this.selectedProjectId) {
-    this.showToast('Please select a project first');
-    return;
-  }
-
-  this.addTestCaseSearch = '';
-
-  this.selectedTestCaseIds =
-    new Set<number>();
-
-  /*
-   * Use the already-loaded project-filtered
-   * test cases.
-   */
-  this.availableTestCases =
-    [...this.testCases];
-
-  /*
-   * Pre-select test cases that already
-   * belong to this suite.
-   */
-  const suiteId =
-    Number(this.selectedSuite.id);
-
-  this.availableTestCases.forEach(tc => {
-
-    const testcaseSuiteId =
-      this.getEntityId(
-        tc.testSuite,
-        tc.testSuiteId ||
-        tc.test_suite_id
-      );
-
-    if (
-      testcaseSuiteId !== null &&
-      testcaseSuiteId !== undefined &&
-      testcaseSuiteId !== '' &&
-      Number(testcaseSuiteId) === suiteId
-    ) {
-
-      if (tc.id !== undefined) {
-        this.selectedTestCaseIds.add(
-          Number(tc.id)
-        );
-      }
-    }
-  });
-
-  this.showAddTestCasesModal =
-    true;
-
-  this.cdr.detectChanges();
-}
-
-
-closeAddTestCasesToSuite(): void {
-
-  if (this.isAddingTestCases) {
-    return;
-  }
-
-  this.showAddTestCasesModal =
-    false;
-
-  this.availableTestCases = [];
-
-  this.selectedTestCaseIds =
-    new Set<number>();
-
-  this.addTestCaseSearch = '';
-}
-
-
-get filteredAvailableTestCases(): TestCase[] {
-
-  const search =
-    this.addTestCaseSearch
-      .trim()
-      .toLowerCase();
-
-  if (!search) {
-    return this.availableTestCases;
-  }
-
-  return this.availableTestCases.filter(
-    tc => {
-
-      const code =
-        this.getTestCaseCode(tc);
-
-      const title =
-        this.getTestCaseTitle(tc);
-
-      const description =
-        tc.description || '';
-
-      const status =
-        tc.status || '';
-
-      const priority =
-        tc.priority || '';
-
-      const suite =
-        this.getSuiteDisplay(tc);
-
-      return [
-        code,
-        title,
-        description,
-        status,
-        priority,
-        suite
-      ]
-        .join(' ')
-        .toLowerCase()
-        .includes(search);
-    }
-  );
-}
-
-
-isTestCaseSelected(
-  testcase: TestCase
-): boolean {
-
-  if (testcase.id === undefined) {
-    return false;
-  }
-
-  return this.selectedTestCaseIds.has(
-    Number(testcase.id)
-  );
-}
-
-
-toggleTestCaseForSuite(
-  testcase: TestCase
-): void {
-
-  if (testcase.id === undefined) {
-    return;
-  }
-
-  const id =
-    Number(testcase.id);
-
-  const next =
-    new Set(
-      this.selectedTestCaseIds
-    );
-
-  if (next.has(id)) {
-    next.delete(id);
-  } else {
-    next.add(id);
-  }
-
-  this.selectedTestCaseIds =
-    next;
-}
-
-
-selectAllAvailableTestCases(): void {
-
-  const next =
-    new Set(
-      this.selectedTestCaseIds
-    );
-
-  this.filteredAvailableTestCases
-    .forEach(tc => {
-
-      if (tc.id !== undefined) {
-        next.add(
-          Number(tc.id)
-        );
-      }
-    });
-
-  this.selectedTestCaseIds =
-    next;
-}
-
-
-clearSelectedAvailableTestCases(): void {
-
-  const visibleIds =
-    new Set(
-      this.filteredAvailableTestCases
-        .filter(tc => tc.id !== undefined)
-        .map(tc => Number(tc.id))
-    );
-
-  const next =
-    new Set<number>();
-
-  this.selectedTestCaseIds.forEach(id => {
-
-    if (!visibleIds.has(id)) {
-      next.add(id);
-    }
-  });
-
-  this.selectedTestCaseIds =
-    next;
-}
-
-
-get selectedAvailableTestCaseCount(): number {
-
-  return this.selectedTestCaseIds.size;
-}
-
-
-get availableAlreadyAssignedCount(): number {
-
-  if (!this.selectedSuite?.id) {
-    return 0;
-  }
-
-  const suiteId =
-    Number(this.selectedSuite.id);
-
-  return this.availableTestCases.filter(
-    tc => {
-
-      const testcaseSuiteId =
-        this.getEntityId(
-          tc.testSuite,
-          tc.testSuiteId ||
-          tc.test_suite_id
-        );
-
-      return (
-        testcaseSuiteId !== null &&
-        testcaseSuiteId !== undefined &&
-        testcaseSuiteId !== '' &&
-        Number(testcaseSuiteId) === suiteId
-      );
-    }
-  ).length;
-}
-
-
-/* ============================================================
-   ADD SELECTED TEST CASES TO CURRENT SUITE
-============================================================ */
-
-addSelectedTestCasesToSuite(): void {
-
-  if (!this.selectedSuite?.id) {
-    this.showToast(
-      'Please select a test suite first'
-    );
-
-    return;
-  }
-
-  if (!this.selectedTestCaseIds.size) {
-    this.showToast(
-      'Please select at least one test case'
-    );
-
-    return;
-  }
-
-  const suiteId =
-    Number(this.selectedSuite.id);
-
-  const selectedCases =
-    this.availableTestCases.filter(
-      tc =>
-        tc.id !== undefined &&
-        this.selectedTestCaseIds.has(
-          Number(tc.id)
-        )
-    );
-
-  if (!selectedCases.length) {
-    return;
-  }
-
-  this.isAddingTestCases = true;
-
-  const headers =
-    this.auth.getAuthHeaders();
-
-  /*
-   * Only update cases that are not already
-   * assigned to this suite.
-   */
-  const casesToUpdate =
-    selectedCases.filter(tc => {
-
-      const existingSuiteId =
-        this.getEntityId(
-          tc.testSuite,
-          tc.testSuiteId ||
-          tc.test_suite_id
-        );
-
-      return (
-        Number(existingSuiteId) !== suiteId
-      );
-    });
-
-  /*
-   * Nothing new to attach.
-   */
-  if (!casesToUpdate.length) {
-
-    this.isAddingTestCases = false;
-
-    this.showToast(
-      'Selected test cases are already in this suite'
-    );
-
-    this.closeAddTestCasesToSuite();
-
-    return;
-  }
-
-  let completed = 0;
-
-  let failed = 0;
-
-  casesToUpdate.forEach(testcase => {
-
-    const projectId =
-      this.getEntityId(
-        testcase.project,
-        testcase.projectId ||
-        testcase.project_id
-      );
-
-    const planId =
-      this.getEntityId(
-        testcase.testPlan,
-        testcase.testPlanId ||
-        testcase.test_plan_id
-      );
-
-    /*
-     * Keep every existing testcase field.
-     *
-     * Only change testSuite.
-     */
-    const payload: any = {
-
-      testCaseCode:
-        testcase.testCaseCode ||
-        testcase.code ||
-        testcase.test_case_code ||
-        null,
-
-      title:
-        this.getTestCaseTitle(testcase),
-
-      description:
-        testcase.description || '',
-
-      preconditions:
-        testcase.preconditions || '',
-
-      steps:
-        testcase.steps || '',
-
-      expectedResult:
-        testcase.expectedResult || '',
-
-      actualResult:
-        testcase.actualResult || '',
-
-      status:
-        testcase.status || 'DRAFT',
-
-      priority:
-        testcase.priority || 'MEDIUM',
-
-      project:
-        projectId
-          ? {
-              id:
-                Number(projectId)
-            }
-          : null,
-
-      testPlan:
-        planId
-          ? {
-              id:
-                Number(planId)
-            }
-          : null,
-
-      /*
-       * NEW / UPDATED SUITE
-       */
-      testSuite: {
-        id: suiteId
-      },
-
-      epic:
-        testcase.epicId ||
-        testcase.epic_id
-          ? {
-              id:
-                Number(
-                  testcase.epicId ||
-                  testcase.epic_id
-                )
-            }
-          : null,
-
-      story:
-        testcase.storyId ||
-        testcase.story_id
-          ? {
-              id:
-                Number(
-                  testcase.storyId ||
-                  testcase.story_id
-                )
-            }
-          : null,
-
-      task:
-        testcase.taskId ||
-        testcase.task_id
-          ? {
-              id:
-                Number(
-                  testcase.taskId ||
-                  testcase.task_id
-                )
-            }
-          : null,
-
-      user:
-        testcase.userId ||
-        testcase.user_id
-          ? {
-              id:
-                Number(
-                  testcase.userId ||
-                  testcase.user_id
-                )
-            }
-          : null
-    };
-
-    this.http
-      .put<any>(
-        `${this.baseUrl2}/v1/testcases/${testcase.id}`,
-        payload,
-        { headers }
-      )
-      .subscribe({
-
-        next: () => {
-
-          completed++;
-
-          if (
-            completed + failed ===
-            casesToUpdate.length
-          ) {
-
-            this.finishAddingTestCases(
-              completed,
-              failed
-            );
-          }
-        },
-
-        error: err => {
-
-          failed++;
-
-          console.error(
-            `Error adding test case ${testcase.id} to suite:`,
-            err
-          );
-
-          if (
-            completed + failed ===
-            casesToUpdate.length
-          ) {
-
-            this.finishAddingTestCases(
-              completed,
-              failed
-            );
-          }
-        }
-      });
-  });
-}
-
-
-private finishAddingTestCases(
-  completed: number,
-  failed: number
-): void {
-
-  this.isAddingTestCases = false;
-
-  this.showAddTestCasesModal =
-    false;
-
-  this.availableTestCases = [];
-
-  this.selectedTestCaseIds =
-    new Set<number>();
-
-  this.addTestCaseSearch = '';
-
-  if (failed === 0) {
-
-    this.showToast(
-      `${completed} test case${completed === 1 ? '' : 's'} added to "${this.selectedSuite?.name}"`
-    );
-
-  } else {
-
-    this.showToast(
-      `${completed} added, ${failed} failed`
-    );
-  }
-
-  /*
-   * Reload through your existing API
-   * and rebuild:
-   *
-   * Project
-   *   └── Test Plan
-   *       └── Test Suite
-   *           └── Test Cases
-   */
-  this.loadTestcases();
-}
-
-
-  /* ============================================================
-     PROJECTS
-  ============================================================ */
 
   loadProjects(): void {
-
-    const headers =
-      this.auth.getAuthHeaders();
-
-    this.http
-      .get<any>(
-        `${this.baseUrl}/projects`,
-        { headers }
-      )
-      .pipe(
-        catchError(() => of([]))
-      )
-      .subscribe(data => {
-
-        this.projects =
-          this.extractArray(data);
-
-        const sharedProjectId = this.projectContext.selectedProjectId();
-        const selectedProject = this.projects.find(project => Number(this.getOptionId(project)) === sharedProjectId)
-          ?? this.projects.find(project => Number(this.getOptionId(project)) === this.selectedProjectId)
-          ?? this.projects[0];
-        if (selectedProject) {
-          const projectId = Number(this.getOptionId(selectedProject));
-          if (projectId !== this.selectedProjectId) this.onProjectChange(projectId);
-          else this.projectContext.setSelectedProject(projectId);
-        }
-
-        this.cdr.detectChanges();
-      });
+    this.http.get<any>(String(this.baseUrl).replace(/\/$/, '') + '/projects', {
+      headers: this.auth.getAuthHeaders()
+    }).pipe(catchError(() => of([]))).subscribe(response => {
+      this.projects = this.extractArray(response);
+      const sharedId = this.projectContext.selectedProjectId();
+      const preferred = this.projects.find(project => Number(this.getProjectOptionId(project)) === sharedId)
+        || this.projects[0];
+      if (preferred) this.onProjectChange(Number(this.getProjectOptionId(preferred)));
+      this.cdr.markForCheck();
+    });
   }
-
-
-  /* ============================================================
-     PROJECT CHANGE
-  ============================================================ */
 
   onProjectChange(value: any): void {
-
-    const projectId =
-      Number(value);
-
-    if (
-      !projectId ||
-      isNaN(projectId)
-    ) {
-
+    const projectId = Number(value);
+    if (!Number.isFinite(projectId) || projectId <= 0) {
       this.selectedProjectId = null;
-      ++this.projectLoadToken;
-      this.isProjectLoading = false;
+      this.projectContext.setSelectedProject(null);
       this.testPlans = [];
-      this.testSuites = [];
       this.testCases = [];
-      this.epics = [];
-      this.stories = [];
-
+      this.testSuites = [];
       this.selectedPlan = null;
       this.selectedSuite = null;
-      this.selectedTestCase = null;
-
+      this.isProjectLoading = false;
       return;
     }
 
-    this.selectedProjectId =
-      projectId;
+    this.selectedProjectId = projectId;
     this.projectContext.setSelectedProject(projectId);
-
-    this.applyProjectSelection();
-  }
-
-
-  /* ============================================================
-     APPLY PROJECT SELECTION
-  ============================================================ */
-
-  applyProjectSelection(): void {
-    const projectId = this.selectedProjectId;
-    const requestToken = ++this.projectLoadToken;
-
-    // Clear the previous project's content immediately, so the UI never shows
-    // stale project data while the new project's requests are in flight.
     this.selectedPlan = null;
     this.selectedSuite = null;
-    this.selectedTestCase = null;
-    this.testPlans = [];
-    this.testSuites = [];
-    this.testCases = [];
-    this.epics = [];
-    this.stories = [];
+    this.planSearch = '';
+    this.caseSearch = '';
+    this.loadProjectWorkspace(projectId);
+  }
 
-    if (!projectId) {
-      this.isProjectLoading = false;
-      this.cdr.markForCheck();
-      return;
-    }
-
+  private loadProjectWorkspace(projectId: number): void {
+    const token = ++this.loadToken;
     this.isProjectLoading = true;
-    this.cdr.markForCheck();
-
     const headers = this.auth.getAuthHeaders();
-    const plans$ = this.http
-      .get<any>(`${this.baseUrl2}/v1/test-plans`, { headers })
-      .pipe(catchError(() => of([])));
-    const suites$ = this.http
-      .get<any>(`${this.baseUrl2}/v1/test-suites`, { headers })
-      .pipe(catchError(() => of([])));
-    const cases$ = this.http
-      .get<any>(`${this.baseUrl2}/v1/testcases`, { headers })
-      .pipe(catchError(() => of([])));
-    const epics$ = this.http
-      .get<any>(`${this.baseUrl}/projects/${projectId}/epics`, { headers })
-      .pipe(catchError(() => of([])));
-    const stories$ = this.http
-      .get<any>(`${this.baseUrl}/projects/${projectId}/stories`, { headers })
-      .pipe(catchError(() => of([])));
-
-    // Run independent requests concurrently, and apply the result only once.
-    forkJoin({ plans: plans$, suites: suites$, cases: cases$, epics: epics$, stories: stories$ })
-      .subscribe(({ plans, suites, cases, epics, stories }) => {
-        // A newer project was selected while these requests were running.
-        if (requestToken !== this.projectLoadToken || projectId !== this.selectedProjectId) {
-          return;
-        }
-
-        const projectKey = String(projectId);
-        this.testPlans = this.extractArray(plans)
-          .filter(plan => String(this.getProjectId(plan)) === projectKey)
-          .map(plan => ({ ...plan, expanded: false, suites: [] }));
-        this.testSuites = this.extractArray(suites)
-          .filter(suite => String(this.getProjectId(suite)) === projectKey);
-        this.testCases = this.extractArray(cases)
-          .filter(testcase => String(this.getProjectId(testcase)) === projectKey);
-        this.epics = this.extractArray(epics);
-        this.stories = this.extractArray(stories);
-
-        this.attachTestCasesToSuites();
-        this.attachSuitesToPlans();
-        this.selectInitialNode();
+    const api = String(this.testApiUrl).replace(/\/$/, '');
+    forkJoin({
+      plans: this.http.get<any>(api + '/v1/test-plans', { headers }).pipe(catchError(() => of([]))),
+      suites: this.http.get<any>(api + '/v1/test-suites', { headers }).pipe(catchError(() => of([]))),
+      cases: this.http.get<any>(api + '/v1/testcases', { headers }).pipe(catchError(() => of([])))
+    }).pipe(finalize(() => {
+      if (token === this.loadToken) {
         this.isProjectLoading = false;
-        this.cdr.detectChanges();
-      });
-  }
-
-  /* ============================================================
-     TEST PLANS
-  ============================================================ */
-
-  loadTestPlans(): void {
-
-    const headers =
-      this.auth.getAuthHeaders();
-
-    this.http
-      .get<any>(
-        `${this.baseUrl2}/v1/test-plans`,
-        { headers }
-      )
-      .pipe(
-        catchError(() => of([]))
-      )
-      .subscribe(data => {
-
-        const plans =
-          this.extractArray(data);
-
-        /*
-         * Only show plans for selected project.
-         */
-        const filtered =
-          this.selectedProjectId
-            ? plans.filter(
-                plan =>
-                  String(
-                    this.getProjectId(plan)
-                  ) ===
-                  String(
-                    this.selectedProjectId
-                  )
-              )
-            : plans;
-
-        this.testPlans =
-          filtered.map(plan => ({
-            ...plan,
-            expanded: false,
-            suites: []
-          }));
-
-        this.attachTestCasesToSuites();
-        this.attachSuitesToPlans();
-
-        this.cdr.detectChanges();
-      });
-  }
-
-
-  /* ============================================================
-     TEST SUITES
-  ============================================================ */
-
-  loadTestSuites(): void {
-
-    const headers =
-      this.auth.getAuthHeaders();
-
-    this.http
-      .get<any>(
-        `${this.baseUrl2}/v1/test-suites`,
-        { headers }
-      )
-      .pipe(
-        catchError(() => of([]))
-      )
-      .subscribe(data => {
-
-        const suites =
-          this.extractArray(data);
-
-        /*
-         * Only suites belonging to selected project.
-         */
-        this.testSuites =
-          this.selectedProjectId
-            ? suites.filter(
-                suite =>
-                  String(
-                    this.getProjectId(suite)
-                  ) ===
-                  String(
-                    this.selectedProjectId
-                  )
-              )
-            : suites;
-
-        this.attachTestCasesToSuites();
-        this.attachSuitesToPlans();
-
-        this.cdr.detectChanges();
-      });
-  }
-
-
-  /* ============================================================
-     TEST CASES
-  ============================================================ */
-
-  loadTestcases(): void {
-
-    const headers =
-      this.auth.getAuthHeaders();
-
-    this.http
-      .get<any>(
-        `${this.baseUrl2}/v1/testcases`,
-        { headers }
-      )
-      .pipe(
-        catchError(() => of([]))
-      )
-      .subscribe(data => {
-
-        const cases =
-          this.extractArray(data);
-
-        /*
-         * IMPORTANT:
-         *
-         * Test cases are filtered by project_id.
-         */
-        this.testCases =
-          this.selectedProjectId
-            ? cases.filter(
-                testcase =>
-                  String(
-                    this.getProjectId(testcase)
-                  ) ===
-                  String(
-                    this.selectedProjectId
-                  )
-              )
-            : cases;
-
-        this.attachTestCasesToSuites();
-
-        this.selectInitialNode();
-
-        this.cdr.detectChanges();
-      });
-  }
-
-
-  /* ============================================================
-     USERS
-  ============================================================ */
-
-  loadUsers(): void {
-
-    const headers =
-      this.auth.getAuthHeaders();
-
-    this.http
-      .get<any>(
-        `${this.baseUrl}/users`,
-        { headers }
-      )
-      .pipe(
-        catchError(() => of([]))
-      )
-      .subscribe(data => {
-
-        this.users =
-          this.extractArray(data);
-
-        this.cdr.detectChanges();
-      });
-  }
-
-
-  /* ============================================================
-     EPICS
-     FIXED: projId was undefined.
-  ============================================================ */
-
-  loadEpics(): void {
-
-    const headers =
-      this.auth.getAuthHeaders();
-
-    const projId =
-      this.selectedProjectId;
-
-    if (!projId) {
-
-      this.epics = [];
-
-      return;
-    }
-
-    /*
-     * KEEPING YOUR EXISTING API.
-     */
-    this.http
-      .get<any>(
-        `${this.baseUrl}/projects/${projId}/epics`,
-        { headers }
-      )
-      .pipe(
-        catchError(() => of([]))
-      )
-      .subscribe(data => {
-
-        this.epics =
-          this.extractArray(data);
-
-        this.cdr.detectChanges();
-      });
-  }
-
-
-  /* ============================================================
-     STORIES
-     FIXED: projId was undefined.
-  ============================================================ */
-
-  loadStories(): void {
-
-    const headers =
-      this.auth.getAuthHeaders();
-
-    const projId =
-      this.selectedProjectId;
-
-    if (!projId) {
-
-      this.stories = [];
-
-      return;
-    }
-
-    /*
-     * KEEPING YOUR EXISTING API.
-     */
-    this.http
-      .get<any>(
-        `${this.baseUrl}/projects/${projId}/stories`,
-        { headers }
-      )
-      .pipe(
-        catchError(() => of([]))
-      )
-      .subscribe(data => {
-
-        this.stories =
-          this.extractArray(data);
-
-        this.cdr.detectChanges();
-      });
-  }
-
-
-  /* ============================================================
-     TASKS
-  ============================================================ */
-
-  loadTasks(): void {
-
-    const headers =
-      this.auth.getAuthHeaders();
-
-    this.http
-      .get<any[]>(
-        `${this.baseUrl}/tasks`,
-        { headers }
-      )
-      .pipe(
-        catchError(() => of([]))
-      )
-      .subscribe(data => {
-
-        this.tasks =
-          this.extractArray(data);
-      });
-  }
-
-
-  /* ============================================================
-     ATTACH SUITES TO PLANS
-  ============================================================ */
-
-  attachSuitesToPlans(): void {
-    // Build a lookup once instead of filtering every suite for every plan.
-    const suitesByPlan = new Map<string, TestSuite[]>();
-
-    for (const suite of this.testSuites) {
-      const planId = this.getEntityId(suite.testPlan, suite.testPlanId);
-      if (planId === null || planId === undefined || planId === '') continue;
-      const key = String(planId);
-      const bucket = suitesByPlan.get(key) || [];
-      bucket.push(suite);
-      suitesByPlan.set(key, bucket);
-    }
-
-    for (const plan of this.testPlans) {
-      const planId = this.getEntityId(plan, plan.id);
-      const suites = suitesByPlan.get(String(planId)) || [];
-      plan.suites = suites;
-      for (const suite of suites) {
-        suite.testCases = suite.testCases || [];
-        suite.expanded = suite.expanded ?? false;
+        this.cdr.markForCheck();
       }
-    }
+    })).subscribe(({ plans, suites, cases }) => {
+      if (token !== this.loadToken || projectId !== this.selectedProjectId) return;
+
+      const allPlans = this.extractArray(plans);
+      const allSuites = this.extractArray(suites);
+      const allCases = this.extractArray(cases);
+      this.testPlans = allPlans.map(plan => this.normalizePlan(plan)).filter(plan => this.getProjectId(plan) === projectId);
+      const projectPlanIds = new Set(this.testPlans.map(plan => Number(plan.id)).filter(Number.isFinite));
+      this.testSuites = allSuites.map(suite => this.normalizeSuite(suite)).filter(suite => {
+        if (this.getProjectId(suite) === projectId) return true;
+        const planId = this.entityId(suite.testPlan, suite.testPlanId ?? suite.test_plan_id);
+        return planId !== null && projectPlanIds.has(planId);
+      });
+      const projectSuiteIds = new Set(this.testSuites.map(suite => Number(suite.id)).filter(Number.isFinite));
+      this.testCases = allCases.map(testCase => this.normalizeCase(testCase)).filter(testCase => {
+        if (this.getProjectId(testCase) === projectId) return true;
+        const planId = this.entityId(testCase.testPlan, testCase.testPlanId ?? testCase.test_plan_id);
+        const suiteId = this.entityId(testCase.testSuite, testCase.testSuiteId ?? testCase.test_suite_id);
+        if (planId !== null && projectPlanIds.has(planId)) return true;
+        if (suiteId !== null && projectSuiteIds.has(suiteId)) return true;
+        const suite = this.testSuites.find(row => Number(row.id) === suiteId);
+        const suitePlanId = suite ? this.entityId(suite.testPlan, suite.testPlanId ?? suite.test_plan_id) : null;
+        return suitePlanId !== null && projectPlanIds.has(suitePlanId);
+      });
+
+      if (this.selectedPlan?.id) {
+        this.selectedPlan = this.testPlans.find(plan => Number(plan.id) === Number(this.selectedPlan?.id)) || null;
+      }
+      if (this.selectedSuite?.id) {
+        this.selectedSuite = this.testSuites.find(suite => Number(suite.id) === Number(this.selectedSuite?.id)) || null;
+      }
+      this.cdr.markForCheck();
+    });
   }
 
-  /* ============================================================
-     ATTACH TEST CASES TO SUITES
-  ============================================================ */
-
-  attachTestCasesToSuites(): void {
-    // Index cases by suite id to avoid an O(suites × test cases) scan.
-    const casesBySuite = new Map<string, TestCase[]>();
-
-    for (const testcase of this.testCases) {
-      const suiteId = this.getEntityId(
-        testcase.testSuite,
-        testcase.testSuiteId || testcase.test_suite_id
-      );
-      if (suiteId === null || suiteId === undefined || suiteId === '') continue;
-      const key = String(suiteId);
-      const bucket = casesBySuite.get(key) || [];
-      bucket.push(testcase);
-      casesBySuite.set(key, bucket);
-    }
-
-    for (const suite of this.testSuites) {
-      suite.testCases = casesBySuite.get(String(suite.id)) || [];
-    }
-
-    this.attachSuitesToPlans();
+  get visiblePlans(): TestPlan[] {
+    const query = this.planSearch.trim().toLowerCase();
+    return this.testPlans.filter(plan => !query || (plan.name + ' ' + (plan.description || '')).toLowerCase().includes(query));
   }
 
-  /* ============================================================
-     INITIAL SELECTION
-  ============================================================ */
-
-  selectInitialNode(): void {
-
-    if (!this.testPlans.length) {
-
-      this.selectedPlan = null;
-      this.selectedSuite = null;
-      this.selectedTestCase = null;
-
-      return;
-    }
-
-    this.selectedPlan =
-      this.testPlans[0];
-
-    this.selectedPlan.expanded =
-      true;
-
-    const suites =
-      this.selectedPlan.suites || [];
-
-    if (!suites.length) {
-
-      this.selectedSuite = null;
-      this.selectedTestCase = null;
-
-      return;
-    }
-
-    this.selectedSuite =
-      suites[0];
-
-    this.selectedSuite.expanded =
-      true;
-
-    const cases =
-      this.selectedSuite.testCases || [];
-
-    this.selectedTestCase =
-      cases.length
-        ? cases[0]
-        : null;
+  get planCases(): TestCase[] {
+    if (!this.selectedSuite?.id) return [];
+    const query = this.caseSearch.trim().toLowerCase();
+    return this.testCases.filter(testCase => this.isCaseInSuite(testCase, this.selectedSuite))
+      .filter(testCase => !query || (this.getCaseCode(testCase) + ' ' + this.getCaseTitle(testCase) + ' ' + (testCase.description || '')).toLowerCase().includes(query));
   }
 
-
-  /* ============================================================
-     PLAN ACTIONS
-  ============================================================ */
-
-  togglePlan(
-    event: Event,
-    plan: TestPlan
-  ): void {
-
-    event.stopPropagation();
-
-    plan.expanded =
-      !plan.expanded;
-
-    this.selectedPlan =
-      plan;
-
-    this.selectedSuite =
-      null;
-
-    this.selectedTestCase =
-      null;
+  get availableCases(): TestCase[] {
+    const query = this.librarySearch.trim().toLowerCase();
+    return this.testCases.filter(testCase => !query ||
+      (this.getCaseCode(testCase) + ' ' + this.getCaseTitle(testCase) + ' ' + (testCase.description || '') + ' ' + (testCase.type || '')).toLowerCase().includes(query));
   }
 
-
-  selectPlan(
-    event: Event,
-    plan: TestPlan
-  ): void {
-
-    event.stopPropagation();
-
-    this.selectedPlan =
-      plan;
-
-    this.selectedSuite =
-      null;
-
-    this.selectedTestCase =
-      null;
-
-    plan.expanded =
-      true;
+  get unaddedAvailableCases(): TestCase[] {
+    return this.availableCases.filter(testCase => !this.selectedSuite || !this.isCaseInSuite(testCase, this.selectedSuite));
   }
 
-
-  /* ============================================================
-     SUITE ACTIONS
-  ============================================================ */
-
-  toggleSuite(
-    event: Event,
-    plan: TestPlan,
-    suite: TestSuite
-  ): void {
-
-    event.stopPropagation();
-
-    this.selectedPlan =
-      plan;
-
-    this.selectedSuite =
-      suite;
-
-    this.selectedTestCase =
-      null;
-
-    suite.expanded =
-      !suite.expanded;
+  get selectedProjectName(): string {
+    const project = this.projects.find(item => Number(this.getProjectOptionId(item)) === this.selectedProjectId);
+    return project?.name || project?.project_name || project?.projectName || project?.title || 'Project';
   }
 
-
-  selectSuite(
-    event: Event,
-    plan: TestPlan,
-    suite: TestSuite
-  ): void {
-
-    event.stopPropagation();
-
-    this.selectedPlan =
-      plan;
-
-    this.selectedSuite =
-      suite;
-
-    this.selectedTestCase =
-      null;
-
-    plan.expanded =
-      true;
-
-    suite.expanded =
-      true;
+  get selectedCaseCount(): number {
+    return this.selectedSuite ? this.testCases.filter(testCase => this.isCaseInSuite(testCase, this.selectedSuite)).length : 0;
   }
 
-
-  /* ============================================================
-     TEST CASE
-  ============================================================ */
-
-  selectTestCase(
-    event: Event,
-    testcase: TestCase
-  ): void {
-
-    event.stopPropagation();
-
-    this.selectedTestCase =
-      testcase;
+  openPlan(plan: TestPlan): void {
+    this.selectedPlan = plan;
+    this.selectedSuite = null;
+    this.planSearch = '';
+    this.caseSearch = '';
+    this.cdr.markForCheck();
   }
 
+  openSuite(suite: any): void {
+    this.selectedSuite = suite;
+    this.caseSearch = '';
+    this.cdr.markForCheck();
+  }
 
-  /* ============================================================
-     CREATE TEST PLAN
-  ============================================================ */
+  backToPlans(): void {
+    this.selectedPlan = null;
+    this.selectedSuite = null;
+    this.caseSearch = '';
+    this.cdr.markForCheck();
+  }
+
+  backToSuites(): void {
+    this.selectedSuite = null;
+    this.caseSearch = '';
+    this.cdr.markForCheck();
+  }
 
   openCreatePlan(): void {
-
-    this.planForm =
-      this.createEmptyPlan();
-
-    this.planForm.projectId =
-      this.selectedProjectId || undefined;
-
-    this.planForm.project =
-      this.getSelectedProject();
-
-    this.showCreatePlanModal =
-      true;
+    this.planForm = { name: '', description: '' };
+    this.showCreatePlanModal = true;
   }
-
 
   closeCreatePlan(): void {
-
-    this.showCreatePlanModal =
-      false;
+    if (!this.isCreatingPlan) this.showCreatePlanModal = false;
   }
-
 
   createPlan(): void {
-
-    if (
-      !this.planForm.name?.trim() ||
-      !this.selectedProjectId
-    ) {
-      return;
-    }
-
-    const headers =
-      this.auth.getAuthHeaders();
-
-    const payload: any = {
-
-      name:
-        this.planForm.name.trim(),
-
-      description:
-        this.planForm.description || '',
-
-      project: {
-        id:
-          Number(
-            this.selectedProjectId
-          )
+    const name = this.planForm.name.trim();
+    if (!name || !this.selectedProjectId || this.isCreatingPlan) return;
+    this.isCreatingPlan = true;
+    const payload = { name, description: this.planForm.description.trim(), project: { id: this.selectedProjectId } };
+    this.http.post<any>(String(this.testApiUrl).replace(/\/$/, '') + '/v1/test-plans', payload, {
+      headers: this.auth.getAuthHeaders()
+    }).pipe(finalize(() => {
+      this.isCreatingPlan = false;
+      this.cdr.markForCheck();
+    })).subscribe({
+      next: () => {
+        this.showCreatePlanModal = false;
+        this.showToast('Test plan created');
+        this.loadProjectWorkspace(this.selectedProjectId as number);
+      },
+      error: error => {
+        console.error('Unable to create test plan', error);
+        this.showToast('Could not create test plan. Please try again.');
       }
-    };
-
-    this.http
-      .post<any>(
-        `${this.baseUrl2}/v1/test-plans`,
-        payload,
-        { headers }
-      )
-      .subscribe({
-
-        next: created => {
-
-          this.showCreatePlanModal =
-            false;
-
-          this.showToast(
-            'Test plan created successfully'
-          );
-
-          this.loadTestPlans();
-        },
-
-        error: err => {
-
-          console.error(
-            'Error creating test plan:',
-            err
-          );
-        }
-      });
+    });
   }
-
-
-  /* ============================================================
-     EDIT TEST PLAN
-  ============================================================ */
-
-  openEditPlan(
-    event: Event,
-    plan: TestPlan
-  ): void {
-
-    event.stopPropagation();
-
-    this.planForm = {
-      ...plan
-    };
-
-    this.planForm.projectId =
-      this.getProjectId(plan);
-
-    this.showEditPlanModal =
-      true;
-  }
-
-
-  closeEditPlan(): void {
-
-    this.showEditPlanModal =
-      false;
-  }
-
-
-  updatePlan(): void {
-
-    if (
-      !this.planForm.id ||
-      !this.planForm.name?.trim()
-    ) {
-      return;
-    }
-
-    const headers =
-      this.auth.getAuthHeaders();
-
-    const projectId =
-      this.getProjectId(
-        this.planForm
-      );
-
-    const payload: any = {
-
-      name:
-        this.planForm.name.trim(),
-
-      description:
-        this.planForm.description || '',
-
-      project: {
-        id:
-          Number(
-            projectId
-          )
-      }
-    };
-
-    this.http
-      .put<any>(
-        `${this.baseUrl2}/v1/test-plans/${this.planForm.id}`,
-        payload,
-        { headers }
-      )
-      .subscribe({
-
-        next: () => {
-
-          this.showEditPlanModal =
-            false;
-
-          this.showToast(
-            'Test plan updated successfully'
-          );
-
-          this.loadTestPlans();
-        },
-
-        error: err => {
-
-          console.error(
-            'Error updating test plan:',
-            err
-          );
-        }
-      });
-  }
-
-
-  /* ============================================================
-     DELETE TEST PLAN
-  ============================================================ */
-
-  deletePlan(
-    event: Event,
-    plan: TestPlan
-  ): void {
-
-    event.stopPropagation();
-
-    if (!plan.id) {
-      return;
-    }
-
-    if (
-      !confirm(
-        `Delete test plan "${plan.name}"?`
-      )
-    ) {
-      return;
-    }
-
-    const headers =
-      this.auth.getAuthHeaders();
-
-    this.http
-      .delete(
-        `${this.baseUrl2}/v1/test-plans/${plan.id}`,
-        { headers }
-      )
-      .subscribe({
-
-        next: () => {
-
-          this.showToast(
-            'Test plan deleted successfully'
-          );
-
-          this.loadTestPlans();
-
-          this.selectedPlan = null;
-          this.selectedSuite = null;
-          this.selectedTestCase = null;
-        }
-      });
-  }
-
-
-  /* ============================================================
-     CREATE TEST SUITE
-  ============================================================ */
 
   openCreateSuite(): void {
-
-    this.suiteForm =
-      this.createEmptySuite();
-
-    if (this.selectedPlan) {
-
-      this.suiteForm.testPlan =
-        this.selectedPlan;
-
-      this.suiteForm.testPlanId =
-        this.selectedPlan.id;
-
-      this.suiteForm.project =
-        this.selectedPlan.project;
-
-      this.suiteForm.projectId =
-        this.getProjectId(
-          this.selectedPlan
-        );
-    }
-
-    if (!this.suiteForm.projectId) {
-
-      this.suiteForm.projectId =
-        this.selectedProjectId || undefined;
-    }
-
-    this.showCreateSuiteModal =
-      true;
+    if (!this.selectedPlan?.id) return;
+    this.suiteForm = { name: '', description: '' };
+    this.showCreateSuiteModal = true;
   }
-
-  toNumber(value: any): number {
-  const numberValue = Number(value);
-
-  return Number.isFinite(numberValue)
-    ? numberValue
-    : 0;
-}
-
 
   closeCreateSuite(): void {
-
-    this.showCreateSuiteModal =
-      false;
+    if (!this.isCreatingSuite) this.showCreateSuiteModal = false;
   }
-
 
   createSuite(): void {
-
-    if (
-      !this.suiteForm.name?.trim() ||
-      !this.suiteForm.testPlanId ||
-      !this.selectedProjectId
-    ) {
-      return;
-    }
-
-    const headers =
-      this.auth.getAuthHeaders();
-
-    const payload: any = {
-
-      name:
-        this.suiteForm.name.trim(),
-
-      description:
-        this.suiteForm.description || '',
-
-      project: {
-        id:
-          Number(
-            this.selectedProjectId
-          )
+    const name = this.suiteForm.name.trim();
+    if (!name || !this.selectedProjectId || !this.selectedPlan?.id || this.isCreatingSuite) return;
+    this.isCreatingSuite = true;
+    const payload = {
+      name,
+      description: this.suiteForm.description.trim(),
+      project: { id: this.selectedProjectId },
+      testPlan: { id: Number(this.selectedPlan.id) }
+    };
+    this.http.post<any>(String(this.testApiUrl).replace(/\/$/, '') + '/v1/test-suites', payload, {
+      headers: this.auth.getAuthHeaders()
+    }).pipe(finalize(() => {
+      this.isCreatingSuite = false;
+      this.cdr.markForCheck();
+    })).subscribe({
+      next: () => {
+        this.showCreateSuiteModal = false;
+        this.showToast('Test suite created');
+        this.loadProjectWorkspace(this.selectedProjectId as number);
       },
-
-      testPlan: {
-        id:
-          Number(
-            this.suiteForm.testPlanId
-          )
+      error: error => {
+        console.error('Unable to create test suite', error);
+        this.showToast('Could not create test suite. Please try again.');
       }
-    };
-
-    this.http
-      .post<any>(
-        `${this.baseUrl2}/v1/test-suites`,
-        payload,
-        { headers }
-      )
-      .subscribe({
-
-        next: () => {
-
-          this.showCreateSuiteModal =
-            false;
-
-          this.showToast(
-            'Test suite created successfully'
-          );
-
-          this.loadTestSuites();
-        },
-
-        error: err => {
-
-          console.error(
-            'Error creating test suite:',
-            err
-          );
-        }
-      });
+    });
   }
-
-
-  /* ============================================================
-     EDIT TEST SUITE
-  ============================================================ */
-
-  openEditSuite(
-    event: Event,
-    suite: TestSuite
-  ): void {
-
-    event.stopPropagation();
-
-    this.suiteForm = {
-      ...suite
-    };
-
-    this.suiteForm.projectId =
-      this.getProjectId(suite);
-
-    this.suiteForm.testPlanId =
-      this.getEntityId(
-        suite.testPlan,
-        suite.testPlanId
-      );
-
-    this.showEditSuiteModal =
-      true;
-  }
-
-
-  closeEditSuite(): void {
-
-    this.showEditSuiteModal =
-      false;
-  }
-
-
-  updateSuite(): void {
-
-    if (
-      !this.suiteForm.id ||
-      !this.suiteForm.name?.trim()
-    ) {
-      return;
-    }
-
-    const headers =
-      this.auth.getAuthHeaders();
-
-    const projectId =
-      this.getProjectId(
-        this.suiteForm
-      );
-
-    const planId =
-      this.getEntityId(
-        this.suiteForm.testPlan,
-        this.suiteForm.testPlanId
-      );
-
-    const payload: any = {
-
-      name:
-        this.suiteForm.name.trim(),
-
-      description:
-        this.suiteForm.description || '',
-
-      project: {
-        id:
-          Number(projectId)
-      },
-
-      testPlan: {
-        id:
-          Number(planId)
-      }
-    };
-
-    this.http
-      .put<any>(
-        `${this.baseUrl2}/v1/test-suites/${this.suiteForm.id}`,
-        payload,
-        { headers }
-      )
-      .subscribe({
-
-        next: () => {
-
-          this.showEditSuiteModal =
-            false;
-
-          this.showToast(
-            'Test suite updated successfully'
-          );
-
-          this.loadTestSuites();
-        },
-
-        error: err => {
-
-          console.error(
-            'Error updating test suite:',
-            err
-          );
-        }
-      });
-  }
-
-
-  /* ============================================================
-     DELETE TEST SUITE
-  ============================================================ */
-
-  deleteSuite(
-    event: Event,
-    suite: TestSuite
-  ): void {
-
-    event.stopPropagation();
-
-    if (!suite.id) {
-      return;
-    }
-
-    if (
-      !confirm(
-        `Delete test suite "${suite.name}"?`
-      )
-    ) {
-      return;
-    }
-
-    const headers =
-      this.auth.getAuthHeaders();
-
-    this.http
-      .delete(
-        `${this.baseUrl2}/v1/test-suites/${suite.id}`,
-        { headers }
-      )
-      .subscribe({
-
-        next: () => {
-
-          this.showToast(
-            'Test suite deleted successfully'
-          );
-
-          this.loadTestSuites();
-
-          this.selectedSuite = null;
-          this.selectedTestCase = null;
-        }
-      });
-  }
-
-
-  /* ============================================================
-     CREATE TEST CASE
-  ============================================================ */
 
   openCreateTestCase(): void {
-
-    this.testcaseForm =
-      this.createEmptyTestCase();
-
-    this.testcaseForm.projectId =
-      this.selectedProjectId || undefined;
-
-    this.testcaseForm.project =
-      this.getSelectedProject();
-
-    if (this.selectedPlan) {
-
-      this.testcaseForm.testPlan =
-        this.selectedPlan;
-
-      this.testcaseForm.testPlanId =
-        this.selectedPlan.id;
-    }
-
-    if (this.selectedSuite) {
-
-      this.testcaseForm.testSuite =
-        this.selectedSuite;
-
-      this.testcaseForm.testSuiteId =
-        this.selectedSuite.id;
-    }
-
-    this.loadEpics();
-    this.loadStories();
-
-    this.showCreateTestCaseModal =
-      true;
+    if (!this.selectedProjectId || !this.selectedPlan?.id || !this.selectedSuite?.id) return;
+    this.caseForm = this.emptyCaseForm();
+    this.showCreateCaseModal = true;
   }
-
 
   closeCreateTestCase(): void {
-
-    this.showCreateTestCaseModal =
-      false;
+    if (!this.isCreatingCase) this.showCreateCaseModal = false;
   }
-
 
   createTestCase(): void {
+    const title = this.caseForm.title.trim();
+    const steps = this.caseForm.steps.trim();
+    const expectedResult = this.caseForm.expectedResult.trim();
+    if (!title || !steps || !expectedResult || !this.selectedProjectId || !this.selectedPlan?.id || !this.selectedSuite?.id || this.isCreatingCase) return;
 
-    if (
-      !this.testcaseForm.title?.trim() ||
-      !this.testcaseForm.steps?.trim() ||
-      !this.testcaseForm.expectedResult?.trim() ||
-      !this.selectedProjectId
-    ) {
-      return;
-    }
+    this.isCreatingCase = true;
+    const projectId = Number(this.selectedProjectId);
+    const planId = Number(this.selectedPlan.id);
+    const suiteId = Number(this.selectedSuite.id);
+    const payload = {
+      testCaseCode: this.caseForm.testCaseCode.trim() || null,
+      title,
+      description: this.caseForm.description.trim(),
+      preconditions: this.caseForm.preconditions.trim(),
+      steps,
+      expectedResult,
+      actualResult: '',
+      status: 'DRAFT',
+      priority: this.caseForm.priority,
+      type: this.caseForm.type,
+      project: { id: projectId },
+      projectId,
+      project_id: projectId,
+      testPlan: { id: planId },
+      testPlanId: planId,
+      test_plan_id: planId,
+      testSuite: { id: suiteId },
+      testSuiteId: suiteId,
+      test_suite_id: suiteId
+    };
 
-    const headers =
-      this.auth.getAuthHeaders();
-
-    const projectId =
-      this.selectedProjectId;
-
-    const planId =
-      this.getEntityId(
-        this.testcaseForm.testPlan,
-        this.testcaseForm.testPlanId
-      );
-
-    const suiteId =
-      this.getEntityId(
-        this.testcaseForm.testSuite,
-        this.testcaseForm.testSuiteId
-      );
-
-    const payload: any = {
-
-      testCaseCode:
-        this.testcaseForm.testCaseCode || null,
-
-      title:
-        this.testcaseForm.title.trim(),
-
-      description:
-        this.testcaseForm.description || '',
-
-      preconditions:
-        this.testcaseForm.preconditions || '',
-
-      steps:
-        this.testcaseForm.steps,
-
-      expectedResult:
-        this.testcaseForm.expectedResult,
-
-      actualResult:
-        this.testcaseForm.actualResult || '',
-
-      status:
-        this.testcaseForm.status || 'DRAFT',
-
-      priority:
-        this.testcaseForm.priority || 'MEDIUM',
-
-      project: {
-        id:
-          Number(projectId)
+    this.http.post<any>(String(this.testApiUrl).replace(/\/$/, '') + '/v1/testcases', payload, {
+      headers: this.auth.getAuthHeaders()
+    }).pipe(finalize(() => {
+      this.isCreatingCase = false;
+      this.cdr.markForCheck();
+    })).subscribe({
+      next: () => {
+        this.showCreateCaseModal = false;
+        this.showToast('Test case created in ' + this.selectedSuite?.name);
+        this.loadProjectWorkspace(projectId);
       },
+      error: error => {
+        console.error('Unable to create test case', error);
+        this.showToast(error?.error?.message || 'Could not create test case. Please try again.');
+      }
+    });
+  }
 
-      testPlan:
-        planId
-          ? { id: Number(planId) }
-          : null,
+  openAddCases(): void {
+    if (!this.selectedPlan?.id || !this.selectedSuite?.id || !this.selectedProjectId) return;
+    this.librarySearch = '';
+    this.selectedCaseIds = new Set<number>();
+    this.showAddCasesModal = true;
+  }
 
-      testSuite:
-        suiteId
-          ? { id: Number(suiteId) }
-          : null,
+  closeAddCases(): void {
+    if (this.isAddingCases) return;
+    this.showAddCasesModal = false;
+    this.selectedCaseIds.clear();
+    this.librarySearch = '';
+  }
 
-      epic:
-        this.testcaseForm.epicId
-          ? {
-              id:
-                Number(
-                  this.testcaseForm.epicId
-                )
-            }
-          : null,
+  isCaseInPlan(testCase: TestCase, plan: TestPlan): boolean {
+    const planId = Number(plan.id);
+    const directPlanId = this.entityId(testCase.testPlan, testCase.testPlanId ?? testCase.test_plan_id);
+    if (directPlanId !== null) return directPlanId === planId;
+    const suiteId = this.entityId(testCase.testSuite, testCase.testSuiteId ?? testCase.test_suite_id);
+    if (suiteId === null) return false;
+    const suite = this.testSuites.find(row => Number(row.id) === suiteId);
+    return Boolean(suite && this.entityId(suite.testPlan, suite.testPlanId ?? suite.test_plan_id) === planId);
+  }
 
-      story:
-        this.testcaseForm.storyId
-          ? {
-              id:
-                Number(
-                  this.testcaseForm.storyId
-                )
-            }
-          : null,
+  isCaseInSuite(testCase: TestCase, suite: any): boolean {
+    return this.entityId(testCase.testSuite, testCase.testSuiteId ?? testCase.test_suite_id) === Number(suite?.id);
+  }
 
-      task:
-        this.testcaseForm.taskId
-          ? {
-              id:
-                Number(
-                  this.testcaseForm.taskId
-                )
-            }
-          : null,
+  isCaseSelected(testCase: TestCase): boolean {
+    const id = this.getCaseId(testCase);
+    return id !== null && this.selectedCaseIds.has(id);
+  }
 
-      user:
-        this.testcaseForm.userId
-          ? {
-              id:
-                Number(
-                  this.testcaseForm.userId
-                )
-            }
-          : null
+  toggleCase(testCase: TestCase): void {
+    const id = this.getCaseId(testCase);
+    if (id === null || (this.selectedSuite && this.isCaseInSuite(testCase, this.selectedSuite))) return;
+    const next = new Set(this.selectedCaseIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    this.selectedCaseIds = next;
+  }
+
+  toggleAllCases(): void {
+    const candidates = this.unaddedAvailableCases.filter(testCase => this.getCaseId(testCase) !== null);
+    const allSelected = candidates.length > 0 && candidates.every(testCase => this.isCaseSelected(testCase));
+    this.selectedCaseIds = allSelected ? new Set<number>() : new Set(candidates.map(testCase => this.getCaseId(testCase) as number));
+  }
+
+  areAllVisibleCasesSelected(): boolean {
+    const candidates = this.unaddedAvailableCases.filter(testCase => this.getCaseId(testCase) !== null);
+    return candidates.length > 0 && candidates.every(testCase => this.isCaseSelected(testCase));
+  }
+
+  setCaseSelection(testCase: TestCase, selected: boolean): void {
+    const id = this.getCaseId(testCase);
+    if (id === null || (this.selectedSuite && this.isCaseInSuite(testCase, this.selectedSuite))) return;
+    const next = new Set(this.selectedCaseIds);
+    if (selected) next.add(id);
+    else next.delete(id);
+    this.selectedCaseIds = next;
+  }
+
+  addSelectedCases(): void {
+    if (!this.selectedPlan?.id || !this.selectedSuite?.id || !this.selectedCaseIds.size || this.isAddingCases) return;
+    const planId = Number(this.selectedPlan.id);
+    const suiteId = Number(this.selectedSuite.id);
+    const selected = this.testCases.filter(testCase => {
+      const id = this.getCaseId(testCase);
+      return id !== null && this.selectedCaseIds.has(id) && !this.isCaseInSuite(testCase, this.selectedSuite);
+    });
+    if (!selected.length) return;
+
+    this.isAddingCases = true;
+    const api = String(this.testApiUrl).replace(/\/$/, '');
+    const requests = selected.map(testCase => this.http.put<any>(api + '/v1/testcases/' + this.getCaseId(testCase), this.caseSuitePayload(testCase, planId, suiteId), {
+      headers: this.auth.getAuthHeaders()
+    }).pipe(map(() => true), catchError(error => {
+      console.error('Unable to add test case ' + this.getCaseId(testCase) + ' to suite', error);
+      return of(false);
+    })));
+
+    forkJoin(requests).pipe(finalize(() => {
+      this.isAddingCases = false;
+      this.cdr.markForCheck();
+    })).subscribe(results => {
+      const added = results.filter(Boolean).length;
+      const failed = results.length - added;
+      const failedIds = selected.filter((_testCase, index) => !results[index]).map(testCase => this.getCaseId(testCase) as number);
+      this.selectedCaseIds = new Set(failedIds);
+      if (!failed) {
+        this.showAddCasesModal = false;
+        this.librarySearch = '';
+      }
+      this.showToast(failed ? added + ' added, ' + failed + ' remain selected. Retry or inspect the failed requests.' : added + ' test case' + (added === 1 ? '' : 's') + ' added to the suite');
+      this.loadProjectWorkspace(this.selectedProjectId as number);
+    });
+  }
+
+  private caseSuitePayload(testCase: TestCase, planId: number, suiteId: number): any {
+    const relation = (objectValue: any, directValue: any): any => {
+      const id = this.entityId(objectValue, directValue);
+      return id === null ? null : { id };
     };
-
-    this.http
-      .post<any>(
-        `${this.baseUrl2}/v1/testcases`,
-        payload,
-        { headers }
-      )
-      .subscribe({
-
-        next: () => {
-
-          this.showCreateTestCaseModal =
-            false;
-
-          this.showToast(
-            'Test case created successfully'
-          );
-
-          this.loadTestcases();
-        },
-
-        error: err => {
-
-          console.error(
-            'Error creating test case:',
-            err
-          );
-        }
-      });
-  }
-
-
-  /* ============================================================
-     EDIT TEST CASE
-  ============================================================ */
-
-  openEditTestCase(
-    testcase: TestCase
-  ): void {
-
-    this.testcaseForm = {
-      ...testcase,
-
-      projectId:
-        this.getEntityId(
-          testcase.project,
-          testcase.projectId ||
-          testcase.project_id
-        ),
-
-      testPlanId:
-        this.getEntityId(
-          testcase.testPlan,
-          testcase.testPlanId ||
-          testcase.test_plan_id
-        ),
-
-      testSuiteId:
-        this.getEntityId(
-          testcase.testSuite,
-          testcase.testSuiteId ||
-          testcase.test_suite_id
-        ),
-
-      epicId:
-        this.getEntityId(
-          testcase.epic,
-          testcase.epicId ||
-          testcase.epic_id
-        ),
-
-      storyId:
-        this.getEntityId(
-          testcase.story,
-          testcase.storyId ||
-          testcase.story_id
-        ),
-
-      taskId:
-        this.getEntityId(
-          testcase.task,
-          testcase.taskId ||
-          testcase.task_id
-        ),
-
-      userId:
-        this.getEntityId(
-          testcase.user,
-          testcase.userId ||
-          testcase.user_id
-        )
+    const code = testCase.testCaseCode || testCase.code || testCase.test_case_code || null;
+    return {
+      ...testCase,
+      testCaseCode: code,
+      test_case_code: code,
+      title: this.getCaseTitle(testCase),
+      description: testCase.description || '',
+      preconditions: testCase.preconditions || '',
+      steps: testCase.steps || '',
+      expectedResult: testCase.expectedResult || '',
+      actualResult: testCase.actualResult || '',
+      status: testCase.status || 'DRAFT',
+      priority: testCase.priority || 'MEDIUM',
+      type: testCase.type || null,
+      assignee: testCase.assignee || null,
+      reporter: testCase.reporter || null,
+      project: relation(testCase.project, testCase.projectId ?? testCase.project_id) || (this.selectedProjectId ? { id: this.selectedProjectId } : null),
+      projectId: this.selectedProjectId,
+      project_id: this.selectedProjectId,
+      testPlan: { id: planId },
+      testPlanId: planId,
+      test_plan_id: planId,
+      testSuite: { id: suiteId },
+      testSuiteId: suiteId,
+      test_suite_id: suiteId,
+      epic: relation(testCase.epic, testCase.epicId ?? testCase.epic_id),
+      story: relation(testCase.story, testCase.storyId ?? testCase.story_id),
+      task: relation(testCase.task, testCase.taskId ?? testCase.task_id),
+      user: relation(testCase.user, testCase.userId ?? testCase.user_id)
     };
-
-    this.selectedProjectId =
-      Number(
-        this.testcaseForm.projectId
-      ) || null;
-
-    this.loadEpics();
-    this.loadStories();
-
-    this.showEditTestCaseModal =
-      true;
   }
 
-
-  closeEditTestCase(): void {
-
-    this.showEditTestCaseModal =
-      false;
+  getCaseCode(testCase: TestCase): string {
+    return testCase.testCaseCode || testCase.test_case_code || testCase.code || ('TC-' + (this.getCaseId(testCase) ?? '—'));
   }
 
+  getCaseId(testCase: TestCase): number | null {
+    const id = Number((testCase as any).id ?? (testCase as any).testcase_id ?? (testCase as any).testCaseId ?? (testCase as any).test_case_id ?? (testCase as any).testcaseId ?? (testCase as any).caseId);
+    return Number.isFinite(id) && id > 0 ? id : null;
+  }
 
-  updateTestCase(): void {
+  getCaseTitle(testCase: TestCase): string {
+    return testCase.title || testCase.name || 'Untitled test case';
+  }
 
-    if (
-      !this.testcaseForm.id ||
-      !this.testcaseForm.title?.trim()
-    ) {
-      return;
-    }
+  getCaseType(testCase: TestCase): string {
+    return testCase.type || 'Manual';
+  }
 
-    const headers =
-      this.auth.getAuthHeaders();
+  getStatusClass(status: string | undefined): string {
+    const value = (status || 'DRAFT').toLowerCase().replace(/[^a-z]+/g, '-');
+    return 'status-' + value;
+  }
 
-    const projectId =
-      this.getEntityId(
-        this.testcaseForm.project,
-        this.testcaseForm.projectId
-      );
+  getPriorityClass(priority: string | undefined): string {
+    const value = (priority || 'medium').toLowerCase().replace(/[^a-z]+/g, '-');
+    return 'priority-' + value;
+  }
 
-    const planId =
-      this.getEntityId(
-        this.testcaseForm.testPlan,
-        this.testcaseForm.testPlanId
-      );
+  getCasePlanName(testCase: TestCase): string {
+    const id = this.entityId(testCase.testPlan, testCase.testPlanId ?? testCase.test_plan_id);
+    const suiteId = this.entityId(testCase.testSuite, testCase.testSuiteId ?? testCase.test_suite_id);
+    const suite = this.testSuites.find(row => Number(row.id) === suiteId);
+    const suitePlanId = suite ? this.entityId(suite.testPlan, suite.testPlanId ?? suite.test_plan_id) : null;
+    const plan = this.testPlans.find(row => Number(row.id) === (id ?? suitePlanId));
+    return plan?.name || 'Unassigned';
+  }
 
-    const suiteId =
-      this.getEntityId(
-        this.testcaseForm.testSuite,
-        this.testcaseForm.testSuiteId
-      );
+  getCaseSuiteName(testCase: TestCase): string {
+    const suiteId = this.entityId(testCase.testSuite, testCase.testSuiteId ?? testCase.test_suite_id);
+    const suite = this.testSuites.find(row => Number(row.id) === suiteId);
+    return suite?.name || 'Unassigned';
+  }
 
-    const payload: any = {
+  getPlanCaseCount(plan: TestPlan): number {
+    return this.testCases.filter(testCase => this.isCaseInPlan(testCase, plan)).length;
+  }
 
-      testCaseCode:
-        this.testcaseForm.testCaseCode,
+  getSuiteCaseCount(suite: any): number {
+    return this.testCases.filter(testCase => this.isCaseInSuite(testCase, suite)).length;
+  }
 
-      title:
-        this.testcaseForm.title.trim(),
+  get visibleSuites(): any[] {
+    if (!this.selectedPlan?.id) return [];
+    const query = this.planSearch.trim().toLowerCase();
+    return this.testSuites.filter(suite => {
+      const planId = this.entityId(suite.testPlan, suite.testPlanId ?? suite.test_plan_id);
+      return planId === Number(this.selectedPlan?.id) && (!query || (suite.name + ' ' + (suite.description || '')).toLowerCase().includes(query));
+    });
+  }
 
-      description:
-        this.testcaseForm.description || '',
+  visibleSuitesForPlan(plan: TestPlan): any[] {
+    return this.testSuites.filter(suite =>
+      this.entityId(suite.testPlan, suite.testPlanId ?? suite.test_plan_id) === Number(plan.id)
+    );
+  }
 
-      preconditions:
-        this.testcaseForm.preconditions || '',
+  trackById(_index: number, item: any): number | string {
+    return item?.id ?? _index;
+  }
 
-      steps:
-        this.testcaseForm.steps || '',
+  getProjectOptionId(project: any): number | null {
+    const value = project?.id ?? project?.projectId ?? project?.project_id;
+    const id = Number(value);
+    return Number.isFinite(id) && id > 0 ? id : null;
+  }
 
-      expectedResult:
-        this.testcaseForm.expectedResult || '',
+  private getProjectId(item: any): number | null {
+    if (!item) return null;
+    const direct = item.project_id ?? item.projectId ?? item.project?.id ?? item.project?.projectId ?? (typeof item.project === 'number' ? item.project : null);
+    const id = Number(direct);
+    return Number.isFinite(id) && id > 0 ? id : null;
+  }
 
-      actualResult:
-        this.testcaseForm.actualResult || '',
+  private normalizePlan(row: any): TestPlan {
+    const id = Number(row?.id ?? row?.testPlanId ?? row?.test_plan_id);
+    return { ...row, id: Number.isFinite(id) && id > 0 ? id : undefined, name: String(row?.name ?? row?.title ?? 'Untitled plan') };
+  }
 
-      status:
-        this.testcaseForm.status || 'DRAFT',
-
-      priority:
-        this.testcaseForm.priority || 'MEDIUM',
-
-      project:
-        projectId
-          ? { id: Number(projectId) }
-          : null,
-
-      testPlan:
-        planId
-          ? { id: Number(planId) }
-          : null,
-
-      testSuite:
-        suiteId
-          ? { id: Number(suiteId) }
-          : null,
-
-      epic:
-        this.testcaseForm.epicId
-          ? {
-              id:
-                Number(
-                  this.testcaseForm.epicId
-                )
-            }
-          : null,
-
-      story:
-        this.testcaseForm.storyId
-          ? {
-              id:
-                Number(
-                  this.testcaseForm.storyId
-                )
-            }
-          : null,
-
-      task:
-        this.testcaseForm.taskId
-          ? {
-              id:
-                Number(
-                  this.testcaseForm.taskId
-                )
-            }
-          : null,
-
-      user:
-        this.testcaseForm.userId
-          ? {
-              id:
-                Number(
-                  this.testcaseForm.userId
-                )
-            }
-          : null
+  private normalizeSuite(row: any): any {
+    const id = Number(row?.id ?? row?.testSuiteId ?? row?.test_suite_id);
+    return {
+      ...row,
+      id: Number.isFinite(id) && id > 0 ? id : undefined,
+      name: String(row?.name ?? row?.title ?? 'Untitled suite'),
+      testPlanId: row?.testPlanId ?? row?.test_plan_id ?? row?.testPlan?.id ?? row?.test_plan?.id
     };
-
-    this.http
-      .put<any>(
-        `${this.baseUrl2}/v1/testcases/${this.testcaseForm.id}`,
-        payload,
-        { headers }
-      )
-      .subscribe({
-
-        next: () => {
-
-          this.showEditTestCaseModal =
-            false;
-
-          this.showToast(
-            'Test case updated successfully'
-          );
-
-          this.loadTestcases();
-        },
-
-        error: err => {
-
-          console.error(
-            'Error updating test case:',
-            err
-          );
-        }
-      });
   }
 
-
-  /* ============================================================
-     DELETE TEST CASE
-  ============================================================ */
-
-  deleteTestcase(
-    testcase: TestCase
-  ): void {
-
-    if (!testcase.id) {
-      return;
-    }
-
-    if (
-      !confirm(
-        `Delete "${this.getTestCaseTitle(testcase)}"?`
-      )
-    ) {
-      return;
-    }
-
-    const headers =
-      this.auth.getAuthHeaders();
-
-    this.http
-      .delete(
-        `${this.baseUrl2}/v1/testcases/${testcase.id}`,
-        { headers }
-      )
-      .subscribe({
-
-        next: () => {
-
-          if (
-            this.selectedTestCase?.id ===
-            testcase.id
-          ) {
-
-            this.selectedTestCase =
-              null;
-          }
-
-          this.showToast(
-            'Test case deleted successfully'
-          );
-
-          this.loadTestcases();
-        }
-      });
+  private normalizeCase(row: any): TestCase {
+    const id = Number(row?.id ?? row?.testcase_id ?? row?.testCaseId ?? row?.test_case_id ?? row?.testcaseId ?? row?.caseId);
+    return {
+      ...row,
+      id: Number.isFinite(id) && id > 0 ? id : undefined,
+      testCaseCode: row?.testCaseCode ?? row?.test_case_code ?? row?.code,
+      title: row?.title ?? row?.name,
+      projectId: row?.projectId ?? row?.project_id ?? row?.project?.id,
+      testPlanId: row?.testPlanId ?? row?.test_plan_id ?? row?.testPlan?.id ?? row?.test_plan?.id,
+      testSuiteId: row?.testSuiteId ?? row?.test_suite_id ?? row?.testSuite?.id ?? row?.test_suite?.id,
+      status: row?.status ?? row?.executionStatus ?? row?.execution_status ?? 'DRAFT'
+    };
   }
 
-
-  /* ============================================================
-     SEARCH
-  ============================================================ */
-
-  get filteredTestCases(): TestCase[] {
-
-    let result =
-      [...this.testCases];
-
-    const search =
-      this.searchText
-        .trim()
-        .toLowerCase();
-
-    if (search) {
-
-      result =
-        result.filter(testcase =>
-          [
-            this.getTestCaseCode(testcase),
-            this.getTestCaseTitle(testcase),
-            testcase.description,
-            testcase.status,
-            testcase.priority,
-            testcase.type,
-            this.getProjectDisplay(testcase),
-            this.getPlanDisplay(testcase),
-            this.getSuiteDisplay(testcase)
-          ]
-            .join(' ')
-            .toLowerCase()
-            .includes(search)
-        );
-    }
-
-    if (this.selectedStatus) {
-
-      result =
-        result.filter(
-          testcase =>
-            String(
-              testcase.status || ''
-            ).toUpperCase() ===
-            String(
-              this.selectedStatus
-            ).toUpperCase()
-        );
-    }
-
-    if (this.selectedPriority) {
-
-      result =
-        result.filter(
-          testcase =>
-            String(
-              testcase.priority || ''
-            ).toUpperCase() ===
-            String(
-              this.selectedPriority
-            ).toUpperCase()
-        );
-    }
-
-    if (this.selectedType) {
-
-      result =
-        result.filter(
-          testcase =>
-            testcase.type ===
-            this.selectedType
-        );
-    }
-
-    if (this.selectedAssignee) {
-
-      result =
-        result.filter(
-          testcase =>
-            testcase.assignee ===
-            this.selectedAssignee
-        );
-    }
-
-    return result;
+  private entityId(value: any, fallback?: any): number | null {
+    const candidate = value && typeof value === 'object'
+      ? value.id ?? value.projectId ?? value.testPlanId ?? value.testSuiteId ?? value.test_plan_id ?? value.test_suite_id ?? fallback
+      : value ?? fallback;
+    const id = Number(candidate);
+    return Number.isFinite(id) && id > 0 ? id : null;
   }
 
-
-  onSearchChange(): void {
-
-    const visible =
-      this.filteredTestCases;
-
-    if (
-      this.selectedTestCase &&
-      !visible.some(
-        tc =>
-          tc.id ===
-          this.selectedTestCase?.id
-      )
-    ) {
-
-      this.selectedTestCase =
-        visible[0] || null;
+  private extractArray(response: any): any[] {
+    if (Array.isArray(response)) return response;
+    if (!response || typeof response !== 'object') return [];
+    for (const key of ['content', 'data', 'items', 'results', 'records', 'plans', 'suites', 'testPlans', 'testCases', 'testSuites', 'test_plans', 'test_cases', 'test_suites']) {
+      if (Array.isArray(response[key]) && response[key].length) return response[key];
+      if (response[key] && typeof response[key] === 'object') {
+        const nested = this.extractArray(response[key]);
+        if (nested.length) return nested;
+      }
     }
-  }
-
-
-  clearSearch(): void {
-
-    this.searchText = '';
-
-    this.onSearchChange();
-  }
-
-
-  toggleFilters(): void {
-
-    this.showFilters =
-      !this.showFilters;
-  }
-
-
-  clearFilters(): void {
-
-    this.selectedStatus = '';
-
-    this.selectedPriority = '';
-
-    this.selectedType = '';
-
-    this.selectedAssignee = '';
-
-    this.onSearchChange();
-  }
-
-
-  get activeFilterCount(): number {
-
-    let count = 0;
-
-    if (this.selectedStatus) {
-      count++;
-    }
-
-    if (this.selectedPriority) {
-      count++;
-    }
-
-    if (this.selectedType) {
-      count++;
-    }
-
-    if (this.selectedAssignee) {
-      count++;
-    }
-
-    return count;
-  }
-
-
-  /* ============================================================
-     DISPLAY HELPERS
-  ============================================================ */
-
-  getTestCaseCode(
-    tc: TestCase
-  ): string {
-
-    return (
-      tc.testCaseCode ||
-      tc.code ||
-      tc.test_case_code ||
-      (
-        tc.id
-          ? `TC-${tc.id}`
-          : '-'
-      )
-    );
-  }
-
-
-  getTestCaseTitle(
-    tc: TestCase
-  ): string {
-
-    return (
-      tc.title ||
-      tc.name ||
-      tc.description ||
-      (
-        tc.id
-          ? `Test Case #${tc.id}`
-          : '-'
-      )
-    );
-  }
-
-
-  getPlanDisplay(
-    tc: TestCase
-  ): string {
-
-    if (
-      tc.testPlan &&
-      typeof tc.testPlan === 'object'
-    ) {
-
-      return (
-        tc.testPlan.name ||
-        tc.testPlan.title ||
-        '-'
-      );
-    }
-
-    const id =
-      this.getEntityId(
-        tc.testPlan,
-        tc.testPlanId ||
-        tc.test_plan_id
-      );
-
-    const found =
-      this.testPlans.find(
-        plan =>
-          String(plan.id) ===
-          String(id)
-      );
-
-    return (
-      found?.name ||
-      (id ? `Plan #${id}` : '-')
-    );
-  }
-
-
-  getSuiteDisplay(
-    tc: TestCase
-  ): string {
-
-    if (
-      tc.testSuite &&
-      typeof tc.testSuite === 'object'
-    ) {
-
-      return (
-        tc.testSuite.name ||
-        tc.testSuite.title ||
-        '-'
-      );
-    }
-
-    const id =
-      this.getEntityId(
-        tc.testSuite,
-        tc.testSuiteId ||
-        tc.test_suite_id
-      );
-
-    const found =
-      this.testSuites.find(
-        suite =>
-          String(suite.id) ===
-          String(id)
-      );
-
-    return (
-      found?.name ||
-      (id ? `Suite #${id}` : '-')
-    );
-  }
-
-
-  getEpicDisplay(
-    tc: TestCase
-  ): string {
-
-    const direct = tc.epic;
-    if (direct && typeof direct === 'object') {
-      return direct.name || direct.title || (direct.epic_code ? `${direct.epic_code} — ${direct.name || ''}`.trim() : '') || '-';
-    }
-
-    const id = this.getEntityId(direct, tc.epicId || tc.epic_id);
-    const found = this.epics.find(item => String(item.id) === String(id));
-    return found?.epic_code && found?.name
-      ? `${found.epic_code} — ${found.name}`
-      : (found?.name || (id ? `Epic #${id}` : '—'));
-  }
-
-
-  getStoryDisplay(
-    tc: TestCase
-  ): string {
-
-    const direct = tc.story;
-    if (direct && typeof direct === 'object') {
-      return direct.title || direct.name || '-';
-    }
-
-    const id = this.getEntityId(direct, tc.storyId || tc.story_id);
-    const found = this.stories.find(item => String(item.id) === String(id));
-    return found?.title || found?.name || (id ? `Story #${id}` : '—');
-  }
-
-
-  getTaskDisplay(
-    tc: TestCase
-  ): string {
-
-    const direct = tc.task;
-    if (direct && typeof direct === 'object') {
-      return direct.title || direct.name || '-';
-    }
-
-    const id = this.getEntityId(direct, tc.taskId || tc.task_id);
-    const found = this.tasks.find(item => String(item.id) === String(id));
-    return found?.title || found?.name || (id ? `Task #${id}` : '—');
-  }
-
-
-  getTypeClass(
-    type?: string
-  ): string {
-
-    return String(type || 'Functional')
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-');
-  }
-
-
-  getProjectDisplay(
-    tc: TestCase
-  ): string {
-
-    if (
-      tc.project &&
-      typeof tc.project === 'object'
-    ) {
-
-      return (
-        tc.project.name ||
-        tc.project.title ||
-        '-'
-      );
-    }
-
-    const id =
-      this.getEntityId(
-        tc.project,
-        tc.projectId ||
-        tc.project_id
-      );
-
-    const found =
-      this.projects.find(
-        project =>
-          String(
-            this.getOptionId(project)
-          ) ===
-          String(id)
-      );
-
-    return (
-      found?.name ||
-      found?.title ||
-      (id ? `Project #${id}` : '-')
-    );
-  }
-
-
-  getUserDisplay(
-    tc: TestCase
-  ): string {
-
-    const user =
-      tc.user ||
-      tc.creator;
-
-    if (
-      user &&
-      typeof user === 'object'
-    ) {
-
-      return (
-        user.name ||
-        user.username ||
-        user.email ||
-        '-'
-      );
-    }
-
-    const id =
-      this.getEntityId(
-        user,
-        tc.userId ||
-        tc.user_id
-      );
-
-    const found =
-      this.users.find(
-        item =>
-          String(
-            this.getOptionId(item)
-          ) ===
-          String(id)
-      );
-
-    return (
-      found?.name ||
-      found?.username ||
-      found?.email ||
-      (id ? `User #${id}` : '-')
-    );
-  }
-
-
-  getStatusClass(
-    status?: string
-  ): string {
-
-    return (
-      status ||
-      'DRAFT'
-    )
-      .toLowerCase()
-      .replace(/\s+/g, '-');
-  }
-
-
-  getPriorityClass(
-    priority?: string
-  ): string {
-
-    return (
-      priority ||
-      'MEDIUM'
-    )
-      .toLowerCase();
-  }
-
-
-  getInitials(
-    name?: string
-  ): string {
-
-    if (!name) {
-      return '?';
-    }
-
-    return name
-      .split(' ')
-      .filter(Boolean)
-      .slice(0, 2)
-      .map(
-        item =>
-          item.charAt(0).toUpperCase()
-      )
-      .join('');
-  }
-
-
-  /* ============================================================
-     PROJECT ID HELPER
-  ============================================================ */
-
-  getProjectId(
-    item: any
-  ): number | null {
-
-    if (!item) {
-      return null;
-    }
-
-    if (
-      item.project_id !==
-      undefined &&
-      item.project_id !== null
-    ) {
-
-      return Number(
-        item.project_id
-      );
-    }
-
-    if (
-      item.projectId !==
-      undefined &&
-      item.projectId !== null
-    ) {
-
-      return Number(
-        item.projectId
-      );
-    }
-
-    if (
-      item.project?.id !==
-      undefined &&
-      item.project?.id !== null
-    ) {
-
-      return Number(
-        item.project.id
-      );
-    }
-
-    if (
-      item.project &&
-      typeof item.project === 'number'
-    ) {
-
-      return Number(
-        item.project
-      );
-    }
-
-    return null;
-  }
-
-
-  /* ============================================================
-     GENERAL HELPERS
-  ============================================================ */
-
-  private extractArray(
-    response: any
-  ): any[] {
-
-    if (Array.isArray(response)) {
-      return response;
-    }
-
-    if (
-      response &&
-      typeof response === 'object'
-    ) {
-
-      return (
-        response.content ??
-        response.data ??
-        response.items ??
-        response.result ??
-        []
-      );
-    }
-
     return [];
   }
 
-
-  private getEntityId(
-    objectValue: any,
-    directId?: any
-  ): any {
-
-    if (
-      objectValue !== null &&
-      objectValue !== undefined
-    ) {
-
-      if (
-        typeof objectValue ===
-        'object'
-      ) {
-
-        if (
-          objectValue.id !==
-          undefined
-        ) {
-
-          return objectValue.id;
-        }
-
-        if (
-          objectValue.projectId !==
-          undefined
-        ) {
-
-          return objectValue.projectId;
-        }
-
-        if (
-          objectValue.testPlanId !==
-          undefined
-        ) {
-
-          return objectValue.testPlanId;
-        }
-
-        if (
-          objectValue.testSuiteId !==
-          undefined
-        ) {
-
-          return objectValue.testSuiteId;
-        }
-      }
-
-      if (
-        typeof objectValue ===
-        'number'
-      ) {
-
-        return objectValue;
-      }
-
-      if (
-        typeof objectValue ===
-        'string' &&
-        objectValue.trim() !== ''
-      ) {
-
-        if (
-          !isNaN(
-            Number(objectValue)
-          )
-        ) {
-
-          return Number(
-            objectValue
-          );
-        }
-
-        return objectValue;
-      }
-    }
-
-    if (
-      directId !== undefined &&
-      directId !== null &&
-      directId !== ''
-    ) {
-
-      return directId;
-    }
-
-    return '';
+  private showToast(message: string): void {
+    this.successMessage = message;
+    this.showSuccessToast = true;
+    if (this.toastTimer) clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => {
+      this.showSuccessToast = false;
+      this.cdr.markForCheck();
+    }, 3400);
   }
 
-
-  getOptionId(
-    item: any
-  ): any {
-
-    if (!item) {
-      return '';
-    }
-
-    if (
-      typeof item === 'object'
-    ) {
-
-      return (
-        item.id ??
-        item.projectId ??
-        item.userId ??
-        item.epicId ??
-        item.storyId ??
-        item.taskId ??
-        ''
-      );
-    }
-
-    return item;
-  }
-
-
-  getSelectedProject(): any {
-
-    if (!this.selectedProjectId) {
-      return '';
-    }
-
-    return this.projects.find(
-      project =>
-        String(
-          this.getOptionId(project)
-        ) ===
-        String(
-          this.selectedProjectId
-        )
-    ) || '';
-  }
-
-
-  /* ============================================================
-     EMPTY OBJECTS
-  ============================================================ */
-
-  createEmptyPlan(): TestPlan {
-
+  private emptyCaseForm(): { testCaseCode: string; title: string; description: string; preconditions: string; steps: string; expectedResult: string; priority: string; type: string } {
     return {
-
-      id: undefined,
-
-      name: '',
-
-      description: '',
-
-      project: '',
-
-      projectId: undefined,
-
-      expanded: false,
-
-      suites: []
-    };
-  }
-
-
-  createEmptySuite(): TestSuite {
-
-    return {
-
-      id: undefined,
-
-      name: '',
-
-      description: '',
-
-      project: '',
-
-      projectId: undefined,
-
-      testPlan: '',
-
-      testPlanId: undefined,
-
-      expanded: false,
-
-      testCases: []
-    };
-  }
-
-
-  createEmptyTestCase(): TestCase {
-
-    return {
-
-      id: undefined,
-
-      testCaseCode: '',
-
+      testCaseCode: 'TC-' + Date.now().toString().slice(-6),
       title: '',
-
       description: '',
-
       preconditions: '',
-
       steps: '',
-
       expectedResult: '',
-
-      actualResult: '',
-
-      status: 'DRAFT',
-
       priority: 'MEDIUM',
-
-      project: '',
-
-      projectId: undefined,
-
-      testPlan: '',
-
-      testPlanId: undefined,
-
-      testSuite: '',
-
-      testSuiteId: undefined,
-
-      epicId: undefined,
-
-      storyId: undefined,
-
-      taskId: undefined,
-
-      userId: undefined,
-
-      type: 'Functional',
-
-      assignee: '',
-
-      reporter: ''
+      type: 'Functional'
     };
-  }
-
-
-  /* ============================================================
-     TOAST
-  ============================================================ */
-
-  showToast(
-    message: string
-  ): void {
-
-    this.successMessage =
-      message;
-
-    this.showSuccessToast =
-      true;
-
-    setTimeout(() => {
-
-      this.showSuccessToast =
-        false;
-
-      this.cdr.detectChanges();
-
-    }, 2500);
-  }
-
-
-  /* ============================================================
-     TRACKING
-  ============================================================ */
-
-  trackByPlan(
-    index: number,
-    plan: TestPlan
-  ): number | undefined {
-
-    return plan.id;
-  }
-
-
-  trackBySuite(
-    index: number,
-    suite: TestSuite
-  ): number | undefined {
-
-    return suite.id;
-  }
-
-
-  trackByTestCase(
-    index: number,
-    testcase: TestCase
-  ): number | undefined {
-
-    return testcase.id;
   }
 }
-

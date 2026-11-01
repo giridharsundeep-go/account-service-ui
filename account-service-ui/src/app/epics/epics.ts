@@ -19,6 +19,7 @@ import { catchError } from 'rxjs/operators';
 import { environment } from '../../environment';
 import { AuthService } from '../auth.service';
 import { ProjectContextService } from '../project-context.service';
+import { WorkspaceHeroComponent } from '../shared/workspace-hero';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -310,6 +311,7 @@ export class ResolveUserPipe implements PipeTransform {
     CommonModule,
     FormsModule,
     ResolveUserPipe,
+    WorkspaceHeroComponent,
     MatButtonModule,
     MatCardModule,
     MatChipsModule,

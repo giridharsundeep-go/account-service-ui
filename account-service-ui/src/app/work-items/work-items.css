@@ -82,6 +82,13 @@
 .work-filter-avatar.filter-person { border-radius: 50%; }
 .work-filter-avatar.filter-project { border-radius: 7px; }
 .work-filter-option-label { overflow: hidden; color: #333840; font-size: 13px; font-weight: 520; text-overflow: ellipsis; white-space: nowrap; }
+.work-filter-control[data-filter="assignee"] .work-filter-option,
+.work-filter-control[data-filter="reporter"] .work-filter-option { min-height: 54px; }
+.work-filter-person-copy { min-width: 0; display: flex; flex: 1 1 auto; flex-direction: column; gap: 2px; }
+.work-filter-person-copy strong,
+.work-filter-person-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.work-filter-person-copy strong { color: #303846; font-size: 12px; font-weight: 620; line-height: 16px; }
+.work-filter-person-copy small { color: #748094; font-size: 10px; line-height: 14px; }
 .work-filter-empty { padding: 14px; color: #828a96; font-size: 12px; text-align: center; }
 .work-filter-show-all { display: grid; place-items: center; width: 100%; min-height: 48px; margin-top: 4px; border: 0; border-top: 1px solid #e0e3e7; background: #fff; color: #525862; font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; }
 .work-filter-show-all:hover { background: #f8faff; color: #1769e0; }

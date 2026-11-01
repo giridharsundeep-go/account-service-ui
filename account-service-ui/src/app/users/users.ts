@@ -1,10 +1,11 @@
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BehaviorSubject, Observable, map, of, catchError, tap } from 'rxjs';
 import { environment } from '../../environment';
 import { AuthService } from '../auth.service';
+import { WorkspaceHeroComponent } from '../shared/workspace-hero';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -43,6 +44,7 @@ interface DirectoryUser {
   imports: [
     CommonModule,
     FormsModule,
+    WorkspaceHeroComponent,
     MatButtonModule,
     MatCardModule,
     MatFormFieldModule,
@@ -53,7 +55,7 @@ interface DirectoryUser {
   templateUrl: './users.html',
   styleUrls: ['./users.css', '../shared/field-controls.css']
 })
-export class Users implements OnInit, OnDestroy {
+export class Users implements OnInit, OnChanges, OnDestroy {
   readonly baseUrl = environment.apiBaseUrlM.replace(/\/$/, '');
 
   private readonly usersSubject = new BehaviorSubject<DirectoryUser[]>([]);
@@ -94,7 +96,12 @@ export class Users implements OnInit, OnDestroy {
 
   editingUserId: number | null = null;
   selectedProfileUser: DirectoryUser | null = null;
+  @Input() currentUserProfileId: number | null = null;
+  @Input() profileOpenRequest = 0;
+  private pendingProfileUserId: number | null = null;
+  private handledProfileOpenRequest = 0;
   profileEditMode = false;
+  profileCreating = false;
   profileTab: 'overview' | 'work' | 'reporting' | 'access' = 'overview';
   isDrawerOpen = false;
   searchTerm = '';
@@ -111,6 +118,14 @@ export class Users implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadUsers();
     this.loadRoles();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['profileOpenRequest'] && this.profileOpenRequest > this.handledProfileOpenRequest) {
+      this.handledProfileOpenRequest = this.profileOpenRequest;
+      this.pendingProfileUserId = this.currentUserProfileId;
+      this.openRequestedProfile();
+    }
   }
 
   ngOnDestroy(): void {
@@ -152,6 +167,7 @@ export class Users implements OnInit, OnDestroy {
         this.cachedUsersArray = users;
         this.usersSubject.next(users);
         this.filterManagerAutocomplete();
+        this.openRequestedProfile();
       },
       error: error => {
         this.cachedUsersArray = [];
@@ -252,6 +268,13 @@ export class Users implements OnInit, OnDestroy {
 
     return {
       ...user,
+      id: numericId(
+        user?.id
+        ?? user?.userId
+        ?? user?.user_id
+        ?? user?.userAccountId
+        ?? user?.user_account_id
+      ) ?? 0,
       firstName: user?.firstName ?? user?.first_name ?? '',
       lastName: user?.lastName ?? user?.last_name ?? '',
       fullName,
@@ -311,10 +334,10 @@ export class Users implements OnInit, OnDestroy {
   }
 
   openCreateForm(): void {
-    this.resetForm();
-    this.editingUserId = null;
-    this.isDrawerOpen = true;
-    this.filterManagerAutocomplete();
+    this.resetForm(); this.editingUserId=null; this.profileCreating=true;
+    this.selectedProfileUser=this.normalizeUser({id:0,fullName:'New user',firstName:'',lastName:'',email:'',is_active:true});
+    this.profileEditMode=true; this.isDrawerOpen=false; this.filterManagerAutocomplete();
+    document.querySelector('.content')?.scrollTo({top:0});
   }
 
   onFileSelected(event: Event): void {
@@ -485,6 +508,7 @@ export class Users implements OnInit, OnDestroy {
           if (this.profileEditMode && this.selectedProfileUser) {
             const updatedProfile = this.normalizeUser({
               ...this.selectedProfileUser,
+              ...(response && !response.data ? response : {}),
               ...(response?.data && typeof response.data === 'object' ? response.data : {}),
               firstName: this.firstName.trim(),
               lastName: this.lastName.trim(),
@@ -514,6 +538,7 @@ export class Users implements OnInit, OnDestroy {
               locationDeskCode: this.locationDeskCode
             });
             this.selectedProfileUser = updatedProfile;
+            this.profileCreating=false;
             this.profileEditMode = false;
             this.editingUserId = null;
             this.resetForm();
@@ -694,13 +719,32 @@ export class Users implements OnInit, OnDestroy {
 
   viewUser(user: DirectoryUser): void {
     if (!user) return;
+    this.profileEditMode = false;
     this.selectedProfileUser = user;
     this.profileTab = 'overview';
     this.isDrawerOpen = false;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  private openRequestedProfile(): void {
+    const requestedId = this.pendingProfileUserId;
+    if (requestedId === null || requestedId === undefined) return;
+
+    const user = this.cachedUsersArray.find(candidate => Number(candidate.id) === Number(requestedId));
+    if (user) {
+      this.pendingProfileUserId = null;
+      this.viewUser(user);
+      return;
+    }
+
+    if (this.cachedUsersArray.length) {
+      this.pendingProfileUserId = null;
+      this.triggerToastAlert('Your account profile was not found in the user directory.', true);
+    }
+  }
+
   closeUserProfile(): void {
+    this.profileCreating=false;
     this.profileEditMode = false;
     this.selectedProfileUser = null;
     this.profileTab = 'overview';
@@ -718,6 +762,7 @@ export class Users implements OnInit, OnDestroy {
   }
 
   cancelProfileEdit(): void {
+    if(this.profileCreating){ this.closeUserProfile(); return; }
     this.profileEditMode = false;
     this.editingUserId = null;
     this.resetForm();
@@ -928,6 +973,11 @@ export class Users implements OnInit, OnDestroy {
     return parts.length > 1
       ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
       : (parts[0]?.[0] || 'U').toUpperCase();
+  }
+
+  personToneClass(id: number | string | null | undefined): string {
+    const numericId = Math.trunc(Number(id) || 0);
+    return `person-tone-${((numericId % 4) + 4) % 4}`;
   }
 
   getCount(users: DirectoryUser[], active: boolean): number {

@@ -1,149 +1,234 @@
-<div class="releases-page">
-  <div class="google-color-strip" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
-  <header class="page-header">
-    <div class="heading-copy">
-      <h1>Releases</h1>
-      <p>Plan versions, track release readiness, and see every work item included in a release.</p>
-    </div>
-    <div class="page-header-actions">
-      <div class="release-header-picker release-project-picker" aria-label="Select project">
-        <mat-icon class="release-picker-icon">folder_open</mat-icon>
-        <mat-select class="release-header-select" [value]="selectedProjectId()" (selectionChange)="onProjectChange($event.value)" aria-label="Project">
-          <mat-option *ngFor="let project of projects()" [value]="project.id">{{ project.name }}</mat-option>
-        </mat-select>
-      </div>
-      <div class="release-header-picker release-sprint-picker" aria-label="Select sprint">
-        <mat-icon class="release-picker-icon">calendar_month</mat-icon>
-        <mat-select class="release-header-select" [value]="sprintFilter()" (selectionChange)="sprintFilter.set($event.value)" aria-label="Sprint">
-          <mat-option value="ALL">All sprints</mat-option>
-          <mat-option *ngFor="let sprint of sprints()" [value]="String(sprint.id)">{{ sprint.name }}</mat-option>
-        </mat-select>
-      </div>
-      <button mat-flat-button color="primary" class="create-button" (click)="openCreate()" [disabled]="!selectedProjectId()">
-        <mat-icon>add</mat-icon> Create release
-      </button>
-    </div>
-  </header>
-
-  <section class="release-status-date-row" aria-label="Release status and date range">
-    <nav class="release-status-tabs" aria-label="Filter releases by status">
-      <button type="button" class="release-status-tab" [class.active]="statusFilter() === 'ALL'" (click)="statusFilter.set('ALL')">All releases <span>{{ statusCount('ALL') }}</span></button>
-      <button type="button" class="release-status-tab" [class.active]="statusFilter() === 'PLANNED'" (click)="statusFilter.set('PLANNED')">Planned <span>{{ statusCount('PLANNED') }}</span></button>
-      <button type="button" class="release-status-tab" [class.active]="statusFilter() === 'IN_PROGRESS'" (click)="statusFilter.set('IN_PROGRESS')">In progress <span>{{ statusCount('IN_PROGRESS') }}</span></button>
-      <button type="button" class="release-status-tab" [class.active]="statusFilter() === 'RELEASED'" (click)="statusFilter.set('RELEASED')">Released <span>{{ statusCount('RELEASED') }}</span></button>
-      <button type="button" class="release-status-tab" [class.active]="statusFilter() === 'CANCELLED'" (click)="statusFilter.set('CANCELLED')">Cancelled <span>{{ statusCount('CANCELLED') }}</span></button>
-    </nav>
-    <div class="release-date-range" aria-label="Filter by release date range">
-      <mat-form-field appearance="outline" class="date-picker-field">
-        <mat-label>From</mat-label>
-        <input matInput [matDatepicker]="releaseFromPicker" [ngModel]="dateFromDate()" (ngModelChange)="dateFrom.set(formatDateValue($event))" aria-label="Release date from">
-        <mat-datepicker-toggle matIconSuffix [for]="releaseFromPicker"></mat-datepicker-toggle>
-        <mat-datepicker #releaseFromPicker></mat-datepicker>
-      </mat-form-field>
-      <span class="date-range-separator">to</span>
-      <mat-form-field appearance="outline" class="date-picker-field">
-        <mat-label>To</mat-label>
-        <input matInput [matDatepicker]="releaseToPicker" [ngModel]="dateToDate()" (ngModelChange)="dateTo.set(formatDateValue($event))" aria-label="Release date to">
-        <mat-datepicker-toggle matIconSuffix [for]="releaseToPicker"></mat-datepicker-toggle>
-        <mat-datepicker #releaseToPicker></mat-datepicker>
-      </mat-form-field>
-    </div>
-  </section>
-  <div *ngIf="errorMessage()" class="notice error-notice"><mat-icon>error_outline</mat-icon><span>{{ errorMessage() }}</span><button type="button" (click)="errorMessage.set('')" aria-label="Dismiss error"><mat-icon>close</mat-icon></button></div>
+<div class="saas-container teams-page releases-page">
+  <div *ngIf="errorMessage()" class="notice error-notice" role="alert"><mat-icon>error_outline</mat-icon><span>{{ errorMessage() }}</span><button type="button" (click)="errorMessage.set('')" aria-label="Dismiss error"><mat-icon>close</mat-icon></button></div>
   <div *ngIf="successMessage()" class="notice success-notice"><mat-icon>check_circle</mat-icon><span>{{ successMessage() }}</span><button type="button" (click)="successMessage.set('')" aria-label="Dismiss message"><mat-icon>close</mat-icon></button></div>
-  <mat-progress-bar *ngIf="loading()" mode="indeterminate" class="top-progress"></mat-progress-bar>
+  <ng-container *ngIf="!profileMode()">
+    <app-workspace-hero *ngIf="!profileMode()" eyebrow="DELIVERY · READINESS · MOMENTUM" title="Releases" subtitle="Plan, track, and share delivery milestones across your project." image="assets/covers/releases.png" imageAlt="A team coordinating a software launch with a timeline and checklist">
+      <button workspace-actions mat-flat-button color="primary" class="create-button" (click)="openCreate()" [disabled]="!selectedProjectId()"><mat-icon>add</mat-icon> Create release</button>
+    </app-workspace-hero>
 
-  <main class="release-layout">
-    <section class="release-list-panel">
-      <div *ngIf="loading() && !releases().length" class="empty-state"><mat-icon>hourglass_top</mat-icon><h3>Loading releases</h3><p>Getting the latest project release plan.</p></div>
-      <div *ngIf="!loading() && !filteredReleases().length" class="empty-state"><span class="empty-illustration"><mat-icon>rocket_launch</mat-icon></span><h3>{{ statusFilter() !== 'ALL' || sprintFilter() !== 'ALL' || dateFrom() || dateTo() ? 'No matching releases' : 'Your release plan starts here' }}</h3><p>{{ statusFilter() !== 'ALL' || sprintFilter() !== 'ALL' || dateFrom() || dateTo() ? 'Try another status, sprint, or date range.' : 'Create a release to organize a sprint’s work into a version.' }}</p><button *ngIf="statusFilter() === 'ALL' && sprintFilter() === 'ALL' && !dateFrom() && !dateTo() && selectedProjectId()" mat-stroked-button color="primary" (click)="openCreate()"><mat-icon>add</mat-icon> Create release</button></div>
-      <div class="release-card-wrap" *ngFor="let release of filteredReleases(); trackBy: trackRelease">
-        <div class="release-row">
-          <span class="release-symbol"><mat-icon>sell</mat-icon></span>
-          <span class="release-row-main">
-            <span class="release-row-title">{{ release.name }}</span>
-            <span class="release-row-project">{{ projectName(release.project_id) }} <span class="meta-separator">|</span> {{ sprintName(release.sprint_id) }}</span>
-            <span class="release-row-bottom-line">
-              <span class="release-version">{{ release.version_number || '—' }}</span>
-              <span class="release-target-date"><span class="meta-separator">|</span> Target release date: {{ release.release_date ? (release.release_date | date:'mediumDate') : 'Not set' }}</span>
-            </span>
-          </span>
-          <span class="release-row-end">
-            <span class="status-pill" [ngClass]="'status-' + (release.status || 'PLANNED').toLowerCase()">{{ statusLabel(release.status) }}</span>
-            <button mat-stroked-button type="button" class="release-overview-button" (click)="openOverview(release)"><mat-icon>visibility</mat-icon> Release overview</button>
-          </span>
-        </div>
-      </div>
+    <section class="release-pulse teams-overview" aria-label="Release portfolio summary">
+      <article class="pulse-tile overview-metric pulse-tile-all"><span class="pulse-icon metric-icon"><mat-icon>layers</mat-icon></span><div><span class="metric-label">All releases</span><strong>{{ statusCount('ALL') }}</strong><small>Across this project</small></div></article>
+      <article class="pulse-tile overview-metric pulse-tile-planned"><span class="pulse-icon metric-icon metric-icon-amber"><mat-icon>event_upcoming</mat-icon></span><div><span class="metric-label">Planned</span><strong>{{ statusCount('PLANNED') }}</strong><small>Queued for delivery</small></div></article>
+      <article class="pulse-tile overview-metric pulse-tile-active"><span class="pulse-icon metric-icon metric-icon-green"><mat-icon>rocket_launch</mat-icon></span><div><span class="metric-label">In motion</span><strong>{{ statusCount('IN_PROGRESS') }}</strong><small>Currently moving</small></div></article>
+      <article class="pulse-tile overview-metric pulse-tile-shipped"><span class="pulse-icon metric-icon metric-icon-purple"><mat-icon>task_alt</mat-icon></span><div><span class="metric-label">Shipped</span><strong>{{ statusCount('RELEASED') }}</strong><small>Completed releases</small></div></article>
     </section>
 
+    <mat-card class="release-workspace teams-workspace" appearance="outlined">
+      <mat-card-content class="release-workspace-content teams-directory-content">
+        <div class="teams-directory-intro">
+          <div class="directory-count"><strong>{{ filteredReleases().length }}</strong><span>{{ filteredReleases().length === 1 ? 'release shown' : 'releases shown' }}</span></div>
+        </div>
+        <div class="release-workspace-toolbar teams-toolbar">
+          <div class="teams-toolbar-heading">
+            <h3>Release library</h3>
+            <p *ngIf="selectedProjectId()">Browse releases for {{ projectName(selectedProjectId()!) }}.</p>
+            <p *ngIf="!selectedProjectId()">Choose a project from the top header to view its releases.</p>
+          </div>
+<div class="release-filter-controls release-filter-line"><nav class="release-status-tabs" aria-label="Filter releases by status">
+            <button type="button" class="release-status-tab" [class.active]="statusFilter() === 'ALL'" (click)="statusFilter.set('ALL')">All <span>{{ statusCount('ALL') }}</span></button>
+            <button type="button" class="release-status-tab" [class.active]="statusFilter() === 'PLANNED'" (click)="statusFilter.set('PLANNED')">Planned <span>{{ statusCount('PLANNED') }}</span></button>
+            <button type="button" class="release-status-tab" [class.active]="statusFilter() === 'IN_PROGRESS'" (click)="statusFilter.set('IN_PROGRESS')">In progress <span>{{ statusCount('IN_PROGRESS') }}</span></button>
+            <button type="button" class="release-status-tab" [class.active]="statusFilter() === 'RELEASED'" (click)="statusFilter.set('RELEASED')">Released <span>{{ statusCount('RELEASED') }}</span></button>
+            <button type="button" class="release-status-tab" [class.active]="statusFilter() === 'CANCELLED'" (click)="statusFilter.set('CANCELLED')">Cancelled <span>{{ statusCount('CANCELLED') }}</span></button>
+          </nav><button type="button" class="gp-button gp-outline release-filter-trigger" (click)="filtersOpen.set(!filtersOpen())" [attr.aria-expanded]="filtersOpen()">Filters <span *ngIf="activeFilterCount()">{{activeFilterCount()}}</span></button><section class="release-filter-popover" *ngIf="filtersOpen()" aria-label="Release filters">
+          <label class="release-search-field">
+            <mat-icon>search</mat-icon>
+            <input type="search" [ngModel]="searchTerm()" (ngModelChange)="onSearchChange($event)" placeholder="Search releases" aria-label="Search releases">
+            <button *ngIf="searchTerm()" type="button" (click)="clearSearch()" aria-label="Clear release search">×</button>
+          </label>
 
-  </main>
+          <div class="release-header-picker release-sprint-picker" aria-label="Select sprint">
+            <mat-icon class="release-picker-icon">calendar_month</mat-icon>
+            <mat-select class="release-header-select" [value]="sprintFilter()" (selectionChange)="sprintFilter.set($event.value)" aria-label="Sprint">
+              <mat-option value="ALL">All sprints</mat-option>
+              <mat-option *ngFor="let sprint of sprints()" [value]="String(sprint.id)">{{ sprint.name }}</mat-option>
+            </mat-select>
+          </div>
+          <div class="release-date-range" aria-label="Filter by release date range">
+            <mat-form-field appearance="outline" class="date-picker-field">
+              <mat-label>From</mat-label>
+              <input matInput [matDatepicker]="releaseFromPicker" [ngModel]="dateFromDate()" (ngModelChange)="dateFrom.set(formatDateValue($event))" aria-label="Release date from">
+              <mat-datepicker-toggle matIconSuffix [for]="releaseFromPicker"></mat-datepicker-toggle>
+              <mat-datepicker #releaseFromPicker></mat-datepicker>
+            </mat-form-field>
+            <span class="date-range-separator">to</span>
+            <mat-form-field appearance="outline" class="date-picker-field">
+              <mat-label>To</mat-label>
+              <input matInput [matDatepicker]="releaseToPicker" [ngModel]="dateToDate()" (ngModelChange)="dateTo.set(formatDateValue($event))" aria-label="Release date to">
+              <mat-datepicker-toggle matIconSuffix [for]="releaseToPicker"></mat-datepicker-toggle>
+              <mat-datepicker #releaseToPicker></mat-datepicker>
+            </mat-form-field>
+          </div>
+          <div class="release-filter-footer"><button type="button" class="gp-button gp-outline" (click)="clearFilters(); clearSearch()">Clear filters</button><button type="button" class="gp-button gp-primary" (click)="filtersOpen.set(false)">Done</button></div></section></div>
+        </div>
+        <mat-progress-bar *ngIf="loading()" mode="indeterminate" class="top-progress"></mat-progress-bar>
+        <main class="release-layout">
+          <section class="release-list-panel saas-team-grid-layout">
+            <div *ngIf="loading() && !releases().length" class="empty-state"><mat-icon>hourglass_top</mat-icon><h3>Loading releases</h3><p>Getting the latest project release plan.</p></div>
+            <div *ngIf="!loading() && !selectedProjectId()" class="empty-state">
+              <span class="empty-illustration"><mat-icon>folder_open</mat-icon></span>
+              <h3>Select a project from the header</h3>
+              <p>Releases follow the project selected in the top bar.</p>
+            </div>
+            <div *ngIf="!loading() && selectedProjectId() && !filteredReleases().length" class="empty-state">
+              <span class="empty-illustration"><mat-icon>rocket_launch</mat-icon></span>
+              <h3>{{ searchTerm() || statusFilter() !== 'ALL' || sprintFilter() !== 'ALL' || dateFrom() || dateTo() ? 'No matching releases' : 'Your release plan starts here' }}</h3>
+              <p>{{ searchTerm() || statusFilter() !== 'ALL' || sprintFilter() !== 'ALL' || dateFrom() || dateTo() ? 'Try another search or adjust your filters.' : 'Create a release to organize a sprint’s work into a version.' }}</p>
+              <button *ngIf="!searchTerm() && statusFilter() === 'ALL' && sprintFilter() === 'ALL' && !dateFrom() && !dateTo() && selectedProjectId()" mat-stroked-button color="primary" (click)="openCreate()"><mat-icon>add</mat-icon> Create release</button>
+            </div>
+            <article class="release-list-row" *ngFor="let release of filteredReleases(); trackBy: trackRelease">
+              <button type="button" class="release-list-title" (click)="openOverview(release)"><strong>{{release.name}}</strong><span>{{sprintName(release.sprint_id)}}</span><b>{{release.version_number || 'Version not set'}}</b></button>
+              <time>{{release.release_date ? (release.release_date | date:'mediumDate') : 'Date not set'}}</time>
+              <mat-select class="release-list-status" [value]="release.status" (selectionChange)="updateStatus(release,$event.value)" [disabled]="editingStatusId() !== null" [attr.aria-label]="'Status of ' + release.name"><mat-option *ngFor="let status of statusOptions" [value]="status">{{statusLabel(status)}}</mat-option></mat-select>
+              <div class="release-list-actions"><button type="button" mat-stroked-button (click)="openOverview(release)">View</button><button mat-icon-button type="button" aria-label="Edit release" (click)="openEdit(release)"><mat-icon>edit</mat-icon></button></div>
+            </article>
+          </section>
+        </main>
+      </mat-card-content>
+    </mat-card>
+  </ng-container>
+
+  <ng-container *ngIf="profileMode() as mode">
+    <ng-container *ngIf="selectedRelease() as release; else releaseComposerProfile">
+      <section class="release-profile-page" [class.release-profile-editing]="mode === 'edit'">
+        <nav class="release-profile-breadcrumb" aria-label="Breadcrumb">
+          <button type="button" mat-button (click)="closeOverview()"><mat-icon>arrow_back</mat-icon> Releases</button>
+          <mat-icon>chevron_right</mat-icon><span>{{ projectName(release.project_id) }}</span>
+          <mat-icon>chevron_right</mat-icon><strong>{{ release.version_number || release.name }}</strong>
+        </nav>
 
 
-  <div class="release-overview-backdrop" *ngIf="overviewOpen()" (click)="closeOverview()" role="presentation"></div>
-  <section class="release-overview-dialog" *ngIf="overviewOpen() && selectedRelease() as release" role="dialog" aria-modal="true" aria-labelledby="release-overview-title">
-    <header class="overview-dialog-header">
-      <div class="overview-title-line">
-        <h2 id="release-overview-title">{{ release.name }}</h2>
-        <div class="overview-header-meta"><span>{{ projectName(release.project_id) }}</span><span class="overview-meta-separator">|</span><span>{{ sprintName(release.sprint_id) }}</span></div>
-      </div>
-      <button mat-icon-button type="button" aria-label="Close release overview" (click)="closeOverview()"><mat-icon>close</mat-icon></button>
-    </header>
-    <div class="overview-version-line">
-      <div class="overview-version-date"><span class="overview-version">{{ release.version_number || 'Not set' }}</span><span class="overview-meta-separator">|</span><span class="overview-target-date"><strong>Target release date</strong>{{ release.release_date ? (release.release_date | date:'mediumDate') : 'Not set' }}</span></div>
-      <span class="status-pill large overview-status" [ngClass]="'status-' + (release.status || 'PLANNED').toLowerCase()">{{ statusLabel(release.status) }}</span>
-    </div>
-    <div class="overview-dialog-body">
-      <section class="overview-notes-section"><h3>Release notes</h3><p>{{ release.notes || 'No release notes added yet.' }}</p></section>
-      <section class="overview-items-section"><div class="overview-items-title"><div><h3>Release items</h3><p>Work items included in this release</p></div><span class="item-total">{{ releaseItems().length }} items</span></div>
-        <mat-progress-bar *ngIf="detailLoading()" mode="indeterminate"></mat-progress-bar>
-        <div *ngIf="!detailLoading() && !releaseItems().length" class="items-empty"><mat-icon>playlist_add_check</mat-icon><strong>No linked items found</strong><span>There are no release-item records associated with this release yet.</span></div>
-        <div class="work-items-table" *ngIf="releaseItems().length"><div class="work-items-head"><span>Work item</span><span>Type</span><span>Status</span></div><div class="work-item-row" *ngFor="let item of releaseItems(); trackBy: trackItem"><span class="work-item-name"><span class="type-icon" [ngClass]="'type-' + (item.item_type || 'TASK').toLowerCase()"><mat-icon>{{ item.item_type === 'BUG' ? 'bug_report' : item.item_type === 'EPIC' ? 'auto_awesome' : item.item_type === 'STORY' ? 'bookmark' : 'check_box' }}</mat-icon></span><span><strong>{{ item.key || (item.work_item_id ? '#' + item.work_item_id : 'Work item') }}</strong><small>{{ item.title || item.summary || 'Title unavailable' }}</small></span></span><span class="type-label">{{ item.item_type || 'TASK' }}</span><span><span class="work-status" [ngClass]="'work-status-' + (item.status || 'UNKNOWN').toLowerCase().replaceAll(' ', '-')">{{ statusLabel(item.status) }}</span></span></div></div>
+        <header class="release-profile-header">
+          <div class="release-profile-avatar"><mat-icon>sell</mat-icon></div>
+          <div class="release-profile-title">
+            <div class="release-profile-title-line"><h1>{{ mode === 'edit' ? (form().name || release.name) : release.name }}</h1><span class="status-pill profile-status-pill" [ngClass]="'status-' + (mode === 'edit' ? (form().status || 'PLANNED') : (release.status || 'PLANNED')).toLowerCase()">{{ statusLabel(mode === 'edit' ? form().status : release.status) }}</span></div>
+            <div class="release-profile-meta"><span><mat-icon>folder_open</mat-icon>{{ projectName(release.project_id) }}</span><span><mat-icon>calendar_month</mat-icon>{{ sprintName(release.sprint_id) }}</span><span class="profile-version-chip">{{ release.version_number || 'Version not set' }}</span></div>
+            <p class="release-profile-description">{{ mode === 'edit' ? (form().notes || 'Keep launch scope, ownership, and timing clear for the team.') : (release.notes || 'A delivery milestone for the selected project.') }}</p>
+          </div>
+          <div class="release-profile-actions" *ngIf="mode === 'view'">
+            <button mat-stroked-button type="button" (click)="setProfileTab('items')"><mat-icon>checklist</mat-icon> {{ releaseItems().length }} items</button>
+            <button mat-flat-button color="primary" type="button" (click)="editOverviewRelease(release)"><mat-icon>edit</mat-icon> Edit release</button>
+          </div>
+          <div class="release-profile-actions" *ngIf="mode !== 'view'">
+            <button mat-stroked-button type="button" [disabled]="saving()" (click)="closeDrawer()">Cancel</button>
+            <button mat-flat-button color="primary" type="button" [disabled]="saving()" (click)="saveRelease()"><mat-icon *ngIf="!saving()">save</mat-icon><mat-icon *ngIf="saving()" class="spin-icon">sync</mat-icon>{{ saving() ? 'Saving…' : 'Save changes' }}</button>
+          </div>
+        </header>
+
+        <nav *ngIf="mode === 'view'" class="release-profile-tabs" aria-label="Release profile sections">
+          <button type="button" [class.active]="profileTab() === 'overview'" (click)="setProfileTab('overview')">Overview</button>
+          <button type="button" [class.active]="profileTab() === 'items'" (click)="setProfileTab('items')">Release items <span>{{ releaseItems().length }}</span></button>
+        </nav>
+
+        <section *ngIf="mode === 'view'" class="release-profile-stat-grid" aria-label="Release summary">
+          <article class="release-profile-stat-card"><span class="release-profile-stat-icon"><mat-icon>flag</mat-icon></span><div><span>Status</span><strong><span class="status-pill" [ngClass]="'status-' + (release.status || 'PLANNED').toLowerCase()">{{ statusLabel(release.status) }}</span></strong></div></article>
+          <article class="release-profile-stat-card"><span class="release-profile-stat-icon release-profile-stat-icon-green"><mat-icon>calendar_month</mat-icon></span><div><span>Sprint</span><strong>{{ sprintName(release.sprint_id) }}</strong></div></article>
+          <article class="release-profile-stat-card"><span class="release-profile-stat-icon"><mat-icon>checklist</mat-icon></span><div><span>Included work</span><strong>{{ releaseItems().length }} items</strong></div></article>
+          <article class="release-profile-stat-card"><span class="release-profile-stat-icon release-profile-stat-icon-amber"><mat-icon>event</mat-icon></span><div><span>Target date</span><strong>{{ release.release_date ? (release.release_date | date:'dd MMM yyyy') : 'Not set' }}</strong></div></article>
+        </section>
+
+        <div class="release-profile-grid">
+          <main class="release-profile-main">
+            <ng-container *ngIf="mode !== 'view'; else releaseReadOnlyContent">
+              <section class="release-profile-card release-edit-card">
+                <div class="release-section-heading"><div><span class="release-section-eyebrow">RELEASE DETAILS</span><h2>{{ mode === 'create' ? 'Set up your release' : 'Edit release details' }}</h2><p>Name the release, choose its version, and write notes for the team.</p></div></div>
+                <div class="release-edit-fields">
+                  <div class="profile-form-field release-name-field"><label for="release-name">Release name <i>*</i></label><input id="release-name" [ngModel]="form().name || ''" (ngModelChange)="updateForm('name', $event)" placeholder="e.g. Customer portal launch"><small class="field-error" *ngIf="formErrors()['name']">{{ formErrors()['name'] }}</small></div>
+                  <div class="profile-form-field"><label for="release-version">Version <i>*</i></label><input id="release-version" [ngModel]="form().version_number || ''" (ngModelChange)="updateForm('version_number', $event)" placeholder="e.g. v1.2.0"><small class="field-error" *ngIf="formErrors()['version_number']">{{ formErrors()['version_number'] }}</small></div>
+                  <div class="profile-form-field release-notes-field"><label for="release-notes">Release notes</label><textarea id="release-notes" rows="5" [ngModel]="form().notes || ''" (ngModelChange)="updateForm('notes', $event)" placeholder="Describe the improvements and fixes included in this release"></textarea></div>
+                </div>
+              </section>
+
+              <section class="release-profile-card release-scope-card">
+                <div class="release-section-heading release-scope-heading"><div><span class="release-section-eyebrow">WHAT’S SHIPPING</span><h2>Release scope</h2><p>Select the epics, stories, and tasks included in this release.</p></div><span class="scope-count">{{ selectedWorkItemIds().length }} selected</span></div>
+                <div *ngIf="!form().sprint_id" class="scope-empty"><mat-icon>info_outline</mat-icon> Choose a sprint to see its available work.</div>
+                <div *ngIf="form().sprint_id && itemsLoading()" class="scope-empty"><mat-icon class="scope-loading">sync</mat-icon> Loading work items…</div>
+                <ng-container *ngIf="form().sprint_id && !itemsLoading()">
+                  <div class="scope-subheading"><strong>Selected for this release</strong><span>{{ selectedCandidateItems().length }} items</span></div>
+                  <div class="scope-list selected-scope-list" *ngIf="selectedCandidateItems().length; else noSelectedScope">
+                    <div class="scope-item selected-scope-item" *ngFor="let item of selectedCandidateItems(); trackBy: trackCandidate">
+                      <span class="type-icon" [ngClass]="'type-' + item.item_type.toLowerCase()"><mat-icon>{{ item.item_type === 'EPIC' ? 'auto_awesome' : item.item_type === 'STORY' ? 'bookmark' : 'check_box' }}</mat-icon></span>
+                      <button type="button" class="scope-item-copy scope-item-link" (click)="openReleaseItem(item)"><strong>{{ item.title }}</strong><small>{{ item.key || ('#' + item.id) }} · {{ item.item_type }} · {{ statusLabel(item.status) }}</small></button>
+                      <button mat-button type="button" class="scope-remove-button" (click)="removeWorkItem(item)" [disabled]="saving()" [attr.aria-label]="'Remove ' + item.title + ' from release scope'"><mat-icon>close</mat-icon> Remove</button>
+                    </div>
+                  </div>
+                  <ng-template #noSelectedScope><div class="scope-empty compact-scope-empty">No work selected yet. Add items from this sprint below.</div></ng-template>
+                  <div class="scope-subheading available-scope-heading"><strong>Available in {{ sprintName(toSprintId(form().sprint_id)) }}</strong><span>{{ candidateItems().length }} items</span></div>
+                  <div class="scope-toolbar"><span>Choose work items to include</span><mat-checkbox [checked]="allWorkItemsSelected()" [indeterminate]="selectedWorkItemIds().length > 0 && !allWorkItemsSelected()" [disabled]="!candidateItems().length" (change)="selectAllWorkItems($event.checked)">Select all</mat-checkbox></div>
+                  <div *ngIf="!candidateItems().length" class="scope-empty">No work items were found for this sprint.</div>
+                  <div class="scope-list" *ngIf="candidateItems().length"><div class="scope-item" *ngFor="let item of candidateItems(); trackBy: trackCandidate">
+                    <mat-checkbox [checked]="isWorkItemSelected(item)" (change)="toggleWorkItem(item, $event.checked)" [aria-label]="'Include ' + item.item_type + ' ' + item.title"></mat-checkbox>
+                    <span class="type-icon" [ngClass]="'type-' + item.item_type.toLowerCase()"><mat-icon>{{ item.item_type === 'EPIC' ? 'auto_awesome' : item.item_type === 'STORY' ? 'bookmark' : 'check_box' }}</mat-icon></span>
+                    <button type="button" class="scope-item-copy scope-item-link" (click)="openReleaseItem(item)"><strong>{{ item.title }}</strong><small>{{ item.key || ('#' + item.id) }} · {{ item.item_type }} · {{ statusLabel(item.status) }}</small></button>
+                    <span class="scope-selection-state" *ngIf="isWorkItemSelected(item)"><mat-icon>check_circle</mat-icon> Added</span>
+                  </div></div>
+                </ng-container>
+              </section>
+            </ng-container>
+
+            <ng-template #releaseReadOnlyContent>
+              <ng-container *ngIf="profileTab() === 'overview'; else releaseItemsContent">
+                <section class="release-profile-card release-notes-card"><div class="release-section-heading"><div><span class="release-section-eyebrow">OVERVIEW</span><h2>Release notes</h2></div></div><p class="release-notes-copy">{{ release.notes || 'No release notes have been added yet.' }}</p></section>
+                <section class="release-profile-card release-overview-card"><div class="release-section-heading"><div><span class="release-section-eyebrow">IN THIS RELEASE</span><h2>Scope at a glance</h2><p>The work items selected for {{ release.name }}.</p></div><button mat-button type="button" (click)="setProfileTab('items')">View all <mat-icon>arrow_forward</mat-icon></button></div>
+                  <mat-progress-bar *ngIf="detailLoading()" mode="indeterminate"></mat-progress-bar>
+                  <div *ngIf="!detailLoading() && !releaseItems().length" class="items-empty"><mat-icon>playlist_add_check</mat-icon><strong>No linked items yet</strong><span>Add work items by editing this release.</span></div>
+                  <div class="work-items-table" *ngIf="releaseItems().length"><div class="work-items-head"><span>Work item</span><span>Type</span><span>Status</span></div><div class="work-item-row" *ngFor="let item of releaseItems().slice(0, 5); trackBy: trackItem" role="button" tabindex="0" (click)="openReleaseItem(item)" (keydown.enter)="openReleaseItem(item)"><span class="work-item-name"><span class="type-icon" [ngClass]="'type-' + (item.item_type || 'TASK').toLowerCase()"><mat-icon>{{ item.item_type === 'BUG' ? 'bug_report' : item.item_type === 'EPIC' ? 'auto_awesome' : item.item_type === 'STORY' ? 'bookmark' : 'check_box' }}</mat-icon></span><span><strong>{{ item.key || (item.work_item_id ? '#' + item.work_item_id : 'Work item') }}</strong><small>{{ item.title || item.summary || 'Title unavailable' }}</small></span></span><span class="type-label">{{ item.item_type || 'TASK' }}</span><span><span class="work-status" [ngClass]="'work-status-' + (item.status || 'UNKNOWN').toLowerCase().replaceAll(' ', '-')">{{ statusLabel(item.status) }}</span></span></div></div>
+                </section>
+              </ng-container>
+              <ng-template #releaseItemsContent>
+                <section class="release-profile-card release-items-card"><div class="release-section-heading"><div><span class="release-section-eyebrow">WHAT’S SHIPPING</span><h2>Release items</h2><p>Work items included in this version.</p></div><span class="scope-count">{{ releaseItems().length }} items</span></div>
+                  <mat-progress-bar *ngIf="detailLoading()" mode="indeterminate"></mat-progress-bar>
+                  <div *ngIf="!detailLoading() && !releaseItems().length" class="items-empty"><mat-icon>playlist_add_check</mat-icon><strong>No linked items yet</strong><span>Edit the release to add work items from its sprint.</span></div>
+                  <div class="work-items-table" *ngIf="releaseItems().length"><div class="work-items-head"><span>Work item</span><span>Type</span><span>Status</span></div><div class="work-item-row" *ngFor="let item of releaseItems(); trackBy: trackItem" role="button" tabindex="0" (click)="openReleaseItem(item)" (keydown.enter)="openReleaseItem(item)"><span class="work-item-name"><span class="type-icon" [ngClass]="'type-' + (item.item_type || 'TASK').toLowerCase()"><mat-icon>{{ item.item_type === 'BUG' ? 'bug_report' : item.item_type === 'EPIC' ? 'auto_awesome' : item.item_type === 'STORY' ? 'bookmark' : 'check_box' }}</mat-icon></span><span><strong>{{ item.key || (item.work_item_id ? '#' + item.work_item_id : 'Work item') }}</strong><small>{{ item.title || item.summary || 'Title unavailable' }}</small></span></span><span class="type-label">{{ item.item_type || 'TASK' }}</span><span><span class="work-status" [ngClass]="'work-status-' + (item.status || 'UNKNOWN').toLowerCase().replaceAll(' ', '-')">{{ statusLabel(item.status) }}</span></span></div></div>
+                </section>
+              </ng-template>
+            </ng-template>
+          </main>
+
+          <aside class="release-profile-aside">
+            <ng-container *ngIf="mode !== 'view'; else releaseReadOnlyFacts">
+              <section class="release-profile-card release-fields-card"><div class="release-section-heading"><div><span class="release-section-eyebrow">DELIVERY</span><h2>Release settings</h2></div></div>
+                <div class="profile-form-field"><label>Sprint <i>*</i></label><mat-form-field appearance="outline" class="full-width"><mat-select [ngModel]="form().sprint_id" (ngModelChange)="updateForm('sprint_id', $event)" placeholder="Select sprint"><mat-option *ngFor="let sprint of sprints()" [value]="sprint.id">{{ sprint.name }}</mat-option></mat-select></mat-form-field><small class="field-error" *ngIf="formErrors()['sprint_id']">{{ formErrors()['sprint_id'] }}</small></div>
+                <div class="profile-form-field"><label>Target release date</label><input type="date" [ngModel]="form().release_date || ''" (ngModelChange)="updateForm('release_date', $event || null)"></div>
+                <div class="profile-form-field"><label>Release owner <i>*</i></label><mat-form-field appearance="outline" class="full-width"><mat-select [ngModel]="form().assignee_id" (ngModelChange)="updateForm('assignee_id', $event)" placeholder="Select release owner"><mat-option *ngFor="let user of users()" [value]="user.id">{{ user.name }}<span *ngIf="user.email"> — {{ user.email }}</span></mat-option></mat-select></mat-form-field><small class="field-error" *ngIf="formErrors()['assignee_id']">{{ formErrors()['assignee_id'] }}</small></div>
+                <div class="profile-form-field"><label>Status</label><mat-form-field appearance="outline" class="full-width"><mat-select [ngModel]="form().status || 'PLANNED'" (ngModelChange)="updateForm('status', $event)"><mat-option value="PLANNED">Planned</mat-option><mat-option value="IN_PROGRESS">In progress</mat-option><mat-option value="RELEASED">Released</mat-option><mat-option value="CANCELLED">Cancelled</mat-option></mat-select></mat-form-field></div>
+              </section>
+            </ng-container>
+            <ng-template #releaseReadOnlyFacts>
+              <section class="release-profile-card release-facts-card"><div class="release-section-heading"><div><span class="release-section-eyebrow">RELEASE DETAILS</span><h2>At a glance</h2></div></div>
+                <div class="release-fact"><span>Status</span><strong><span class="status-pill" [ngClass]="'status-' + (release.status || 'PLANNED').toLowerCase()">{{ statusLabel(release.status) }}</span></strong></div>
+                <div class="release-fact"><span>Project</span><strong>{{ projectName(release.project_id) }}</strong></div>
+                <div class="release-fact"><span>Sprint</span><strong>{{ sprintName(release.sprint_id) }}</strong></div>
+                <div class="release-fact"><span>Version</span><strong>{{ release.version_number || 'Not set' }}</strong></div>
+                <div class="release-fact"><span>Target date</span><strong>{{ release.release_date ? (release.release_date | date:'mediumDate') : 'Not set' }}</strong></div>
+                <div class="release-fact"><span>Owner</span><strong class="release-owner"><span class="owner-avatar">{{ userName(release.assignee_id).slice(0, 1) | uppercase }}</span>{{ userName(release.assignee_id) }}</strong></div>
+              </section>
+              <section class="release-profile-card release-additional-card"><h2>Additional information</h2><div class="release-fact"><span>Created</span><strong>{{ release.created_at ? (release.created_at | date:'medium') : '—' }}</strong></div><div class="release-fact"><span>Last updated</span><strong>{{ release.updated_at ? (release.updated_at | date:'medium') : '—' }}</strong></div><div class="release-fact"><span>Created by</span><strong>{{ userName(release.user_id) }}</strong></div></section>
+            </ng-template>
+          </aside>
+        </div>
+        <footer class="release-profile-footer"><button type="button" mat-button (click)="closeOverview()"><mat-icon>arrow_back</mat-icon> Back to releases</button><span>Release workspace · {{ projectName(release.project_id) }}</span></footer>
       </section>
-    </div>
-    <footer class="overview-dialog-actions"><button mat-button type="button" (click)="closeOverview()">Close</button><button mat-flat-button color="primary" type="button" (click)="editOverviewRelease(release)"><mat-icon>edit</mat-icon> Edit release details</button></footer>
-  </section>
+    </ng-container>
 
-  <div class="drawer-backdrop" *ngIf="drawerOpen()" (click)="closeDrawer()" role="presentation"></div>
-  <aside class="release-drawer" *ngIf="drawerOpen()" role="dialog" aria-modal="true" [attr.aria-label]="isEditing() ? 'Edit release' : 'Create release'">
-    <div class="drawer-top"><div><span class="drawer-kicker">RELEASE MANAGEMENT</span><h2>{{ isEditing() ? 'Edit release' : 'Create a release' }}</h2><p>Define the version and the sprint scope it will ship.</p></div><button mat-icon-button aria-label="Close" [disabled]="saving()" (click)="closeDrawer()"><mat-icon>close</mat-icon></button></div>
-    <mat-progress-bar *ngIf="saving()" mode="indeterminate" class="drawer-progress"></mat-progress-bar>
-    <div class="drawer-body"><div *ngIf="errorMessage()" class="form-error-banner"><mat-icon>error_outline</mat-icon>{{ errorMessage() }}</div>
-      <div class="form-section"><h3>Release information</h3><div class="form-field"><label for="release-name">Release name <i>*</i></label><input id="release-name" [ngModel]="form().name || ''" (ngModelChange)="updateForm('name', $event)" placeholder="e.g. Customer portal launch"><small class="field-error" *ngIf="formErrors()['name']">{{ formErrors()['name'] }}</small></div>
-        <div class="form-grid"><div class="form-field"><label for="release-version">Version <i>*</i></label><input id="release-version" [ngModel]="form().version_number || ''" (ngModelChange)="updateForm('version_number', $event)" placeholder="e.g. v1.2.0"><small class="field-error" *ngIf="formErrors()['version_number']">{{ formErrors()['version_number'] }}</small></div><div class="form-field"><label for="release-date">Target release date</label><input id="release-date" type="date" [ngModel]="form().release_date || ''" (ngModelChange)="updateForm('release_date', $event || null)"></div></div>
-        <div class="form-field"><label for="release-notes">Release notes</label><textarea id="release-notes" rows="4" [ngModel]="form().notes || ''" (ngModelChange)="updateForm('notes', $event)" placeholder="What is included in this release?"></textarea></div>
-        <div class="form-field"><label>Project <i>*</i></label><mat-form-field appearance="outline" class="full-width"><mat-select [ngModel]="form().project_id" (ngModelChange)="onFormProjectChange($event)" placeholder="Select project"><mat-option *ngFor="let project of projects()" [value]="project.id">{{ project.name }}</mat-option></mat-select></mat-form-field><small class="field-error" *ngIf="formErrors()['project_id']">{{ formErrors()['project_id'] }}</small></div>
-        <div class="form-field"><label>Sprint <i>*</i></label><mat-form-field appearance="outline" class="full-width"><mat-select [ngModel]="form().sprint_id" (ngModelChange)="updateForm('sprint_id', $event)" placeholder="Select sprint"><mat-option *ngFor="let sprint of sprints()" [value]="sprint.id">{{ sprint.name }}</mat-option></mat-select></mat-form-field><small class="field-error" *ngIf="formErrors()['sprint_id']">{{ formErrors()['sprint_id'] }}</small><small class="field-hint">The release detail will show the work items linked to this release.</small></div>
-      </div>
-      <div class="form-section scope-section"><div class="scope-title-row"><div><h3>Release scope</h3><p>Select the epics, stories, and tasks that belong to this release.</p></div><span class="scope-count">{{ selectedWorkItemIds().length }} selected</span></div>
-        <div *ngIf="!form().sprint_id" class="scope-empty">Choose a sprint to load its available work items.</div>
-        <div *ngIf="form().sprint_id && itemsLoading()" class="scope-empty"><mat-icon class="scope-loading">sync</mat-icon> Loading work items…</div>
-        <ng-container *ngIf="form().sprint_id && !itemsLoading()">
-          <div class="scope-subheading"><strong>Selected for this release</strong><span>{{ selectedCandidateItems().length }} items</span></div>
-          <div class="scope-list selected-scope-list" *ngIf="selectedCandidateItems().length; else noSelectedScope">
-            <div class="scope-item selected-scope-item" *ngFor="let item of selectedCandidateItems(); trackBy: trackCandidate">
-              <span class="type-icon" [ngClass]="'type-' + item.item_type.toLowerCase()"><mat-icon>{{ item.item_type === 'EPIC' ? 'auto_awesome' : item.item_type === 'STORY' ? 'bookmark' : 'check_box' }}</mat-icon></span>
-              <span class="scope-item-copy"><strong>{{ item.title }}</strong><small>{{ item.key || ('#' + item.id) }} · {{ item.item_type }} · {{ statusLabel(item.status) }}</small></span>
-              <button mat-button type="button" class="scope-remove-button" (click)="removeWorkItem(item)" [disabled]="saving()" [attr.aria-label]="'Remove ' + item.title + ' from release scope'"><mat-icon>close</mat-icon> Remove</button>
-            </div>
-          </div>
-          <ng-template #noSelectedScope><div class="scope-empty compact-scope-empty">No work items selected yet. Add them from the available list below.</div></ng-template>
-          <div class="scope-subheading available-scope-heading"><strong>Available in {{ sprintName(toSprintId(form().sprint_id)) }}</strong><span>{{ candidateItems().length }} items</span></div>
-          <div class="scope-toolbar"><span>Select the items to include</span><mat-checkbox [checked]="allWorkItemsSelected()" [indeterminate]="selectedWorkItemIds().length > 0 && !allWorkItemsSelected()" [disabled]="!candidateItems().length" (change)="selectAllWorkItems($event.checked)">Select all</mat-checkbox></div>
-          <div *ngIf="!candidateItems().length" class="scope-empty">No work items were found for this sprint. Check that your project work-item APIs return sprint assignments.</div>
-          <div class="scope-list" *ngIf="candidateItems().length">
-            <div class="scope-item" *ngFor="let item of candidateItems(); trackBy: trackCandidate">
-              <mat-checkbox [checked]="isWorkItemSelected(item)" (change)="toggleWorkItem(item, $event.checked)" [aria-label]="'Include ' + item.item_type + ' ' + item.title"></mat-checkbox>
-              <span class="type-icon" [ngClass]="'type-' + item.item_type.toLowerCase()"><mat-icon>{{ item.item_type === 'EPIC' ? 'auto_awesome' : item.item_type === 'STORY' ? 'bookmark' : 'check_box' }}</mat-icon></span>
-              <span class="scope-item-copy"><strong>{{ item.title }}</strong><small>{{ item.key || ('#' + item.id) }} · {{ item.item_type }} · {{ statusLabel(item.status) }}</small></span>
-              <span class="scope-selection-state" *ngIf="isWorkItemSelected(item)"><mat-icon>check_circle</mat-icon> Added</span>
-            </div>
-          </div>
-        </ng-container>
-      </div>
-      <div class="form-section"><h3>Ownership</h3><div class="form-field"><label>Release owner <i>*</i></label><mat-form-field appearance="outline" class="full-width"><mat-select [ngModel]="form().assignee_id" (ngModelChange)="updateForm('assignee_id', $event)" placeholder="Select release owner"><mat-option *ngFor="let user of users()" [value]="user.id">{{ user.name }}<span *ngIf="user.email"> — {{ user.email }}</span></mat-option></mat-select></mat-form-field><small class="field-error" *ngIf="formErrors()['assignee_id']">{{ formErrors()['assignee_id'] }}</small></div></div>
-      <div class="form-section"><h3>Release status</h3><div class="form-field"><label>Initial status</label><mat-form-field appearance="outline" class="full-width"><mat-select [ngModel]="form().status || 'PLANNED'" (ngModelChange)="updateForm('status', $event)"><mat-option value="PLANNED">Planned</mat-option><mat-option value="IN_PROGRESS">In progress</mat-option><mat-option value="RELEASED">Released</mat-option><mat-option value="CANCELLED">Cancelled</mat-option></mat-select></mat-form-field></div></div>
-    </div>
-    <footer class="drawer-footer"><button mat-button type="button" [disabled]="saving()" (click)="closeDrawer()">Cancel</button><button mat-flat-button color="primary" type="button" [disabled]="saving()" (click)="saveRelease()"><mat-icon *ngIf="!saving()">{{ isEditing() ? 'save' : 'add' }}</mat-icon><mat-icon *ngIf="saving()" class="spin-icon">sync</mat-icon>{{ saving() ? 'Saving…' : (isEditing() ? 'Save changes' : 'Create release') }}</button></footer>
-  </aside>
+    <ng-template #releaseComposerProfile>
+      <section class="release-profile-page release-create-profile">
+        <nav class="release-profile-breadcrumb" aria-label="Breadcrumb"><button type="button" mat-button (click)="closeDrawer()"><mat-icon>arrow_back</mat-icon> Releases</button><mat-icon>chevron_right</mat-icon><span>{{ projectName(toSprintId(form().project_id)) }}</span><mat-icon>chevron_right</mat-icon><strong>{{ mode === 'edit' ? 'Edit release' : 'New release' }}</strong></nav>
+
+        <header class="release-profile-header"><div class="release-profile-avatar"><mat-icon>sell</mat-icon></div><div class="release-profile-title"><div class="release-profile-title-line"><h1>{{ form().name || (mode === 'edit' ? 'Edit release' : 'Create a release') }}</h1><span class="status-pill profile-status-pill" [ngClass]="'status-' + (form().status || 'PLANNED').toLowerCase()">{{ statusLabel(form().status) }}</span></div><div class="release-profile-meta"><span><mat-icon>folder_open</mat-icon>{{ projectName(toSprintId(form().project_id)) }}</span><span><mat-icon>rocket_launch</mat-icon>Release workspace</span></div></div><div class="release-profile-actions"><button mat-stroked-button type="button" [disabled]="saving()" (click)="closeDrawer()">Cancel</button><button mat-flat-button color="primary" type="button" [disabled]="saving()" (click)="saveRelease()"><mat-icon *ngIf="!saving()">{{ mode === 'edit' ? 'save' : 'add' }}</mat-icon><mat-icon *ngIf="saving()" class="spin-icon">sync</mat-icon>{{ saving() ? 'Saving…' : (mode === 'edit' ? 'Save changes' : 'Create release') }}</button></div></header>
+        <div class="release-create-intro"><mat-icon>tips_and_updates</mat-icon><span>Give this release a clear name and version, choose its sprint, then add the work that is ready to ship.</span></div>
+        <div class="release-profile-grid release-create-grid">
+          <main class="release-profile-main">
+            <section class="release-profile-card release-edit-card"><div class="release-section-heading"><div><span class="release-section-eyebrow">RELEASE DETAILS</span><h2>{{ mode === 'edit' ? 'Edit release details' : 'Set up your release' }}</h2><p>Give the team a clear summary of what this version delivers.</p></div></div><div class="release-edit-fields"><div class="profile-form-field release-name-field"><label for="composer-release-name">Release name <i>*</i></label><input id="composer-release-name" [ngModel]="form().name || ''" (ngModelChange)="updateForm('name', $event)" placeholder="e.g. Customer portal launch"><small class="field-error" *ngIf="formErrors()['name']">{{ formErrors()['name'] }}</small></div><div class="profile-form-field"><label for="composer-release-version">Version <i>*</i></label><input id="composer-release-version" [ngModel]="form().version_number || ''" (ngModelChange)="updateForm('version_number', $event)" placeholder="e.g. v1.2.0"><small class="field-error" *ngIf="formErrors()['version_number']">{{ formErrors()['version_number'] }}</small></div><div class="profile-form-field release-notes-field"><label for="composer-release-notes">Release notes</label><textarea id="composer-release-notes" rows="5" [ngModel]="form().notes || ''" (ngModelChange)="updateForm('notes', $event)" placeholder="Describe the improvements and fixes included in this release"></textarea></div></div></section>
+            <section class="release-profile-card release-scope-card"><div class="release-section-heading release-scope-heading"><div><span class="release-section-eyebrow">WHAT’S SHIPPING</span><h2>Release scope</h2><p>Select the epics, stories, and tasks included in this release.</p></div><span class="scope-count">{{ selectedWorkItemIds().length }} selected</span></div>
+              <div *ngIf="!form().sprint_id" class="scope-empty"><mat-icon>info_outline</mat-icon> Choose a sprint in the settings to load available work.</div><div *ngIf="form().sprint_id && itemsLoading()" class="scope-empty"><mat-icon class="scope-loading">sync</mat-icon> Loading work items…</div>
+              <ng-container *ngIf="form().sprint_id && !itemsLoading()"><div class="scope-subheading"><strong>Selected for this release</strong><span>{{ selectedCandidateItems().length }} items</span></div><div class="scope-list selected-scope-list" *ngIf="selectedCandidateItems().length; else composerNoSelectedScope"><div class="scope-item selected-scope-item" *ngFor="let item of selectedCandidateItems(); trackBy: trackCandidate"><span class="type-icon" [ngClass]="'type-' + item.item_type.toLowerCase()"><mat-icon>{{ item.item_type === 'EPIC' ? 'auto_awesome' : item.item_type === 'STORY' ? 'bookmark' : 'check_box' }}</mat-icon></span><button type="button" class="scope-item-copy scope-item-link" (click)="openReleaseItem(item)"><strong>{{ item.title }}</strong><small>{{ item.key || ('#' + item.id) }} · {{ item.item_type }} · {{ statusLabel(item.status) }}</small></button><button mat-button type="button" class="scope-remove-button" (click)="removeWorkItem(item)" [disabled]="saving()"><mat-icon>close</mat-icon> Remove</button></div></div><ng-template #composerNoSelectedScope><div class="scope-empty compact-scope-empty">No work selected yet. Add items from this sprint below.</div></ng-template><div class="scope-subheading available-scope-heading"><strong>Available in {{ sprintName(toSprintId(form().sprint_id)) }}</strong><span>{{ candidateItems().length }} items</span></div><div class="scope-toolbar"><span>Choose work items to include</span><mat-checkbox [checked]="allWorkItemsSelected()" [indeterminate]="selectedWorkItemIds().length > 0 && !allWorkItemsSelected()" [disabled]="!candidateItems().length" (change)="selectAllWorkItems($event.checked)">Select all</mat-checkbox></div><div *ngIf="!candidateItems().length" class="scope-empty">No work items were found for this sprint.</div><div class="scope-list" *ngIf="candidateItems().length"><div class="scope-item" *ngFor="let item of candidateItems(); trackBy: trackCandidate"><mat-checkbox [checked]="isWorkItemSelected(item)" (change)="toggleWorkItem(item, $event.checked)" [aria-label]="'Include ' + item.item_type + ' ' + item.title"></mat-checkbox><span class="type-icon" [ngClass]="'type-' + item.item_type.toLowerCase()"><mat-icon>{{ item.item_type === 'EPIC' ? 'auto_awesome' : item.item_type === 'STORY' ? 'bookmark' : 'check_box' }}</mat-icon></span><button type="button" class="scope-item-copy scope-item-link" (click)="openReleaseItem(item)"><strong>{{ item.title }}</strong><small>{{ item.key || ('#' + item.id) }} · {{ item.item_type }} · {{ statusLabel(item.status) }}</small></button><span class="scope-selection-state" *ngIf="isWorkItemSelected(item)"><mat-icon>check_circle</mat-icon> Added</span></div></div></ng-container>
+            </section>
+          </main>
+          <aside class="release-profile-aside"><section class="release-profile-card release-fields-card"><div class="release-section-heading"><div><span class="release-section-eyebrow">DELIVERY</span><h2>Release settings</h2></div></div><div class="profile-form-field"><label>Sprint <i>*</i></label><mat-form-field appearance="outline" class="full-width"><mat-select [ngModel]="form().sprint_id" (ngModelChange)="updateForm('sprint_id', $event)" placeholder="Select sprint"><mat-option *ngFor="let sprint of sprints()" [value]="sprint.id">{{ sprint.name }}</mat-option></mat-select></mat-form-field><small class="field-error" *ngIf="formErrors()['sprint_id']">{{ formErrors()['sprint_id'] }}</small></div><div class="profile-form-field"><label>Target release date</label><input type="date" [ngModel]="form().release_date || ''" (ngModelChange)="updateForm('release_date', $event || null)"></div><div class="profile-form-field"><label>Release owner <i>*</i></label><mat-form-field appearance="outline" class="full-width"><mat-select [ngModel]="form().assignee_id" (ngModelChange)="updateForm('assignee_id', $event)" placeholder="Select release owner"><mat-option *ngFor="let user of users()" [value]="user.id">{{ user.name }}<span *ngIf="user.email"> — {{ user.email }}</span></mat-option></mat-select></mat-form-field><small class="field-error" *ngIf="formErrors()['assignee_id']">{{ formErrors()['assignee_id'] }}</small></div><div class="profile-form-field"><label>Status</label><mat-form-field appearance="outline" class="full-width"><mat-select [ngModel]="form().status || 'PLANNED'" (ngModelChange)="updateForm('status', $event)"><mat-option value="PLANNED">Planned</mat-option><mat-option value="IN_PROGRESS">In progress</mat-option><mat-option value="RELEASED">Released</mat-option><mat-option value="CANCELLED">Cancelled</mat-option></mat-select></mat-form-field></div></section></aside>
+        </div>
+        <footer class="release-profile-footer"><button type="button" mat-button (click)="closeDrawer()"><mat-icon>arrow_back</mat-icon> Back to releases</button><span>Release workspace · {{ projectName(toSprintId(form().project_id)) }}</span></footer>
+      </section>
+    </ng-template>
+  </ng-container>
 </div>

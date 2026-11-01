@@ -15,44 +15,7 @@
       *ngIf="dashboardViewMode === 'projects'">
 
       <section class="directory-section" *ngIf="!selectedProject">
-        <header class="projects-hero">
-          <div class="projects-hero-copy">
-            <span class="projects-hero-eyebrow">PLAN · DELIVER · GROW</span>
-            <h1>Projects</h1>
-            <h2>Turn ambitious ideas into meaningful progress.</h2>
-            <p>Organize initiatives, track deadlines and keep every delivery cycle connected.</p>
-          </div>
-          <div class="projects-hero-art" aria-hidden="true">
-          <svg xmlns="http://www.w3.org/2000/svg" width="1000" height="520" viewBox="0 0 1000 520" fill="none" role="img" aria-label="A colorful team collaborating around a project board">
-<defs>
- <linearGradient id="boardBlue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#D7E7FF"/><stop offset="1" stop-color="#AFCBFA"/></linearGradient>
- <linearGradient id="screen" x1="0" y1="0" x2="0.8" y2="1"><stop stop-color="#F8FBFF"/><stop offset="1" stop-color="#DDEBFF"/></linearGradient>
- <filter id="softShadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#174EA6" flood-opacity=".14"/></filter>
-</defs>
-<!-- airy Google-like abstract background -->
-<circle cx="535" cy="180" r="170" fill="#F1F6FF"/><circle cx="855" cy="365" r="100" fill="#E8F5E9"/><circle cx="160" cy="390" r="100" fill="#FCE8F3"/>
-<path d="M86 128l42 20M117 96l22 10M893 105l-31 19M923 147l-18 7" stroke="#F9AB00" stroke-width="9" stroke-linecap="round"/>
-<circle cx="910" cy="268" r="29" fill="#34A853"/><path d="M910 254v28M896 268h28" stroke="white" stroke-width="5" stroke-linecap="round"/>
-<!-- project board/device -->
-<g filter="url(#softShadow)"><rect x="318" y="42" width="385" height="302" rx="28" fill="#202124"/><rect x="332" y="56" width="357" height="273" rx="19" fill="url(#screen)"/><path d="M332 76q0-20 20-20h317q20 0 20 20v54H332V76Z" fill="url(#boardBlue)"/><circle cx="357" cy="82" r="8" fill="white"/><rect x="377" y="75" width="62" height="13" rx="6.5" fill="white"/><rect x="635" y="75" width="30" height="13" rx="6.5" fill="white"/>
-<rect x="354" y="151" width="95" height="148" rx="10" fill="white"/><rect x="463" y="151" width="95" height="148" rx="10" fill="white"/><rect x="572" y="151" width="95" height="148" rx="10" fill="white"/>
-<rect x="366" y="165" width="58" height="7" rx="3.5" fill="#4285F4"/><rect x="475" y="165" width="57" height="7" rx="3.5" fill="#34A853"/><rect x="584" y="165" width="57" height="7" rx="3.5" fill="#FBBC04"/>
-<rect x="366" y="184" width="70" height="39" rx="6" fill="#E8F0FE"/><path d="M375 210l13-12 11 7 15-13" stroke="#4285F4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><rect x="366" y="234" width="59" height="5" rx="2.5" fill="#DADCE0"/><rect x="366" y="246" width="48" height="5" rx="2.5" fill="#DADCE0"/><circle cx="379" cy="273" r="8" fill="#FBBC04"/><rect x="392" y="270" width="32" height="5" rx="2.5" fill="#DADCE0"/>
-<rect x="475" y="184" width="69" height="35" rx="6" fill="#E6F4EA"/><path d="M485 207l12-12 11 6 18-12" stroke="#34A853" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><rect x="475" y="234" width="59" height="5" rx="2.5" fill="#DADCE0"/><rect x="475" y="246" width="48" height="5" rx="2.5" fill="#DADCE0"/><circle cx="488" cy="273" r="8" fill="#EA4335"/><rect x="501" y="270" width="32" height="5" rx="2.5" fill="#DADCE0"/>
-<rect x="584" y="184" width="69" height="35" rx="6" fill="#FEF7E0"/><path d="M594 207l12-12 11 6 18-12" stroke="#F9AB00" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><rect x="584" y="234" width="59" height="5" rx="2.5" fill="#DADCE0"/><rect x="584" y="246" width="48" height="5" rx="2.5" fill="#DADCE0"/><circle cx="597" cy="273" r="8" fill="#4285F4"/><rect x="610" y="270" width="32" height="5" rx="2.5" fill="#DADCE0"/>
-</g>
-<!-- person on left, green shirt -->
-<path d="M68 520c5-84 40-133 115-145l53 18 49-18c63 14 88 66 91 145H68Z" fill="#34A853"/><path d="M181 376l24 39 28-39-9-25h-34Z" fill="#F9AB00"/><rect x="184" y="315" width="43" height="63" rx="19" fill="#B8754B"/><ellipse cx="205" cy="278" rx="54" ry="66" fill="#C6865A"/><path d="M151 274c-8-58 23-91 61-91 39 0 58 26 51 76l-12-18-8-26c-25 18-52 20-78 10l-9 49Z" fill="#202124"/><path d="M174 273q10-8 20 0M218 273q10-8 20 0" stroke="#202124" stroke-width="5" stroke-linecap="round"/><path d="M188 299q17 16 35 0" stroke="#fff" stroke-width="5" stroke-linecap="round"/><circle cx="151" cy="283" r="9" fill="#C6865A"/><circle cx="259" cy="283" r="9" fill="#C6865A"/>
-<!-- person on right, blue shirt -->
-<path d="M653 520c3-87 35-130 100-145l48 16 46-16c68 18 91 72 94 145H653Z" fill="#4285F4"/><path d="M756 376l24 40 26-40-8-26h-34Z" fill="#EA4335"/><rect x="758" y="315" width="43" height="63" rx="19" fill="#E4AC83"/><ellipse cx="779" cy="278" rx="53" ry="65" fill="#F0BE98"/><path d="M727 271c-6-49 20-85 57-85 44 0 63 31 49 79l-13-21-7-22c-21 16-48 20-76 10l-5 39Z" fill="#5B3427"/><path d="M748 273q10-8 20 0M791 273q10-8 20 0" stroke="#202124" stroke-width="5" stroke-linecap="round"/><path d="M762 300q17 15 35 0" stroke="white" stroke-width="5" stroke-linecap="round"/><circle cx="726" cy="283" r="9" fill="#F0BE98"/><circle cx="832" cy="283" r="9" fill="#F0BE98"/>
-<!-- foreground teammate in yellow, arms raised in collaboration -->
-<path d="M354 520c5-75 30-115 83-127l38 15 42-15c57 13 81 55 85 127H354Z" fill="#FBBC04"/><path d="M431 393c-26-22-50-46-69-73-7-10-2-21 7-18 16 8 29 25 43 37l-17-41c-4-12 8-17 15-6l22 31-9-36c-2-12 10-15 16-3l18 36 4-25c2-11 13-10 16 1l3 36c2 25-9 46-29 65Z" fill="#F0BE98"/><path d="M574 393c27-20 50-45 72-72 8-10 3-21-7-18-16 8-30 24-44 37l17-41c5-12-7-17-14-6l-23 31 10-36c3-12-9-15-15-3l-19 36-3-25c-2-11-13-10-16 1l-4 36c-2 25 8 46 28 65Z" fill="#F0BE98"/>
-<rect x="454" y="322" width="52" height="70" rx="23" fill="#D99B75"/><ellipse cx="480" cy="288" rx="51" ry="59" fill="#D99B75"/><path d="M429 284c-10-48 12-81 48-81 40 0 61 28 52 75l-12-16-4-22c-22 15-45 18-69 9l-7 35Z" fill="#202124"/><path d="M451 282q9-7 18 0M490 282q9-7 18 0" stroke="#202124" stroke-width="5" stroke-linecap="round"/><path d="M464 305q15 13 30 0" stroke="white" stroke-width="5" stroke-linecap="round"/>
-<!-- small floating project status chips -->
-<g filter="url(#softShadow)"><rect x="60" y="185" width="140" height="42" rx="21" fill="white"/><circle cx="82" cy="206" r="6" fill="#34A853"/><text x="96" y="211" fill="#3C4043" font-family="Arial,sans-serif" font-size="13" font-weight="700">On track</text><rect x="790" y="360" width="152" height="42" rx="21" fill="white"/><circle cx="813" cy="381" r="6" fill="#4285F4"/><text x="827" y="386" fill="#3C4043" font-family="Arial,sans-serif" font-size="13" font-weight="700">Team aligned</text></g>
-</svg>
-          </div>
-        </header>
+        <app-workspace-hero eyebrow="PLAN · DELIVER · GROW" title="Projects" subtitle="Organize initiatives, track deadlines, and keep every delivery cycle connected." image="assets/covers/projects.png" imageAlt="A team coordinating a project plan"></app-workspace-hero>
 
         <ng-container *ngIf="projects$ | async as projectsList; else loadingProjects">
           <div class="projects-list-toolbar">
@@ -645,7 +608,7 @@
             </div>
             <div class="person-card-details">
               <strong>{{ member.name || 'Unnamed member' }}</strong>
-              <span class="person-designation">{{ member.designation || member.jobTitle || member.title || member.role || 'Team member' }}</span>
+              <span class="person-designation">{{ memberDesignation(member) }}</span>
               <span class="person-card-email" *ngIf="member.email">{{ member.email }}</span>
             </div>
           </article></div>
@@ -667,7 +630,7 @@
 
         <section class="profile-section-card profile-step-card view-tab-card">
           <div class="profile-section-heading"><div><h2>Sprints preview</h2><p>Planned delivery cycles for {{ profile.name || (isProfileCreating ? 'New project' : 'Untitled project') }}.</p></div><button mat-stroked-button type="button" (click)="switchToSprintsForProject(profile.project_code, profile.id)">Open sprint directory</button></div>
-          <div class="project-table-shell profile-sprints-table-shell"><table mat-table [dataSource]="getProjectProfileSprints(profile)" class="projects-mat-table profile-sprints-table"><ng-container matColumnDef="sprint"><th mat-header-cell *matHeaderCellDef>Sprint</th><td mat-cell *matCellDef="let sprint"><button type="button" class="sprint-table-link" (click)="openSprintDetails(sprint)"><strong>{{ sprint.name }}</strong><small>{{ sprint.projectCode }} · Sprint {{ sprint.sprint_number }}</small></button></td></ng-container><ng-container matColumnDef="sprintStatus"><th mat-header-cell *matHeaderCellDef>Status</th><td mat-cell *matCellDef="let sprint"><span class="project-status-badge"><span class="status-dot"></span>{{ sprint.status | titlecase }}</span></td></ng-container><ng-container matColumnDef="start"><th mat-header-cell *matHeaderCellDef>Start date</th><td mat-cell *matCellDef="let sprint">{{ sprint.scheduled_start_date || '—' }}</td></ng-container><ng-container matColumnDef="end"><th mat-header-cell *matHeaderCellDef>End date</th><td mat-cell *matCellDef="let sprint">{{ sprint.scheduled_end_date || '—' }}</td></ng-container><ng-container matColumnDef="velocity"><th mat-header-cell *matHeaderCellDef>Velocity</th><td mat-cell *matCellDef="let sprint">{{ sprint.target_velocity || 0 }} pts</td></ng-container><tr mat-header-row *matHeaderRowDef="profileSprintDisplayedColumns"></tr><tr mat-row *matRowDef="let row; columns: profileSprintDisplayedColumns"></tr></table><div class="project-table-empty" *ngIf="getProjectProfileSprints(profile).length === 0"><mat-icon>event_busy</mat-icon><strong>No sprints yet</strong><span>Sprints will appear here once they are created.</span></div></div>
+          <section class="project-sprint-scope"><header><h3>Sprint work items</h3><button type="button" class="gp-button gp-primary" (click)="openProjectPlanning(profile)">Project planning</button></header><p *ngIf="projectWorkLoading">Loading sprint work…</p><p *ngIf="projectWorkError" role="status">{{projectWorkError}}</p><details *ngFor="let sprint of getProjectProfileSprints(profile)"><summary>{{sprint.name}} <b>{{sprintPreviewItems(sprint).length}} items</b></summary><button type="button" class="project-scope-item" *ngFor="let item of sprintPreviewItems(sprint)" (click)="openProjectWorkItem(item)"><strong>{{item.key}}</strong><span>{{item.title}}</span><span>{{item.assignee}}</span><b>{{item.status}}</b></button><p *ngIf="!sprintPreviewItems(sprint).length">No work assigned to this sprint.</p></details></section><div class="project-table-shell profile-sprints-table-shell"><table mat-table [dataSource]="getProjectProfileSprints(profile)" class="projects-mat-table profile-sprints-table"><ng-container matColumnDef="sprint"><th mat-header-cell *matHeaderCellDef>Sprint</th><td mat-cell *matCellDef="let sprint"><button type="button" class="sprint-table-link" (click)="openSprintDetails(sprint)"><strong>{{ sprint.name }}</strong><small>{{ sprint.projectCode }} · Sprint {{ sprint.sprint_number }}</small></button></td></ng-container><ng-container matColumnDef="sprintStatus"><th mat-header-cell *matHeaderCellDef>Status</th><td mat-cell *matCellDef="let sprint"><span class="project-status-badge"><span class="status-dot"></span>{{ sprint.status | titlecase }}</span></td></ng-container><ng-container matColumnDef="start"><th mat-header-cell *matHeaderCellDef>Start date</th><td mat-cell *matCellDef="let sprint">{{ sprint.scheduled_start_date || '—' }}</td></ng-container><ng-container matColumnDef="end"><th mat-header-cell *matHeaderCellDef>End date</th><td mat-cell *matCellDef="let sprint">{{ sprint.scheduled_end_date || '—' }}</td></ng-container><ng-container matColumnDef="velocity"><th mat-header-cell *matHeaderCellDef>Velocity</th><td mat-cell *matCellDef="let sprint">{{ sprint.target_velocity || 0 }} pts</td></ng-container><tr mat-header-row *matHeaderRowDef="profileSprintDisplayedColumns"></tr><tr mat-row *matRowDef="let row; columns: profileSprintDisplayedColumns"></tr></table><div class="project-table-empty" *ngIf="getProjectProfileSprints(profile).length === 0"><mat-icon>event_busy</mat-icon><strong>No sprints yet</strong><span>Sprints will appear here once they are created.</span></div></div>
         </section>
       
       </ng-container>
@@ -728,7 +691,7 @@
             </div>
             <div class="person-card-details">
               <strong>{{ member.name || 'Unnamed member' }}</strong>
-              <span class="person-designation">{{ member.designation || member.jobTitle || member.title || member.role || 'Team member' }}</span>
+              <span class="person-designation">{{ memberDesignation(member) }}</span>
               <span class="person-card-email" *ngIf="member.email">{{ member.email }}</span>
             </div>
           </article>
@@ -758,7 +721,7 @@
         <section class="profile-section-card profile-step-card">
           <div class="profile-section-heading"><div><h2>Sprints preview</h2><p>Planned delivery cycles for {{ profile.name || (isProfileCreating ? 'New project' : 'Untitled project') }}.</p></div><button mat-stroked-button type="button" (click)="switchToSprintsForProject(profile.project_code, profile.id)">Open sprint directory</button></div>
           <div class="sprint-preview-metrics"><div><span>Existing sprints</span><strong>{{ getProjectProfileSprints(profile).length }}</strong></div><div><span>Target velocity</span><strong>{{ isProfileEditing ? projectForm.target_velocity : profile.target_velocity }} pts</strong></div><div><span>Projected cycles</span><strong>{{ isProfileEditing ? projectForm.computed_sprint_count : profile.computed_sprint_count }}</strong></div></div>
-          <div class="project-table-shell profile-sprints-table-shell"><table mat-table [dataSource]="getProjectProfileSprints(profile)" class="projects-mat-table profile-sprints-table">
+          <section class="project-sprint-scope"><header><h3>Sprint work items</h3><button type="button" class="gp-button gp-primary" (click)="openProjectPlanning(profile)">Project planning</button></header><p *ngIf="projectWorkLoading">Loading sprint work…</p><p *ngIf="projectWorkError" role="status">{{projectWorkError}}</p><details *ngFor="let sprint of getProjectProfileSprints(profile)"><summary>{{sprint.name}} <b>{{sprintPreviewItems(sprint).length}} items</b></summary><button type="button" class="project-scope-item" *ngFor="let item of sprintPreviewItems(sprint)" (click)="openProjectWorkItem(item)"><strong>{{item.key}}</strong><span>{{item.title}}</span><span>{{item.assignee}}</span><b>{{item.status}}</b></button><p *ngIf="!sprintPreviewItems(sprint).length">No work assigned to this sprint.</p></details></section><div class="project-table-shell profile-sprints-table-shell"><table mat-table [dataSource]="getProjectProfileSprints(profile)" class="projects-mat-table profile-sprints-table">
             <ng-container matColumnDef="sprint"><th mat-header-cell *matHeaderCellDef>Sprint</th><td mat-cell *matCellDef="let sprint"><button type="button" class="sprint-table-link" (click)="openSprintDetails(sprint)"><strong>{{ sprint.name }}</strong><small>{{ sprint.projectCode }} · Sprint {{ sprint.sprint_number }}</small></button></td></ng-container>
             <ng-container matColumnDef="sprintStatus"><th mat-header-cell *matHeaderCellDef>Status</th><td mat-cell *matCellDef="let sprint"><span class="project-status-badge" [class.status-active]="sprint.status === 'CURRENT'" [class.status-hold]="sprint.status === 'PLANNED'" [class.status-archived]="sprint.status === 'COMPLETED'"><span class="status-dot"></span>{{ sprint.status | titlecase }}</span></td></ng-container>
             <ng-container matColumnDef="start"><th mat-header-cell *matHeaderCellDef>Start date</th><td mat-cell *matCellDef="let sprint">{{ sprint.scheduled_start_date || '—' }}</td></ng-container>
@@ -995,7 +958,7 @@
       </div>
 
 
-      <footer class="detail-footer">
+      <section class="project-sprint-scope"><h3>Included work items</h3><p *ngIf="projectWorkLoading">Loading sprint work…</p><p *ngIf="projectWorkError">{{projectWorkError}}</p><button type="button" class="project-scope-item" *ngFor="let item of sprintPreviewItems(selectedSprint!)" (click)="openProjectWorkItem(item)"><strong>{{item.key}}</strong><span>{{item.title}}</span><b>{{item.status}}</b></button><p *ngIf="!projectWorkLoading && !sprintPreviewItems(selectedSprint!).length">No work assigned to this sprint.</p></section><footer class="detail-footer">
 
         <button
           type="button"

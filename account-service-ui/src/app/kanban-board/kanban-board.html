@@ -1,22 +1,7 @@
 <section class="kb-page">
-  <div class="kb-board-view" [class.is-hidden]="!!selectedItem || showCreateForm">
-  <header class="kb-board-heading">
-    <div class="kb-title-block">
-      <div class="kb-title-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M9 4v16M15 4v16"></path></svg>
-      </div>
-      <div><h2>Board: {{ selectedProject?.name || 'Kanban' }}</h2></div>
-    </div>
-    <div class="kb-heading-actions">
-      <button type="button" class="kb-button kb-button-outline" (click)="openCreateFor('Epic')"><span aria-hidden="true">＋</span><span>Epic</span></button>
-      <button type="button" class="kb-button kb-button-outline" (click)="openCreateFor('Story')"><span aria-hidden="true">＋</span><span>Story</span></button>
-      <button type="button" class="kb-button kb-button-outline" (click)="openCreateFor('Task')"><span aria-hidden="true">＋</span><span>Task</span></button>
-      <button type="button" class="kb-button kb-button-outline" (click)="openCreateFor('Bug')"><span aria-hidden="true">＋</span><span>Issue</span></button>
-      <button type="button" class="kb-button kb-button-outline" (click)="toggleProgress()" [attr.aria-expanded]="sprintProgressOpen">
-        <svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16"></path><path d="m7 15 4-4 3 2 5-7"></path></svg><span>Sprint progress</span>
-      </button>
-    </div>
-  </header>
+  <div class="kb-board-view" [class.is-hidden]="!!selectedItem || showCreateForm || !!dialogRequest">
+  <app-workspace-hero [compact]="true" eyebrow="PLAN · PRIORITIZE · MOVE" title="Kanban board" subtitle="See the flow, focus on the next step, and keep work moving." image="assets/covers/kanban.png" imageAlt="A team moving work through a kanban board"></app-workspace-hero>
+
 
   <section class="kb-cycle-panel">
     <div class="kb-cycle-copy">
@@ -41,7 +26,7 @@
           [class.is-selected]="isPersonSelected(person.id)" (click)="selectPerson(person.id)"
           [attr.aria-pressed]="isPersonSelected(person.id)" [attr.title]="'Show tickets assigned to ' + person.name">
           <img *ngIf="person.avatarUrl" class="kb-avatar" [src]="person.avatarUrl" [alt]="person.name" />
-          <span *ngIf="!person.avatarUrl" class="kb-avatar" [style.background]="person.color">{{ person.initials }}</span>
+          <span *ngIf="!person.avatarUrl" class="kb-avatar" [ngClass]="personToneClass(person.id)">{{ person.initials }}</span>
           <span class="kb-person-name">{{ person.name }}</span><b>{{ itemsAssignedTo(person.id) }}</b>
         </button>
       </div>
@@ -56,7 +41,7 @@
           </button>
           <button *ngFor="let person of assignedPeople; trackBy: trackByPersonId" type="button" class="kb-people-picker-option" [class.is-selected]="isPersonSelected(person.id)" (click)="selectPerson(person.id); peopleListOpen = false">
             <img *ngIf="person.avatarUrl" class="kb-avatar" [src]="person.avatarUrl" [alt]="person.name" />
-            <span *ngIf="!person.avatarUrl" class="kb-avatar" [style.background]="person.color">{{ person.initials }}</span>
+            <span *ngIf="!person.avatarUrl" class="kb-avatar" [ngClass]="personToneClass(person.id)">{{ person.initials }}</span>
             <span class="kb-person-name">{{ person.name }}</span><b>{{ itemsAssignedTo(person.id) }}</b>
           </button>
           <span class="kb-no-assignees" *ngIf="assignedPeople.length === 0">No assigned people in this cycle</span>
@@ -83,6 +68,16 @@
           </button>
           <span class="kb-button kb-group-label" aria-label="Cards grouped by status"><svg viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"></path><path d="m3 12 9 5 9-5M3 16l9 5 9-5"></path></svg><span>Group</span></span>
         </div>
+            <div class="kb-heading-actions">
+      <button type="button" class="kb-button kb-button-outline" (click)="openCreateFor('Epic')"><span aria-hidden="true">＋</span><span>Epic</span></button>
+      <button type="button" class="kb-button kb-button-outline" (click)="openCreateFor('Story')"><span aria-hidden="true">＋</span><span>Story</span></button>
+      <button type="button" class="kb-button kb-button-outline" (click)="openCreateFor('Task')"><span aria-hidden="true">＋</span><span>Task</span></button>
+      <button type="button" class="kb-button kb-button-outline" (click)="openCreateFor('Bug')"><span aria-hidden="true">＋</span><span>Issue</span></button>
+      <button type="button" class="kb-button kb-button-outline" (click)="toggleProgress()" [attr.aria-expanded]="sprintProgressOpen">
+        <svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16"></path><path d="m7 15 4-4 3 2 5-7"></path></svg><span>Sprint progress</span>
+      </button>
+    </div>
+
         <div class="kb-board-toolbar-copy"><strong>Work items</strong><span>{{ filteredItems.length }} items</span></div>
 
         <section class="kb-filter-panel" *ngIf="filterPanelOpen" role="dialog" aria-label="Filter work items">
@@ -139,7 +134,10 @@
 
   </div>
 
-  <section class="kb-item-page kb-create-item-page" *ngIf="showCreateForm" (window:keydown.escape)="cancelCreate()">
+  <div *ngIf="dialogRequest && !selectedItem" class="shared-item-loading" role="dialog" aria-modal="true" aria-label="Loading work item"><div><button type="button" (click)="dialogClosed.emit()" aria-label="Close work item">×</button><h2>{{ loading ? 'Loading work item…' : 'Work item unavailable' }}</h2><p>{{ loadError || (loading ? 'Getting the latest project details.' : 'This item was not returned by the project API. Refresh the project or check your access.') }}</p></div></div>
+  <div class="kb-item-dialog-backdrop" *ngIf="selectedItem || showCreateForm" aria-hidden="true"></div>
+
+  <section class="kb-item-page kb-create-item-page kb-work-item-dialog" role="dialog" aria-modal="true" aria-label="Create work item" cdkTrapFocus [cdkTrapFocusAutoCapture]="true" *ngIf="showCreateForm" (window:keydown.escape)="cancelCreate()">
     <form class="kb-create-item-form" (ngSubmit)="createItem()">
       <nav class="kb-item-page-nav" aria-label="New work item navigation">
         <button type="button" class="kb-item-back" (click)="cancelCreate()"><span aria-hidden="true">←</span> Back to board</button>
@@ -161,11 +159,21 @@
 
       <div class="kb-create-error" *ngIf="createError" role="alert">{{ createError }}</div>
       <section class="kb-item-detail-layout" [attr.aria-label]="'Create ' + (newType === 'Bug' ? 'issue' : newType.toLowerCase())">
-        <section class="kb-detail-title-section kb-detail-title-full kb-create-title-section">
+        <header class="kb-item-title-row">
+          <div class="kb-detail-data-cell kb-detail-status-cell">
+                <span class="kb-detail-label">Status</span><mat-form-field appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><mat-select name="newStatus" [(ngModel)]="newStatus" aria-label="Status"><mat-select-trigger><span class="kb-status-option" [ngClass]="'status-' + statusClass(newStatus)">{{ newStatus }}</span></mat-select-trigger><mat-option *ngFor="let status of statuses" [value]="status"><span class="kb-status-option" [ngClass]="'status-' + statusClass(status)">{{ status }}</span></mat-option></mat-select></mat-form-field></div>
+        <div class="kb-detail-data-cell">
+                <span class="kb-detail-label">Priority</span><mat-form-field appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><mat-select name="newPriority" [(ngModel)]="newPriority" aria-label="Priority"><mat-option value="Critical">Critical</mat-option><mat-option value="High">High</mat-option><mat-option value="Medium">Medium</mat-option><mat-option value="Low">Low</mat-option></mat-select></mat-form-field></div>
+<div class="kb-detail-data-cell">
+                <span class="kb-detail-label">Assignee</span><mat-form-field appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><input matInput name="newAssigneeSearchText" [(ngModel)]="newAssigneeSearchText" (ngModelChange)="filterCreatePeople('assignee', $event)" [matAutocomplete]="newAssigneeAuto" aria-label="Search assignee" /><mat-autocomplete #newAssigneeAuto="matAutocomplete" (optionSelected)="selectCreatePerson('assignee', $event.option.value)"><mat-option [value]="null">Unassigned</mat-option><mat-option *ngFor="let person of filteredCreatePeople('assignee'); trackBy: trackByPersonId" [value]="person.id"><span class="person-option-layout"><span class="person-option-avatar" [ngClass]="'person-tone-' + (person.id % 4)">{{ person.initials }}</span><span class="person-option-copy"><strong>{{ person.name }}</strong><small>{{ person.designation || 'Team member' }}</small></span></span></mat-option><mat-option *ngIf="newAssigneeSearchText && !filteredCreatePeople('assignee').length" disabled>No matching people</mat-option></mat-autocomplete></mat-form-field></div>
+<div class="kb-detail-data-cell">
+                <span class="kb-detail-label">Reporter</span><mat-form-field appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><input matInput name="newReporterSearchText" [(ngModel)]="newReporterSearchText" (ngModelChange)="filterCreatePeople('reporter', $event)" [matAutocomplete]="newReporterAuto" aria-label="Search reporter" /><mat-autocomplete #newReporterAuto="matAutocomplete" (optionSelected)="selectCreatePerson('reporter', $event.option.value)"><mat-option [value]="null">No reporter</mat-option><mat-option *ngFor="let person of filteredCreatePeople('reporter'); trackBy: trackByPersonId" [value]="person.id"><span class="person-option-layout"><span class="person-option-avatar" [ngClass]="'person-tone-' + (person.id % 4)">{{ person.initials }}</span><span class="person-option-copy"><strong>{{ person.name }}</strong><small>{{ person.designation || 'Team member' }}</small></span></span></mat-option><mat-option *ngIf="newReporterSearchText && !filteredCreatePeople('reporter').length" disabled>No matching people</mat-option></mat-autocomplete></mat-form-field></div>
+<section class="kb-detail-title-section kb-detail-title-full kb-create-title-section">
           <label class="kb-detail-label" for="kb-new-title">Title</label>
-          <input id="kb-new-title" class="kb-title-edit-input" type="text" name="newTitle" [(ngModel)]="newTitle" required maxlength="240" placeholder="Give this work item a clear title" />
+          <input id="kb-new-title" class="kb-title-edit-input" type="text" name="newTitle" [(ngModel)]="newTitle" required maxlength="240" placeholder="Give this work item a clear title" cdkFocusInitial />
         </section>
 
+        </header>
         <div class="kb-detail-content">
           <main class="kb-detail-main">
             <section class="kb-detail-description-section">
@@ -206,22 +214,16 @@
           </main>
 
           <aside class="kb-detail-sidebar">
-            <section class="kb-detail-fields kb-detail-primary-fields" aria-label="Work item details">
-              <div class="kb-detail-fields-grid">
-                <div class="kb-detail-data-cell"><mat-form-field appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><mat-label>Status</mat-label><mat-select name="newStatus" [(ngModel)]="newStatus"><mat-select-trigger><span class="kb-status-option" [ngClass]="'status-' + statusClass(newStatus)">{{ newStatus }}</span></mat-select-trigger><mat-option *ngFor="let status of statuses" [value]="status"><span class="kb-status-option" [ngClass]="'status-' + statusClass(status)">{{ status }}</span></mat-option></mat-select></mat-form-field></div>
-                <div class="kb-detail-data-cell"><mat-form-field appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><mat-label>Priority</mat-label><mat-select name="newPriority" [(ngModel)]="newPriority"><mat-option value="Critical">Critical</mat-option><mat-option value="High">High</mat-option><mat-option value="Medium">Medium</mat-option><mat-option value="Low">Low</mat-option></mat-select></mat-form-field></div>
-                <div class="kb-detail-data-cell"><mat-form-field appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><mat-label>Assignee</mat-label><input matInput name="newAssigneeSearchText" [(ngModel)]="newAssigneeSearchText" (ngModelChange)="filterCreatePeople('assignee', $event)" [matAutocomplete]="newAssigneeAuto" aria-label="Search assignee" /><mat-autocomplete #newAssigneeAuto="matAutocomplete" (optionSelected)="selectCreatePerson('assignee', $event.option.value)"><mat-option [value]="null">Unassigned</mat-option><mat-option *ngFor="let person of filteredCreatePeople('assignee'); trackBy: trackByPersonId" [value]="person.id">{{ person.name }}</mat-option><mat-option *ngIf="newAssigneeSearchText && !filteredCreatePeople('assignee').length" disabled>No matching people</mat-option></mat-autocomplete></mat-form-field></div>
-                <div class="kb-detail-data-cell"><mat-form-field appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><mat-label>Reporter</mat-label><input matInput name="newReporterSearchText" [(ngModel)]="newReporterSearchText" (ngModelChange)="filterCreatePeople('reporter', $event)" [matAutocomplete]="newReporterAuto" aria-label="Search reporter" /><mat-autocomplete #newReporterAuto="matAutocomplete" (optionSelected)="selectCreatePerson('reporter', $event.option.value)"><mat-option [value]="null">No reporter</mat-option><mat-option *ngFor="let person of filteredCreatePeople('reporter'); trackBy: trackByPersonId" [value]="person.id">{{ person.name }}</mat-option><mat-option *ngIf="newReporterSearchText && !filteredCreatePeople('reporter').length" disabled>No matching people</mat-option></mat-autocomplete></mat-form-field></div>
-                <div class="kb-detail-data-cell"><mat-form-field appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><mat-label>Sprint</mat-label><mat-select name="newSprintId" [(ngModel)]="newSprintId"><mat-option [value]="null">No sprint</mat-option><mat-option *ngFor="let sprint of projectSprints" [value]="sprint.id">{{ sprint.name }}</mat-option></mat-select></mat-form-field></div>
-              </div>
-            </section>
+
 
             <section class="kb-detail-section-card kb-detail-secondary-fields kb-create-extra-fields">
               <header><div><h2>Additional information</h2></div></header>
-              <mat-form-field *ngIf="newType === 'Epic'" appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><mat-label>Epic code</mat-label><input matInput name="newEpicCode" [(ngModel)]="newEpicCode" required placeholder="e.g. EPIC-123" /></mat-form-field>
-              <mat-form-field *ngIf="newType === 'Bug'" appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><mat-label>Issue code</mat-label><input matInput name="newIssueCode" [(ngModel)]="newIssueCode" required /></mat-form-field>
-              <mat-form-field *ngIf="newType === 'Story' || newType === 'Task'" appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><mat-label>Story points</mat-label><input matInput type="number" min="0" name="newPoints" [(ngModel)]="newPoints" /></mat-form-field>
-              <mat-form-field appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><mat-label>Labels</mat-label><input matInput name="newLabelsText" [(ngModel)]="newLabelsText" placeholder="Separate labels with commas" /></mat-form-field>
+<div class="kb-detail-data-cell">
+                <span class="kb-detail-label">Sprint</span><mat-form-field appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><mat-select name="newSprintId" [(ngModel)]="newSprintId" aria-label="Sprint"><mat-option [value]="null">No sprint</mat-option><mat-option *ngFor="let sprint of projectSprints" [value]="sprint.id">{{ sprint.name }}</mat-option></mat-select></mat-form-field></div>
+              <div class="kb-detail-data-cell" *ngIf="newType === 'Epic'"><span class="kb-detail-label">Epic code</span><mat-form-field appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><input matInput name="newEpicCode" [(ngModel)]="newEpicCode" required placeholder="e.g. EPIC-123" aria-label="Epic code" /></mat-form-field></div>
+              <div class="kb-detail-data-cell" *ngIf="newType === 'Bug'"><span class="kb-detail-label">Issue code</span><mat-form-field appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><input matInput name="newIssueCode" [(ngModel)]="newIssueCode" required aria-label="Issue code" /></mat-form-field></div>
+              <div class="kb-detail-data-cell" *ngIf="newType === 'Story' || newType === 'Task'"><span class="kb-detail-label">Story points</span><mat-form-field appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><input matInput type="number" min="0" name="newPoints" [(ngModel)]="newPoints" aria-label="Story points" /></mat-form-field></div>
+              <div class="kb-detail-data-cell"><span class="kb-detail-label">Labels</span><mat-form-field appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><input matInput name="newLabelsText" [(ngModel)]="newLabelsText" placeholder="Separate labels with commas" aria-label="Labels" /></mat-form-field></div>
             </section>
           </aside>
         </div>
@@ -230,12 +232,11 @@
           <header class="kb-activity-heading"><h2>Comments and activity</h2></header>
           <p>Activity will appear here after this item is created.</p>
         </section>
-        <footer class="kb-create-footer"><button type="button" class="kb-comment-cancel" (click)="cancelCreate()" [disabled]="creatingItem">Cancel</button><button type="submit" class="kb-comment-save" [disabled]="creatingItem || !newTitle.trim()">{{ creatingItem ? 'Creating…' : 'Create ' + (newType === 'Bug' ? 'Issue' : newType) }}</button></footer>
       </section>
     </form>
   </section>
 
-  <section class="kb-item-page" *ngIf="selectedItem as detail" (window:keydown.escape)="closeItemDetails()">
+  <section class="kb-item-page kb-work-item-dialog" role="dialog" aria-modal="true" [attr.aria-label]="detail.title" cdkTrapFocus [cdkTrapFocusAutoCapture]="true" *ngIf="selectedItem as detail" (window:keydown.escape)="closeItemDetails()">
     <nav class="kb-item-page-nav" aria-label="Work item navigation">
       <button type="button" class="kb-item-back" (click)="closeItemDetails()"><span aria-hidden="true">←</span> Back to board</button>
       <div class="kb-item-breadcrumb">
@@ -250,14 +251,43 @@
         <button type="button" class="kb-item-copy-key" (click)="copyItemKey(detail.key)" [attr.aria-label]="copiedItemKey ? 'Item key copied' : 'Copy item key'">
           <span aria-hidden="true">{{ copiedItemKey ? '✓' : '⧉' }}</span>{{ copiedItemKey ? 'Copied' : 'Copy key' }}
         </button>
+        <button type="button" class="kb-dialog-close" aria-label="Close work item" (click)="closeItemDetails()">×</button>
       </div>
     </nav>
     <section class="kb-item-detail-layout" role="region" [attr.aria-label]="detail.title">
-      <section class="kb-detail-title-section kb-detail-title-full">
-        <input *ngIf="editingDetailField === 'title'" class="kb-title-edit-input" type="text" maxlength="240" [ngModel]="detailDraft.title" (ngModelChange)="updateDetailDraft('title', $event)" aria-label="Work item title" />
+      <header class="kb-item-title-row">
+                    <div class="kb-detail-data-cell kb-detail-status-cell">
+                <span class="kb-detail-label">Status</span>
+                <mat-form-field *ngIf="editingDetailField === 'status'" appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><mat-select [ngModel]="detailDraft.status" (ngModelChange)="updateDetailDraft('status', $event)" aria-label="Status"><mat-select-trigger><span class="kb-status-option" [ngClass]="'status-' + statusClass(detailDraft.status)">{{ detailDraft.status }}</span></mat-select-trigger><mat-option *ngFor="let status of statuses" [value]="status"><span class="kb-status-option" [ngClass]="'status-' + statusClass(status)">{{ status }}</span></mat-option></mat-select></mat-form-field>
+                <div *ngIf="editingDetailField === 'status'" class="kb-inline-actions"><button type="button" class="kb-inline-save" (click)="saveDetailField(detail, 'status')" [disabled]="detailSaving" aria-label="Save status">✓</button><button type="button" class="kb-inline-cancel" (click)="cancelDetailFieldEdit()" [disabled]="detailSaving" aria-label="Cancel status edit">×</button></div>
+                <button *ngIf="editingDetailField !== 'status'" type="button" class="kb-detail-value-field kb-inline-trigger" (click)="beginDetailFieldEdit('status')"><strong class="kb-status-value" [ngClass]="'status-' + statusClass(detail.status)">{{ detail.status }}</strong><span class="kb-field-edit-icon" aria-hidden="true">✎</span></button>
+              </div>
+
+      <div class="kb-detail-data-cell kb-detail-priority-cell">
+                <span class="kb-detail-label">Priority</span>
+                <mat-form-field *ngIf="editingDetailField === 'priority'" appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><mat-select [ngModel]="detailDraft.priority" (ngModelChange)="updateDetailDraft('priority', $event)" aria-label="Priority"><mat-option value="Critical">Critical</mat-option><mat-option value="High">High</mat-option><mat-option value="Medium">Medium</mat-option><mat-option value="Low">Low</mat-option></mat-select></mat-form-field>
+                <div *ngIf="editingDetailField === 'priority'" class="kb-inline-actions"><button type="button" class="kb-inline-save" (click)="saveDetailField(detail, 'priority')" [disabled]="detailSaving" aria-label="Save priority">✓</button><button type="button" class="kb-inline-cancel" (click)="cancelDetailFieldEdit()" [disabled]="detailSaving" aria-label="Cancel priority edit">×</button></div>
+                <button *ngIf="editingDetailField !== 'priority'" type="button" class="kb-detail-value-field kb-inline-trigger" (click)="beginDetailFieldEdit('priority')"><strong>{{ detail.priority }}</strong><span class="kb-field-edit-icon" aria-hidden="true">✎</span></button>
+              </div>
+<div class="kb-detail-data-cell kb-detail-assignee-cell">
+                <span class="kb-detail-label">Assignee</span>
+                <mat-form-field *ngIf="editingDetailField === 'assigneeId'" appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><input matInput [(ngModel)]="assigneeSearchText" (ngModelChange)="filterDetailPeople('assignee', $event)" [matAutocomplete]="assigneeAuto" aria-label="Search assignee" /><mat-autocomplete #assigneeAuto="matAutocomplete" (optionSelected)="selectDetailPerson('assigneeId', $event.option.value)"><mat-option [value]="null">Unassigned</mat-option><mat-option *ngFor="let person of filteredDetailPeople('assignee'); trackBy: trackByPersonId" [value]="person.id"><span class="person-option-layout"><span class="person-option-avatar" [ngClass]="'person-tone-' + (person.id % 4)">{{ person.initials }}</span><span class="person-option-copy"><strong>{{ person.name }}</strong><small>{{ person.designation || 'Team member' }}</small></span></span></mat-option><mat-option *ngIf="assigneeSearchText && !filteredDetailPeople('assignee').length" disabled>No matching people</mat-option></mat-autocomplete></mat-form-field>
+                <div *ngIf="editingDetailField === 'assigneeId'" class="kb-inline-actions"><button type="button" class="kb-inline-save" (click)="saveDetailField(detail, 'assigneeId')" [disabled]="detailSaving" aria-label="Save assignee">✓</button><button type="button" class="kb-inline-cancel" (click)="cancelDetailFieldEdit()" [disabled]="detailSaving" aria-label="Cancel assignee edit">×</button></div>
+                <button *ngIf="editingDetailField !== 'assigneeId'" type="button" class="kb-detail-value-field kb-inline-trigger kb-user-value-field" (click)="beginDetailFieldEdit('assigneeId')"><strong class="kb-user-value"><span class="kb-detail-avatar" aria-hidden="true"><img *ngIf="detailPersonAvatarUrl(detail.assigneeId) as avatarUrl" [src]="avatarUrl" alt="" /><span *ngIf="!detailPersonAvatarUrl(detail.assigneeId)">{{ detailAssigneeInitials(detail) }}</span></span>{{ detail.assignee }}</strong><span class="kb-field-edit-icon" aria-hidden="true">✎</span></button>
+              </div>
+<div class="kb-detail-data-cell kb-detail-reporter-cell">
+                <span class="kb-detail-label">Reporter</span>
+                <mat-form-field *ngIf="editingDetailField === 'reporterId'" appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><input matInput [(ngModel)]="reporterSearchText" (ngModelChange)="filterDetailPeople('reporter', $event)" [matAutocomplete]="reporterAuto" aria-label="Search reporter" /><mat-autocomplete #reporterAuto="matAutocomplete" (optionSelected)="selectDetailPerson('reporterId', $event.option.value)"><mat-option [value]="null">No reporter</mat-option><mat-option *ngFor="let person of filteredDetailPeople('reporter'); trackBy: trackByPersonId" [value]="person.id"><span class="person-option-layout"><span class="person-option-avatar" [ngClass]="'person-tone-' + (person.id % 4)">{{ person.initials }}</span><span class="person-option-copy"><strong>{{ person.name }}</strong><small>{{ person.designation || 'Team member' }}</small></span></span></mat-option><mat-option *ngIf="reporterSearchText && !filteredDetailPeople('reporter').length" disabled>No matching people</mat-option></mat-autocomplete></mat-form-field>
+                <div *ngIf="editingDetailField === 'reporterId'" class="kb-inline-actions"><button type="button" class="kb-inline-save" (click)="saveDetailField(detail, 'reporterId')" [disabled]="detailSaving" aria-label="Save reporter">✓</button><button type="button" class="kb-inline-cancel" (click)="cancelDetailFieldEdit()" [disabled]="detailSaving" aria-label="Cancel reporter edit">×</button></div>
+                <button *ngIf="editingDetailField !== 'reporterId'" type="button" class="kb-detail-value-field kb-inline-trigger kb-user-value-field" (click)="beginDetailFieldEdit('reporterId')"><strong class="kb-user-value"><span class="kb-detail-avatar kb-detail-avatar-reporter" aria-hidden="true"><img *ngIf="detailPersonAvatarUrl(detail.reporterId) as avatarUrl" [src]="avatarUrl" alt="" /><span *ngIf="!detailPersonAvatarUrl(detail.reporterId)">{{ detailReporterInitials(detail) }}</span></span>{{ detailReporter(detail) }}</strong><span class="kb-field-edit-icon" aria-hidden="true">✎</span></button>
+              </div>
+<section class="kb-detail-title-section kb-detail-title-full">
+        <span class="kb-detail-label">Title</span>
+        <input *ngIf="editingDetailField === 'title'" class="kb-title-edit-input" type="text" (keydown.enter)="saveDetailField(detail, 'title')" maxlength="240" [ngModel]="detailDraft.title" (ngModelChange)="updateDetailDraft('title', $event)" aria-label="Work item title" />
         <div *ngIf="editingDetailField === 'title'" class="kb-inline-actions"><button type="button" class="kb-inline-save" (click)="saveDetailField(detail, 'title')" [disabled]="detailSaving" aria-label="Save title">✓</button><button type="button" class="kb-inline-cancel" (click)="cancelDetailFieldEdit()" [disabled]="detailSaving" aria-label="Cancel title edit">×</button></div>
-        <div *ngIf="editingDetailField !== 'title'" class="kb-detail-title-view kb-inline-trigger" role="button" tabindex="0" (click)="beginDetailFieldEdit('title')" (keydown.enter)="beginDetailFieldEdit('title')" (keydown.space)="beginDetailFieldEdit('title')" aria-label="Edit title"><span class="kb-detail-label">Title</span><h1>{{ detail.title }}</h1><span class="kb-field-edit-icon" aria-hidden="true">✎</span></div>
+        <div *ngIf="editingDetailField !== 'title'" class="kb-detail-title-view kb-inline-trigger" role="button" tabindex="0" (click)="beginDetailFieldEdit('title')" (keydown.enter)="beginDetailFieldEdit('title')" (keydown.space)="beginDetailFieldEdit('title')" aria-label="Edit title"><h1 [title]="detail.title">{{ detail.title }}</h1><span class="kb-field-edit-icon" aria-hidden="true">✎</span></div>
       </section>
+      </header>
       <div class="kb-detail-content">
         <main class="kb-detail-main">
           <section class="kb-detail-description-section">
@@ -293,57 +323,39 @@
 
         <aside class="kb-detail-sidebar">
           <p class="kb-detail-save-error" *ngIf="detailEditError" role="status">{{ detailEditError }}</p>
-          <section class="kb-detail-fields kb-detail-primary-fields" aria-label="Work item details">
-            <div class="kb-detail-fields-grid">
-              <div class="kb-detail-data-cell kb-detail-status-cell">
-                <mat-form-field *ngIf="editingDetailField === 'status'" appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><mat-label>Status</mat-label><mat-select [ngModel]="detailDraft.status" (ngModelChange)="updateDetailDraft('status', $event)"><mat-select-trigger><span class="kb-status-option" [ngClass]="'status-' + statusClass(detailDraft.status)">{{ detailDraft.status }}</span></mat-select-trigger><mat-option *ngFor="let status of statuses" [value]="status"><span class="kb-status-option" [ngClass]="'status-' + statusClass(status)">{{ status }}</span></mat-option></mat-select></mat-form-field>
-                <div *ngIf="editingDetailField === 'status'" class="kb-inline-actions"><button type="button" class="kb-inline-save" (click)="saveDetailField(detail, 'status')" [disabled]="detailSaving" aria-label="Save status">✓</button><button type="button" class="kb-inline-cancel" (click)="cancelDetailFieldEdit()" [disabled]="detailSaving" aria-label="Cancel status edit">×</button></div>
-                <button *ngIf="editingDetailField !== 'status'" type="button" class="kb-detail-value-field kb-inline-trigger" (click)="beginDetailFieldEdit('status')"><span>Status</span><strong class="kb-status-value" [ngClass]="'status-' + statusClass(detail.status)">{{ detail.status }}</strong><span class="kb-field-edit-icon" aria-hidden="true">✎</span></button>
-              </div>
-              <div class="kb-detail-data-cell kb-detail-priority-cell">
-                <mat-form-field *ngIf="editingDetailField === 'priority'" appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><mat-label>Priority</mat-label><mat-select [ngModel]="detailDraft.priority" (ngModelChange)="updateDetailDraft('priority', $event)"><mat-option value="Critical">Critical</mat-option><mat-option value="High">High</mat-option><mat-option value="Medium">Medium</mat-option><mat-option value="Low">Low</mat-option></mat-select></mat-form-field>
-                <div *ngIf="editingDetailField === 'priority'" class="kb-inline-actions"><button type="button" class="kb-inline-save" (click)="saveDetailField(detail, 'priority')" [disabled]="detailSaving" aria-label="Save priority">✓</button><button type="button" class="kb-inline-cancel" (click)="cancelDetailFieldEdit()" [disabled]="detailSaving" aria-label="Cancel priority edit">×</button></div>
-                <button *ngIf="editingDetailField !== 'priority'" type="button" class="kb-detail-value-field kb-inline-trigger" (click)="beginDetailFieldEdit('priority')"><span>Priority</span><strong>{{ detail.priority }}</strong><span class="kb-field-edit-icon" aria-hidden="true">✎</span></button>
-              </div>
-              <div class="kb-detail-data-cell kb-detail-assignee-cell">
-                <mat-form-field *ngIf="editingDetailField === 'assigneeId'" appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><mat-label>Assignee</mat-label><input matInput [(ngModel)]="assigneeSearchText" (ngModelChange)="filterDetailPeople('assignee', $event)" [matAutocomplete]="assigneeAuto" aria-label="Search assignee" /><mat-autocomplete #assigneeAuto="matAutocomplete" (optionSelected)="selectDetailPerson('assigneeId', $event.option.value)"><mat-option [value]="null">Unassigned</mat-option><mat-option *ngFor="let person of filteredDetailPeople('assignee'); trackBy: trackByPersonId" [value]="person.id">{{ person.name }}</mat-option><mat-option *ngIf="assigneeSearchText && !filteredDetailPeople('assignee').length" disabled>No matching people</mat-option></mat-autocomplete></mat-form-field>
-                <div *ngIf="editingDetailField === 'assigneeId'" class="kb-inline-actions"><button type="button" class="kb-inline-save" (click)="saveDetailField(detail, 'assigneeId')" [disabled]="detailSaving" aria-label="Save assignee">✓</button><button type="button" class="kb-inline-cancel" (click)="cancelDetailFieldEdit()" [disabled]="detailSaving" aria-label="Cancel assignee edit">×</button></div>
-                <button *ngIf="editingDetailField !== 'assigneeId'" type="button" class="kb-detail-value-field kb-inline-trigger kb-user-value-field" (click)="beginDetailFieldEdit('assigneeId')"><span>Assignee</span><strong class="kb-user-value"><span class="kb-detail-avatar" aria-hidden="true"><img *ngIf="detailPersonAvatarUrl(detail.assigneeId) as avatarUrl" [src]="avatarUrl" alt="" /><span *ngIf="!detailPersonAvatarUrl(detail.assigneeId)">{{ detailAssigneeInitials(detail) }}</span></span>{{ detail.assignee }}</strong><span class="kb-field-edit-icon" aria-hidden="true">✎</span></button>
-              </div>
-              <div class="kb-detail-data-cell kb-detail-reporter-cell">
-                <mat-form-field *ngIf="editingDetailField === 'reporterId'" appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><mat-label>Reporter</mat-label><input matInput [(ngModel)]="reporterSearchText" (ngModelChange)="filterDetailPeople('reporter', $event)" [matAutocomplete]="reporterAuto" aria-label="Search reporter" /><mat-autocomplete #reporterAuto="matAutocomplete" (optionSelected)="selectDetailPerson('reporterId', $event.option.value)"><mat-option [value]="null">No reporter</mat-option><mat-option *ngFor="let person of filteredDetailPeople('reporter'); trackBy: trackByPersonId" [value]="person.id">{{ person.name }}</mat-option><mat-option *ngIf="reporterSearchText && !filteredDetailPeople('reporter').length" disabled>No matching people</mat-option></mat-autocomplete></mat-form-field>
-                <div *ngIf="editingDetailField === 'reporterId'" class="kb-inline-actions"><button type="button" class="kb-inline-save" (click)="saveDetailField(detail, 'reporterId')" [disabled]="detailSaving" aria-label="Save reporter">✓</button><button type="button" class="kb-inline-cancel" (click)="cancelDetailFieldEdit()" [disabled]="detailSaving" aria-label="Cancel reporter edit">×</button></div>
-                <button *ngIf="editingDetailField !== 'reporterId'" type="button" class="kb-detail-value-field kb-inline-trigger kb-user-value-field" (click)="beginDetailFieldEdit('reporterId')"><span>Reporter</span><strong class="kb-user-value"><span class="kb-detail-avatar kb-detail-avatar-reporter" aria-hidden="true"><img *ngIf="detailPersonAvatarUrl(detail.reporterId) as avatarUrl" [src]="avatarUrl" alt="" /><span *ngIf="!detailPersonAvatarUrl(detail.reporterId)">{{ detailReporterInitials(detail) }}</span></span>{{ detailReporter(detail) }}</strong><span class="kb-field-edit-icon" aria-hidden="true">✎</span></button>
-              </div>
-              <div class="kb-detail-data-cell kb-detail-sprint-cell">
-                <mat-form-field *ngIf="editingDetailField === 'sprintId'" appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><mat-label>Sprint</mat-label><mat-select [ngModel]="detailDraft.sprintId" (ngModelChange)="updateDetailDraft('sprintId', $event)"><mat-option [value]="null">No sprint</mat-option><mat-option *ngFor="let sprint of projectSprints" [value]="sprint.id">{{ sprint.name }}</mat-option></mat-select></mat-form-field>
+
+          <details class="kb-detail-section-card kb-detail-secondary-fields">
+            <summary>Additional information</summary>
+<div class="kb-detail-data-cell kb-detail-sprint-cell">
+                <span class="kb-detail-label">Sprint</span>
+                <mat-form-field *ngIf="editingDetailField === 'sprintId'" appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><mat-select [ngModel]="detailDraft.sprintId" (ngModelChange)="updateDetailDraft('sprintId', $event)" aria-label="Sprint"><mat-option [value]="null">No sprint</mat-option><mat-option *ngFor="let sprint of projectSprints" [value]="sprint.id">{{ sprint.name }}</mat-option></mat-select></mat-form-field>
                 <div *ngIf="editingDetailField === 'sprintId'" class="kb-inline-actions"><button type="button" class="kb-inline-save" (click)="saveDetailField(detail, 'sprintId')" [disabled]="detailSaving" aria-label="Save sprint">✓</button><button type="button" class="kb-inline-cancel" (click)="cancelDetailFieldEdit()" [disabled]="detailSaving" aria-label="Cancel sprint edit">×</button></div>
-                <button *ngIf="editingDetailField !== 'sprintId'" type="button" class="kb-detail-value-field kb-inline-trigger" (click)="beginDetailFieldEdit('sprintId')"><span>Sprint</span><strong>{{ detail.sprintId === null ? 'No sprint' : detail.sprint }}</strong><span class="kb-field-edit-icon" aria-hidden="true">✎</span></button>
+                <button *ngIf="editingDetailField !== 'sprintId'" type="button" class="kb-detail-value-field kb-inline-trigger" (click)="beginDetailFieldEdit('sprintId')"><strong>{{ detail.sprintId === null ? 'No sprint' : detail.sprint }}</strong><span class="kb-field-edit-icon" aria-hidden="true">✎</span></button>
               </div>
-            </div>
-          </section>
-          <section class="kb-detail-section-card kb-detail-secondary-fields">
-            <header><div><h2>Additional information</h2></div></header>
             <div class="kb-detail-fields-grid">
               <div class="kb-detail-data-cell kb-detail-created-cell">
-                <mat-form-field *ngIf="editingDetailField === 'createdAtInput'" appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><mat-label>Created</mat-label><input matInput type="datetime-local" [ngModel]="detailDraft.createdAtInput" (ngModelChange)="updateDetailDraft('createdAtInput', $event)" /></mat-form-field>
+                <span class="kb-detail-label">Created</span>
+                <mat-form-field *ngIf="editingDetailField === 'createdAtInput'" appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><input matInput type="datetime-local" [ngModel]="detailDraft.createdAtInput" (ngModelChange)="updateDetailDraft('createdAtInput', $event)" aria-label="Created" /></mat-form-field>
                 <div *ngIf="editingDetailField === 'createdAtInput'" class="kb-inline-actions"><button type="button" class="kb-inline-save" (click)="saveDetailField(detail, 'createdAtInput')" [disabled]="detailSaving" aria-label="Save created date">✓</button><button type="button" class="kb-inline-cancel" (click)="cancelDetailFieldEdit()" [disabled]="detailSaving" aria-label="Cancel created date edit">×</button></div>
-                <button *ngIf="editingDetailField !== 'createdAtInput'" type="button" class="kb-detail-value-field kb-inline-trigger" (click)="beginDetailFieldEdit('createdAtInput')"><span>Created</span><strong>{{ detailDate(detail, 'created') }}</strong><span class="kb-field-edit-icon" aria-hidden="true">✎</span></button>
+                <button *ngIf="editingDetailField !== 'createdAtInput'" type="button" class="kb-detail-value-field kb-inline-trigger" (click)="beginDetailFieldEdit('createdAtInput')"><strong>{{ detailDate(detail, 'created') }}</strong><span class="kb-field-edit-icon" aria-hidden="true">✎</span></button>
               </div>
               <div class="kb-detail-data-cell kb-detail-updated-cell">
-                <mat-form-field *ngIf="editingDetailField === 'updatedAtInput'" appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><mat-label>Updated</mat-label><input matInput type="datetime-local" [ngModel]="detailDraft.updatedAtInput" (ngModelChange)="updateDetailDraft('updatedAtInput', $event)" /></mat-form-field>
+                <span class="kb-detail-label">Updated</span>
+                <mat-form-field *ngIf="editingDetailField === 'updatedAtInput'" appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><input matInput type="datetime-local" [ngModel]="detailDraft.updatedAtInput" (ngModelChange)="updateDetailDraft('updatedAtInput', $event)" aria-label="Updated" /></mat-form-field>
                 <div *ngIf="editingDetailField === 'updatedAtInput'" class="kb-inline-actions"><button type="button" class="kb-inline-save" (click)="saveDetailField(detail, 'updatedAtInput')" [disabled]="detailSaving" aria-label="Save updated date">✓</button><button type="button" class="kb-inline-cancel" (click)="cancelDetailFieldEdit()" [disabled]="detailSaving" aria-label="Cancel updated date edit">×</button></div>
-                <button *ngIf="editingDetailField !== 'updatedAtInput'" type="button" class="kb-detail-value-field kb-inline-trigger" (click)="beginDetailFieldEdit('updatedAtInput')"><span>Updated</span><strong>{{ detailDate(detail, 'updated') }}</strong><span class="kb-field-edit-icon" aria-hidden="true">✎</span></button>
+                <button *ngIf="editingDetailField !== 'updatedAtInput'" type="button" class="kb-detail-value-field kb-inline-trigger" (click)="beginDetailFieldEdit('updatedAtInput')"><strong>{{ detailDate(detail, 'updated') }}</strong><span class="kb-field-edit-icon" aria-hidden="true">✎</span></button>
               </div>
               <div class="kb-detail-data-cell kb-detail-points-cell" *ngIf="detail.sourceType === 'STORY' || detail.sourceType === 'TASK'">
-                <mat-form-field *ngIf="editingDetailField === 'points'" appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><mat-label>Story points</mat-label><input matInput type="number" min="0" [ngModel]="detailDraft.points" (ngModelChange)="updateDetailDraft('points', $event)" /></mat-form-field>
+                <span class="kb-detail-label">Story points</span>
+                <mat-form-field *ngIf="editingDetailField === 'points'" appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><input matInput aria-label="Story points" type="number" min="0" [ngModel]="detailDraft.points" (ngModelChange)="updateDetailDraft('points', $event)" /></mat-form-field>
                 <div *ngIf="editingDetailField === 'points'" class="kb-inline-actions"><button type="button" class="kb-inline-save" (click)="saveDetailField(detail, 'points')" [disabled]="detailSaving" aria-label="Save story points">✓</button><button type="button" class="kb-inline-cancel" (click)="cancelDetailFieldEdit()" [disabled]="detailSaving" aria-label="Cancel story points edit">×</button></div>
-                <button *ngIf="editingDetailField !== 'points'" type="button" class="kb-detail-value-field kb-inline-trigger" (click)="beginDetailFieldEdit('points')"><span>Story points</span><strong>{{ detail.points ?? '—' }}</strong><span class="kb-field-edit-icon" aria-hidden="true">✎</span></button>
+                <button *ngIf="editingDetailField !== 'points'" type="button" class="kb-detail-value-field kb-inline-trigger" (click)="beginDetailFieldEdit('points')"><strong>{{ detail.points ?? '—' }}</strong><span class="kb-field-edit-icon" aria-hidden="true">✎</span></button>
               </div>
               <div class="kb-detail-data-cell kb-detail-labels-cell">
-                <mat-form-field *ngIf="editingDetailField === 'labelsText'" appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><mat-label>Labels</mat-label><input matInput [ngModel]="detailDraft.labelsText" (ngModelChange)="updateDetailDraft('labelsText', $event)" placeholder="Separate labels with commas" /></mat-form-field>
+                <span class="kb-detail-label">Labels</span>
+                <mat-form-field *ngIf="editingDetailField === 'labelsText'" appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><input matInput [ngModel]="detailDraft.labelsText" (ngModelChange)="updateDetailDraft('labelsText', $event)" placeholder="Separate labels with commas" aria-label="Labels" /></mat-form-field>
                 <div *ngIf="editingDetailField === 'labelsText'" class="kb-inline-actions"><button type="button" class="kb-inline-save" (click)="saveDetailField(detail, 'labelsText')" [disabled]="detailSaving" aria-label="Save labels">✓</button><button type="button" class="kb-inline-cancel" (click)="cancelDetailFieldEdit()" [disabled]="detailSaving" aria-label="Cancel labels edit">×</button></div>
-                <button *ngIf="editingDetailField !== 'labelsText'" type="button" class="kb-detail-value-field kb-inline-trigger" (click)="beginDetailFieldEdit('labelsText')"><span>Labels</span><strong>{{ detail.labels.length ? detail.labels.join(', ') : '—' }}</strong><span class="kb-field-edit-icon" aria-hidden="true">✎</span></button>
+                <button *ngIf="editingDetailField !== 'labelsText'" type="button" class="kb-detail-value-field kb-inline-trigger" (click)="beginDetailFieldEdit('labelsText')"><strong>{{ detail.labels.length ? detail.labels.join(', ') : '—' }}</strong><span class="kb-field-edit-icon" aria-hidden="true">✎</span></button>
               </div>
             </div>
             <details class="kb-detail-collapsible" *ngIf="detailExtraFields(detail).length"><summary>More fields <span>{{ detailExtraFields(detail).length }}</span></summary>
@@ -353,7 +365,7 @@
                 <dd *ngIf="editingDetailField !== 'raw:' + field.key"><button type="button" class="kb-detail-extra-trigger kb-inline-trigger" (click)="beginDetailFieldEdit('raw:' + field.key)">{{ field.value }}<span class="kb-field-edit-icon" aria-hidden="true">✎</span></button></dd>
               </div></dl>
             </details>
-          </section>
+          </details>
         </aside>
       </div>
       <section class="kb-detail-activity kb-detail-activity-full">

@@ -3270,3 +3270,66 @@
   .form-drawer-wrapper .drawer-body.mat-mdc-card-content { padding:16px 12px 8px !important; }
   .form-drawer-wrapper .drawer-footer.mat-mdc-card-actions { padding:12px !important; }
 }
+
+/* Profile hero proportions: generous cover, overlapping portrait, readable identity. */
+.atlassian-profile-layout .users-profile-cover-wall {
+  height: clamp(280px, 35vh, 400px) !important;
+  min-height: 280px !important;
+}
+.atlassian-profile-layout .atlassian-profile-hero {
+  min-height: 500px !important;
+  padding: 0 48px 32px !important;
+}
+.atlassian-profile-layout .user-profile-identity-wrap {
+  display: block !important;
+  padding-top: 184px !important;
+}
+.atlassian-profile-layout .user-profile-avatar-wrap {
+  position: absolute !important;
+  top: -190px !important;
+  left: 48px !important;
+  width: clamp(190px, 16vw, 320px) !important;
+  height: clamp(190px, 16vw, 320px) !important;
+  margin: 0 !important;
+}
+.atlassian-profile-layout .user-profile-avatar {
+  width: 100% !important;
+  height: 100% !important;
+  border: 7px solid #fff !important;
+  border-radius: 50% !important;
+}
+.atlassian-profile-layout .atlassian-profile-identity {
+  padding: 0 !important;
+}
+.atlassian-profile-layout .atlassian-profile-identity h2 {
+  font-size: clamp(32px, 2.4vw, 46px) !important;
+}
+.atlassian-profile-layout .user-profile-role {
+  font-size: clamp(17px, 1.4vw, 21px) !important;
+}
+.atlassian-profile-layout .profile-contact-line {
+  font-size: clamp(14px, 1.15vw, 18px) !important;
+}
+.atlassian-profile-layout .user-profile-actions {
+  top: 42px !important;
+  right: 40px !important;
+}
+
+@media (max-width: 900px) {
+  .atlassian-profile-layout .users-profile-cover-wall { height: 250px !important; min-height: 250px !important; }
+  .atlassian-profile-layout .atlassian-profile-hero { min-height: 420px !important; padding: 0 26px 24px !important; }
+  .atlassian-profile-layout .user-profile-identity-wrap { padding-top: 140px !important; }
+  .atlassian-profile-layout .user-profile-avatar-wrap { top: -140px !important; left: 26px !important; width: 220px !important; height: 220px !important; }
+  .atlassian-profile-layout .user-profile-actions { top: 18px !important; right: 18px !important; }
+}
+
+@media (max-width: 600px) {
+  .atlassian-profile-layout .users-profile-cover-wall { height: 160px !important; min-height: 160px !important; }
+  .atlassian-profile-layout .atlassian-profile-hero { min-height: 0 !important; padding: 0 16px 22px !important; }
+  .atlassian-profile-layout .user-profile-identity-wrap { display: block !important; padding-top: 0 !important; }
+  .atlassian-profile-layout .user-profile-avatar-wrap { position: relative !important; top: auto !important; left: auto !important; width: 112px !important; height: 112px !important; margin-top: -52px !important; }
+  .atlassian-profile-layout .user-profile-avatar { border-width: 5px !important; }
+  .atlassian-profile-layout .atlassian-profile-identity { padding-top: 12px !important; }
+  .atlassian-profile-layout .atlassian-profile-identity h2 { font-size: 27px !important; }
+  .atlassian-profile-layout .user-profile-actions { position: static !important; justify-content: flex-start !important; max-width: none !important; margin-top: 14px !important; }
+}

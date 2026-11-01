@@ -56,14 +56,44 @@ export class AuthService {
     });
   }
 
-  getCurrentUser(): { id: number; [key: string]: any } | null {
-    const userStr = localStorage.getItem('user'); // Or wherever you store logged-in user data
+  getCurrentUser(): any | null {
+    if (!this.isBrowser()) return null;
+    const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
     if (!userStr) return null;
     try {
       return JSON.parse(userStr);
     } catch {
       return null;
     }
+  }
+
+  getCurrentUserId(): number | null {
+    if (!this.isBrowser()) return null;
+
+    const candidates = [
+      localStorage.getItem('user'),
+      localStorage.getItem('currentUser'),
+      sessionStorage.getItem('user')
+    ];
+
+    for (const candidate of candidates) {
+      if (!candidate) continue;
+
+      let parsed: any = candidate;
+      try {
+        parsed = JSON.parse(candidate);
+      } catch {
+        // Older sessions may store the numeric ID as an unquoted string.
+      }
+
+      const rawId = typeof parsed === 'object' && parsed !== null
+        ? parsed.id ?? parsed.userId ?? parsed.user_id ?? parsed.userAccountId ?? parsed.user_account_id
+        : parsed;
+      const id = Number(rawId);
+      if (Number.isSafeInteger(id) && id > 0) return id;
+    }
+
+    return null;
   }
 
 }

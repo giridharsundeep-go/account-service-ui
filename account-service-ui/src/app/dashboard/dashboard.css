@@ -1,0 +1,225 @@
+.agile-dashboard {
+  background: #fff;
+  max-width: 100%;
+  min-width: 0;
+}
+.agile-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  padding: 24px 0;
+}
+.agile-heading h1 {
+  font-size: 28px;
+  line-height: 1.3;
+  margin: 6px 0;
+  color: #172b4d;
+}
+.agile-heading p,
+.agile-panel > p {
+  font-size: 14px;
+  color: #69758a;
+  line-height: 1.6;
+}
+.agile-heading > div > span {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #69758a;
+}
+.agile-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.agile-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.agile-metrics article,
+.agile-panel {
+  padding: 24px;
+  border: 1px solid #dce4ef;
+  border-radius: 10px;
+  background: #fff;
+  min-width: 0;
+}
+.agile-metrics article {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 3px solid #7c3aed;
+}
+.agile-metrics article:nth-child(2) {
+  border-top-color: #16a34a;
+}
+.agile-metrics article:nth-child(3) {
+  border-top-color: #ea580c;
+}
+.agile-metrics article:nth-child(4) {
+  border-top-color: #2563eb;
+}
+.agile-metrics strong {
+  font-size: 32px;
+  color: #172b4d;
+}
+.agile-metrics span {
+  font-size: 12px;
+  color: #69758a;
+}
+.agile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+.agile-panel h2 {
+  font-size: 18px;
+  margin: 0 0 8px;
+  color: #172b4d;
+}
+.agile-wide {
+  grid-column: 1/-1;
+}
+.agile-flow > div {
+  display: grid;
+  grid-template-columns: 100px minmax(0, 1fr) 30px;
+  gap: 12px;
+  align-items: center;
+  margin-top: 18px;
+  font-size: 14px;
+}
+.agile-track {
+  height: 10px;
+  border-radius: 8px;
+  background: #f0f3f8;
+  overflow: hidden;
+}
+.agile-track i {
+  display: block;
+  height: 100%;
+  min-width: 0;
+  border-radius: inherit;
+  transition: width 0.35s ease;
+}
+.agile-sprints {
+  max-height: 350px;
+  overflow: auto;
+}
+.agile-sprints article {
+  margin-top: 20px;
+}
+.agile-sprints article > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+.agile-sprints small {
+  display: block;
+  margin-top: 6px;
+  color: #69758a;
+}
+.agile-people {
+  max-height: 360px;
+  overflow: auto;
+}
+.agile-people article {
+  display: grid;
+  grid-template-columns: 32px minmax(100px, 1fr) auto auto;
+  gap: 12px;
+  align-items: center;
+  border-bottom: 1px solid #eef1f5;
+  padding: 14px 0;
+  font-size: 13px;
+}
+.agile-person-mark {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: white;
+}
+.agile-release {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid #eef1f5;
+  padding: 16px 0;
+  font-size: 13px;
+}
+.agile-release > div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.agile-release b {
+  font-size: 11px;
+  background: #edf2fc;
+  color: #245da7;
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+.agile-release b.is-shipped {
+  background: #e9f8ee;
+  color: #18864b;
+}
+.agile-risk {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr) 150px 100px;
+  gap: 16px;
+  width: 100%;
+  padding: 16px 0;
+  border: 0;
+  border-bottom: 1px solid #eef1f5;
+  background: white;
+  text-align: left;
+  font-size: 14px;
+  cursor: pointer;
+}
+.agile-risk strong {
+  color: #2563eb;
+}
+.agile-notice {
+  padding: 12px 16px;
+  border: 1px solid #f5dda8;
+  background: #fff9eb;
+  border-radius: 10px;
+  font-size: 14px;
+}
+@media (max-width: 1000px) {
+  .agile-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .agile-heading {
+    flex-wrap: wrap;
+  }
+  .agile-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .agile-risk {
+    grid-template-columns: 1fr 2fr;
+  }
+  .agile-release {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 600px) {
+  .agile-metrics {
+    grid-template-columns: 1fr;
+  }
+  .agile-controls {
+    flex-wrap: wrap;
+  }
+  .agile-people article {
+    grid-template-columns: 32px 1fr;
+  }
+  .agile-panel {
+    padding: 16px;
+  }
+}

@@ -1,0 +1,10 @@
+<section class="gp-workspace-hero" [class.gp-workspace-hero--compact]="compact">
+  <div class="gp-workspace-hero__copy">
+    <h1>{{ title }}</h1>
+    <p>{{ subtitle }}</p>
+    <div class="gp-workspace-hero__actions"><ng-content select="[workspace-actions]"></ng-content></div>
+  </div>
+  <div class="gp-workspace-hero__art" aria-hidden="true">
+    <img [src]="image" [alt]="imageAlt" fetchpriority="high" decoding="async" />
+  </div>
+</section>

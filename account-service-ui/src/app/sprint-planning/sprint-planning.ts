@@ -1,5 +1,8 @@
+import { untracked } from '@angular/core';
+import { WorkItemDialogService } from '../shared/work-item-dialog.service';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, ElementRef, HostListener, OnInit, ViewChild, effect, inject } from '@angular/core';
+import { A11yModule } from '@angular/cdk/a11y';
+import { ChangeDetectorRef, Component, ElementRef, HostListener, Input, OnInit, ViewChild, effect, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -13,6 +16,7 @@ import { catchError, switchMap } from 'rxjs/operators';
 
 import { environment } from '../../environment';
 import { AuthService } from '../auth.service';
+import { WorkspaceHeroComponent } from '../shared/workspace-hero';
 import { ProjectContextService } from '../project-context.service';
 
 type WorkKind = 'EPIC' | 'STORY' | 'TASK' | 'ISSUE';
@@ -47,6 +51,7 @@ interface PlanningPerson {
   name: string;
   initials: string;
   avatarUrl: string | null;
+  designation: string;
 }
 
 interface PlanningItem {
@@ -94,11 +99,28 @@ interface PlanningSprintGroup {
 @Component({
   selector: 'app-sprint-planning',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatFormFieldModule, MatInputModule, MatAutocompleteModule, MatSelectModule, MatCheckboxModule, MatTableModule],
+  imports: [CommonModule, A11yModule, FormsModule, MatFormFieldModule, MatInputModule, MatAutocompleteModule, MatSelectModule, MatCheckboxModule, MatTableModule, WorkspaceHeroComponent],
   templateUrl: './sprint-planning.html',
   styleUrls: ['../kanban-board/kanban-board.css', './sprint-planning.css', '../shared/field-controls.css'],
 })
 export class SprintPlanning implements OnInit {
+  @Input() projectScope = false;
+  readonly itemDialog = inject(WorkItemDialogService);
+  private lastItemRevision = this.itemDialog.revision();
+  private readonly itemRefresh = effect(() => {
+    const revision = this.itemDialog.revision();
+    if (revision === this.lastItemRevision) return;
+    this.lastItemRevision = revision;
+    untracked(() => { if (this.selectedProjectId) this.loadProjectItems(this.selectedProjectId); });
+  });
+  userReview: PlanningAssigneeGroup | null = null;
+  private previousSelection = new Set<string>();
+  private previousFocus: number|null=null;
+  openUserReview(group: PlanningAssigneeGroup): void { this.previousSelection = new Set(this.selectedItemIds); this.selectedItemIds.clear(); this.previousFocus=this.selectedSprintId; this.selectedSprintId=group.items[0]?.sprintId ?? null; this.userReview = group; }
+  closeUserReview(): void { if(this.saving) return; this.userReview = null; this.selectedSprintId=this.previousFocus; this.selectedItemIds = new Set(this.previousSelection); }
+  get reviewedItems(): PlanningItem[] { return this.userReview ? this.teamItems.filter(i => i.assigneeId === this.userReview!.personId && i.sprintId === (this.userReview!.items[0]?.sprintId ?? null)) : []; }
+  openPlanningItem(item: PlanningItem): void { this.itemDialog.open(Number(this.selectedProjectId), item.kind, item.sourceId); }
+
   @ViewChild('planningRoot', { static: true }) private planningRoot!: ElementRef<HTMLElement>;
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
@@ -236,6 +258,7 @@ export class SprintPlanning implements OnInit {
       id,
       name,
       initials: this.initials(name),
+      designation: String(profile?.designation ?? profile?.job_title ?? profile?.jobTitle ?? profile?.role_name ?? profile?.roleName ?? profile?.role?.name ?? profile?.title ?? raw?.designation ?? raw?.job_title ?? raw?.jobTitle ?? 'Team member').trim() || 'Team member',
       avatarUrl: profile?.avatarUrl ?? profile?.avatar_url ?? profile?.profilePictureUrl ?? profile?.profile_picture_url ??
         profile?.photoUrl ?? profile?.photo_url ?? raw?.avatarUrl ?? raw?.avatar_url ?? raw?.profilePictureUrl ?? raw?.profile_picture_url ?? null
     };
@@ -484,7 +507,7 @@ export class SprintPlanning implements OnInit {
   }
 
   openCreateDialog(kind: WorkKind): void {
-    if (!this.selectedProjectId || !this.selectedTeamId) return;
+    if (!this.selectedProjectId || (!this.projectScope && !this.selectedTeamId)) return;
     this.createKind = kind;
     this.createTitle = '';
     this.createDescription = '';
@@ -518,7 +541,7 @@ export class SprintPlanning implements OnInit {
 
   createWorkItem(): void {
     const title = this.createTitle.trim();
-    if (!title || !this.selectedProjectId || !this.selectedTeamId || this.creatingWorkItem) return;
+    if (!title || !this.selectedProjectId || (!this.projectScope && !this.selectedTeamId) || this.creatingWorkItem) return;
     if (this.createKind === 'EPIC' && !this.createEpicCode.trim()) {
       this.createError = 'Enter an Epic code before creating this item.';
       return;
@@ -692,9 +715,10 @@ export class SprintPlanning implements OnInit {
       sprints: this.collection([`${this.baseUrl}/sprints?project_id=${projectId}`, `${this.baseUrl}/sprints`]),
       teams: this.http.get<any>(`${this.baseUrl}/teams`, this.headers()).pipe(catchError(() => of([]))),
       projectTeams: this.http.get<any>(`${this.baseUrl}/project-teams/${projectId}`, this.headers()).pipe(catchError(() => of([]))),
-      users: this.http.get<any>(`${this.baseUrl}/users`, this.headers()).pipe(catchError(() => of([])))
+      users: this.http.get<any>(`${this.baseUrl}/users`, this.headers()).pipe(catchError(() => of([]))),
+      roles: this.http.get<any>(`${this.baseUrl}/roles`, this.headers()).pipe(catchError(() => of([])))
     }).subscribe({
-      next: ({ epics, stories, tasks, issues, sprints, teams, projectTeams, users }) => {
+      next: ({ epics, stories, tasks, issues, sprints, teams, projectTeams, users, roles }) => {
         if (projectAtRequest !== this.selectedProjectId) return;
         this.sprints = this.extractArray(sprints).map(raw => ({
           id: Number(raw?.id ?? raw?.sprint_id ?? raw?.sprintId),
@@ -734,7 +758,12 @@ export class SprintPlanning implements OnInit {
           teamById.set(team.id, directoryTeam ? { ...team, ...directoryTeam, members: directoryTeam.members.length ? directoryTeam.members : team.members } : team);
         }
         const allPeople = this.extractArray(users).map((row, index) => this.normalizePerson(row, index)).filter((person): person is PlanningPerson => Boolean(person));
-        this.userDirectory = allPeople;
+        const roleRows = this.extractArray(roles);
+        this.userDirectory = allPeople.map(person => {
+          const raw = this.extractArray(users).find(user => Number(user.id ?? user.user_id ?? user.user_account_id) === person.id);
+          const role = roleRows.find(role => Number(role.id ?? role.role_id) === Number(raw?.role_id ?? raw?.roleId));
+          return person.designation === 'Team member' && role ? { ...person, designation: role.name ?? role.role_name ?? person.designation } : person;
+        });
         const projectStoryIds = new Set(storyRows.map(row => Number(row?.id ?? row?.story_id ?? row?.storyId)).filter(Number.isFinite));
         const epicById = new Map<number, any>(epicRows.map(row => [Number(row?.id ?? row?.epic_id ?? row?.epicId), row]));
         const storyById = new Map<number, any>(storyRows.map(row => [Number(row?.id ?? row?.story_id ?? row?.storyId), row]));
@@ -865,6 +894,7 @@ export class SprintPlanning implements OnInit {
   }
 
   get teamItems(): PlanningItem[] {
+    if (this.projectScope) return this.items;
     if (this.selectedTeamId === null) return [];
     const memberIds = new Set(this.teamMembers.map(person => person.id));
     return this.items.filter(item => item.teamId === this.selectedTeamId || (item.teamId === null && item.assigneeId !== null && memberIds.has(item.assigneeId)));
@@ -1376,4 +1406,7 @@ export class SprintPlanning implements OnInit {
   trackByItem(_index: number, item: PlanningItem): string { return item.id; }
   trackBySprintGroup(_index: number, group: PlanningSprintGroup): string { return group.key; }
   trackByAssigneeGroup(_index: number, group: PlanningAssigneeGroup): string { return group.key; }
+  personToneClass(id: number | null): string {
+    return `person-tone-${((Math.trunc(Number(id) || 0) % 4) + 4) % 4}`;
+  }
 }

@@ -655,6 +655,22 @@ body {
   text-align: center;
 }
 
+.profile-card-action {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.profile-card-action:hover,
+.profile-card-action:focus-visible {
+  background: #f8fafd;
+}
+
+.profile-card-action:focus-visible { box-shadow: 0 0 0 2px #2878e8; }
+
 .profile-card strong {
   color: #202124;
 

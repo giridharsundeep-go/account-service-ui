@@ -1,16 +1,6 @@
 
 <div class="saas-container roles-page">
-  <header class="roles-hero">
-    <div class="roles-hero-copy">
-      <div class="roles-hero-eyebrow">PEOPLE · ACCESS · SECURITY</div>
-      <h1>Roles &amp; Permissions</h1>
-      <h2>Create and manage application roles.</h2>
-      <p>Define role names and responsibilities to keep access clear across your organization.</p>
-    </div>
-    <div class="roles-hero-art" aria-hidden="true">
-      <img src="assets/roles-cover-illustration.png" alt="" />
-    </div>
-  </header>
+  <app-workspace-hero eyebrow="PEOPLE · ACCESS · SECURITY" title="Roles &amp; Permissions" subtitle="Define clear responsibilities and keep access consistent across your organization." image="assets/covers/roles.png" imageAlt="A team aligning access and responsibilities"></app-workspace-hero>
 
   <div class="role-feedback role-feedback-error" *ngIf="errorMessage" role="alert">
     {{ errorMessage }}

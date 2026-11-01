@@ -1,3 +1,5 @@
+import { untracked } from '@angular/core';
+import { WorkItemDialogService } from '../shared/work-item-dialog.service';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -8,6 +10,7 @@ import {
   signal
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -24,6 +27,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { environment } from '../../environment';
+import { WorkspaceHeroComponent } from '../shared/workspace-hero';
 import { ProjectContextService } from '../project-context.service';
 import { AuthService } from '../auth.service';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -113,6 +117,7 @@ interface BoardCard {
   imports: [
     CommonModule,
     FormsModule,
+    WorkspaceHeroComponent,
     MatOptionModule,
     DragDropModule,
     MatCardModule,
@@ -141,6 +146,15 @@ interface BoardCard {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Boards implements OnInit {
+  private readonly itemDialog = inject(WorkItemDialogService);
+  private lastItemRevision = this.itemDialog.revision();
+  private readonly itemRefresh = effect(() => {
+    const revision = this.itemDialog.revision();
+    if (revision === this.lastItemRevision) return;
+    this.lastItemRevision = revision;
+    untracked(() => { if (!this.boardHome()) this.loadWorkItems(); });
+  });
+  private readonly router = inject(Router);
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
   private readonly projectContext = inject(ProjectContextService);
@@ -1322,11 +1336,15 @@ export class Boards implements OnInit {
 
   openBoardItem(card: BoardCard): void {
     if (!card?.id) return;
-    this.selectedBoardItem.set(card);
-    this.workItemDraft.set(this.toWorkItemDraft(card));
-    this.syncWorkItemUserQueries(card.assigneeId, card.reporterId);
-    this.workItemModalMode.set('EDIT');
-    this.boardItemModalOpen.set(true);
+    if (card.type === 'TEST_CASE') {
+      this.selectedBoardItem.set(card);
+      this.workItemDraft.set(this.toWorkItemDraft(card));
+      this.syncWorkItemUserQueries(card.assigneeId, card.reporterId);
+      this.workItemModalMode.set('EDIT');
+      this.boardItemModalOpen.set(true);
+      return;
+    }
+    this.itemDialog.open(Number(this.selectedProjectId() ?? this.selectedBoard()?.projectId ?? card.raw?.project_id), card.type, card.id);
   }
 
   openCreateWorkItem(type: 'EPIC' | 'STORY' | 'TASK' | 'ISSUE' | 'TEST_CASE'): void {
@@ -1681,6 +1699,15 @@ export class Boards implements OnInit {
     if (!user) return '';
     const fullName = user.name || [user.firstName || user.first_name, user.lastName || user.last_name].filter(Boolean).join(' ');
     return String(fullName || `User ${user.id}`).trim();
+  }
+
+  workItemUserDesignation(user: User | null | undefined): string {
+    if (!user) return 'Team member';
+    return String(user['designation'] ?? user['job_title'] ?? user['jobTitle'] ?? user['role_name'] ?? user['roleName'] ?? user['role'] ?? 'Team member').trim() || 'Team member';
+  }
+
+  personToneClass(id: number | null | undefined): string {
+    return `person-tone-${Math.abs(Number(id) || 0) % 4}`;
   }
 
   onWorkItemAssigneeInput(value: string): void {

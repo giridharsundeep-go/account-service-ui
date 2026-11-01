@@ -6,6 +6,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { finalize, switchMap, map } from 'rxjs/operators';
 import { environment } from '../../environment';
 import { AuthService } from '../auth.service';
+import { WorkspaceHeroComponent } from '../shared/workspace-hero';
 
 // Angular Material Module Imports
 import { MatIconModule } from '@angular/material/icon';
@@ -34,7 +35,7 @@ export interface AgileProductNode {
     MatInputModule, 
     MatFormFieldModule, 
     MatButtonModule, 
-    MatProgressSpinnerModule, MatCardModule
+    MatProgressSpinnerModule, MatCardModule, WorkspaceHeroComponent
   ]
 })
 export class Products implements OnInit {

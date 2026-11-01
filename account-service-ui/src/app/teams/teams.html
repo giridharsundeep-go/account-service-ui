@@ -1,26 +1,12 @@
 
 <div class="saas-container teams-page">
 
-  <section class="teams-illustration-wall" *ngIf="!selectedTeam && editingTeamId === null" aria-label="Teams build better work">
-    <div class="teams-illustration-copy">
-      <span class="teams-illustration-eyebrow">PEOPLE · TEAMWORK · PROGRESS</span>
-      <h1>Teams</h1>
-      <p>Build better work, together.</p>
-    </div>
-    <div class="teams-illustration-caption">Good work starts with good people.</div>
-  </section>
+
 
   <ng-container *ngIf="!selectedTeam">
-  <header class="teams-page-hero" [hidden]="editingTeamId !== null">
-    <div class="teams-hero-copy">
-      <div class="teams-breadcrumb"><span>Organization</span><span class="breadcrumb-separator">/</span><strong>Teams</strong></div>
-      <h1>Teams</h1>
-      <p>Bring people together around shared goals. Manage team membership and keep ownership clear.</p>
-    </div>
-    <button type="button" class="teams-create-button" (click)="resetForm(); editingTeamId = 0">
-      <span class="create-plus" aria-hidden="true">+</span> Create team
-    </button>
-  </header>
+  <app-workspace-hero *ngIf="editingTeamId === null" eyebrow="PEOPLE · TEAMWORK · PROGRESS" title="Teams" subtitle="Bring people together around shared goals. Manage team membership and keep ownership clear." image="assets/covers/teams.jpeg" imageAlt="A diverse team collaborating around shared goals">
+    <button workspace-actions type="button" class="teams-create-button" (click)="resetForm(); editingTeamId = 0"><span class="create-plus" aria-hidden="true">+</span> Create team</button>
+  </app-workspace-hero>
 
   <section class="teams-overview" aria-label="Team overview" [hidden]="editingTeamId !== null">
     <article class="overview-metric overview-metric-primary">

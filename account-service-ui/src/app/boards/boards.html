@@ -1,14 +1,10 @@
-<section class="boards-page">
+<section class="boards-page gp-workspace-canvas">
+  <app-workspace-hero *ngIf="boardHome()" eyebrow="PLAN · ALIGN · DELIVER" title="Boards" subtitle="Give every team a shared view of the work that matters." image="assets/covers/boards.png" imageAlt="Teammates planning work on a shared board">
+    <button workspace-actions mat-flat-button class="primary-action" type="button" (click)="openCreateBoard()"><mat-icon>add</mat-icon><span>Create Board</span></button>
+  </app-workspace-hero>
 
   <!-- PRODUCTS-STYLE HEADER -->
   <header class="google-header boards-google-header google-one-topbar">
-    <div class="header-brand">
-      <div>
-        <h1>Boards</h1>
-        <p>Project boards and workflow</p>
-      </div>
-    </div>
-
     <div class="header-search">
       <div class="search-shell boards-search-shell">
         <mat-icon class="search-icon">search</mat-icon>
@@ -21,10 +17,6 @@
       </div>
     </div>
 
-    <button mat-flat-button class="primary-action" type="button" (click)="openCreateBoard()">
-      <mat-icon>add</mat-icon>
-      <span>Create Board</span>
-    </button>
   </header>
 
   <mat-progress-bar *ngIf="loading()" mode="indeterminate" class="top-progress"></mat-progress-bar>
@@ -200,8 +192,8 @@
       <div class="filter-suggestions" *ngIf="assigneeAutocompleteOpen()">
         <button mat-button *ngFor="let user of filteredAssigneeUsers()"
           (click)="selectAssigneeFilterUser(user); assigneeAutocompleteOpen.set(false)">
-          <span class="mini-avatar">{{ initials(user.id) }}</span>{{ user.name }}
-          <small>{{ user.employeeCode || user.email }}</small>
+          <span class="mini-avatar" [ngClass]="personToneClass(user.id)">{{ initials(user.id) }}</span>
+          <span class="person-option-copy"><strong>{{ user.name }}</strong><small>{{ workItemUserDesignation(user) }}</small></span>
         </button>
         <button mat-button *ngIf="!filteredAssigneeUsers().length" disabled>No users found</button>
       </div>
@@ -209,8 +201,8 @@
       <div class="filter-suggestions" *ngIf="reporterAutocompleteOpen()">
         <button mat-button *ngFor="let user of filteredReporterUsers()"
           (click)="selectReporterFilterUser(user); reporterAutocompleteOpen.set(false)">
-          <span class="mini-avatar">{{ initials(user.id) }}</span>{{ user.name }}
-          <small>{{ user.employeeCode || user.email }}</small>
+          <span class="mini-avatar" [ngClass]="personToneClass(user.id)">{{ initials(user.id) }}</span>
+          <span class="person-option-copy"><strong>{{ user.name }}</strong><small>{{ workItemUserDesignation(user) }}</small></span>
         </button>
         <button mat-button *ngIf="!filteredReporterUsers().length" disabled>No users found</button>
       </div>
@@ -791,8 +783,8 @@
                   </mat-form-field>
                   <div class="work-item-user-options" *ngIf="workItemAssigneeAutocompleteOpen()">
                     <button type="button" *ngFor="let user of filteredWorkItemAssignees()" (click)="selectWorkItemAssignee(user)">
-                      <span class="mini-avatar">{{ initials(user.id) }}</span>
-                      <span class="work-item-user-name"><strong>{{ workItemUserName(user) }}</strong></span>
+                      <span class="mini-avatar" [ngClass]="personToneClass(user.id)">{{ initials(user.id) }}</span>
+                      <span class="work-item-user-name"><strong>{{ workItemUserName(user) }}</strong><small>{{ workItemUserDesignation(user) }}</small></span>
                     </button>
                     <div class="autocomplete-empty" *ngIf="!filteredWorkItemAssignees().length">No users match your search.</div>
                   </div>
@@ -810,8 +802,8 @@
                   </mat-form-field>
                   <div class="work-item-user-options" *ngIf="workItemReporterAutocompleteOpen()">
                     <button type="button" *ngFor="let user of filteredWorkItemReporters()" (click)="selectWorkItemReporter(user)">
-                      <span class="mini-avatar">{{ initials(user.id) }}</span>
-                      <span class="work-item-user-name"><strong>{{ workItemUserName(user) }}</strong></span>
+                      <span class="mini-avatar" [ngClass]="personToneClass(user.id)">{{ initials(user.id) }}</span>
+                      <span class="work-item-user-name"><strong>{{ workItemUserName(user) }}</strong><small>{{ workItemUserDesignation(user) }}</small></span>
                     </button>
                     <div class="autocomplete-empty" *ngIf="!filteredWorkItemReporters().length">No users match your search.</div>
                   </div>

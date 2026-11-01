@@ -19,6 +19,7 @@ import {
 } from 'rxjs/operators';
 
 import { AuthService } from '../auth.service';
+import { WorkspaceHeroComponent } from '../shared/workspace-hero';
 
 // Angular Material
 import { MatCardModule } from '@angular/material/card';
@@ -64,6 +65,7 @@ interface TeamView {
   imports: [
     CommonModule,
     FormsModule,
+    WorkspaceHeroComponent,
     MatCardModule,
     MatButtonModule,
     MatFormFieldModule,

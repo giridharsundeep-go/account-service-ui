@@ -1,3 +1,5 @@
+import { untracked } from '@angular/core';
+import { WorkItemDialogService } from '../shared/work-item-dialog.service';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, HostListener, OnInit, effect, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -11,6 +13,7 @@ import { MatTableModule } from '@angular/material/table';
 import { environment } from '../../environment';
 import { AuthService } from '../auth.service';
 import { ProjectContextService } from '../project-context.service';
+import { WorkspaceHeroComponent } from '../shared/workspace-hero';
 
 type WorkItemKind = 'EPIC' | 'STORY' | 'TASK' | 'ISSUE';
 type FilterKey = 'project' | 'assignee' | 'kind' | 'status' | 'reporter' | 'sprint' | 'priority' | 'resolution';
@@ -23,6 +26,7 @@ interface WorkItemFilterOption {
   initials?: string;
   avatarUrl?: string | null;
   kindClass?: string;
+  designation?: string;
 }
 
 interface WorkItemProject {
@@ -43,6 +47,7 @@ interface WorkItemPerson {
   name: string;
   initials: string;
   avatarUrl: string | null;
+  designation: string;
 }
 
 interface WorkItemRow {
@@ -77,13 +82,21 @@ interface ProjectWorkCollections {
 @Component({
   selector: 'app-work-items',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatCheckboxModule, MatTableModule],
+  imports: [CommonModule, FormsModule, MatCheckboxModule, MatTableModule, WorkspaceHeroComponent],
   templateUrl: './work-items.html',
   styleUrls: ['./work-items.css', '../shared/field-controls.css']
 })
 export class WorkItems implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
+  private readonly itemDialog = inject(WorkItemDialogService);
+  private lastItemRevision = this.itemDialog.revision();
+  private readonly itemRefresh = effect(() => {
+    const revision = this.itemDialog.revision();
+    if (revision === this.lastItemRevision) return;
+    this.lastItemRevision = revision;
+    untracked(() => { this.loadWorkItems(); });
+  });
   private readonly router = inject(Router);
   private readonly projectContext = inject(ProjectContextService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -311,7 +324,8 @@ export class WorkItems implements OnInit {
       id,
       name,
       initials: this.makeInitials(name || `U${index + 1}`),
-      avatarUrl: this.text(raw?.profile_picture_url ?? raw?.profilePictureUrl ?? raw?.avatar_url ?? raw?.avatarUrl ?? raw?.photo_url, '') || null
+      avatarUrl: this.text(raw?.profile_picture_url ?? raw?.profilePictureUrl ?? raw?.avatar_url ?? raw?.avatarUrl ?? raw?.photo_url, '') || null,
+      designation: this.text(raw?.designation ?? raw?.job_title ?? raw?.jobTitle ?? raw?.role_name ?? raw?.roleName ?? raw?.role?.name ?? raw?.title, 'Team member')
     };
   }
 
@@ -458,12 +472,12 @@ export class WorkItems implements OnInit {
         ];
       case 'assignee':
         return [
-          ...this.assigneeOptions.map(person => ({ value: person.id, label: person.name, initials: person.initials, avatarUrl: person.avatarUrl, kindClass: 'filter-person' })),
+          ...this.assigneeOptions.map(person => ({ value: person.id, label: person.name, initials: person.initials, avatarUrl: person.avatarUrl, kindClass: 'filter-person', designation: person.designation })),
           { value: '__unassigned', label: 'Unassigned', initials: '—' }
         ];
       case 'reporter':
         return [
-          ...this.reporterOptions.map(person => ({ value: person.id, label: person.name, initials: person.initials, avatarUrl: person.avatarUrl, kindClass: 'filter-person' })),
+          ...this.reporterOptions.map(person => ({ value: person.id, label: person.name, initials: person.initials, avatarUrl: person.avatarUrl, kindClass: 'filter-person', designation: person.designation })),
           { value: '__no_reporter', label: 'No reporter', initials: '—' }
         ];
       case 'sprint':
@@ -596,7 +610,8 @@ export class WorkItems implements OnInit {
         id,
         name,
         initials: this.makeInitials(name),
-        avatarUrl: field === 'assigneeId' ? item.assigneeAvatarUrl : item.reporterAvatarUrl
+        avatarUrl: field === 'assigneeId' ? item.assigneeAvatarUrl : item.reporterAvatarUrl,
+        designation: 'Team member'
       };
     }).filter((person): person is WorkItemPerson => Boolean(person)).sort((a, b) => a.name.localeCompare(b.name));
   }
@@ -740,17 +755,15 @@ export class WorkItems implements OnInit {
   }
 
   openWorkItem(item: WorkItemRow): void {
-    this.router.navigate(['/user-home'], {
-      queryParams: {
-        menu: 'kanban-board',
-        openType: item.kind,
-        openId: item.sourceId,
-        ...(item.projectId === null ? {} : { projectId: item.projectId })
-      }
-    });
+    this.itemDialog.open(Number(item.projectId), item.kind, item.sourceId);
   }
 
   initials(name: string): string { return this.makeInitials(name); }
+
+  personToneClass(id: number | string): string {
+    const tone = ((Math.trunc(Number(id) || 0) % 4) + 4) % 4;
+    return `person-tone-${tone}`;
+  }
   kindLabel(kind: WorkItemKind): string { return kind[0] + kind.slice(1).toLowerCase(); }
   kindClass(kind: WorkItemKind): string { return `work-type-${kind.toLowerCase()}`; }
   statusClass(status: string): string { return `work-status-${status.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`; }

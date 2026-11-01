@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../auth.service';
 import { environment } from '../../environment';
+import { WorkspaceHeroComponent } from '../shared/workspace-hero';
 
 type TabKey = 'pages' | 'services' | 'api' | 'permissions' | 'activity';
 // API payloads are dynamic JSON objects; `any` avoids TS4111 dot-access errors
@@ -16,7 +17,7 @@ type FolderNode = AnyRecord & { children: FolderNode[]; expanded?: boolean; dept
 @Component({
   selector: 'app-docs',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, WorkspaceHeroComponent],
   templateUrl: './docs.html',
   styleUrls: ['./docs.css', '../shared/field-controls.css'],
 })

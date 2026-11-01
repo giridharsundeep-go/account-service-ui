@@ -1,13 +1,29 @@
 /* You can add global styles to this file, and also import other style files */
 @import '@angular/material/prebuilt-themes/indigo-pink.css';
+@import './app/shared/workspace-system.css';
+@import './app/shared/work-item-dialog.css';
+@import './app/shared/agile-workspaces.css';
 
 :root {
-  --gp-field-height: 42px;
+  /* Greatley Poshley product identity tokens. Use these across new workspaces. */
+  --gp-brand-navy: #001c51;
+  --gp-brand-blue: #007cc1;
+  --gp-brand-cyan: #34b7c6;
+  --gp-brand-mint: #79c7aa;
+  --gp-brand-canvas: #f4f7fb;
+  --gp-brand-surface: #ffffff;
+  --gp-brand-ink: #172b4d;
+  --gp-brand-muted: #66758a;
+  --gp-brand-border: #dbe3ed;
+  --gp-brand-success: #18866b;
+  --gp-brand-warning: #b67822;
+  --gp-brand-danger: #c45159;
+  --gp-field-height: 50px;
   --gp-field-radius: 10px;
-  --gp-field-border: #d5dbe4;
-  --gp-field-border-hover: #aeb9c8;
-  --gp-field-border-focus: #2878e8;
-  --gp-field-focus-ring: 0 0 0 3px rgba(40, 120, 232, .14);
+  --gp-field-border: rgba(23, 43, 77, .34);
+  --gp-field-border-hover: rgba(23, 43, 77, .40);
+  --gp-field-border-focus: rgba(23, 43, 77, .46);
+  --gp-field-focus-ring: none;
   --gp-field-background: #fff;
   --gp-field-text: #303846;
   --gp-field-muted: #748094;
@@ -37,10 +53,10 @@ app-root .mat-mdc-form-field.mat-mdc-form-field {
 }
 
 .mat-mdc-option {
-  min-height: 42px !important;
+  min-height: 44px !important;
   color: var(--gp-field-text) !important;
   font-family: "Google Sans", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
-  font-size: 13px !important;
+  font-size: 14px !important;
 }
 
 .mat-mdc-option:hover:not(.mdc-list-item--disabled),
@@ -59,8 +75,8 @@ app-test-case-attach-dialog .search-wrapper {
 }
 
 app-test-case-attach-dialog .search-wrapper:focus-within {
-  border-color: var(--gp-field-border-focus) !important;
-  box-shadow: var(--gp-field-focus-ring) !important;
+  border-color: var(--gp-field-border) !important;
+  box-shadow: none !important;
 }
 
 app-test-case-attach-dialog .search-input {
@@ -148,9 +164,9 @@ app-test-case-attach-dialog .search-input {
 /* Primary Material Buttons (Replaces .gp-button) */
 .mat-mdc-unelevated-button.mat-primary,
 .mat-mdc-raised-button.mat-primary {
-  --mdc-filled-button-container-color: #001c51;
+  --mdc-filled-button-container-color: var(--gp-brand-navy);
   --mdc-filled-button-label-text-color: #ffffff;
-  --mdc-protected-button-container-color: #001c51;
+  --mdc-protected-button-container-color: var(--gp-brand-navy);
   --mdc-protected-button-label-text-color: #ffffff;
   
   border-radius: 10px !important;
@@ -161,9 +177,9 @@ app-test-case-attach-dialog .search-input {
 /* Accent / Secondary Material Buttons (Replaces .gp-button-light) */
 .mat-mdc-unelevated-button.mat-accent,
 .mat-mdc-raised-button.mat-accent {
-  --mdc-filled-button-container-color: #2678bf;
+  --mdc-filled-button-container-color: var(--gp-brand-blue);
   --mdc-filled-button-label-text-color: #ffffff;
-  --mdc-protected-button-container-color: #2678bf;
+  --mdc-protected-button-container-color: var(--gp-brand-blue);
   --mdc-protected-button-label-text-color: #ffffff;
 
   border-radius: 10px !important;
@@ -173,8 +189,8 @@ app-test-case-attach-dialog .search-input {
 
 /* Stroked / Outlined Buttons */
 .mat-mdc-outlined-button.mat-accent {
-  --mdc-outlined-button-outline-color: #2678bf;
-  --mdc-outlined-button-label-text-color: #2678bf;
+  --mdc-outlined-button-outline-color: var(--gp-brand-blue);
+  --mdc-outlined-button-label-text-color: var(--gp-brand-blue);
 
   border-radius: 10px !important;
   height: 40px !important;
@@ -201,4 +217,1330 @@ button.full-width {
   -webkit-font-feature-settings: 'liga';
   -webkit-font-smoothing: antialiased;
   font-feature-settings: 'liga';
+}
+
+/* One product-wide field system for public forms, workspace views, and dialogs. */
+#gp-app :is(
+  input[type="text"], input[type="email"], input[type="password"], input[type="number"],
+  input[type="date"], input[type="datetime-local"], input[type="tel"], input[type="url"],
+  input[type="search"], input:not([type]), select, [role="combobox"],
+  button[aria-haspopup="listbox"], .person-autocomplete-field, .person-autocomplete-control,
+  .global-project-trigger, .work-items-filter-trigger, .work-items-filter-select,
+  .work-items-status-trigger, .kb-filter-trigger, .kb-sprint-select,
+  .epics-board-filter-trigger, .filter-button, .work-items-more-filter,
+  .selector-field select, .filter-field select, .filter-select, .google-select,
+  .native-google-select, .project-selector select, .project-switcher-select,
+  .epics-project-picker, .epics-project-select, .release-header-picker, .release-header-select,
+  .material-select, .edit-input, .edit-select, .detail-input, .drawer-select,
+  .user-autocomplete-input, .team-inline-input
+):not(:is(
+  .mat-mdc-input-element, .mat-mdc-native-select, .mat-mdc-select,
+  .work-item-header-title-input, .person-autocomplete-input,
+  [aria-label="Paragraph style"], [aria-label="Font size"],
+  [type="checkbox"], [type="radio"], [type="file"], [type="hidden"],
+  [type="range"], [type="color"], .icon-button, .global-work-search-clear
+)) {
+  box-sizing: border-box !important;
+  height: var(--gp-field-height) !important;
+  min-height: var(--gp-field-height) !important;
+  padding: 0 12px !important;
+  border: 1px solid var(--gp-field-border) !important;
+  border-radius: var(--gp-field-radius) !important;
+  background: var(--gp-field-background) !important;
+  color: var(--gp-field-text) !important;
+  font-family: "Google Sans", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 14px !important;
+  line-height: 20px !important;
+  box-shadow: none !important;
+  transition: border-color .16s ease, box-shadow .16s ease, background-color .16s ease !important;
+}
+
+#gp-app :is(
+  input[type="text"], input[type="email"], input[type="password"], input[type="number"],
+  input[type="date"], input[type="datetime-local"], input[type="tel"], input[type="url"],
+  input[type="search"], input:not([type]), select, [role="combobox"],
+  button[aria-haspopup="listbox"], .person-autocomplete-field, .person-autocomplete-control,
+  .global-project-trigger, .work-items-filter-trigger, .work-items-filter-select,
+  .work-items-status-trigger, .kb-filter-trigger, .kb-sprint-select,
+  .epics-board-filter-trigger, .filter-button, .work-items-more-filter,
+  .selector-field select, .filter-field select, .filter-select, .google-select,
+  .native-google-select, .project-selector select, .project-switcher-select,
+  .epics-project-picker, .epics-project-select, .release-header-picker, .release-header-select,
+  .material-select, .edit-input, .edit-select, .detail-input, .drawer-select,
+  .user-autocomplete-input, .team-inline-input
+):not(:is(
+  .mat-mdc-input-element, .mat-mdc-native-select, .mat-mdc-select,
+  .work-item-header-title-input, .person-autocomplete-input,
+  [aria-label="Paragraph style"], [aria-label="Font size"],
+  [type="checkbox"], [type="radio"], [type="file"], [type="hidden"],
+  [type="range"], [type="color"], .icon-button, .global-work-search-clear
+)):is(:focus, :focus-visible, :focus-within) {
+  border-width: 1px !important;
+  border-color: var(--gp-field-border-focus) !important;
+  outline: 0 !important;
+  box-shadow: var(--gp-field-focus-ring) !important;
+}
+
+#gp-app :is(
+  input[type="text"], input[type="email"], input[type="password"], input[type="number"],
+  input[type="date"], input[type="datetime-local"], input[type="tel"], input[type="url"],
+  input[type="search"], input:not([type]), select, [role="combobox"],
+  button[aria-haspopup="listbox"], .person-autocomplete-field, .person-autocomplete-control,
+  .global-project-trigger, .work-items-filter-trigger, .work-items-filter-select,
+  .work-items-status-trigger, .kb-filter-trigger, .kb-sprint-select,
+  .epics-board-filter-trigger, .filter-button, .work-items-more-filter,
+  .selector-field select, .filter-field select, .filter-select, .google-select,
+  .native-google-select, .project-selector select, .project-switcher-select,
+  .epics-project-picker, .epics-project-select, .release-header-picker, .release-header-select,
+  .material-select, .edit-input, .edit-select, .detail-input, .drawer-select,
+  .user-autocomplete-input, .team-inline-input
+):not(:is(
+  .mat-mdc-input-element, .mat-mdc-native-select, .mat-mdc-select,
+  .work-item-header-title-input, .person-autocomplete-input,
+  [aria-label="Paragraph style"], [aria-label="Font size"],
+  [type="checkbox"], [type="radio"], [type="file"], [type="hidden"],
+  [type="range"], [type="color"], .icon-button, .global-work-search-clear
+)):is(:hover, .is-open, .is-active, .has-selection, .active):not(:focus, :focus-within) {
+  border-color: var(--gp-field-border-hover) !important;
+}
+
+#gp-app :is(.global-project-trigger, .work-items-filter-trigger, .work-items-status-trigger, .kb-filter-trigger, .epics-board-filter-trigger, .filter-button, .work-items-more-filter):is(.is-open, .is-active, .has-selection, .active) {
+  border-width: 1px !important;
+  border-color: var(--gp-field-border-focus) !important;
+  background: #eef5ff !important;
+  color: #175fc2 !important;
+}
+#gp-app :is(input, select, button[aria-haspopup="listbox"]):disabled,
+#gp-app :is(.global-project-trigger, .work-items-filter-trigger, .work-items-status-trigger, .kb-filter-trigger, .epics-board-filter-trigger, .filter-button, .work-items-more-filter):disabled {
+  background: #f4f6f8 !important;
+  color: var(--gp-field-muted) !important;
+  cursor: not-allowed !important;
+}
+
+/* Material inputs and selects follow the same field geometry. */
+#gp-app .mat-mdc-form-field.mat-mdc-form-field {
+  --mdc-outlined-text-field-outline-color: var(--gp-field-border);
+  --mdc-outlined-text-field-focus-outline-color: var(--gp-field-border-focus);
+  --mdc-outlined-text-field-hover-outline-color: var(--gp-field-border-hover);
+  --mdc-outlined-text-field-container-shape: var(--gp-field-radius);
+  --mdc-outlined-text-field-input-text-color: var(--gp-field-text);
+  --mdc-outlined-text-field-label-text-color: var(--gp-field-muted);
+  --mdc-outlined-text-field-focus-label-text-color: var(--gp-field-border-focus);
+  width: 100%;
+  min-width: 0;
+}
+
+#gp-app .mat-mdc-form-field.mat-mdc-form-field:not(:has(textarea)) .mat-mdc-text-field-wrapper,
+#gp-app .mat-mdc-form-field.mat-mdc-form-field:not(:has(textarea)) .mat-mdc-form-field-flex,
+#gp-app .mat-mdc-form-field.mat-mdc-form-field:not(:has(textarea)) .mat-mdc-form-field-infix {
+  box-sizing: border-box !important;
+  height: var(--gp-field-height) !important;
+  min-height: var(--gp-field-height) !important;
+}
+#gp-app .mat-mdc-form-field.mat-mdc-form-field:not(:has(textarea)) .mat-mdc-text-field-wrapper {
+  padding-inline: 12px !important;
+  border-radius: var(--gp-field-radius) !important;
+  background: var(--gp-field-background) !important;
+}
+#gp-app .mat-mdc-form-field.mat-mdc-form-field:not(:has(textarea)) .mat-mdc-form-field-infix {
+  padding: 10px 0 !important;
+}
+#gp-app .mat-mdc-form-field .mat-mdc-select-trigger {
+  height: var(--gp-field-height) !important;
+  min-height: var(--gp-field-height) !important;
+  align-items: center !important;
+}
+#gp-app .mat-mdc-form-field .mat-mdc-input-element,
+#gp-app .mat-mdc-form-field .mat-mdc-select-value,
+#gp-app .mat-mdc-form-field .mat-mdc-select-placeholder {
+  color: var(--gp-field-text) !important;
+  font-family: "Google Sans", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 14px !important;
+  line-height: 20px !important;
+}
+#gp-app .mat-mdc-form-field .mdc-notched-outline,
+#gp-app .mat-mdc-form-field .mdc-notched-outline__leading,
+#gp-app .mat-mdc-form-field .mdc-notched-outline__trailing {
+  border-radius: var(--gp-field-radius) !important;
+}
+
+/* Text areas retain their working height while sharing the same outline and typography. */
+#gp-app textarea:not(.mat-mdc-input-element):not([contenteditable="true"]) {
+  box-sizing: border-box !important;
+  min-height: 96px !important;
+  padding: 11px 12px !important;
+  border: 1px solid var(--gp-field-border) !important;
+  border-radius: var(--gp-field-radius) !important;
+  background: var(--gp-field-background) !important;
+  color: var(--gp-field-text) !important;
+  font-family: "Google Sans", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 14px !important;
+  line-height: 20px !important;
+}
+#gp-app textarea:not(.mat-mdc-input-element):not([contenteditable="true"]):is(:focus, :focus-visible) {
+  border-width: 1px !important;
+  border-color: var(--gp-field-border-focus) !important;
+  outline: 0 !important;
+  box-shadow: var(--gp-field-focus-ring) !important;
+}
+#gp-app textarea.work-item-header-title-input {
+  height: var(--gp-field-height) !important;
+  min-height: var(--gp-field-height) !important;
+  padding: 0 12px !important;
+  resize: none !important;
+  overflow: hidden !important;
+}
+
+/* Search boxes use the same shell; their inner input stays flat. */
+#gp-app :is(
+  .matrix-search-input-frame, .search-shell, .search-box, .global-search,
+  .google-search-shell, .work-items-search, .planning-toolbar .search-field,
+  .kb-board-search, .work-filter-search, .global-project-search, .global-work-search-field,
+  .docs-search, .team-profile-member-search, .team-search, .epics-filter-search,
+  .add-testcases-search, .search-control, .release-search-field
+) {
+  box-sizing: border-box !important;
+  height: var(--gp-field-height) !important;
+  min-height: var(--gp-field-height) !important;
+  padding-inline: 12px !important;
+  border: 1px solid var(--gp-field-border) !important;
+  border-radius: var(--gp-field-radius) !important;
+  background: var(--gp-field-background) !important;
+}
+#gp-app :is(
+  .matrix-search-input-frame, .search-shell, .search-box, .global-search,
+  .google-search-shell, .work-items-search, .planning-toolbar .search-field,
+  .kb-board-search, .work-filter-search, .global-project-search, .global-work-search-field,
+  .docs-search, .team-profile-member-search, .team-search, .epics-filter-search,
+  .add-testcases-search, .search-control, .release-search-field
+):focus-within {
+  border-width: 1px !important;
+  border-color: var(--gp-field-border-focus) !important;
+  box-shadow: var(--gp-field-focus-ring) !important;
+}
+#gp-app :is(
+  .matrix-search-input-frame, .search-shell, .search-box, .global-search,
+  .google-search-shell, .work-items-search, .planning-toolbar .search-field,
+  .kb-board-search, .work-filter-search, .global-project-search, .global-work-search-field,
+  .docs-search, .team-profile-member-search, .team-search, .epics-filter-search,
+  .add-testcases-search, .search-control, .release-search-field
+) input:not(.mat-mdc-input-element) {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--gp-field-text) !important;
+  box-shadow: none !important;
+}
+#gp-app :is(.person-autocomplete-field, .person-autocomplete-control) .person-autocomplete-input {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Compact project/search controls in the global application header. */
+#gp-app .global-project-trigger { padding: 3px 12px !important; }
+#gp-app .global-project-trigger strong,
+#gp-app .global-work-search-input,
+#gp-app .global-project-search input { font-size: 14px !important; }
+#gp-app .global-project-caption { font-size: 9px !important; }
+
+/* Keep the custom continuous outlines on authentication forms in sync too. */
+#gp-app app-login .mat-mdc-text-field-wrapper::after,
+#gp-app app-super-reg .mat-mdc-text-field-wrapper::after {
+  border-color: var(--gp-field-border) !important;
+  border-radius: var(--gp-field-radius) !important;
+}
+#gp-app app-login .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper::after,
+#gp-app app-super-reg .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper::after {
+  border: 1px solid var(--gp-field-border-focus) !important;
+  border-radius: var(--gp-field-radius) !important;
+  box-shadow: none !important;
+}
+#gp-app app-login .mat-mdc-form-field:hover:not(.mat-focused) .mat-mdc-text-field-wrapper::after,
+#gp-app app-super-reg .mat-mdc-form-field:hover:not(.mat-focused) .mat-mdc-text-field-wrapper::after {
+  border-color: var(--gp-field-border-hover) !important;
+}
+
+/* Material dialogs render outside app-root, so give them the same field tokens. */
+body .cdk-overlay-container .mat-mdc-form-field.mat-mdc-form-field.mat-mdc-form-field {
+  --mdc-outlined-text-field-outline-color: var(--gp-field-border);
+  --mdc-outlined-text-field-focus-outline-color: var(--gp-field-border-focus);
+  --mdc-outlined-text-field-hover-outline-color: var(--gp-field-border-hover);
+  --mdc-outlined-text-field-container-shape: var(--gp-field-radius);
+  --mdc-outlined-text-field-input-text-color: var(--gp-field-text);
+}
+body .cdk-overlay-container .mat-mdc-form-field.mat-mdc-form-field.mat-mdc-form-field:not(:has(textarea)) .mat-mdc-text-field-wrapper,
+body .cdk-overlay-container .mat-mdc-form-field.mat-mdc-form-field.mat-mdc-form-field:not(:has(textarea)) .mat-mdc-form-field-flex,
+body .cdk-overlay-container .mat-mdc-form-field.mat-mdc-form-field.mat-mdc-form-field:not(:has(textarea)) .mat-mdc-form-field-infix {
+  box-sizing: border-box !important;
+  height: var(--gp-field-height) !important;
+  min-height: var(--gp-field-height) !important;
+}
+body .cdk-overlay-container .mat-mdc-form-field.mat-mdc-form-field.mat-mdc-form-field:not(:has(textarea)) .mat-mdc-text-field-wrapper {
+  padding-inline: 12px !important;
+  border-radius: var(--gp-field-radius) !important;
+  background: var(--gp-field-background) !important;
+}
+body .cdk-overlay-container .mat-mdc-form-field.mat-mdc-form-field.mat-mdc-form-field:not(:has(textarea)) .mat-mdc-form-field-infix {
+  padding: 10px 0 !important;
+}
+body .cdk-overlay-container .mat-mdc-form-field.mat-mdc-form-field.mat-mdc-form-field .mat-mdc-input-element,
+body .cdk-overlay-container .mat-mdc-form-field.mat-mdc-form-field.mat-mdc-form-field .mat-mdc-select-value,
+body .cdk-overlay-container .mat-mdc-form-field.mat-mdc-form-field.mat-mdc-form-field .mat-mdc-select-placeholder {
+  color: var(--gp-field-text) !important;
+  font-family: "Google Sans", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 14px !important;
+  line-height: 20px !important;
+}
+body .cdk-overlay-container .mat-mdc-form-field .mdc-notched-outline,
+body .cdk-overlay-container .mat-mdc-form-field .mdc-notched-outline__leading,
+body .cdk-overlay-container .mat-mdc-form-field .mdc-notched-outline__trailing {
+  border-radius: var(--gp-field-radius) !important;
+}
+body .cdk-overlay-container .mat-mdc-form-field .mat-mdc-select-trigger {
+  height: var(--gp-field-height) !important;
+  min-height: var(--gp-field-height) !important;
+  align-items: center !important;
+}
+
+/* Focus uses a quiet slate outline; nested search inputs stay borderless. */
+#gp-app :is(
+  input[type="text"], input[type="email"], input[type="password"], input[type="number"],
+  input[type="date"], input[type="datetime-local"], input[type="tel"], input[type="url"],
+  input[type="search"], input:not([type]), select, [role="combobox"],
+  button[aria-haspopup="listbox"], .person-autocomplete-field, .person-autocomplete-control,
+  .global-project-trigger, .work-items-filter-trigger, .work-items-filter-select,
+  .work-items-status-trigger, .kb-filter-trigger, .kb-sprint-select,
+  .epics-board-filter-trigger, .filter-button, .work-items-more-filter,
+  .selector-field select, .filter-field select, .filter-select, .google-select,
+  .native-google-select, .project-selector select, .project-switcher-select,
+  .epics-project-picker, .epics-project-select, .release-header-picker, .release-header-select,
+  .material-select, .edit-input, .edit-select, .detail-input, .drawer-select,
+  .user-autocomplete-input, .team-inline-input
+):not(:is(
+  .mat-mdc-input-element, .mat-mdc-native-select, .mat-mdc-select,
+  .work-item-header-title-input, .person-autocomplete-input,
+  [aria-label="Paragraph style"], [aria-label="Font size"],
+  [type="checkbox"], [type="radio"], [type="file"], [type="hidden"],
+  [type="range"], [type="color"], .icon-button, .global-work-search-clear
+)):is(:focus, :focus-visible, :focus-within) {
+  border-width: 1px !important;
+  border-color: var(--gp-field-border-focus) !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+#gp-app textarea:not(.mat-mdc-input-element):not([contenteditable="true"]):is(:focus, :focus-visible) {
+  border-width: 1px !important;
+  border-color: var(--gp-field-border-focus) !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+#gp-app :is(
+  .matrix-search-input-frame, .search-shell, .search-box, .global-search,
+  .google-search-shell, .work-items-search, .planning-toolbar .search-field,
+  .kb-board-search, .work-filter-search, .global-project-search, .global-work-search-field,
+  .docs-search, .team-profile-member-search, .team-search, .epics-filter-search,
+  .add-testcases-search, .search-control, .release-search-field
+):focus-within {
+  border-width: 1px !important;
+  border-color: var(--gp-field-border-focus) !important;
+  box-shadow: none !important;
+}
+
+#gp-app .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper {
+  box-shadow: none !important;
+}
+body .cdk-overlay-container .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper {
+  box-shadow: none !important;
+}
+#gp-app .mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
+#gp-app .mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
+#gp-app .mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing,
+body .cdk-overlay-container .mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
+body .cdk-overlay-container .mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
+body .cdk-overlay-container .mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing {
+  border-color: var(--gp-field-border-focus) !important;
+}
+
+/* Shared product polish: quieter field outlines, consistent control rhythm,
+   and compact people cards across feature areas. */
+#gp-app {
+  --gp-field-border: rgba(23, 43, 77, .34);
+  --gp-field-border-hover: rgba(23, 43, 77, .40);
+  --gp-field-border-focus: rgba(23, 43, 77, .46);
+  --gp-space-card: 16px;
+}
+
+#gp-app :is(
+  input[type="text"], input[type="email"], input[type="password"], input[type="number"],
+  input[type="date"], input[type="datetime-local"], input[type="tel"], input[type="url"],
+  input[type="search"], input:not([type]), select, textarea,
+  [role="combobox"], button[aria-haspopup="listbox"],
+  .person-autocomplete-field, .person-autocomplete-control,
+  .global-project-trigger, .work-items-filter-trigger, .work-items-filter-select,
+  .work-items-status-trigger, .kb-filter-trigger, .kb-sprint-select,
+  .epics-board-filter-trigger, .filter-button, .work-items-more-filter,
+  .selector-field select, .filter-field select, .filter-select, .google-select,
+  .native-google-select, .project-selector select, .project-switcher-select,
+  .epics-project-picker, .epics-project-select, .release-header-picker, .release-header-select,
+  .material-select, .edit-input, .edit-select, .detail-input, .drawer-select,
+  .user-autocomplete-input, .team-inline-input
+):not(:is(
+  .mat-mdc-input-element, .mat-mdc-native-select, .mat-mdc-select,
+  .work-item-header-title-input, .person-autocomplete-input,
+  [aria-label="Paragraph style"], [aria-label="Font size"],
+  [type="checkbox"], [type="radio"], [type="file"], [type="hidden"],
+  [type="range"], [type="color"], .icon-button, .global-work-search-clear
+)) {
+  border-color: var(--gp-field-border) !important;
+  border-radius: 10px !important;
+}
+
+#gp-app :is(
+  input[type="text"], input[type="email"], input[type="password"], input[type="number"],
+  input[type="date"], input[type="datetime-local"], input[type="tel"], input[type="url"],
+  input[type="search"], input:not([type]), select, textarea,
+  [role="combobox"], button[aria-haspopup="listbox"],
+  .person-autocomplete-field, .person-autocomplete-control,
+  .global-project-trigger, .work-items-filter-trigger, .work-items-filter-select,
+  .work-items-status-trigger, .kb-filter-trigger, .kb-sprint-select,
+  .epics-board-filter-trigger, .filter-button, .work-items-more-filter,
+  .selector-field select, .filter-field select, .filter-select, .google-select,
+  .native-google-select, .project-selector select, .project-switcher-select,
+  .epics-project-picker, .epics-project-select, .release-header-picker, .release-header-select,
+  .material-select, .edit-input, .edit-select, .detail-input, .drawer-select,
+  .user-autocomplete-input, .team-inline-input
+):not(:is(
+  .mat-mdc-input-element, .mat-mdc-native-select, .mat-mdc-select,
+  .work-item-header-title-input, .person-autocomplete-input,
+  [aria-label="Paragraph style"], [aria-label="Font size"],
+  [type="checkbox"], [type="radio"], [type="file"], [type="hidden"],
+  [type="range"], [type="color"], .icon-button, .global-work-search-clear
+)):is(:focus, :focus-visible, :focus-within) {
+  border-width: 1px !important;
+  border-color: var(--gp-field-border-focus) !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+#gp-app textarea:not(.mat-mdc-input-element):not([contenteditable="true"]) {
+  border-color: var(--gp-field-border) !important;
+  border-radius: 10px !important;
+}
+#gp-app textarea:not(.mat-mdc-input-element):not([contenteditable="true"]):is(:focus, :focus-visible) {
+  border-color: var(--gp-field-border-focus) !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+#gp-app :is(.matrix-search-input-frame, .search-shell, .search-box, .global-search,
+  .google-search-shell, .work-items-search, .planning-toolbar .search-field,
+  .kb-board-search, .work-filter-search, .global-project-search, .global-work-search-field,
+  .docs-search, .team-profile-member-search, .team-search, .epics-filter-search,
+  .add-testcases-search, .search-control, .release-search-field):focus-within {
+  border-color: var(--gp-field-border-focus) !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+}
+
+/* One button geometry across the product; color remains owned by each action. */
+#gp-app :is(
+  .gp-button, .button-primary, .button-secondary, .google-primary-button,
+  .google-secondary-button, .kb-button, .primary-button, .secondary-button,
+  .teams-create-button, .releases-create-button, .release-create-button,
+  .primary-action, .team-small-primary, .button
+):not(.icon-button) {
+  box-sizing: border-box !important;
+  min-height: 42px !important;
+  height: 42px !important;
+  padding: 0 16px !important;
+  border-radius: 10px !important;
+  font-family: "Google Sans", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  gap: 8px !important;
+  transition: background-color .16s ease, border-color .16s ease, color .16s ease, transform .16s ease !important;
+}
+#gp-app :is(
+  .gp-button, .button-primary, .button-secondary, .google-primary-button,
+  .google-secondary-button, .kb-button, .primary-button, .secondary-button,
+  .teams-create-button, .releases-create-button, .release-create-button,
+  .primary-action, .team-small-primary, .button
+):not(.icon-button):disabled { opacity: .58; cursor: not-allowed; }
+
+/* Member/profile cards share compact proportions and a restrained surface. */
+#gp-app :is(.profile-person-card, .person-card, .allocation-member.person-card) {
+  box-sizing: border-box !important;
+  border: 1px solid rgba(23, 43, 77, .18) !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  box-shadow: 0 1px 3px rgba(23, 43, 77, .06) !important;
+}
+#gp-app .teams-page .team-profile-reference-member-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr)) !important;
+  gap: 16px !important;
+}
+#gp-app .teams-page .team-profile-reference-person-card {
+  min-height: 276px !important;
+  height: auto !important;
+  padding: 0 16px 16px !important;
+  border-radius: 12px !important;
+}
+#gp-app .teams-page .team-profile-reference-person-card .team-member-card-cover {
+  flex: 0 0 78px !important;
+  height: 78px !important;
+  min-height: 78px !important;
+  width: calc(100% + 32px) !important;
+  margin-inline: -16px !important;
+  border-radius: 0 !important;
+}
+#gp-app .teams-page .team-profile-reference-person-card .profile-person-avatar {
+  flex: 0 0 64px !important;
+  width: 64px !important;
+  height: 64px !important;
+  min-width: 64px !important;
+  min-height: 64px !important;
+  max-width: 64px !important;
+  max-height: 64px !important;
+  margin: -32px 0 10px !important;
+  border-width: 3px !important;
+  font-size: 21px !important;
+}
+#gp-app .teams-page .team-profile-reference-person-card > strong {
+  margin: 0 0 4px !important;
+  font-size: 15px !important;
+  line-height: 1.3 !important;
+}
+#gp-app .teams-page .team-profile-reference-person-card .profile-person-role {
+  margin: 0 0 6px !important;
+  font-size: 12px !important;
+}
+#gp-app .teams-page .team-profile-reference-person-card .profile-person-email {
+  font-size: 11px !important;
+  line-height: 1.4 !important;
+}
+#gp-app .teams-page .team-profile-reference-person-card .profile-remove-person {
+  margin-top: 12px !important;
+  min-height: 34px !important;
+  padding: 0 14px !important;
+  border-radius: 10px !important;
+}
+#gp-app .teams-page .create-member-wall .profile-person-card {
+  min-height: 220px !important;
+  padding: 16px !important;
+  border-radius: 12px !important;
+}
+#gp-app .teams-page .create-member-wall .profile-person-avatar {
+  flex-basis: 64px !important;
+  width: 64px !important;
+  height: 64px !important;
+  min-width: 64px !important;
+  border-radius: 50% !important;
+}
+
+/* Four repeatable avatar tones: orange, red, green, and indigo. */
+.person-tone-0 { background: #ed7d2d !important; color: #fff !important; }
+.person-tone-1 { background: #d94b58 !important; color: #fff !important; }
+.person-tone-2 { background: #3c9b68 !important; color: #fff !important; }
+.person-tone-3 { background: #6557c8 !important; color: #fff !important; }
+#gp-app :is(.profile-person-avatar-fallback, .reporting-avatar, .allocation-member-avatar,
+  .person-field-avatar, .person-option-avatar, .person-input-avatar, .mini-avatar,
+  .work-person-avatar, .kb-detail-avatar, .avatar.person-input-avatar) {
+  border-radius: 50% !important;
+}
+
+#gp-app :is(.person-option-layout, .person-suggestion, .work-item-user-options button) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+#gp-app .person-option-layout { min-width: 0; width: 100%; }
+#gp-app :is(.person-option-copy, .work-item-user-name) {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  min-width: 0 !important;
+  gap: 2px !important;
+}
+#gp-app :is(.person-option-copy strong, .work-item-user-name strong) {
+  overflow: hidden !important;
+  color: #303846 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 18px !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+#gp-app :is(.person-option-copy small, .person-option-copy span, .work-item-user-name small) {
+  overflow: hidden !important;
+  color: #748094 !important;
+  font-size: 11px !important;
+  line-height: 15px !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+#gp-app .work-item-user-options button {
+  min-height: 54px !important;
+  padding: 7px 10px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  text-align: left !important;
+}
+#gp-app .work-item-user-options button:hover,
+#gp-app .work-item-user-options button:focus-visible {
+  background: #f4f7fb !important;
+  outline: 0 !important;
+}
+#gp-app .person-option-avatar,
+#gp-app .person-suggestion .avatar,
+#gp-app .work-item-user-options .mini-avatar {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 34px !important;
+  height: 34px !important;
+  flex: 0 0 34px !important;
+  border-radius: 50% !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+#gp-app .mat-mdc-option .person-option-layout { min-height: 48px; }
+#gp-app .person-suggestion:nth-child(4n + 1) .avatar,
+#gp-app .person-option:nth-child(4n + 1) .person-option-avatar,
+#gp-app .people-card:nth-child(4n + 1) .avatar,
+#gp-app .profile-person-card:nth-child(4n + 1) .profile-person-avatar-fallback { background: #ed7d2d !important; color: #fff !important; }
+#gp-app .person-suggestion:nth-child(4n + 2) .avatar,
+#gp-app .person-option:nth-child(4n + 2) .person-option-avatar,
+#gp-app .people-card:nth-child(4n + 2) .avatar,
+#gp-app .profile-person-card:nth-child(4n + 2) .profile-person-avatar-fallback { background: #d94b58 !important; color: #fff !important; }
+#gp-app .person-suggestion:nth-child(4n + 3) .avatar,
+#gp-app .person-option:nth-child(4n + 3) .person-option-avatar,
+#gp-app .people-card:nth-child(4n + 3) .avatar,
+#gp-app .profile-person-card:nth-child(4n + 3) .profile-person-avatar-fallback { background: #3c9b68 !important; color: #fff !important; }
+#gp-app .person-suggestion:nth-child(4n) .avatar,
+#gp-app .person-option:nth-child(4n) .person-option-avatar,
+#gp-app .people-card:nth-child(4n) .avatar,
+#gp-app .profile-person-card:nth-child(4n) .profile-person-avatar-fallback { background: #6557c8 !important; color: #fff !important; }
+#gp-app .allocation-member:nth-child(4n + 1) .allocation-member-avatar,
+#gp-app .reporting-person:nth-child(4n + 1) .reporting-avatar { background: #ed7d2d !important; color: #fff !important; }
+#gp-app .allocation-member:nth-child(4n + 2) .allocation-member-avatar,
+#gp-app .reporting-person:nth-child(4n + 2) .reporting-avatar { background: #d94b58 !important; color: #fff !important; }
+#gp-app .allocation-member:nth-child(4n + 3) .allocation-member-avatar,
+#gp-app .reporting-person:nth-child(4n + 3) .reporting-avatar { background: #3c9b68 !important; color: #fff !important; }
+#gp-app .allocation-member:nth-child(4n) .allocation-member-avatar,
+#gp-app .reporting-person:nth-child(4n) .reporting-avatar { background: #6557c8 !important; color: #fff !important; }
+
+/* Material action buttons follow the same shape as product buttons. */
+#gp-app button.mat-mdc-button,
+#gp-app button.mat-mdc-raised-button,
+#gp-app button.mat-mdc-unelevated-button,
+#gp-app button.mat-mdc-outlined-button {
+  min-height: 42px !important;
+  border-radius: 10px !important;
+  font-family: "Google Sans", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+@media (max-width: 680px) {
+  #gp-app .teams-page .team-profile-reference-member-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)) !important; }
+  #gp-app .teams-page .team-profile-reference-person-card { min-height: 260px !important; }
+}
+
+#gp-app :is(
+  .matrix-search-input-frame, .search-shell, .search-box, .global-search,
+  .google-search-shell, .work-items-search, .planning-toolbar .search-field,
+  .kb-board-search, .work-filter-search, .global-project-search, .global-work-search-field,
+  .docs-search, .team-profile-member-search, .team-search, .epics-filter-search,
+  .add-testcases-search, .search-control, .release-search-field
+) input:not(.mat-mdc-input-element):not(.person-autocomplete-input):focus {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #gp-app :is(input, select, textarea, button[aria-haspopup="listbox"], .mat-mdc-form-field) {
+    transition-duration: .01ms !important;
+  }
+}
+
+/* Final shared geometry: keep Material's segmented outline aligned so the
+   floating-label notch does not create doubled corner arcs. */
+#gp-app .mat-mdc-form-field .mdc-notched-outline {
+  border-radius: 10px !important;
+}
+#gp-app .mat-mdc-form-field .mdc-notched-outline__leading {
+  width: 12px !important;
+  border-radius: 10px 0 0 10px !important;
+  border-color: var(--gp-field-border) !important;
+  border-width: 1px !important;
+  border-right-width: 0 !important;
+}
+#gp-app .mat-mdc-form-field .mdc-notched-outline__notch {
+  border-radius: 0 !important;
+  border-color: var(--gp-field-border) !important;
+  border-width: 1px !important;
+  border-left-width: 0 !important;
+  border-right-width: 0 !important;
+}
+#gp-app .mat-mdc-form-field .mdc-notched-outline--notched .mdc-notched-outline__notch {
+  border-top-width: 0 !important;
+}
+#gp-app .mat-mdc-form-field .mdc-notched-outline__trailing {
+  border-radius: 0 10px 10px 0 !important;
+  border-color: var(--gp-field-border) !important;
+  border-width: 1px !important;
+  border-left-width: 0 !important;
+}
+#gp-app .mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
+#gp-app .mat-mdc-form-field:hover .mdc-notched-outline__leading {
+  border-color: var(--gp-field-border-focus) !important;
+  border-width: 1px !important;
+  border-right-width: 0 !important;
+}
+#gp-app .mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
+#gp-app .mat-mdc-form-field:hover .mdc-notched-outline__notch {
+  border-color: var(--gp-field-border-focus) !important;
+  border-width: 1px !important;
+  border-left-width: 0 !important;
+  border-right-width: 0 !important;
+}
+#gp-app .mat-mdc-form-field.mat-focused .mdc-notched-outline--notched .mdc-notched-outline__notch,
+#gp-app .mat-mdc-form-field:hover .mdc-notched-outline--notched .mdc-notched-outline__notch {
+  border-top-width: 0 !important;
+}
+#gp-app .mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing,
+#gp-app .mat-mdc-form-field:hover .mdc-notched-outline__trailing {
+  border-color: var(--gp-field-border-focus) !important;
+  border-width: 1px !important;
+  border-left-width: 0 !important;
+}
+#gp-app .mat-mdc-form-field.mat-form-field-invalid .mdc-notched-outline__leading,
+#gp-app .mat-mdc-form-field.mat-form-field-invalid .mdc-notched-outline__notch,
+#gp-app .mat-mdc-form-field.mat-form-field-invalid .mdc-notched-outline__trailing {
+  border-color: rgba(196, 81, 89, .72) !important;
+}
+
+/* Material overlays use the same segmented outline geometry as page fields. */
+body .cdk-overlay-container .mat-mdc-form-field .mdc-notched-outline {
+  border-radius: 10px !important;
+}
+body .cdk-overlay-container .mat-mdc-form-field .mdc-notched-outline__leading {
+  width: 12px !important;
+  border-radius: 10px 0 0 10px !important;
+  border-width: 1px !important;
+  border-right-width: 0 !important;
+}
+body .cdk-overlay-container .mat-mdc-form-field .mdc-notched-outline__notch {
+  border-radius: 0 !important;
+  border-width: 1px !important;
+  border-left-width: 0 !important;
+  border-right-width: 0 !important;
+}
+body .cdk-overlay-container .mat-mdc-form-field .mdc-notched-outline--notched .mdc-notched-outline__notch {
+  border-top-width: 0 !important;
+}
+body .cdk-overlay-container .mat-mdc-form-field .mdc-notched-outline__trailing {
+  border-radius: 0 10px 10px 0 !important;
+  border-width: 1px !important;
+  border-left-width: 0 !important;
+}
+body .cdk-overlay-container .person-option-layout {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-width: 0 !important;
+  width: 100% !important;
+}
+body .cdk-overlay-container .person-option-layout .person-option-avatar {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 34px !important;
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 50% !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+body .cdk-overlay-container .person-option-copy {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  min-width: 0 !important;
+  gap: 2px !important;
+}
+body .cdk-overlay-container .person-option-copy strong {
+  overflow: hidden !important;
+  color: #303846 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 18px !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+body .cdk-overlay-container .person-option-copy small,
+body .cdk-overlay-container .person-option-copy span {
+  overflow: hidden !important;
+  color: #748094 !important;
+  font-size: 11px !important;
+  line-height: 15px !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+body .cdk-overlay-container .mat-mdc-form-field .mdc-notched-outline__leading,
+body .cdk-overlay-container .mat-mdc-form-field .mdc-notched-outline__notch,
+body .cdk-overlay-container .mat-mdc-form-field .mdc-notched-outline__trailing {
+  border-color: var(--gp-field-border) !important;
+}
+body .cdk-overlay-container .mat-mdc-form-field.mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
+body .cdk-overlay-container .mat-mdc-form-field.mat-mdc-form-field:hover .mdc-notched-outline__leading {
+  border-color: var(--gp-field-border-focus) !important;
+  border-width: 1px !important;
+  border-right-width: 0 !important;
+}
+body .cdk-overlay-container .mat-mdc-form-field.mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
+body .cdk-overlay-container .mat-mdc-form-field.mat-mdc-form-field:hover .mdc-notched-outline__notch {
+  border-color: var(--gp-field-border-focus) !important;
+  border-width: 1px !important;
+  border-left-width: 0 !important;
+  border-right-width: 0 !important;
+}
+body .cdk-overlay-container .mat-mdc-form-field.mat-mdc-form-field.mat-focused .mdc-notched-outline--notched .mdc-notched-outline__notch,
+body .cdk-overlay-container .mat-mdc-form-field.mat-mdc-form-field:hover .mdc-notched-outline--notched .mdc-notched-outline__notch {
+  border-top-width: 0 !important;
+}
+body .cdk-overlay-container .mat-mdc-form-field.mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing,
+body .cdk-overlay-container .mat-mdc-form-field.mat-mdc-form-field:hover .mdc-notched-outline__trailing {
+  border-color: var(--gp-field-border-focus) !important;
+  border-width: 1px !important;
+  border-left-width: 0 !important;
+}
+
+/* Native inputs rendered in dialogs use the same 50px field as page forms. */
+body .cdk-overlay-container :is(
+  input[type="text"], input[type="email"], input[type="password"], input[type="number"],
+  input[type="date"], input[type="datetime-local"], input[type="tel"], input[type="url"],
+  input[type="search"], input:not([type]), select, [role="combobox"]
+):not(:is(
+  .mat-mdc-input-element, .mat-mdc-native-select, .mat-mdc-select,
+  [type="checkbox"], [type="radio"], [type="file"], [type="hidden"],
+  [type="range"], [type="color"], [contenteditable="true"]
+)) {
+  box-sizing: border-box !important;
+  height: var(--gp-field-height) !important;
+  min-height: var(--gp-field-height) !important;
+  padding: 0 12px !important;
+  border: 1px solid var(--gp-field-border) !important;
+  border-radius: var(--gp-field-radius) !important;
+  background: var(--gp-field-background) !important;
+  color: var(--gp-field-text) !important;
+  font-family: "Google Sans", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 14px !important;
+  line-height: 20px !important;
+  box-shadow: none !important;
+}
+
+/* Login and registration draw one rounded rectangle rather than MDC's three
+   outline segments, so keep their outline pieces hidden and share the tokens. */
+#gp-app app-login .mat-mdc-form-field .mdc-notched-outline,
+#gp-app app-login .mat-mdc-form-field .mdc-notched-outline__leading,
+#gp-app app-login .mat-mdc-form-field .mdc-notched-outline__notch,
+#gp-app app-login .mat-mdc-form-field .mdc-notched-outline__trailing,
+#gp-app app-super-reg .registration-shell .mdc-notched-outline,
+#gp-app app-super-reg .registration-shell .mdc-notched-outline__leading,
+#gp-app app-super-reg .registration-shell .mdc-notched-outline__notch,
+#gp-app app-super-reg .registration-shell .mdc-notched-outline__trailing {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+#gp-app app-login .mat-mdc-text-field-wrapper,
+#gp-app app-super-reg .registration-shell .mat-mdc-text-field-wrapper {
+  position: relative !important;
+  overflow: visible !important;
+}
+#gp-app app-login .mat-mdc-text-field-wrapper::after,
+#gp-app app-super-reg .registration-shell .mat-mdc-text-field-wrapper::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  border: 1px solid var(--gp-field-border) !important;
+  border-radius: var(--gp-field-radius) !important;
+  box-shadow: none !important;
+  pointer-events: none !important;
+}
+#gp-app app-login .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper::after,
+#gp-app app-super-reg .registration-shell .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper::after {
+  border: 1px solid var(--gp-field-border-focus) !important;
+}
+#gp-app app-login .mat-mdc-form-field:hover:not(.mat-focused) .mat-mdc-text-field-wrapper::after,
+#gp-app app-super-reg .registration-shell .mat-mdc-form-field:hover:not(.mat-focused) .mat-mdc-text-field-wrapper::after {
+  border-color: var(--gp-field-border-hover) !important;
+}
+body .cdk-overlay-container :is(
+  input[type="text"], input[type="email"], input[type="password"], input[type="number"],
+  input[type="date"], input[type="datetime-local"], input[type="tel"], input[type="url"],
+  input[type="search"], input:not([type]), select, [role="combobox"]
+):not(:is(
+  .mat-mdc-input-element, .mat-mdc-native-select, .mat-mdc-select,
+  [type="checkbox"], [type="radio"], [type="file"], [type="hidden"],
+  [type="range"], [type="color"], [contenteditable="true"]
+)):is(:focus, :focus-visible, :focus-within) {
+  border-color: var(--gp-field-border-focus) !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Tables use the same quiet borders, row rhythm, and header treatment. */
+#gp-app .mat-mdc-table {
+  border-color: rgba(23, 43, 77, .16) !important;
+  background: #fff !important;
+  color: var(--gp-field-text) !important;
+}
+#gp-app .mat-mdc-table .mat-mdc-header-row {
+  height: 50px !important;
+  background: #f5f7fa !important;
+}
+#gp-app .mat-mdc-table .mat-mdc-header-cell {
+  padding: 0 14px !important;
+  border-bottom: 1px solid rgba(23, 43, 77, .18) !important;
+  color: #626f80 !important;
+  font-size: 11px !important;
+  font-weight: 650 !important;
+}
+#gp-app .mat-mdc-table .mat-mdc-row {
+  min-height: 58px !important;
+  height: auto !important;
+  background: #fff !important;
+  transition: background-color .14s ease !important;
+}
+#gp-app .mat-mdc-table .mat-mdc-cell {
+  min-height: 58px !important;
+  padding: 9px 14px !important;
+  border-bottom: 1px solid rgba(23, 43, 77, .12) !important;
+  color: #384456 !important;
+  font-size: 13px !important;
+}
+#gp-app .mat-mdc-table .mat-mdc-row:hover { background: #f7f9fc !important; }
+#gp-app .mat-mdc-table .mat-mdc-row:last-child .mat-mdc-cell { border-bottom: 0 !important; }
+#gp-app :is(.matrix-table-workspace, .project-table-shell, .project-table-card,
+  .work-items-table-card, .epics-table-shell, .release-table-shell) {
+  border-color: rgba(23, 43, 77, .17) !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  box-shadow: 0 1px 3px rgba(23, 43, 77, .05) !important;
+}
+#gp-app :is(app-teams, app-users, app-roles) {
+  --gp-border: rgba(23, 43, 77, .34);
+  --gp-border-soft: rgba(23, 43, 77, .15);
+}
+#gp-app .matrix-header-row {
+  height: 50px !important;
+  min-height: 50px !important;
+  border-bottom: 1px solid rgba(23, 43, 77, .18) !important;
+  background: #f5f7fa !important;
+  color: #626f80 !important;
+}
+#gp-app .matrix-row {
+  min-height: 58px !important;
+  padding-block: 8px !important;
+  border-bottom: 1px solid rgba(23, 43, 77, .12) !important;
+  background: #fff !important;
+  color: #384456 !important;
+}
+#gp-app .matrix-header-row .cell {
+  color: #626f80 !important;
+  font-size: 11px !important;
+  font-weight: 650 !important;
+}
+#gp-app .matrix-row .cell { color: #384456 !important; }
+#gp-app .matrix-row.data-row:hover { background: #f7f9fc !important; }
+#gp-app .matrix-data-frame { border-radius: 12px !important; }
+#gp-app .matrix-row-scroller { border-radius: 0 0 12px 12px !important; }
+
+/* Search shells are fields too: one outer stroke, with the inner text input clear. */
+#gp-app :is(
+  .matrix-search-input-frame, .search-shell, .search-box, .global-search,
+  .google-search-shell, .work-items-search, .planning-toolbar .search-field,
+  .kb-board-search, .work-filter-search, .global-project-search, .global-work-search-field,
+  .docs-search, .team-profile-member-search, .team-search, .epics-filter-search,
+  .add-testcases-search, .search-control, .release-search-field
+) {
+  box-sizing: border-box !important;
+  height: var(--gp-field-height) !important;
+  min-height: var(--gp-field-height) !important;
+  border: 1px solid var(--gp-field-border) !important;
+  border-radius: var(--gp-field-radius) !important;
+  background: #fff !important;
+}
+#gp-app :is(
+  .matrix-search-input-frame, .search-shell, .search-box, .global-search,
+  .google-search-shell, .work-items-search, .planning-toolbar .search-field,
+  .kb-board-search, .work-filter-search, .global-project-search, .global-work-search-field,
+  .docs-search, .team-profile-member-search, .team-search, .epics-filter-search,
+  .add-testcases-search, .search-control, .release-search-field
+):focus-within {
+  border-width: 1px !important;
+  border-color: var(--gp-field-border-focus) !important;
+  box-shadow: none !important;
+}
+#gp-app :is(
+  .matrix-search-input-frame, .search-shell, .search-box, .global-search,
+  .google-search-shell, .work-items-search, .planning-toolbar .search-field,
+  .kb-board-search, .work-filter-search, .global-project-search, .global-work-search-field,
+  .docs-search, .team-profile-member-search, .team-search, .epics-filter-search,
+  .add-testcases-search, .search-control, .release-search-field
+) input:not(.mat-mdc-input-element) {
+  box-sizing: border-box !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Form sections share an even card inset and control-grid rhythm. */
+#gp-app :is(.profile-section-card, .form-section-card, .drawer-card) {
+  border-color: rgba(23, 43, 77, .17) !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+#gp-app :is(.profile-edit-grid, .form-grid, .team-form-grid, .user-form-grid,
+  .project-form-grid, .edit-form-grid) {
+  gap: 16px !important;
+}
+
+/* Primary and secondary actions use one compact control shape. */
+#gp-app :is(
+  .gp-button, .button-primary, .button-secondary, .google-primary-button,
+  .google-secondary-button, .kb-button, .primary-button, .secondary-button,
+  .teams-create-button, .releases-create-button, .release-create-button,
+  .primary-action, .team-small-primary, .outline-button, .text-button,
+  .mini-button, .google-nav-icon, .edit-trigger, .work-items-apply-status,
+  .work-items-clear-selection, .work-items-load-more, .profile-remove-person
+):not(.icon-button) {
+  box-sizing: border-box !important;
+  min-height: 42px !important;
+  height: 42px !important;
+  padding-inline: 16px !important;
+  border-radius: 10px !important;
+  font-family: "Google Sans", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+}
+#gp-app :is(.gp-button.gp-outline, .gp-button.gp-cancel, .button-secondary,
+  .google-secondary-button, .secondary-button, .outline-button, .text-button,
+  .mini-button, .google-nav-icon, .edit-trigger, .team-neutral-button,
+  .upload-action-stack .gp-button, .create-story-button, .create-task-button) {
+  border: 1px solid var(--gp-field-border) !important;
+  background: #fff !important;
+  color: #3e4a5d !important;
+  box-shadow: none !important;
+}
+#gp-app :is(.gp-button.gp-primary, .gp-button.gp-action, .button-primary,
+  .google-primary-button, .primary-button, .primary-action,
+  .teams-create-button, .releases-create-button, .release-create-button,
+  .work-items-apply-status) {
+  border: 1px solid #175fc2 !important;
+  background: #175fc2 !important;
+  color: #fff !important;
+}
+#gp-app :is(.gp-button, .button-primary, .button-secondary, .primary-button,
+  .secondary-button, .outline-button, .text-button, .mini-button,
+  .work-items-apply-status, .work-items-clear-selection, .work-items-load-more):hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+/* The member picker lives in the CDK overlay, outside #gp-app. */
+app-user-select-dialog .mat-mdc-dialog-surface {
+  width: min(1280px, 94vw) !important;
+  max-height: 88vh !important;
+  border-radius: 14px !important;
+}
+app-user-select-dialog .mat-mdc-form-field {
+  --mdc-outlined-text-field-outline-color: var(--gp-field-border);
+  --mdc-outlined-text-field-focus-outline-color: var(--gp-field-border-focus);
+  --mdc-outlined-text-field-hover-outline-color: var(--gp-field-border-hover);
+  --mdc-outlined-text-field-container-shape: 10px;
+  width: 100% !important;
+}
+app-user-select-dialog .mat-mdc-form-field .mat-mdc-text-field-wrapper,
+app-user-select-dialog .mat-mdc-form-field .mat-mdc-form-field-flex,
+app-user-select-dialog .mat-mdc-form-field .mat-mdc-form-field-infix {
+  height: 50px !important;
+  min-height: 50px !important;
+  border-radius: 10px !important;
+  box-sizing: border-box !important;
+}
+app-user-select-dialog .mat-mdc-form-field .mat-mdc-form-field-infix { padding-block: 10px !important; }
+app-user-select-dialog .mat-mdc-form-field .mdc-notched-outline { border-radius: 10px !important; }
+app-user-select-dialog .mat-mdc-form-field .mdc-notched-outline__leading {
+  width: 12px !important;
+  border-radius: 10px 0 0 10px !important;
+  border-color: var(--gp-field-border) !important;
+  border-width: 1px !important;
+}
+app-user-select-dialog .mat-mdc-form-field .mdc-notched-outline__notch {
+  border-radius: 0 !important;
+  border-color: var(--gp-field-border) !important;
+  border-width: 1px !important;
+}
+app-user-select-dialog .mat-mdc-form-field .mdc-notched-outline__trailing {
+  border-radius: 0 10px 10px 0 !important;
+  border-color: var(--gp-field-border) !important;
+  border-width: 1px !important;
+}
+app-user-select-dialog .mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
+app-user-select-dialog .mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
+app-user-select-dialog .mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing {
+  border-color: var(--gp-field-border-focus) !important;
+  border-width: 1px !important;
+}
+app-user-select-dialog .dialog-container { height: min(780px, 82vh) !important; }
+app-user-select-dialog .users-list.people-card-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 205px), 1fr)) !important;
+  gap: 14px !important;
+}
+app-user-select-dialog .user-row.people-card {
+  min-height: 220px !important;
+  padding: 18px 14px 14px !important;
+  border-color: rgba(23, 43, 77, .18) !important;
+  border-radius: 12px !important;
+}
+app-user-select-dialog .user-row.people-card.selected {
+  border: 1px solid #2f6fcb !important;
+  background: #f2f7ff !important;
+  box-shadow: 0 0 0 2px rgba(47, 111, 203, .10) !important;
+}
+app-user-select-dialog .user-row.people-card .avatar {
+  width: 56px !important;
+  height: 56px !important;
+  min-width: 56px !important;
+  flex-basis: 56px !important;
+  font-size: 16px !important;
+}
+app-user-select-dialog .user-row.people-card .user-name { font-size: 13px !important; }
+app-user-select-dialog .user-row.people-card .user-email { font-size: 11px !important; }
+app-user-select-dialog .user-row.people-card .user-employee-code { font-size: 10px !important; }
+app-user-select-dialog .gp-button {
+  min-width: 132px !important;
+  min-height: 42px !important;
+  height: 42px !important;
+  padding: 0 16px !important;
+  border-radius: 10px !important;
+}
+app-user-select-dialog .gp-cancel {
+  border: 1px solid var(--gp-field-border) !important;
+  background: #fff !important;
+  color: #39465a !important;
+}
+app-user-select-dialog .gp-primary {
+  border: 1px solid #175fc2 !important;
+  background: #175fc2 !important;
+  color: #fff !important;
+}
+app-user-select-dialog .person-tone-0 { background: #ed7d2d !important; color: #fff !important; }
+app-user-select-dialog .person-tone-1 { background: #d94b58 !important; color: #fff !important; }
+app-user-select-dialog .person-tone-2 { background: #3c9b68 !important; color: #fff !important; }
+app-user-select-dialog .person-tone-3 { background: #6557c8 !important; color: #fff !important; }
+
+/* Project allocation cards use the same compact people-card proportions as Teams. */
+#gp-app .allocation-members {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr)) !important;
+  gap: 16px !important;
+  justify-content: start !important;
+}
+#gp-app .allocation-members .allocation-member.person-card {
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  min-height: 276px !important;
+  padding: 0 16px 16px !important;
+  overflow: hidden !important;
+  border-radius: 12px !important;
+  text-align: center !important;
+}
+#gp-app .allocation-members .person-card-cover {
+  position: relative !important;
+  align-self: stretch !important;
+  flex: 0 0 78px !important;
+  width: calc(100% + 32px) !important;
+  height: 78px !important;
+  margin: 0 -16px !important;
+  border-radius: 0 !important;
+}
+#gp-app .allocation-members .allocation-member-avatar {
+  z-index: 1 !important;
+  flex: 0 0 64px !important;
+  width: 64px !important;
+  height: 64px !important;
+  margin: -32px auto 10px !important;
+  border: 3px solid #fff !important;
+  font-size: 21px !important;
+}
+#gp-app .allocation-members .person-card-details {
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 4px !important;
+  width: 100% !important;
+}
+#gp-app .allocation-members .person-card-details strong {
+  font-size: 15px !important;
+  line-height: 1.3 !important;
+}
+#gp-app .allocation-members .person-card-details .person-designation { font-size: 12px !important; }
+#gp-app .allocation-members .person-card-email { font-size: 11px !important; }
+
+@media (max-width: 640px) {
+  app-user-select-dialog .mat-mdc-dialog-surface { width: 100% !important; border-radius: 0 !important; }
+  app-user-select-dialog .users-list.people-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+
+/* A single continuous outline for every Material field. MDC normally draws an
+   outline from three pieces; component-level focus rules were reintroducing
+   borders on their joins and creating the broken curves seen in forms. */
+#gp-app .mat-mdc-form-field .mat-mdc-text-field-wrapper,
+body .cdk-overlay-container .mat-mdc-form-field .mat-mdc-text-field-wrapper {
+  position: relative !important;
+  overflow: visible !important;
+  border-radius: var(--gp-field-radius) !important;
+  background: var(--gp-field-background) !important;
+}
+#gp-app .mat-mdc-form-field.mat-mdc-form-field.mat-mdc-form-field .mdc-notched-outline,
+#gp-app .mat-mdc-form-field.mat-mdc-form-field.mat-mdc-form-field .mdc-notched-outline__leading,
+#gp-app .mat-mdc-form-field.mat-mdc-form-field.mat-mdc-form-field .mdc-notched-outline__notch,
+#gp-app .mat-mdc-form-field.mat-mdc-form-field.mat-mdc-form-field .mdc-notched-outline__trailing,
+body .cdk-overlay-container .mat-mdc-form-field.mat-mdc-form-field.mat-mdc-form-field .mdc-notched-outline,
+body .cdk-overlay-container .mat-mdc-form-field.mat-mdc-form-field.mat-mdc-form-field .mdc-notched-outline__leading,
+body .cdk-overlay-container .mat-mdc-form-field.mat-mdc-form-field.mat-mdc-form-field .mdc-notched-outline__notch,
+body .cdk-overlay-container .mat-mdc-form-field.mat-mdc-form-field.mat-mdc-form-field .mdc-notched-outline__trailing {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+#gp-app .mat-mdc-form-field .mdc-notched-outline,
+body .cdk-overlay-container .mat-mdc-form-field .mdc-notched-outline {
+  opacity: 1 !important;
+  pointer-events: none !important;
+}
+#gp-app .mat-mdc-form-field .mat-mdc-text-field-wrapper::after,
+body .cdk-overlay-container .mat-mdc-form-field .mat-mdc-text-field-wrapper::after {
+  content: "" !important;
+  position: absolute !important;
+  z-index: 0 !important;
+  inset: 0 !important;
+  border: 1px solid var(--gp-field-border) !important;
+  border-radius: var(--gp-field-radius) !important;
+  box-shadow: none !important;
+  pointer-events: none !important;
+  transition: border-color .14s ease !important;
+}
+#gp-app .mat-mdc-form-field .mat-mdc-form-field-flex,
+body .cdk-overlay-container .mat-mdc-form-field .mat-mdc-form-field-flex {
+  position: relative !important;
+  z-index: 1 !important;
+}
+#gp-app .mat-mdc-form-field .mdc-floating-label,
+body .cdk-overlay-container .mat-mdc-form-field .mdc-floating-label {
+  padding-inline: 4px !important;
+  background: var(--gp-field-background) !important;
+}
+#gp-app .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper::after,
+body .cdk-overlay-container .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper::after {
+  border-color: var(--gp-field-border-focus) !important;
+}
+#gp-app .mat-mdc-form-field:hover:not(.mat-focused) .mat-mdc-text-field-wrapper::after,
+body .cdk-overlay-container .mat-mdc-form-field:hover:not(.mat-focused) .mat-mdc-text-field-wrapper::after {
+  border-color: var(--gp-field-border-hover) !important;
+}
+#gp-app .mat-mdc-form-field .mat-mdc-input-element,
+body .cdk-overlay-container .mat-mdc-form-field .mat-mdc-input-element {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Keep directory, picker, and allocation people cards on one surface system. */
+#gp-app :is(.profile-person-card, .person-card, .people-card, .gp-person-card,
+  .user-row.people-card, .team-profile-reference-person-card, .allocation-member.person-card) {
+  border: 1px solid rgba(23, 43, 77, .18) !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+  box-shadow: 0 1px 3px rgba(23, 43, 77, .06) !important;
+}
+body .cdk-overlay-container :is(.people-card, .user-row.people-card) {
+  border: 1px solid rgba(23, 43, 77, .18) !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+  box-shadow: 0 1px 3px rgba(23, 43, 77, .06) !important;
+}
+body .cdk-overlay-container app-user-select-dialog .user-row.people-card.selected {
+  border-radius: 10px !important;
+}
+#gp-app :is(.profile-section-card, .form-section-card, .drawer-card,
+  .matrix-data-frame, .project-table-shell, .project-table-card,
+  .work-items-table-card, .epics-table-shell, .release-table-shell,
+  .matrix-table-workspace) {
+  border-radius: 10px !important;
+}
+#gp-app :is(.mat-mdc-table, .drive-table) {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  background: #fff !important;
+}
+#gp-app :is(.mat-mdc-table, .drive-table) :is(th, .mat-mdc-header-cell) {
+  background: #f5f7fa !important;
+  color: #626f80 !important;
+  font-weight: 650 !important;
+}
+#gp-app :is(.mat-mdc-table, .drive-table) :is(td, th, .mat-mdc-cell, .mat-mdc-header-cell) {
+  border-color: rgba(23, 43, 77, .12) !important;
+}
+
+/* Compact planning controls and consistent work-item dialog presentation. */
+#gp-app .navigation-group { margin-block: 6px; }
+#gp-app .navigation-group > summary { cursor: pointer; padding: 12px 16px; list-style-position: inside; }
+#gp-app .sidebar.collapsed .navigation-group > summary { display: none; }
+#gp-app .kb-board-toolbar { display:flex!important; flex-wrap:wrap!important; align-items:center!important; gap:12px!important; padding:12px!important; }
+#gp-app .kb-toolbar-controls, #gp-app .kb-heading-actions { display:flex!important; flex-wrap:wrap!important; align-items:center!important; gap:8px!important; margin:0!important; }
+#gp-app .kb-board-toolbar-copy { margin-left:auto!important; }
+#gp-app .kb-board-search { width:230px!important; }
+#gp-app .kb-filter-panel { width:min(660px,calc(100vw - 48px))!important; max-height:65vh!important; overflow:auto!important; left:12px!important; top:calc(100% + 8px)!important; }
+#gp-app .kb-cycle-panel { padding:12px 16px!important; margin-block:12px!important; }
+#gp-app .kb-person-chip { min-height:36px!important; height:36px!important; padding:4px 10px!important; font-size:12px!important; }
+#gp-app .kb-person-chip .kb-avatar { width:26px!important; height:26px!important; flex-basis:26px!important; }
+/* Releases are a readable list, with no inherited Teams card grid. */
+#gp-app .releases-page .release-layout, #gp-app .releases-page .release-list-panel { display:flex!important; flex-direction:column!important; width:100%!important; min-width:0!important; gap:12px!important; }
+#gp-app .releases-page .release-directory-card { display:grid!important; grid-template-columns:minmax(240px,2fr) minmax(200px,2fr) auto!important; align-items:center!important; width:100%!important; min-height:100px!important; margin:0!important; padding:16px!important; gap:16px!important; }
+#gp-app .releases-page .release-directory-card-header, #gp-app .releases-page .release-directory-content, #gp-app .releases-page .release-directory-actions { padding:0!important; margin:0!important; min-width:0!important; }
+#gp-app .releases-page .release-filter-controls { display:flex!important; flex-wrap:wrap!important; gap:12px!important; min-width:0!important; }
+/* Profile composition: cover, overlapping portrait, identity, and stacked sections. */
+#gp-app .user-profile-page { max-width:1200px!important; margin-inline:auto!important; padding:24px!important; }
+#gp-app .users-profile-cover-wall { height:220px!important; min-height:220px!important; border-radius:10px 10px 0 0!important; background-image:radial-gradient(ellipse at 85% 35%,#79c7aa55,transparent 45%),linear-gradient(120deg,#001c51,#007cc1 65%,#34b7c6)!important; }
+#gp-app .users-profile-cover-copy { display:none!important; }
+#gp-app .user-profile-hero { position:relative!important; display:flex!important; flex-wrap:wrap!important; padding:0 28px 28px!important; margin-top:0!important; border:1px solid #dce4ef!important; border-top:0!important; border-radius:0 0 10px 10px!important; background:white!important; }
+#gp-app .user-profile-identity-wrap { display:flex!important; flex-direction:column!important; align-items:flex-start!important; gap:16px!important; }
+#gp-app .user-profile-avatar-wrap { margin-top:-70px!important; }
+#gp-app .user-profile-avatar { width:140px!important; height:140px!important; border:5px solid white!important; border-radius:50%!important; }
+#gp-app .user-profile-actions { margin-left:auto!important; align-self:flex-end!important; }
+@media(max-width:850px) {
+ #gp-app .releases-page .release-directory-card { grid-template-columns:1fr!important; }
 }

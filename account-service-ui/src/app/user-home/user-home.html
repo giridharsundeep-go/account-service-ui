@@ -322,7 +322,7 @@
           *ngIf="profileMenuOpen"
           class="popover profile-popover">
 
-          <div class="profile-card">
+          <button type="button" class="profile-card profile-card-action" (click)="openMyProfile()" aria-label="Open your profile">
 
             <div class="profile-avatar profile-large">
               {{ userInitials }}
@@ -336,7 +336,7 @@
               {{ user.email }}
             </span>
 
-          </div>
+          </button>
 
 
           <div class="popover-divider"></div>
@@ -345,7 +345,7 @@
           <button
             type="button"
             class="popover-item"
-            (click)="openEditDialog()">
+            (click)="openMyProfile()">
 
             <span class="popover-icon">
 
@@ -365,7 +365,7 @@
 
             </span>
 
-            Edit profile
+            My profile
 
           </button>
 
@@ -480,7 +480,7 @@
         <ng-container *ngTemplateOutlet="navigationGroup; context: { title: 'People & Access', items: peopleNavigation }"></ng-container>
 
         <ng-template #navigationGroup let-title="title" let-items="items" let-first="first">
-          <div class="navigation-section" *ngIf="title && !isCollapsed">{{ title }}</div>
+          <details class="navigation-group" open><summary [hidden]="!title || isCollapsed" class="navigation-section">{{ title }}</summary>
           <div class="navigation-divider" *ngIf="title && isCollapsed"></div>
           <button *ngFor="let item of items" type="button" class="nav-item"
             [class.active]="isActive(item.id)" [class.collapsed-item]="isCollapsed"
@@ -502,6 +502,7 @@
             </span>
             <span class="nav-label" *ngIf="!isCollapsed">{{ item.label }}</span>
           </button>
+          </details>
         </ng-template>
       </nav>
 
@@ -585,7 +586,9 @@
           </app-roles>
 
           <app-users
-            *ngIf="activeMenu === 'users'">
+            *ngIf="activeMenu === 'users'"
+            [currentUserProfileId]="currentUserProfileId"
+            [profileOpenRequest]="profileOpenRequest">
           </app-users>
 
           <app-teams
@@ -611,6 +614,8 @@
           <app-sprint-planning
             *ngIf="activeMenu === 'sprint-planning'">
           </app-sprint-planning>
+
+          <app-project-planning *ngIf="activeMenu === 'project-planning'"></app-project-planning>
 
           <app-work-items
             *ngIf="activeMenu === 'work-items'">
@@ -684,3 +689,5 @@
   </div>
 
 </div>
+
+<app-kanban-board *ngIf="itemDialog.request() as request" [dialogRequest]="request" (dialogClosed)="itemDialog.close()"></app-kanban-board>

@@ -53,10 +53,9 @@
     <div class="sidebar-resize-handle" *ngIf="!sidebarCollapsed" role="separator" aria-label="Resize navigation panel" aria-orientation="vertical" (pointerdown)="startSidebarResize($event)"></div>
 
     <main class="docs-main">
-      <div class="welcome-panel" *ngIf="!selectedSpace">
-        <div class="welcome-art"><div class="art-sheet sheet-back"></div><div class="art-sheet sheet-front"><i></i><i></i><i></i><b></b></div><span class="art-spark spark-one">✳</span><span class="art-spark spark-two">✦</span></div>
-        <span class="eyebrow">YOUR ENGINEERING KNOWLEDGE HUB</span><h2>Make knowledge easy to find.</h2><p>Create a documentation space for architecture, onboarding guides, API contracts and operational runbooks.</p><button class="button button-primary" (click)="openSpaceForm()">Create your first space</button>
-      </div>
+      <app-workspace-hero *ngIf="!selectedSpace" eyebrow="KNOWLEDGE · CONTEXT · CLARITY" title="Documentation" subtitle="Create a home for architecture, onboarding guides, API contracts, and operational runbooks." image="assets/covers/documentation.png" imageAlt="A team sharing and organizing product knowledge">
+          <button workspace-actions class="button button-primary" (click)="openSpaceForm()">＋ Create your first space</button>
+        </app-workspace-hero>
 
       <ng-container *ngIf="selectedSpace">
         <div class="content-heading">

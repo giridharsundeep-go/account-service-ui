@@ -1,5 +1,10 @@
+import { untracked, effect } from '@angular/core';
+import { Router } from '@angular/router';
+import { ProjectContextService } from '../project-context.service';
+import { ProjectWorkItem, ProjectWorkService } from '../shared/project-work.service';
+import { WorkItemDialogService } from '../shared/work-item-dialog.service';
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -18,6 +23,7 @@ import {
 
 import { environment } from '../../environment';
 import { AuthService } from '../auth.service';
+import { WorkspaceHeroComponent } from '../shared/workspace-hero';
 
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
@@ -49,6 +55,9 @@ export interface UserAccountNode {
   username?: string;
   email?: string;
   role?: string;
+  roleId?: number;
+  designation?: string;
+  jobTitle?: string;
   profilePictureUrl?: string | null;
   employeeIdPrefix?: string | null;
   employeeIdNumber?: string | number | null;
@@ -149,6 +158,7 @@ export interface SprintItem {
   imports: [
     CommonModule,
     FormsModule,
+    WorkspaceHeroComponent,
 
     MatIconModule,
     MatCardModule,
@@ -173,6 +183,37 @@ export interface SprintItem {
   ]
 })
 export class Projects implements OnInit {
+  projectRoles: any[] = [];
+  private readonly projectWork = inject(ProjectWorkService);
+  private readonly itemDialog = inject(WorkItemDialogService);
+  private lastItemRevision = this.itemDialog.revision();
+  private readonly itemRefresh = effect(() => {
+    const revision = this.itemDialog.revision();
+    if (revision === this.lastItemRevision) return;
+    this.lastItemRevision = revision;
+    untracked(() => { if (this.workRequestProject > 0) this.loadProjectWork(this.workRequestProject); });
+  });
+  private readonly projectContext = inject(ProjectContextService);
+  private readonly projectRouter = inject(Router);
+  projectWorkItems: ProjectWorkItem[] = [];
+  projectWorkLoading = false;
+  projectWorkError = '';
+  private workRequestProject = 0;
+  loadProjectWork(id: number): void {
+    if (!Number.isFinite(id) || id <= 0) return;
+    this.workRequestProject=id; this.projectWorkLoading=true; this.projectWorkError=''; this.projectWorkItems=[];
+    this.projectWork.load(id).subscribe(data=>{if(this.workRequestProject!==id)return;this.projectWorkItems=data.items;this.projectWorkLoading=false;this.projectWorkError=data.unavailable.length ? 'Some work sources are unavailable: '+data.unavailable.join(', ') : '';this.cdr.markForCheck();});
+  }
+  sprintPreviewItems(sprint: SprintItem): ProjectWorkItem[] { return this.projectWorkItems.filter(item=>item.sprintId===Number(sprint.id)); }
+  openProjectWorkItem(item: ProjectWorkItem): void { this.itemDialog.open(item.projectId,item.kind,item.id); }
+  openProjectPlanning(project: StrategicInitiative): void { const id=Number(project.id);if(!id)return;this.projectContext.setSelectedProject(id);this.projectRouter.navigate(['/user-home'],{queryParams:{menu:'project-planning',projectId:id}}); }
+  memberDesignation(member:any): string {
+    const user:any=this.organizationPersonnel.find(u=>Number(u.id)===Number(member.id));
+    const assignedRole=this.projectRoles.find(r=>Number(r.id??r.role_id)===Number(user?.roleId));
+    const role=member.designation||member.jobTitle||user?.designation||user?.jobTitle||assignedRole?.name||assignedRole?.role_name||assignedRole?.roleName||member.role||user?.role;
+    return typeof role==='object' ? String(role?.name??role?.role_name??'Team member') : String(role||'Team member');
+  }
+
 
   baseUrl = environment.apiBaseUrlM;
 
@@ -357,6 +398,7 @@ Math: any;
   ============================================================ */
 
   ngOnInit(): void {
+    this.http.get<any>(`${this.baseUrl}/roles`,{headers:this.auth.getAuthHeaders()}).pipe(catchError(()=>of([]))).subscribe(res=>{this.projectRoles=this.extractApiArray(res);this.cdr.markForCheck();});
 
     this.loadUsersBackground();
 
@@ -853,6 +895,7 @@ Math: any;
   ): void {
     const normalized = this.normalizeProject(project);
     this.selectedProject = normalized;
+    this.loadProjectWork(Number(normalized.id));
     this.selectedSprint = null;
     this.selectedProjectTabIndex = 0;
     this.isProfileCreating = false;
@@ -970,6 +1013,8 @@ Math: any;
 
     this.selectedSprint =
       sprint;
+    const projectId=Number(sprint.project_id || this.selectedProject?.id);
+    if(projectId) this.loadProjectWork(projectId);
 
     this.selectedProject =
       null;
@@ -3246,6 +3291,9 @@ Math: any;
   ): UserAccountNode {
 
     return {
+      roleId: Number(user?.role_id ?? user?.roleId ?? user?.role?.id) || undefined,
+      designation: String(user?.designation ?? user?.job_title ?? user?.jobTitle ?? user?.role_name ?? user?.roleName ?? user?.role?.name ?? ''),
+      jobTitle: user?.jobTitle ?? user?.job_title,
       id:
         Number(
           user?.id ??
