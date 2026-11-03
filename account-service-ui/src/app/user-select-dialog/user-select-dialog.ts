@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environment';
 import { AuthService } from '../auth.service';
@@ -9,6 +9,9 @@ import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/materia
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSelectModule } from '@angular/material/select';
+import { catchError, forkJoin, of } from 'rxjs';
+import { peopleRows, personDesignation, personRegions, personRoleLabels } from '../shared/people-directory';
 
 export interface UserPayload {
   id: number;
@@ -17,11 +20,16 @@ export interface UserPayload {
   profilePictureUrl?: string | null;
   employeeIdPrefix?: string | null;
   employeeIdNumber?: string | number | null;
+  designation?: string;
+  roleId?: number;
+  roleLabels?: string[];
+  regions?: string[];
 }
 
 export interface UserSelectDialogData {
   users: UserPayload[];
   currentSelection: number[];
+  title?: string;
 }
 
 @Component({
@@ -34,7 +42,7 @@ export interface UserSelectDialogData {
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
-    MatIconModule
+    MatIconModule, MatSelectModule
   ],
   templateUrl: './user-select-dialog.html',
   styleUrls: ['./user-select-dialog.css', '../shared/field-controls.css']
@@ -45,6 +53,9 @@ export class UserSelectDialog implements OnInit {
   users: UserPayload[] = [];
   loadingUsers = false;
   usersLoadError = '';
+  selectedRoles: string[] = [];
+  selectedRegions: string[] = [];
+  visibleLimit = 50;
 
   private readonly baseUrl = environment.apiBaseUrlM;
 
@@ -52,7 +63,8 @@ export class UserSelectDialog implements OnInit {
     public dialogRef: MatDialogRef<UserSelectDialog>,
     @Inject(MAT_DIALOG_DATA) public data: UserSelectDialogData,
     private http: HttpClient,
-    private auth: AuthService
+    private auth: AuthService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -72,14 +84,18 @@ export class UserSelectDialog implements OnInit {
     this.loadingUsers = true;
     this.usersLoadError = '';
 
-    this.http.get<any>(
-      `${this.baseUrl.replace(/\/+$/, '')}/users`,
-      { headers: this.auth.getAuthHeaders() }
-    ).subscribe({
-      next: (response: any) => {
+    const base = this.baseUrl.replace(/\/+$/, '');
+    const headers = this.auth.getAuthHeaders();
+    forkJoin({
+      users: this.http.get<any>(`${base}/users`, {headers}),
+      roles: this.http.get<any>(`${base}/roles`, {headers}).pipe(catchError(() => of([])))
+    }).subscribe({
+      next: ({users: response, roles: roleResponse}) => {
+        const roles = peopleRows(roleResponse);
         const rawUsers = this.extractUsers(response);
         const normalized = rawUsers
-          .map((user: any) => this.normalizeUser(user))
+          .map((user: any) => ({...this.normalizeUser(user), designation: personDesignation(user, roles),
+            roleLabels: personRoleLabels(user, roles), regions: personRegions(user)}))
           .filter((user: UserPayload) =>
             Number.isFinite(user.id) && user.id > 0
           );
@@ -91,6 +107,7 @@ export class UserSelectDialog implements OnInit {
         this.usersLoadError = this.users.length
           ? ''
           : 'No users were returned by the users API.';
+        this.cdr.markForCheck();
       },
       error: (error) => {
         console.error('Failed to load users for team member selection:', error);
@@ -99,6 +116,7 @@ export class UserSelectDialog implements OnInit {
           ? ''
           : 'Unable to load users. Check the users API response and permissions.';
         this.loadingUsers = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -226,7 +244,11 @@ export class UserSelectDialog implements OnInit {
         user?.photoUrl ?? user?.photo_url ?? user?.imageUrl ??
         user?.image_url ?? user?.profileImage ?? user?.profile_image ?? null,
       employeeIdPrefix: prefix != null ? String(prefix) : null,
-      employeeIdNumber: number != null ? String(number) : null
+      employeeIdNumber: number != null ? String(number) : null,
+      designation: personDesignation(user),
+      roleId: Number(user?.roleId ?? user?.role_id ?? user?.role?.id) || undefined,
+      roleLabels: user?.roleLabels ?? personRoleLabels(user),
+      regions: user?.regions ?? personRegions(user)
     };
   }
 
@@ -315,16 +337,27 @@ export class UserSelectDialog implements OnInit {
     const users = this.users ?? [];
     const query = this.searchQuery.trim().toLowerCase();
 
-    if (!query) {
-      return users;
-    }
-
     return users.filter(user =>
-      (user?.name ?? '').toLowerCase().includes(query) ||
+      (!this.selectedRoles.length || user.roleLabels?.some(role => this.selectedRoles.includes(role))) &&
+      (!this.selectedRegions.length || user.regions?.some(region => this.selectedRegions.includes(region))) &&
+      (!query || (user?.name ?? '').toLowerCase().includes(query) ||
       (user?.email ?? '').toLowerCase().includes(query) ||
-      this.getEmployeeCode(user).toLowerCase().includes(query)
+      (user.designation ?? '').toLowerCase().includes(query) ||
+      this.getEmployeeCode(user).toLowerCase().includes(query))
     );
   }
+
+  get roleOptions(): string[] { return [...new Set(this.users.flatMap(user => user.roleLabels ?? []))].sort(); }
+  get regionOptions(): string[] { return [...new Set(this.users.flatMap(user => user.regions ?? []))].sort(); }
+  get visibleUsers(): UserPayload[] { return this.getFilteredUsers().slice(0, this.visibleLimit); }
+  get allVisibleSelected(): boolean { return this.visibleUsers.length > 0 && this.visibleUsers.every(user => this.localSelectedIds.includes(user.id)); }
+  toggleVisible(): void {
+    const ids = new Set(this.visibleUsers.map(user => user.id));
+    this.localSelectedIds = this.allVisibleSelected ? this.localSelectedIds.filter(id => !ids.has(id))
+      : [...new Set([...this.localSelectedIds, ...ids])];
+  }
+  resetFilters(): void { this.searchQuery = ''; this.selectedRoles = []; this.selectedRegions = []; this.visibleLimit = 50; }
+  trackUser(_index: number, user: UserPayload): number { return user.id; }
 
   getEmployeeCode(user: UserPayload): string {
     const prefix =
@@ -340,7 +373,7 @@ export class UserSelectDialog implements OnInit {
     }
 
     if (prefix && number) {
-      return `${prefix}//${number}`;
+      return `${prefix}/${number}`;
     }
 
     return String(prefix || number);

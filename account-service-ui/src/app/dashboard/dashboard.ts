@@ -11,6 +11,7 @@ import {
 } from '../shared/project-work.service';
 import { WorkItemDialogService } from '../shared/work-item-dialog.service';
 import { ChangeDetectorRef } from '@angular/core';
+import { WorkspaceSettingsService } from '../shared/workspace-settings.service';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -19,6 +20,7 @@ import { ChangeDetectorRef } from '@angular/core';
   styleUrls: ['./dashboard.css', '../shared/field-controls.css'],
 })
 export class Dashboard implements OnDestroy {
+  readonly workflow = inject(WorkspaceSettingsService);
   readonly context = inject(ProjectContextService);
   private data = inject(ProjectWorkService);
   private dialog = inject(WorkItemDialogService);
@@ -38,6 +40,7 @@ export class Dashboard implements OnDestroy {
   readonly colors = ['#7c3aed', '#4f46e5', '#2563eb', '#16a34a', '#eab308', '#ea580c', '#dc2626'];
   private sync = effect(() => {
     this.dialog.revision();
+    this.workflow.revision();
     const id = this.context.selectedProjectId();
     this.subscription?.unsubscribe();
     this.team = 'ALL';
@@ -174,6 +177,7 @@ export class Dashboard implements OnDestroy {
   private scopeSnapshot: ProjectWorkSnapshot | null = null;
   private scopeTeam = '';
   private scopeDay = '';
+  private scopeWorkflow: unknown = null;
   private scopedItems: ProjectWorkItem[] = [];
   private metricsCache = new Map<string, unknown>();
   private metric<T>(key: string, build: () => T): T {
@@ -186,11 +190,13 @@ export class Dashboard implements OnDestroy {
     if (
       this.scopeSnapshot !== this.snapshot ||
       this.scopeTeam !== this.team ||
-      this.scopeDay !== day
+      this.scopeDay !== day ||
+      this.scopeWorkflow !== this.workflow.statuses
     ) {
       this.scopeSnapshot = this.snapshot;
       this.scopeTeam = this.team;
       this.scopeDay = day;
+      this.scopeWorkflow = this.workflow.statuses;
       this.metricsCache.clear();
       const sprintIds = new Set(
         this.snapshot.sprints
@@ -242,38 +248,14 @@ export class Dashboard implements OnDestroy {
   }
   get statusMix() {
     return this.metric('statusMix', () => {
-      const groups = [
-        { name: 'Backlog', states: ['BACKLOG'], color: this.colors[0] },
-        { name: 'To do', states: ['TODO', 'TO_DO', 'OPEN', 'NEW'], color: this.colors[2] },
-        {
-          name: 'In progress',
-          states: ['IN_PROGRESS', 'IN_REVIEW', 'REVIEW'],
-          color: this.colors[1],
-        },
-        { name: 'Testing', states: ['TESTING', 'QA'], color: this.colors[4] },
-        {
-          name: 'Completed',
-          states: ['DONE', 'COMPLETED', 'CLOSED', 'RESOLVED', 'RELEASED'],
-          color: this.colors[3],
-        },
-        { name: 'Blocked', states: ['BLOCKED', 'ON_HOLD'], color: this.colors[6] },
-      ].map((g) => ({
-        ...g,
-        count: this.execution.filter((i) => g.states.includes(i.status)).length,
+      const configured = this.workflow.statuses.map(status => ({
+        name: status.name,
+        states: [...new Set([status.code, ...this.items.filter(item => this.workflow.code(item.status) === status.code).map(item => item.status)])],
+        color: status.color,
+        count: this.execution.filter(item => this.workflow.code(item.status) === status.code).length,
       }));
-      const known = new Set(groups.flatMap((group) => group.states));
-      const others = [...new Set(this.items.map((item) => item.status))].filter(
-        (status) => !known.has(status),
-      );
-      return [
-        ...groups,
-        {
-          name: 'Other',
-          states: others,
-          color: this.colors[5],
-          count: this.execution.filter((item) => others.includes(item.status)).length,
-        },
-      ];
+      const remaining = [...new Set(this.items.map(item => item.status))].filter(status => !configured.some(group => group.states.includes(status)));
+      return [...configured, {name:'Other',states:remaining,color:this.colors[5],count:this.execution.filter(item => remaining.includes(item.status)).length}];
     });
   }
   get sprintMetrics() {

@@ -1,0 +1,7 @@
+import {Injectable,inject,PLATFORM_ID} from '@angular/core';import {isPlatformBrowser} from '@angular/common';import {SuiteAuth,appUrl} from '@greatley-poshley/suite';import {AuthService} from '../auth.service';
+@Injectable({providedIn:'root'})export class SuiteSessionService {
+ private auth=inject(AuthService);private platform=inject(PLATFORM_ID);readonly identity=new SuiteAuth('professy');private registration?:Promise<any>;private timer:any;
+ register():Promise<any>{if(!isPlatformBrowser(this.platform))return Promise.resolve(null);const token=localStorage.getItem('token');if(!token)return Promise.resolve(null);if(!this.timer)this.timer=setInterval(async()=>{try{const result=await this.identity.resume();if(Number(result.data.user.id)!==Number(this.auth.getCurrentUserId())){location.reload();return;}this.auth.setSession(result.data);}catch(error:any){if(error.status===401){this.auth.logout();location.assign('/login');}}},60000);if(!this.registration)this.registration=this.identity.adopt(token).finally(()=>this.registration=undefined);return this.registration;}
+ open(app:string,params:Record<string,any>={}):void{if(!isPlatformBrowser(this.platform))return;const target=window.open('about:blank',app);if(!target)return;this.register().catch(()=>null).then(()=>{target.location.href=appUrl(app,params);});}
+ async logout(){await this.identity.logout();clearInterval(this.timer);this.timer=null;this.auth.logout();}
+}

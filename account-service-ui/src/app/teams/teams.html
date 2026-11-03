@@ -70,13 +70,8 @@
         <section class="profile-section-card">
           <div class="profile-section-heading"><div><h2>Members <span class="profile-tab-count">{{ chipUserObjects.length }}</span></h2><p>Add the people who belong to this team.</p></div>
           <button type="button" class="gp-button gp-primary" (click)="openUserSelectModal()"><span aria-hidden="true">+</span> Add members</button></div>
-          <div class="profile-people-grid profile-people-grid-large create-member-wall" *ngIf="chipUserObjects.length; else createNoMembers">
-            <article class="profile-person-card create-member-card" *ngFor="let user of chipUserObjects">
-              <img *ngIf="user.profilePictureUrl" [src]="getAvatarDisplaySrc(user)" [alt]="user.name" class="profile-person-avatar" />
-              <span *ngIf="!user.profilePictureUrl" class="profile-person-avatar profile-person-avatar-fallback">{{ getInitials(user.name) }}</span>
-              <strong [title]="user.name">{{ user.name }}</strong><span class="profile-person-email">{{ user.email }}</span><span class="profile-person-code">Employee ID: {{ getMemberEmployeeCode(user) }}</span>
-              <button type="button" class="profile-remove-person" (click)="removeUserChip(user.id)">Remove</button>
-            </article>
+          <div class="gp-people-grid" *ngIf="chipUserObjects.length; else createNoMembers">
+            <app-person-card *ngFor="let user of chipUserObjects" [id]="user.id" [name]="user.name" [email]="user.email" [avatar]="getAvatarDisplaySrc(user)" [designation]="getMemberRoleLabel(user)" [removable]="true" (remove)="removeUserChip(user.id)"></app-person-card>
           </div>
           <ng-template #createNoMembers><div class="profile-empty-state create-empty-members"><mat-icon fontSet="material-icons">group_add</mat-icon><strong>No members added yet</strong><p>Add members to see their people cards here.</p><button type="button" class="gp-button gp-primary" (click)="openUserSelectModal()">+ Add members</button></div></ng-template>
         </section>
@@ -179,6 +174,7 @@
         </div>
       </div>
       <div class="team-profile-actions">
+        <button type="button" class="gp-button gp-outline" (click)="chatly.team(selectedTeam.id)">Chat with team ↗</button>
         <button type="button" class="gp-button gp-primary team-edit-profile-button" (click)="startProfileFieldEdit('name')">
           <mat-icon fontSet="material-icons">edit</mat-icon> Edit team
         </button>
@@ -225,20 +221,9 @@
 
         <ng-container *ngIf="selectedTeam as currentTeam">
           <ng-container *ngIf="getTeamMembers(currentTeam) as teamMembers">
-            <div class="profile-people-grid profile-people-grid-large team-member-wall team-profile-reference-member-grid"
+            <div class="gp-people-grid"
                  *ngIf="getFilteredTeamMembers(currentTeam).length > 0">
-              <article class="profile-person-card team-profile-reference-person-card"
-                       *ngFor="let member of getFilteredTeamMembers(currentTeam); trackBy: trackMember"
-                       [attr.data-member-id]="getMemberId(member)">
-                <div class="team-member-card-cover" aria-hidden="true"></div>
-                <img *ngIf="getMemberAvatar(member)" [src]="getMemberAvatarDisplaySrc(member)" [alt]="getMemberName(member)" class="profile-person-avatar"/>
-                <span *ngIf="!getMemberAvatar(member)" class="profile-person-avatar profile-person-avatar-fallback">{{ getInitials(getMemberName(member)) }}</span>
-                <strong [title]="getMemberName(member)">{{ getMemberName(member) }}</strong>
-                <span class="profile-person-role">{{ getMemberRoleLabel(member) }}</span>
-                <span class="profile-person-email" [title]="getMemberEmail(member)">{{ getMemberEmail(member) }}</span>
-                <span class="profile-person-code">Employee ID: {{ getMemberEmployeeCode(member) }}</span>
-                <button type="button" class="profile-remove-person" (click)="removeMemberFromTeamInline(currentTeam.id, getMemberId(member))">Remove</button>
-              </article>
+              <app-person-card *ngFor="let member of getFilteredTeamMembers(currentTeam); trackBy: trackMember" [id]="getMemberId(member)" [name]="getMemberName(member)" [email]="getMemberEmail(member)" [avatar]="getMemberAvatarDisplaySrc(member)" [designation]="getMemberRoleLabel(member)" [removable]="true" (remove)="removeMemberFromTeamInline(currentTeam.id, getMemberId(member))"></app-person-card>
             </div>
             <div class="profile-empty-state" *ngIf="teamMembers.length === 0 && !memberSearchTerm.trim()">
               <mat-icon fontSet="material-icons">group_add</mat-icon><strong>No people added</strong><p>Add members to this team to see their profile cards here.</p>
@@ -254,7 +239,7 @@
     </div>
 
     <div class="team-profile-content team-profile-single-column" *ngIf="teamProfileTab === 'work'">
-      <section class="profile-section-card profile-empty-tab"><mat-icon fontSet="material-icons">work_outline</mat-icon><h2>Team work</h2><p>Projects and work items associated with this team can be shown here when a team-to-project association is available.</p></section>
+      <app-team-work *ngIf="selectedTeam" [teamId]="selectedTeam.id"></app-team-work>
     </div>
     <div class="team-profile-content team-profile-single-column" *ngIf="teamProfileTab === 'resources'">
       <section class="profile-section-card profile-empty-tab"><mat-icon fontSet="material-icons">link</mat-icon><h2>Team resources</h2><p>Useful links and documents for this team can be managed here. No resource links are currently configured.</p></section>

@@ -4,6 +4,8 @@ import { UserHome } from './user-home/user-home';
 import { AuthGuard } from './auth.guard';
 
 export const routes: Routes = [
+  {path:'forgot-password',loadComponent:()=>import('./password-setup').then(m=>m.PasswordSetup)},
+  {path:'reset-password',loadComponent:()=>import('./password-setup').then(m=>m.PasswordSetup)},
 
   // =========================================================
   // LOGIN

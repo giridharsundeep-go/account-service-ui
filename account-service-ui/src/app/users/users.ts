@@ -1,11 +1,15 @@
+import {UserAccessPanel} from '../shared/user-access-panel';
+import {WorkspaceSettingsService} from '../shared/workspace-settings.service';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, effect, inject, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BehaviorSubject, Observable, map, of, catchError, tap, shareReplay } from 'rxjs';
 import { environment } from '../../environment';
 import { AuthService } from '../auth.service';
 import { WorkspaceHeroComponent } from '../shared/workspace-hero';
+import { peopleRows, personDesignation, personRegions, personRoleLabels } from '../shared/people-directory';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -42,7 +46,7 @@ interface DirectoryUser {
   selector: 'app-users',
   standalone: true,
   imports: [
-    CommonModule,
+    CommonModule, UserAccessPanel,
     FormsModule,
     WorkspaceHeroComponent,
     MatButtonModule,
@@ -50,12 +54,19 @@ interface DirectoryUser {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
-    MatAutocompleteModule
+    MatAutocompleteModule, MatPaginatorModule
   ],
   templateUrl: './users.html',
   styleUrls: ['./users.css', '../shared/field-controls.css']
 })
 export class Users implements OnInit, OnChanges, OnDestroy {
+  readonly settings = inject(WorkspaceSettingsService);
+  private readonly liveDirectory = effect(() => {
+    const event = this.settings.lastEvent();
+    if (event && ['USER_UPDATED', 'USER_ACCESS_UPDATED', 'ROLE_UPDATED'].includes(event.type || '')) {
+      untracked(() => { if (!this.profileEditMode && !this.profileCreating) this.loadUsers(); });
+    }
+  });
   readonly baseUrl = environment.apiBaseUrlM.replace(/\/$/, '');
 
   private readonly usersSubject = new BehaviorSubject<DirectoryUser[]>([]);
@@ -106,13 +117,20 @@ export class Users implements OnInit, OnChanges, OnDestroy {
   isDrawerOpen = false;
   searchTerm = '';
   loading = false;
+  directoryLoading = false;
+  selectedRoleFilters: string[] = [];
+  selectedRegionFilters: string[] = [];
+  workModelFilter = '';
+  pageIndex = 0;
+  pageSize = 25;
   showSuccessToast = false;
   successMessage = '';
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private readonly http: HttpClient,
-    private readonly auth: AuthService
+    private readonly auth: AuthService,
+    private readonly cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -152,31 +170,33 @@ export class Users implements OnInit, OnChanges, OnDestroy {
   }
 
   private unwrapArray(response: any): any[] {
-    if (Array.isArray(response)) return response;
-    if (Array.isArray(response?.data)) return response.data;
-    if (Array.isArray(response?.content)) return response.content;
-    return [];
+    return peopleRows(response);
   }
 
   loadUsers(): void {
+    this.directoryLoading = true;
     this.http.get<any>(`${this.baseUrl}/users`, {
       headers: this.headers()
     }).subscribe({
       next: response => {
         const users = this.unwrapArray(response).map(user => this.normalizeUser(user));
         this.cachedUsersArray = users;
+        this.directoryLoading = false;
         this.usersSubject.next(users);
         this.filterManagerAutocomplete();
         this.openRequestedProfile();
+        this.cdr.markForCheck();
       },
       error: error => {
         this.cachedUsersArray = [];
+        this.directoryLoading = false;
         this.usersSubject.next([]);
         this.filterManagerAutocomplete();
         this.triggerToastAlert(
           this.errorMessage(error, 'Unable to load users.'),
           true
         );
+        this.cdr.markForCheck();
       }
     });
   }
@@ -324,6 +344,7 @@ export class Users implements OnInit, OnChanges, OnDestroy {
       map(response => this.unwrapArray(response)),
       tap(roles => {
         this.roleOptions = roles;
+        this.cdr.markForCheck();
       }),
       catchError(() => {
         this.roleOptions = [];
@@ -334,7 +355,17 @@ export class Users implements OnInit, OnChanges, OnDestroy {
     this.roles$.subscribe();
   }
 
+  get canManageUsers():boolean{return this.settings.can('USERS.UPDATE');}
+  get canCreateUsers():boolean{return this.settings.can('USERS.CREATE');}
+  get canDeactivateUsers():boolean{return this.settings.can('USERS.DELETE');}
+  get canCreateSetupLink():boolean{return this.settings.superUser;}
+  canEditPerson(user:any):boolean{return this.canManageUsers||Number(user.id)===this.auth.getCurrentUserId();}
+  invitationUrl='';
+  invitationForUserId=0;
+  createSetupLink(user:any):void{if(!this.canCreateSetupLink)return;this.http.post<any>(`${this.baseUrl}/users/${user.id}/invitation-link`,{},{headers:this.headers()}).subscribe({next:result=>{this.invitationUrl=result.url;this.invitationForUserId=Number(user.id);this.cdr.markForCheck();},error:()=>this.triggerToastAlert('Unable to create a password setup link.',true)});}
+
   openCreateForm(): void {
+    if(!this.canCreateUsers)return;
     this.resetForm(); this.editingUserId=null; this.profileCreating=true;
     this.selectedProfileUser=this.normalizeUser({id:0,fullName:'New user',firstName:'',lastName:'',email:'',is_active:true});
     this.profileEditMode=true; this.isDrawerOpen=false; this.filterManagerAutocomplete();
@@ -468,7 +499,7 @@ export class Users implements OnInit, OnChanges, OnDestroy {
       next: () => {
         this.sendingRegistrationEmail = false;
         this.triggerToastAlert(
-          `Registration invitation sent to ${payload['email']}.`
+          'Invitation queued. Email delivery will start when SMTP is configured.'
         );
       },
       error: error => {
@@ -485,7 +516,8 @@ export class Users implements OnInit, OnChanges, OnDestroy {
   }
 
   saveUser(): void {
-    if (this.loading || !this.validateForm()) return;
+    const allowed=this.editingUserId===null?this.canCreateUsers:(this.canManageUsers||this.editingUserId===this.auth.getCurrentUserId());
+    if (!allowed || this.loading || !this.validateForm()) return;
 
     const isCreate = this.editingUserId === null;
     this.loading = true;
@@ -547,7 +579,7 @@ export class Users implements OnInit, OnChanges, OnDestroy {
             this.closeDrawerAndCancel();
           }
           this.triggerToastAlert(
-            isCreate ? 'User created successfully.' : 'User updated successfully.'
+            isCreate ? 'User created. Password setup email queued.' : 'User updated successfully.'
           );
           this.loadUsers();
         },
@@ -842,7 +874,7 @@ export class Users implements OnInit, OnChanges, OnDestroy {
       if (assignedName) return String(assignedName);
     }
 
-    return user?.role_name?.trim() || 'Not assigned';
+    return personDesignation(user, this.roleOptions);
   }
 
   getDirectReports(user: DirectoryUser): DirectoryUser[] {
@@ -868,7 +900,7 @@ export class Users implements OnInit, OnChanges, OnDestroy {
   }
 
   deactivateUser(user: DirectoryUser): void {
-    if (!user?.id || !user.is_active || !confirm(`Deactivate ${user.fullName}?`)) {
+    if (!this.canDeactivateUsers || !user?.id || !user.is_active || !confirm(`Deactivate ${user.fullName}?`)) {
       return;
     }
 
@@ -991,6 +1023,9 @@ export class Users implements OnInit, OnChanges, OnDestroy {
 
     return users.filter(user =>
       user.is_active === targetActive
+      && (!this.selectedRoleFilters.length || personRoleLabels(user, this.roleOptions).some(role => this.selectedRoleFilters.includes(role)))
+      && (!this.selectedRegionFilters.length || personRegions(user).some(region => this.selectedRegionFilters.includes(region)))
+      && (!this.workModelFilter || user.locationWorkModel === this.workModelFilter)
       && (!query ||
         user.fullName.toLowerCase().includes(query)
         || user.email.toLowerCase().includes(query)
@@ -1000,6 +1035,22 @@ export class Users implements OnInit, OnChanges, OnDestroy {
         || user.employee_id_number.toLowerCase().includes(query))
     );
   }
+
+  get directoryRoleOptions(): string[] { return [...new Set(this.cachedUsersArray.flatMap(user => personRoleLabels(user, this.roleOptions)))].sort(); }
+  get directoryRegionOptions(): string[] { return [...new Set(this.cachedUsersArray.flatMap(personRegions))].sort(); }
+  get directoryWorkModels(): string[] { return [...new Set(this.cachedUsersArray.map(user => user.locationWorkModel).filter(Boolean))].sort(); }
+  get peopleStats(): {total: number; active: number; managers: number; regions: number} {
+    return {total: this.cachedUsersArray.length, active: this.getCount(this.cachedUsersArray, true),
+      managers: new Set(this.cachedUsersArray.map(user => user.manager_id).filter(Boolean)).size,
+      regions: new Set(this.cachedUsersArray.map(user => user.locationCountry).filter(Boolean)).size};
+  }
+  pagedUsers(users: DirectoryUser[]): DirectoryUser[] {
+    const filtered = this.filterUsersByStatusAndSearch(users);
+    const lastPage = Math.max(0, Math.ceil(filtered.length / this.pageSize) - 1);
+    return filtered.slice(Math.min(this.pageIndex, lastPage) * this.pageSize, (Math.min(this.pageIndex, lastPage) + 1) * this.pageSize);
+  }
+  onDirectoryPage(event: PageEvent): void { this.pageIndex = event.pageIndex; this.pageSize = event.pageSize; }
+  resetDirectoryFilters(): void { this.searchTerm = ''; this.selectedRoleFilters = []; this.selectedRegionFilters = []; this.workModelFilter = ''; this.pageIndex = 0; }
 
   trackByUserId(_index: number, user: DirectoryUser): number {
     return user.id;

@@ -1,128 +1,23 @@
-<div class="dialog-container">
-  <h2 mat-dialog-title class="dialog-title">Select Team Members</h2>
-
-  <div class="search-wrapper">
-    <mat-form-field appearance="outline" class="search-field">
-      <mat-label>Search users by name, email or employee code...</mat-label>
-      <input
-        matInput
-        [(ngModel)]="searchQuery"
-        placeholder="Search users..."
-        autocomplete="off" />
-
-      <button
-        *ngIf="searchQuery"
-        mat-icon-button
-        matSuffix
-        type="button"
-        aria-label="Clear search"
-        class="clear-btn"
-        (click)="searchQuery = ''">
-        &times;
-      </button>
-    </mat-form-field>
+<div class="member-picker">
+  <header class="member-picker-heading"><div><h2 mat-dialog-title>{{ data.title || 'Select team members' }}</h2><p>Find people by role, region, name or employee code.</p></div><button mat-icon-button type="button" aria-label="Close member selector" (click)="onCancel()"><mat-icon>close</mat-icon></button></header>
+  <div class="member-picker-filters">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="member-picker-search"><mat-label>Search people</mat-label><mat-icon matPrefix>search</mat-icon><input matInput [(ngModel)]="searchQuery" (ngModelChange)="visibleLimit = 50" placeholder="Name, email or employee code" autocomplete="off" /></mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic"><mat-label>Roles / designations</mat-label><mat-select multiple [(ngModel)]="selectedRoles" (selectionChange)="visibleLimit = 50"><mat-option *ngFor="let role of roleOptions" [value]="role">{{role}}</mat-option></mat-select></mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic"><mat-label>Region</mat-label><mat-select multiple [(ngModel)]="selectedRegions" (selectionChange)="visibleLimit = 50"><mat-option *ngFor="let region of regionOptions" [value]="region">{{region}}</mat-option></mat-select></mat-form-field>
   </div>
-
-  <mat-dialog-content class="dialog-content">
-
-    <div class="dialog-state" *ngIf="loadingUsers">
-      Loading users...
+  <div class="member-picker-summary"><label><input type="checkbox" [checked]="allVisibleSelected" (change)="toggleVisible()" [disabled]="!visibleUsers.length" /> Select visible</label><span>{{getFilteredUsers().length}} people</span><button type="button" mat-button *ngIf="searchQuery || selectedRoles.length || selectedRegions.length" (click)="resetFilters()">Clear filters</button></div>
+  <mat-dialog-content class="member-picker-content">
+    <p *ngIf="loadingUsers" role="status">Loading people…</p><p *ngIf="usersLoadError" role="alert">{{usersLoadError}}</p>
+    <div class="member-picker-list" *ngIf="!loadingUsers">
+      <label class="member-option" *ngFor="let user of visibleUsers; trackBy: trackUser" [class.is-selected]="localSelectedIds.includes(user.id)">
+        <input type="checkbox" [checked]="localSelectedIds.includes(user.id)" (change)="toggleUserSelection(user.id)" [attr.aria-label]="'Select ' + user.name" />
+        <span class="member-option-avatar" [ngClass]="'person-tone-' + (user.id % 4)"><img *ngIf="hasAvatar(user); else initials" [src]="getAvatarDisplaySrc(user)" [alt]="user.name" (error)="onAvatarError($event)" /><ng-template #initials>{{getInitials(user.name)}}</ng-template></span>
+        <span class="member-option-copy"><strong>{{user.name}}</strong><span class="member-option-designation">{{user.designation || 'Designation not set'}}</span><small>{{user.email}}</small></span>
+        <span class="member-option-meta"><small>{{user.regions?.join(' · ') || 'Region not set'}}</small><small>{{getUserEmployeeCode(user)}}</small></span>
+      </label>
     </div>
-
-    <div class="dialog-state error" *ngIf="!loadingUsers && usersLoadError">
-      {{ usersLoadError }}
-    </div>
-
-    <div
-      *ngIf="!loadingUsers && !usersLoadError && getFilteredUsers().length === 0"
-      class="empty-state">
-      {{
-        users.length === 0
-          ? 'No users available'
-          : 'No users match your search'
-      }}
-    </div>
-
-    <div class="users-list people-card-grid" *ngIf="!loadingUsers && getFilteredUsers().length > 0">
-
-      <div
-        class="user-row people-card"
-        *ngFor="let user of getFilteredUsers()"
-        [class.selected]="localSelectedIds.includes(user.id)"
-        (click)="toggleUserSelection(user.id)">
-
-        <div class="user-left">
-
-          <div class="avatar" [ngClass]="'person-tone-' + (user.id % 4)">
-            <img
-              *ngIf="hasAvatar(user)"
-              [src]="getAvatarDisplaySrc(user)"
-              [alt]="user.name"
-              (error)="onAvatarError($event)" />
-            <span *ngIf="!hasAvatar(user)">
-              {{ getInitials(user.name) }}
-            </span>
-          </div>
-
-          <div class="user-details" [attr.title]="user.name">
-
-            <span class="user-name">
-              {{ user.name }}
-            </span>
-
-            <span class="user-email">
-              {{ user.email }}
-            </span>
-
-            <span class="user-employee-code">
-              {{ getUserEmployeeCode(user) }}
-            </span>
-
-          </div>
-
-        </div>
-
-        <span class="selected-indicator" *ngIf="localSelectedIds.includes(user.id)" aria-label="Selected">
-          ✓
-        </span>
-        <input
-          type="checkbox"
-          class="styled-checkbox card-checkbox"
-          [checked]="localSelectedIds.includes(user.id)"
-          [attr.aria-label]="'Select ' + user.name"
-          (click)="$event.stopPropagation()"
-          (change)="toggleUserSelection(user.id)" />
-
-      </div>
-
-    </div>
+    <div class="member-picker-empty" *ngIf="!loadingUsers && !usersLoadError && !visibleUsers.length">No people match these filters.</div>
+    <button type="button" mat-stroked-button class="member-picker-more" *ngIf="getFilteredUsers().length > visibleLimit" (click)="visibleLimit = visibleLimit + 50">Load 50 more</button>
   </mat-dialog-content>
-
-  <mat-dialog-actions align="end" class="dialog-actions">
-
-    <span class="selection-counter">
-      {{ localSelectedIds.length }} user(s) selected
-    </span>
-
-    <div class="action-buttons">
-
-      <button
-        mat-stroked-button
-        type="button"
-        class="gp-button gp-cancel"
-        (click)="onCancel()">
-        Cancel
-      </button>
-
-      <button
-        mat-stroked-button
-        type="button"
-        class="gp-button gp-primary"
-        (click)="onSave()">
-        Apply Selection
-      </button>
-
-    </div>
-
-  </mat-dialog-actions>
+  <mat-dialog-actions class="member-picker-actions"><span>{{localSelectedIds.length}} selected across all filters</span><div><button mat-stroked-button type="button" (click)="onCancel()">Cancel</button><button mat-flat-button color="primary" type="button" (click)="onSave()">Apply selection</button></div></mat-dialog-actions>
 </div>

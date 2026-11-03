@@ -1003,3 +1003,57 @@
 @media (prefers-reduced-motion: reduce) {
   .planning-group-body, .planning-group-chevron, .planning-assignee-body, .planning-assignee-chevron { transition: none; }
 }
+
+/* Sprint tables and the optional backlog share the available page width. */
+.planning-workspace-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 16px 0; color: #64748b; font-size: 14px; }
+.planning-workspace-heading button { display: inline-flex; align-items: center; gap: 8px; }
+.planning-workspace-heading b { min-width: 24px; border-radius: 7px; padding: 3px 6px; background: #edf2fa; font-size: 13px; }
+.planning-split-layout { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 20px; width: 100%; min-width: 0; }
+.planning-split-layout.backlog-open { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.planning-split-layout > * { min-width: 0; }
+.planning-split-layout .planning-table-panel { margin: 0; }
+.planning-split-layout .planning-table-heading { flex-wrap: wrap; gap: 12px; }
+.planning-split-layout .planning-table-scroll { height: auto; max-height: none; overflow: visible; }
+.planning-split-layout.backlog-open .planning-mat-table { width: 100%; min-width: 0; table-layout: fixed; }
+.planning-split-layout.backlog-open :is(.mat-column-priority, .mat-column-points, .mat-column-sprint) { display: none; }
+.planning-split-layout.backlog-open .mat-column-status { width: 110px; }
+.planning-split-layout.backlog-open .planning-sprint-group-heading { flex-wrap: wrap; }
+.planning-split-layout.backlog-open .planning-assignee-group-heading { flex-wrap: wrap; }
+.planning-backlog-panel { border: 1px solid #dce3ed; border-radius: 10px; background: #fff; overflow: hidden; animation: planning-backlog-enter .2s ease-out; }
+.planning-backlog-header { display: flex; gap: 12px; padding: 20px; border-bottom: 1px solid #e5eaf1; }
+.planning-backlog-header h2 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 20px; color: #172b4d; }
+.planning-backlog-header h2 span { padding: 3px 8px; border-radius: 8px; background: #eef2f7; font-size: 14px; }
+.planning-backlog-header p { margin: 8px 0 0; font-size: 14px; line-height: 1.5; color: #64748b; }
+.planning-backlog-close { align-self: flex-start; margin-left: auto; padding: 4px 10px; border: 0; border-radius: 8px; background: #f1f4f8; color: #475569; font-size: 22px; cursor: pointer; }
+.planning-backlog-actions { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 20px; color: #64748b; font-size: 14px; border-bottom: 1px solid #e5eaf1; }
+.planning-backlog-cards { display: grid; gap: 12px; padding: 16px; background: #fafbfc; }
+.planning-backlog-card { min-width: 0; padding: 16px; border: 1px solid #dce3ed; border-radius: 10px; background: #fff; box-shadow: var(--gp-card-shadow); }
+.planning-backlog-card.is-selected { border-color: #72a4ed; background: #f3f7ff; }
+.planning-backlog-card-top { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.planning-backlog-card-top .planning-table-key { flex: 1; overflow-wrap: anywhere; }
+.planning-backlog-item-title { display: block; width: 100%; padding: 10px 0; border: 0; background: transparent; color: #243247; text-align: left; font: inherit; font-size: 16px; font-weight: 650; line-height: 1.5; cursor: pointer; }
+.planning-backlog-item-title:hover { color: #1456b8; }
+.planning-backlog-card p { margin: 0 0 12px; color: #64748b; font-size: 13px; overflow-wrap: anywhere; }
+.planning-backlog-card footer { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding-top: 12px; border-top: 1px solid #edf0f4; color: #64748b; font-size: 13px; }
+.planning-backlog-assignee { display: flex; align-items: center; gap: 8px; flex: 1; }
+.planning-backlog-assignee .planning-assignee-avatar { width: 28px; height: 28px; flex: 0 0 28px; font-size: 11px; }
+.planning-backlog-card footer button { padding: 7px 10px; border: 1px solid #d2def0; border-radius: 8px; background: #fff; color: #1456b8; cursor: pointer; }
+.planning-backlog-card button:disabled { opacity: .5; cursor: default; }
+:is(.planning-backlog-panel, .planning-sprint-group).is-drop-target { outline: 2px dashed #4585e7; outline-offset: -4px; background: #edf5ff; }
+@keyframes planning-backlog-enter { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
+@media (max-width: 950px) { .planning-split-layout.backlog-open { grid-template-columns: minmax(0, 1fr); } .planning-backlog-panel { grid-row: 1; } }
+@media (prefers-reduced-motion: reduce) { .planning-backlog-panel { animation: none; } }
+.planning-page .planning-split-layout { align-items:stretch; height:clamp(560px, 72dvh, 900px); }
+.planning-page .planning-split-layout > :is(.planning-table-panel,.planning-backlog-panel) { display:flex;flex-direction:column;height:100%;min-height:0; }
+.planning-page .planning-table-heading { flex:0 0 auto; }
+.planning-page .planning-split-layout .planning-table-scroll { flex:1;min-height:0;overflow:auto;height:auto; }
+.planning-page .planning-backlog-cards { flex:1;min-height:0;overflow-y:auto;align-content:start;overscroll-behavior:contain; }
+.planning-backlog-search { display:flex;align-items:center;gap:10px;margin:14px 16px 2px;padding:0 12px;border:1px solid #aab5c5;border-radius:10px;height:50px;flex:0 0 50px; }
+.planning-backlog-search span { font-size:24px;color:#64748b; }
+.planning-backlog-search input { flex:1;min-width:0;border:0!important;outline:0!important;box-shadow:none!important;height:46px!important;padding:0!important;background:transparent;font:inherit;font-size:14px; }
+.planning-people-chips { display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0; }
+.planning-people-chips button { display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:6px 12px;border:1px solid #dce3ed;border-radius:10px;background:#fff;color:#475569;font:inherit;font-size:14px;cursor:pointer; }
+.planning-people-chips button.is-selected { border-color:#8ab0ed;background:#edf4ff;color:#1456b8; }
+.planning-people-chips .planning-assignee-avatar { width:28px;height:28px;flex:0 0 28px;font-size:10px; }
+.planning-people-chips b { font-size:13px;padding:2px 6px;border-radius:6px;background:#e9edf4; }
+@media(max-width:950px){.planning-page .planning-split-layout { height:auto; }.planning-page .planning-split-layout > :is(.planning-table-panel,.planning-backlog-panel){height:65dvh;min-height:460px;}}

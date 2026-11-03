@@ -1,3 +1,5 @@
+import {WorkspaceSettingsService} from '../shared/workspace-settings.service';
+import { SprintLifecycleComponent } from '../shared/sprint-lifecycle';
 import { untracked } from '@angular/core';
 import { WorkItemDialogService } from '../shared/work-item-dialog.service';
 import { CommonModule } from '@angular/common';
@@ -7,10 +9,8 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSelectModule } from '@angular/material/select';
-import { MatTableModule } from '@angular/material/table';
 import { forkJoin, Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
@@ -18,6 +18,9 @@ import { environment } from '../../environment';
 import { AuthService } from '../auth.service';
 import { WorkspaceHeroComponent } from '../shared/workspace-hero';
 import { ProjectContextService } from '../project-context.service';
+import { PersonPickerComponent } from '../shared/person-picker';
+import { ApiCollectionService } from '../shared/api-collection.service';
+import { PlanningWorkTableComponent } from '../shared/planning-work-table';
 
 type WorkKind = 'EPIC' | 'STORY' | 'TASK' | 'ISSUE';
 type TypeFilter = 'ALL' | WorkKind;
@@ -99,11 +102,13 @@ interface PlanningSprintGroup {
 @Component({
   selector: 'app-sprint-planning',
   standalone: true,
-  imports: [CommonModule, A11yModule, FormsModule, MatFormFieldModule, MatInputModule, MatAutocompleteModule, MatSelectModule, MatCheckboxModule, MatTableModule, WorkspaceHeroComponent],
+  imports: [SprintLifecycleComponent, CommonModule, A11yModule, FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, WorkspaceHeroComponent, PersonPickerComponent, PlanningWorkTableComponent],
   templateUrl: './sprint-planning.html',
   styleUrls: ['../kanban-board/kanban-board.css', './sprint-planning.css', '../shared/field-controls.css'],
 })
 export class SprintPlanning implements OnInit {
+  private readonly collections = inject(ApiCollectionService);
+  showBacklog = true;
   @Input() projectScope = false;
   @Input() planningProjectId: number|null = null;
   readonly itemDialog = inject(WorkItemDialogService);
@@ -152,10 +157,11 @@ export class SprintPlanning implements OnInit {
   loadingTeamMembers = false;
   typeFilter: TypeFilter = 'ALL';
   searchQuery = '';
+  backlogSearch = '';
+  selectedPersonId: number | 'ALL' = 'ALL';
   selectedItemIds = new Set<string>();
   collapsedSprintGroupKeys = new Set<string>();
   expandedAssigneeGroupKeys = new Set<string>();
-  readonly displayedColumns = ['select', 'workItem', 'status', 'sprint', 'priority', 'points'];
   moveDestinationSprintId: number | null = null;
   loadingProjects = false;
   loadingItems = false;
@@ -168,6 +174,7 @@ export class SprintPlanning implements OnInit {
   creatingSprint = false;
   sprintError = '';
   newSprintName = '';
+  newSprintActivation='MANUAL';
   newSprintStartDate = '';
   newSprintEndDate = '';
   newSprintCapacity: number | null = null;
@@ -193,7 +200,9 @@ export class SprintPlanning implements OnInit {
   createIssueBlocking = false;
   createAssigneeSearchText = 'Unassigned';
   createReporterSearchText = 'No reporter';
-  readonly createStatuses = ['Backlog', 'To Do', 'In Progress', 'Testing', 'Completed', 'Blocked'];
+  readonly workflow=inject(WorkspaceSettingsService);
+  get createStatuses(){return this.workflow.names;}
+  private readonly liveRefresh=effect(()=>{if(this.workflow.revision()>0)untracked(()=>{if(this.selectedProjectId&&!this.saving)this.loadProjectItems(this.selectedProjectId,true);});});
   readonly descriptionColors = ['#202124', '#2563eb', '#7c3aed', '#16834a', '#c2410c'];
   draggedItemId: string | null = null;
   dropTarget: 'backlog' | number | null = null;
@@ -208,6 +217,7 @@ export class SprintPlanning implements OnInit {
     this.loadProjects();
   }
 
+  refreshLifecycle():void{if(this.selectedProjectId)this.loadProjectItems(this.selectedProjectId,true);}
   private headers() {
     return { headers: this.auth.getAuthHeaders() };
   }
@@ -316,6 +326,7 @@ export class SprintPlanning implements OnInit {
   onTeamChange(value: number | string | null): void {
     const teamId = Number(value);
     this.selectedTeamId = Number.isFinite(teamId) && teamId > 0 ? teamId : null;
+    this.selectedPersonId = 'ALL';
     this.selectedItemIds.clear();
     this.collapsedSprintGroupKeys.clear();
     this.expandedAssigneeGroupKeys.clear();
@@ -323,7 +334,7 @@ export class SprintPlanning implements OnInit {
     this.saveError = '';
     this.loadingTeamMembers = false;
     const team = this.selectedTeam;
-    this.teamMembers = this.mergePeople(team?.members ?? [], this.userDirectory);
+    this.teamMembers = this.enrichTeamPeople(team?.members ?? []);
     const initiallyExpandedSprint = this.selectedSprint ?? this.activeSprint ?? this.planningSprints[0];
     for (const sprint of this.sprints) {
       if (sprint.id !== initiallyExpandedSprint?.id) this.collapsedSprintGroupKeys.add(this.sprintGroupKey(sprint.id));
@@ -341,7 +352,7 @@ export class SprintPlanning implements OnInit {
       const loaded = this.extractArray(response)
         .map((row, index) => this.normalizePerson(row, index))
         .filter((person): person is PlanningPerson => Boolean(person));
-      this.teamMembers = this.mergePeople(loaded, this.mergePeople(this.selectedTeam?.members ?? [], this.userDirectory));
+      this.teamMembers = this.enrichTeamPeople(this.mergePeople(loaded, this.selectedTeam?.members ?? []));
       this.loadingTeamMembers = false;
       this.cdr.markForCheck();
     });
@@ -386,6 +397,8 @@ export class SprintPlanning implements OnInit {
   }
 
   onProjectChange(value: number | string | null): void {
+    this.selectedPersonId = 'ALL';
+    this.backlogSearch = '';
     const projectId = Number(value);
     if (!Number.isFinite(projectId) || projectId <= 0) {
       this.selectedProjectId = null;
@@ -468,17 +481,7 @@ export class SprintPlanning implements OnInit {
   }
 
   get createPeople(): PlanningPerson[] {
-    return this.teamMembers.length ? this.teamMembers : this.userDirectory;
-  }
-
-  filteredCreatePeople(field: 'assignee' | 'reporter'): PlanningPerson[] {
-    const query = (field === 'assignee' ? this.createAssigneeSearchText : this.createReporterSearchText).trim().toLowerCase();
-    return this.createPeople.filter(person => !query || person.name.toLowerCase().includes(query)).slice(0, 50);
-  }
-
-  filterCreatePeople(field: 'assignee' | 'reporter', query: string): void {
-    if (field === 'assignee') this.createAssigneeSearchText = query;
-    else this.createReporterSearchText = query;
+    return this.mergePeople(this.teamMembers, this.userDirectory);
   }
 
   selectCreatePerson(field: 'assignee' | 'reporter', id: number | null): void {
@@ -726,7 +729,7 @@ export class SprintPlanning implements OnInit {
       sprints: this.collection([`${this.baseUrl}/sprints?project_id=${projectId}`, `${this.baseUrl}/sprints`]),
       teams: this.http.get<any>(`${this.baseUrl}/teams`, this.headers()).pipe(catchError(() => of([]))),
       projectTeams: this.http.get<any>(`${this.baseUrl}/project-teams/${projectId}`, this.headers()).pipe(catchError(() => of([]))),
-      users: this.http.get<any>(`${this.baseUrl}/users`, this.headers()).pipe(catchError(() => of([]))),
+      users: this.collections.read(`${this.baseUrl}/users`).pipe(catchError(() => of([]))),
       roles: this.http.get<any>(`${this.baseUrl}/roles`, this.headers()).pipe(catchError(() => of([])))
     }).subscribe({
       next: ({ epics, stories, tasks, issues, sprints, teams, projectTeams, users, roles }) => {
@@ -905,12 +908,7 @@ export class SprintPlanning implements OnInit {
     return this.initials(this.selectedTeam?.name || 'Sprint planning');
   }
 
-  get teamItems(): PlanningItem[] {
-    if (this.projectScope) return this.items;
-    if (this.selectedTeamId === null) return [];
-    const memberIds = new Set(this.teamMembers.map(person => person.id));
-    return this.items.filter(item => item.teamId === this.selectedTeamId || (item.teamId === null && item.assigneeId !== null && memberIds.has(item.assigneeId)));
-  }
+  get teamItems(): PlanningItem[] { return this.items; }
 
   get filteredItems(): PlanningItem[] {
     const query = this.searchQuery.trim().toLowerCase();
@@ -919,7 +917,7 @@ export class SprintPlanning implements OnInit {
       const typeMatches = this.typeFilter === 'ALL' || item.kind === this.typeFilter;
       const queryMatches = !query || [item.key, item.title, item.description, item.parentName, item.status, item.priority]
         .some(value => value.toLowerCase().includes(query));
-      return typeMatches && queryMatches;
+      return typeMatches && queryMatches && (this.selectedPersonId === 'ALL' || item.assigneeId === this.selectedPersonId);
     }).sort((a, b) => {
       return kindOrder[a.kind] - kindOrder[b.kind] || a.key.localeCompare(b.key) || a.title.localeCompare(b.title);
     });
@@ -934,12 +932,8 @@ export class SprintPlanning implements OnInit {
       itemsBySprint.set(item.sprintId, groupItems);
     }
 
-    const hasFilters = this.typeFilter !== 'ALL' || Boolean(this.searchQuery.trim());
+    const hasFilters = this.typeFilter !== 'ALL' || this.selectedPersonId !== 'ALL' || Boolean(this.searchQuery.trim());
     const groups: PlanningSprintGroup[] = [];
-    const backlogItems = itemsBySprint.get(null) ?? [];
-    if (!hasFilters || backlogItems.length) {
-      groups.push(this.createSprintGroup(null, 'Backlog', backlogItems));
-    }
 
     const orderedSprints = [...this.sprints].sort((a, b) => {
       const activeFirst = Number(this.isSprintActive(b)) - Number(this.isSprintActive(a));
@@ -962,7 +956,36 @@ export class SprintPlanning implements OnInit {
       const sprintItems = itemsBySprint.get(sprintId) ?? [];
       groups.push(this.createSprintGroup(sprintId, sprintItems[0]?.sprintName || `Sprint ${sprintId}`, sprintItems));
     }
+    const unscheduled=(itemsBySprint.get(null)||[]).filter(item=>String(item.status).toUpperCase()!=='BACKLOG');
+    if(unscheduled.length)groups.push(this.createSprintGroup(null,'Unscheduled work',unscheduled));
     return groups;
+  }
+
+  get backlogItems(): PlanningItem[] {
+    const query = this.backlogSearch.trim().toLowerCase();
+    return this.items.filter(item => String(item.status).toUpperCase().replace(/[ _-]/g,'') === 'BACKLOG' &&
+      (this.typeFilter === 'ALL' || item.kind === this.typeFilter) &&
+      (this.selectedPersonId === 'ALL' || item.assigneeId === this.selectedPersonId) &&
+      (!query || [item.key,item.title,item.parentName,item.assigneeName].join(' ').toLowerCase().includes(query)));
+  }
+  private enrichTeamPeople(members: PlanningPerson[]): PlanningPerson[] {
+    return members.map(member => {
+      const directory=this.userDirectory.find(person=>person.id===member.id);
+      return {...member,...directory,avatarUrl:directory?.avatarUrl||member.avatarUrl};
+    });
+  }
+  get planningPeople(): PlanningPerson[] {
+    const ids=new Set(this.items.map(item=>item.assigneeId).filter(id=>id!==null));
+    const people=new Map<number,PlanningPerson>([...this.userDirectory,...this.teamMembers].filter(person=>ids.has(person.id)||this.teamMembers.some(member=>member.id===person.id)).map(person=>[person.id,person]));
+    for(const item of this.items)if(item.assigneeId&&!people.has(item.assigneeId))people.set(item.assigneeId,{id:item.assigneeId,name:item.assigneeName,initials:item.assigneeName.split(/\s+/).map(part=>part[0]).slice(0,2).join('').toUpperCase(),avatarUrl:item.assigneeAvatarUrl,designation:''});
+    return [...people.values()].sort((a,b)=>a.name.localeCompare(b.name));
+  }
+
+  personItemCount(id: number): number { return this.teamItems.filter(item=>item.assigneeId===id).length; }
+  selectPlanningPerson(id: number | 'ALL'): void { this.selectedPersonId = id; }
+  get selectedBacklogItems(): PlanningItem[] { return this.selectedItems.filter(item => String(item.status).toUpperCase().replace(/[ _-]/g,'') === 'BACKLOG'); }
+  moveBacklogSelectionToFocus(): void {
+    if (this.selectedSprintId !== null) this.updateItems(this.selectedBacklogItems, this.selectedSprintId);
   }
 
   private createSprintGroup(sprintId: number | null, name: string, items: PlanningItem[], sprint?: SprintOption): PlanningSprintGroup {
@@ -1094,14 +1117,7 @@ export class SprintPlanning implements OnInit {
     this.saving = true;
     this.saveError = '';
     this.notice = '';
-    this.http.put(`${this.baseUrl}/sprints/${sprint.id}`, {
-      name: sprint.name,
-      status: 'ACTIVE',
-      start_date: sprint.startDate ?? null,
-      end_date: sprint.endDate ?? null,
-      scheduled_start_date: sprint.startDate ?? null,
-      scheduled_end_date: sprint.endDate ?? null
-    }, this.headers()).subscribe({
+    this.http.post(`${this.baseUrl}/sprints/${sprint.id}/lifecycle/start`, {}, this.headers()).subscribe({
       next: () => {
         this.saving = false;
         this.notice = `${sprint.name} is now active.`;
@@ -1161,7 +1177,7 @@ export class SprintPlanning implements OnInit {
       scheduled_end_date: end,
       duration_weeks: durationWeeks,
       target_velocity: this.newSprintCapacity ?? 0,
-      activation_type: 'MANUAL'
+      activation_type: this.newSprintActivation
     };
 
     this.creatingSprint = true;
@@ -1232,7 +1248,7 @@ export class SprintPlanning implements OnInit {
   }
   get selectedItems(): PlanningItem[] { return this.teamItems.filter(item => this.selectedItemIds.has(item.id)); }
   get selectedItemCount(): number { return this.selectedItems.length; }
-  get selectedBacklogCount(): number { return this.selectedItems.filter(item => item.sprintId !== null).length; }
+  get selectedBacklogCount(): number { return this.selectedItems.filter(item => item.sprintId !== null || String(item.status).toUpperCase().replace(/[ _-]/g,'') !== 'BACKLOG').length; }
   get selectedNextSprintCount(): number {
     return this.nextPlanningSprint ? this.selectedItems.filter(item => item.sprintId !== this.nextPlanningSprint?.id).length : 0;
   }
@@ -1272,7 +1288,7 @@ export class SprintPlanning implements OnInit {
   }
 
   moveSelectedToBacklog(): void {
-    this.updateItems(this.selectedItems.filter(item => item.sprintId !== null), null);
+    this.updateItems(this.selectedItems.filter(item => item.sprintId !== null || String(item.status).toUpperCase() !== 'BACKLOG'), null);
   }
 
   moveSelectedToNextSprint(): void {
@@ -1289,7 +1305,7 @@ export class SprintPlanning implements OnInit {
     this.updateItems(this.selectedItems.filter(item => item.sprintId !== sprintId), sprintId);
   }
 
-  private moveItem(item: PlanningItem, sprintId: number | null): void {
+  moveItem(item: PlanningItem, sprintId: number | null): void {
     this.updateItems([item], sprintId);
   }
 
@@ -1316,91 +1332,11 @@ export class SprintPlanning implements OnInit {
     });
   }
 
-  private updateRequest(item: PlanningItem, sprintId: number | null): Observable<any> {
-    const raw = item.raw ?? {};
-    const status = raw?.status ?? 'BACKLOG';
-    const priority = raw?.priority ?? 'MEDIUM';
-    const assigneeId = this.numberOrNull(raw?.assignee_user_id ?? raw?.assigneeUserId ?? raw?.assignee_id ?? raw?.assigneeId);
-    const reporterId = this.numberOrNull(raw?.reporter_user_id ?? raw?.reporterUserId ?? raw?.reporter_id ?? raw?.reporterId);
-    const teamPatch = raw?.team_id !== undefined || raw?.teamId !== undefined
-      ? { team_id: this.itemTeamId(raw) }
-      : {};
-    let url: string;
-    let payload: Record<string, any>;
+  private updateRequest(item:PlanningItem,sprintId:number|null):Observable<any>{return this.http.patch(`${this.baseUrl}/tickets/${item.kind}/${item.sourceId}/placement`,{sprintId},this.headers());}
 
-    if (item.kind === 'EPIC') {
-      url = `${this.baseUrl}/epics/${item.sourceId}`;
-      payload = {
-        name: raw?.name ?? raw?.title ?? item.title,
-        description: raw?.description ?? '',
-        status,
-        priority,
-        project_id: this.numberOrNull(raw?.project_id ?? raw?.projectId) ?? this.selectedProjectId,
-        ...teamPatch,
-        sprint_id: sprintId,
-        assignee_user_id: assigneeId,
-        reporter_user_id: reporterId
-      };
-    } else if (item.kind === 'STORY') {
-      url = `${this.baseUrl}/stories/${item.sourceId}`;
-      payload = {
-        title: raw?.title ?? raw?.name ?? item.title,
-        description: raw?.description ?? '',
-        status,
-        priority,
-        project_id: this.numberOrNull(raw?.project_id ?? raw?.projectId) ?? this.selectedProjectId,
-        ...teamPatch,
-        epic_id: this.numberOrNull(raw?.epic_id ?? raw?.epicId),
-        story_points: this.numberOrNull(raw?.story_points ?? raw?.storyPoints) ?? 0,
-        sprint_id: sprintId,
-        assignee_user_id: assigneeId,
-        reporter_user_id: reporterId
-      };
-    } else if (item.kind === 'TASK') {
-      url = `${this.baseUrl}/tasks/${item.sourceId}`;
-      payload = {
-        title: raw?.title ?? raw?.name ?? item.title,
-        description: raw?.description ?? '',
-        status,
-        priority,
-        ...teamPatch,
-        story_id: this.numberOrNull(raw?.story_id ?? raw?.storyId),
-        story_points: this.numberOrNull(raw?.story_points ?? raw?.storyPoints) ?? 0,
-        sprint_id: sprintId,
-        assignee_user_id: assigneeId,
-        reporter_user_id: reporterId
-      };
-    } else {
-      url = `${this.baseUrl}/v1/issues/${item.sourceId}`;
-      payload = {
-        ...raw,
-        status,
-        priority,
-        sprint_id: sprintId,
-        sprintId,
-        sprint: sprintId === null ? null : { id: sprintId },
-        project_id: this.numberOrNull(raw?.project_id ?? raw?.projectId) ?? this.selectedProjectId,
-        projectId: this.numberOrNull(raw?.project_id ?? raw?.projectId) ?? this.selectedProjectId,
-        ...(item.teamId !== null ? { team_id: item.teamId, teamId: item.teamId } : {}),
-        assignee_user_id: assigneeId,
-        assigneeUserId: assigneeId,
-        reporter_user_id: reporterId,
-        reporterUserId: reporterId
-      };
-    }
-    return this.http.put<any>(url, payload, this.headers());
-  }
+  private statusLabel(value:any):string{return this.workflow.label(value);}
 
-  private statusLabel(value: any): string {
-    const status = this.displayText(value, 'Backlog').trim().replace(/[_-]+/g, ' ').toLowerCase();
-    return status.replace(/\b\w/g, letter => letter.toUpperCase());
-  }
-
-  private backendStatus(value: string): string {
-    const status = String(value || '').trim().toUpperCase().replace(/[\s-]+/g, '_');
-    const map: Record<string, string> = { BACKLOG: 'BACKLOG', TODO: 'TODO', TO_DO: 'TODO', IN_PROGRESS: 'IN_PROGRESS', TESTING: 'TESTING', COMPLETED: 'COMPLETED', BLOCKED: 'BLOCKED' };
-    return map[status] ?? 'BACKLOG';
-  }
+  private backendStatus(value:string):string{return this.workflow.code(value);}
 
   private priorityLabel(value: any): string {
     const priority = this.displayText(value, 'Medium').trim().replace(/[_-]+/g, ' ').toLowerCase();

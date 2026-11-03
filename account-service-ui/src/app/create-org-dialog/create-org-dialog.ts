@@ -61,7 +61,7 @@ export class CreateOrgDialog {
       email: this.email,
       phone: this.phone,
       address: this.address,
-      user_id : localStorage.getItem('user')
+      user_id : this.auth.getCurrentUserId()
     };
 
     this.http.post('http://127.0.0.1:5000/api/organisation/create', payload, {

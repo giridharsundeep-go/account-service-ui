@@ -1,3 +1,6 @@
+import {WorkspaceSettingsService} from '../shared/workspace-settings.service';
+import {untracked} from '@angular/core';
+import { TicketCollaborationComponent } from '../shared/ticket-collaboration';
 import { RecentWorkService } from '../shared/recent-work.service';
 import { CommonModule } from '@angular/common';
 import { A11yModule } from '@angular/cdk/a11y';
@@ -7,7 +10,6 @@ import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatSelectModule } from '@angular/material/select';
 import { forkJoin, Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -16,8 +18,10 @@ import { AuthService } from '../auth.service';
 import { ProjectContextService } from '../project-context.service';
 import { WorkItemDialogRequest } from '../shared/work-item-dialog.service';
 import { WorkspaceHeroComponent } from '../shared/workspace-hero';
+import { PersonPickerComponent } from '../shared/person-picker';
+import { ApiCollectionService } from '../shared/api-collection.service';
 
-type WorkStatus = 'Backlog' | 'To Do' | 'In Progress' | 'Testing' | 'Completed' | 'Blocked';
+type WorkStatus = string;
 type WorkPriority = 'Low' | 'Medium' | 'High' | 'Critical';
 type ItemType = 'Epic' | 'Story' | 'Task' | 'Bug';
 type FilterField = 'Parent' | 'Assignee' | 'Status' | 'Work type' | 'Labels' | 'Sprint' | 'Priority';
@@ -27,7 +31,7 @@ interface SprintOption {
   id: number; name: string; projectId?: number; startDate?: string; endDate?: string;
   status?: string; [key: string]: any;
 }
-interface PersonOption { id: number; lookupIds?: number[]; name: string; initials: string; designation?: string; avatarUrl?: string | null; }
+interface PersonOption { id: number; lookupIds?: number[]; name: string; initials: string; designation?: string; avatarUrl?: string | null; email?: string; }
 interface WorkItem {
   /** Stable unique key also used for drag/drop; IDs can overlap between item types. */
   id: string;
@@ -57,20 +61,22 @@ interface WorkItem {
 @Component({
   selector: 'app-kanban-board',
   standalone: true,
-  imports: [CommonModule, A11yModule, FormsModule, MatFormFieldModule, MatInputModule, MatAutocompleteModule, MatSelectModule, WorkspaceHeroComponent],
+  imports: [TicketCollaborationComponent, CommonModule, A11yModule, FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, WorkspaceHeroComponent, PersonPickerComponent],
   templateUrl: './kanban-board.html',
-  styleUrls: ['./kanban-board.css', '../shared/field-controls.css']
+  styleUrls: ['./kanban-board.css', '../shared/field-controls.css', '../shared/board-surface.css']
 })
 export class KanbanBoard implements OnInit {
   @Input() dialogRequest: WorkItemDialogRequest | null = null;
   fullscreenMode = false;
   @HostListener('document:keydown.escape') closeOnEscape(): void {
     if (this.dialogRequest) return;
+    if (this.sprintProgressOpen) { this.sprintProgressOpen = false; return; }
     if (!this.selectedItem && !this.showCreateForm) this.fullscreenMode = false;
   }
   @Output() dialogClosed = new EventEmitter<void>();
   private readonly recentWork = inject(RecentWorkService);
   private readonly http = inject(HttpClient);
+  private readonly collections = inject(ApiCollectionService);
   private readonly auth = inject(AuthService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly projectContext = inject(ProjectContextService);
@@ -78,7 +84,10 @@ export class KanbanBoard implements OnInit {
   private readonly router = inject(Router);
   readonly baseUrl = environment.apiBaseUrlM;
 
-  readonly statuses: WorkStatus[] = ['Backlog', 'To Do', 'In Progress', 'Testing', 'Completed', 'Blocked'];
+  readonly workflow=inject(WorkspaceSettingsService);
+  get statuses():string[]{return [...new Set([...this.workflow.names,...this.items.map(item=>this.workflow.label(item.raw?.status??item.status))])];}
+  private readonly liveRefresh=effect(()=>{if(this.workflow.revision()>0)untracked(()=>{if(this.selectedProjectId&&!this.detailSaving&&!this.editingDetailField)this.loadProjectData();});});
+  sprintStatusCount(status: WorkStatus): number { return this.sprintItems.filter(item => item.status === status).length; }
   readonly descriptionColors = ['#202124', '#2563eb', '#7c3aed', '#16834a', '#c2410c'];
   readonly issueRelationFields = [
     { field: 'epicIds', type: 'EPIC', label: 'Linked Epics' },
@@ -101,6 +110,8 @@ export class KanbanBoard implements OnInit {
   sprintProgressOpen = false;
   peopleListOpen = false;
   selectedItem: WorkItem | null = null;
+  ticketPermissions={canEdit:false,canComment:false,canAttach:false};
+  ticketRevision=0;
   detailEditError = '';
   detailEditMode = false;
   detailSaving = false;
@@ -344,7 +355,7 @@ export class KanbanBoard implements OnInit {
     forkJoin({
       project: this.dialogRequest ? this.http.get<any>(`${this.baseUrl}/projects/${projectId}`, this.headers()).pipe(catchError(() => of(null))) : of(null),
       users: this.http.get<any>(`${this.baseUrl}/project-individuals/${projectId}`, this.headers()).pipe(catchError(() => of([]))),
-      allUsers: this.http.get<any>(`${this.baseUrl}/users`, this.headers()).pipe(catchError(() => of([]))),
+      allUsers: this.collections.read(`${this.baseUrl}/users`).pipe(catchError(() => of([]))),
       roles: this.http.get<any>(`${this.baseUrl}/roles`, this.headers()).pipe(catchError(() => of([]))),
       sprints: this.http.get<any>(`${this.baseUrl}/sprints`, this.headers()).pipe(catchError(() => of([])))
     }).subscribe(({ project, users, allUsers, roles, sprints }) => {
@@ -383,6 +394,7 @@ export class KanbanBoard implements OnInit {
           id,
           lookupIds,
           name,
+          email: String(profile?.email ?? u?.email ?? ''),
           initials: this.initials(name),
           designation: String(profile?.designation ?? profile?.job_title ?? profile?.jobTitle ?? profile?.role_name ?? profile?.roleName ?? profile?.role?.name ?? profile?.title ?? u?.designation ?? u?.job_title ?? u?.jobTitle ?? role?.name ?? role?.role_name ?? 'Team member').trim() || 'Team member',
           avatarUrl: profile?.avatarUrl ?? profile?.avatar_url ?? profile?.photoUrl ??
@@ -721,7 +733,7 @@ export class KanbanBoard implements OnInit {
     });
   }
 
-  itemsFor(status: WorkStatus): WorkItem[] { return this.filteredItems.filter(item => item.status === status); }
+  itemsFor(status: WorkStatus): WorkItem[] { return this.filteredItems.filter(item => this.workflow.code(item.raw?.status??item.status) === this.workflow.code(status)); }
 
   selectPerson(personId: number | null): void {
     this.selectedPersonId = this.selectedPersonId === personId ? null : personId;
@@ -734,7 +746,7 @@ export class KanbanBoard implements OnInit {
     return this.sprintItems.filter(item => item.assigneeId === personId).length;
   }
   get sprintItems(): WorkItem[] { return this.items.filter(item => this.selectedSprintId === 'ALL' || item.sprintId === this.sprintFilterId); }
-  get completedCount(): number { return this.sprintItems.filter(item => item.status === 'Completed').length; }
+  get completedCount(): number { return this.sprintItems.filter(item => this.workflow.done(item.raw?.status??item.status)).length; }
   get progressPercent(): number { return this.sprintItems.length ? Math.round(this.completedCount / this.sprintItems.length * 100) : 0; }
   get activeFilterCount(): number {
     return Number(this.selectedSprintId !== 'ALL') + Number(this.selectedPersonId !== null) +
@@ -771,15 +783,7 @@ export class KanbanBoard implements OnInit {
     return this.currentProjectSprintId;
   }
 
-  private mapStatus(value: any): WorkStatus {
-    const status = String(value ?? 'BACKLOG').trim().toUpperCase().replace(/[\s-]+/g, '_');
-    if (['TODO', 'TO_DO', 'OPEN', 'NEW', 'READY'].includes(status)) return 'To Do';
-    if (['IN_PROGRESS', 'INPROGRESS', 'DOING', 'STARTED'].includes(status)) return 'In Progress';
-    if (['TESTING', 'IN_TEST', 'QA', 'IN_REVIEW', 'REVIEW'].includes(status)) return 'Testing';
-    if (['COMPLETED', 'DONE', 'CLOSED', 'RESOLVED', 'FINISHED'].includes(status)) return 'Completed';
-    if (['BLOCKED', 'ON_HOLD', 'ONHOLD'].includes(status)) return 'Blocked';
-    return 'Backlog';
-  }
+  private mapStatus(value:any):WorkStatus{return this.workflow.label(value);}
 
   private mapPriority(value: any): WorkPriority {
     const priority = String(value ?? 'MEDIUM').trim().toUpperCase();
@@ -881,16 +885,6 @@ export class KanbanBoard implements OnInit {
     });
   }
 
-  filteredCreatePeople(field: 'assignee' | 'reporter'): PersonOption[] {
-    const query = (field === 'assignee' ? this.newAssigneeSearchText : this.newReporterSearchText).trim().toLowerCase();
-    return this.people.filter(person => !query || person.name.toLowerCase().includes(query)).slice(0, 50);
-  }
-
-  filterCreatePeople(field: 'assignee' | 'reporter', query: string): void {
-    if (field === 'assignee') this.newAssigneeSearchText = query;
-    else this.newReporterSearchText = query;
-  }
-
   selectCreatePerson(field: 'assignee' | 'reporter', id: number | null): void {
     const text = id === null ? (field === 'assignee' ? 'Unassigned' : 'No reporter') : this.detailPersonName(id);
     if (field === 'assignee') {
@@ -920,6 +914,7 @@ export class KanbanBoard implements OnInit {
     if (!this.selectedItem) this.boardScrollY = window.scrollY;
     this.recentWork.remember({id:item.sourceId,type:item.sourceType,projectId:item.projectId,key:item.key,title:item.title});
     this.selectedItem = item;
+    this.ticketPermissions={canEdit:false,canComment:false,canAttach:false};
     this.detailEditError = '';
     this.detailEditMode = false;
     this.editingDetailField = null;
@@ -986,7 +981,7 @@ export class KanbanBoard implements OnInit {
   }
 
   beginDetailFieldEdit(field: string): void {
-    if (!this.selectedItem || this.detailSaving || (this.editingDetailField && this.editingDetailField !== field)) return;
+    if (!this.ticketPermissions.canEdit || !this.selectedItem || this.detailSaving || (this.editingDetailField && this.editingDetailField !== field)) return;
     this.detailDraft = this.toDetailDraft(this.selectedItem);
     this.editingDetailField = field;
     this.detailEditError = '';
@@ -1041,18 +1036,6 @@ export class KanbanBoard implements OnInit {
       }
     }
     this.saveDetailEdit(item, field);
-  }
-
-  filterDetailPeople(field: 'assignee' | 'reporter', query: string): void {
-    if (field === 'assignee') this.assigneeSearchText = query;
-    else this.reporterSearchText = query;
-  }
-
-  filteredDetailPeople(field: 'assignee' | 'reporter'): PersonOption[] {
-    const query = (field === 'assignee' ? this.assigneeSearchText : this.reporterSearchText).trim().toLowerCase();
-    return this.people
-      .filter(person => !query || person.name.toLowerCase().includes(query))
-      .slice(0, 50);
   }
 
   selectDetailPerson(field: 'assigneeId' | 'reporterId', id: number | null): void {
@@ -1415,7 +1398,7 @@ export class KanbanBoard implements OnInit {
   }
 
   saveDetailEdit(item: WorkItem, field?: string): void {
-    if (!this.detailDraft || this.detailSaving) return;
+    if (!this.ticketPermissions.canEdit || !this.detailDraft || this.detailSaving) return;
     const draft = this.detailDraft;
     const title = String(draft.title || '').trim();
     if (!title) { this.detailEditError = 'A title is required.'; return; }
@@ -1527,6 +1510,7 @@ export class KanbanBoard implements OnInit {
       }
       this.items = this.items.map(existing => existing.id === item.id ? item : existing);
       this.selectedItem = item;
+      this.ticketRevision++;
       this.detailDraft = this.toDetailDraft(item);
       this.recentWork.remember({id:item.sourceId,type:item.sourceType,projectId:item.projectId,key:item.key,title:item.title,action:'Updated'});
       this.detailEditMode = false;
@@ -1665,11 +1649,7 @@ export class KanbanBoard implements OnInit {
     const previousStatus = item.status;
     item.status = status;
     const backendStatus = this.backendStatus(status);
-    let request;
-    if (item.sourceType === 'EPIC') request = this.http.put(`${this.baseUrl}/epics/${item.sourceId}`, { name: item.raw?.name ?? item.title, description: item.raw?.description ?? '', status: backendStatus, sprint_id: item.sprintId, assignee_user_id: item.assigneeId, reporter_user_id: this.numberOrNull(item.raw?.reporter_user_id ?? item.raw?.reporterUserId) }, this.headers());
-    else if (item.sourceType === 'STORY') request = this.http.put(`${this.baseUrl}/stories/${item.sourceId}`, { title: item.title, description: item.description, status: backendStatus, priority: item.raw?.priority ?? 'MEDIUM', project_id: item.projectId, epic_id: this.numberOrNull(item.raw?.epic_id ?? item.raw?.epicId), sprint_id: item.sprintId, assignee_user_id: item.assigneeId, reporter_user_id: this.numberOrNull(item.raw?.reporter_user_id ?? item.raw?.reporterUserId) }, this.headers());
-    else if (item.sourceType === 'TASK') request = this.http.put(`${this.baseUrl}/tasks/${item.sourceId}`, { title: item.title, description: item.description, status: backendStatus, sprint_id: item.sprintId, assignee_user_id: item.assigneeId, reporter_user_id: this.numberOrNull(item.raw?.reporter_user_id ?? item.raw?.reporterUserId) }, this.headers());
-    else request = this.http.put(`${this.baseUrl}/v1/issues/${item.sourceId}`, { ...item.raw, status: backendStatus }, this.headers());
+    const request=this.http.patch(`${this.baseUrl}/tickets/${item.sourceType}/${item.sourceId}/placement`,{status:backendStatus},this.headers());
 
     request.pipe(catchError(error => {
       item.status = previousStatus;
@@ -1681,10 +1661,7 @@ export class KanbanBoard implements OnInit {
     this.draggedItemId = null;
   }
 
-  private backendStatus(status: WorkStatus): string {
-    const map: Record<WorkStatus, string> = { 'Backlog': 'BACKLOG', 'To Do': 'TODO', 'In Progress': 'IN_PROGRESS', 'Testing': 'TESTING', 'Completed': 'COMPLETED', 'Blocked': 'BLOCKED' };
-    return map[status];
-  }
+  private backendStatus(status:WorkStatus):string{return this.workflow.code(status);}
 
   statusClass(status: WorkStatus): string { return status.toLowerCase().replace(/\s+/g, '-'); }
   trackById(_index: number, item: WorkItem): string { return item.id; }

@@ -51,9 +51,9 @@
         </div>
         <div class="user-profile-actions">
           <ng-container *ngIf="!profileEditMode; else profileEditActions">
-            <button class="profile-edit-icon" mat-icon-button type="button" (click)="editProfileUser(profile)" aria-label="Edit profile" title="Edit profile">✎</button>
-            <button mat-stroked-button type="button" (click)="closeUserProfile()">Back</button>
-            <button *ngIf="profile.is_active" mat-stroked-button type="button" class="user-deactivate-button" (click)="deactivateUser(profile)">Deactivate</button>
+            <button *ngIf="canEditPerson(profile)" class="profile-edit-icon" mat-icon-button type="button" (click)="editProfileUser(profile)" aria-label="Edit profile" title="Edit profile">✎</button>
+            <button mat-stroked-button type="button" (click)="closeUserProfile()">Back</button><button *ngIf="canCreateSetupLink" mat-stroked-button type="button" (click)="createSetupLink(profile)">Password setup link</button><label *ngIf="invitationUrl && canCreateSetupLink && invitationForUserId===profile.id">Copy this single-use link<input readonly [value]="invitationUrl" aria-label="Password setup link" (click)="$any($event.target).select()"></label>
+            <button *ngIf="profile.is_active && canDeactivateUsers" mat-stroked-button type="button" class="user-deactivate-button" (click)="deactivateUser(profile)">Deactivate</button>
           </ng-container>
           <ng-template #profileEditActions>
             <button mat-stroked-button type="button" (click)="cancelProfileEdit()" [disabled]="loading">Cancel</button>
@@ -108,7 +108,7 @@
               <h3 class="user-overview-section-title">Employment details</h3>
               <div class="profile-edit-grid">
                 <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Designation</mat-label><mat-select [(ngModel)]="roleId" name="profileRole"><mat-option [value]="null">Not assigned</mat-option><mat-option *ngFor="let role of (roles$ | async)" [value]="+(role.id ?? role.roleId ?? role.role_id)">{{ role.roleName ?? role.role_name ?? role.name ?? role.title }}</mat-option></mat-select></mat-form-field>
-                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Organization role</mat-label><input matInput [(ngModel)]="orgRole" name="profileOrgRole" maxlength="100" /></mat-form-field>
+                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Organization role</mat-label><input matInput [(ngModel)]="orgRole" name="profileOrgRole" maxlength="100" readonly /></mat-form-field>
                 <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Employee ID prefix</mat-label><mat-select [(ngModel)]="employeeIdPrefix" name="profileEmployeePrefix"><mat-option value="EMP">EMP</mat-option><mat-option value="CON">CON</mat-option><mat-option value="EXC">EXC</mat-option></mat-select></mat-form-field>
                 <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Employee ID number</mat-label><input matInput [(ngModel)]="employeeIdNumber" name="profileEmployeeNumber" maxlength="50" /></mat-form-field>
                 <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Account status</mat-label><mat-select [(ngModel)]="isActive" name="profileIsActive"><mat-option [value]="true">Active</mat-option><mat-option [value]="false">Inactive</mat-option></mat-select></mat-form-field>
@@ -151,6 +151,7 @@
           </section>
         </aside>
       </div>
+      <app-user-access-panel *ngIf="profile.id > 0" [userId]="profile.id"></app-user-access-panel>
     </section>
   </ng-container>
 
@@ -484,6 +485,12 @@
 
 
   <ng-template #usersDirectory>
+  <section class="people-stat-grid" aria-label="Organization people statistics">
+    <article><span class="people-stat-icon blue">◎</span><div><span>Total people</span><strong>{{peopleStats.total}}</strong><small>Organization directory</small></div></article>
+    <article><span class="people-stat-icon green">✓</span><div><span>Active accounts</span><strong>{{peopleStats.active}}</strong><small>{{peopleStats.total - peopleStats.active}} inactive accounts</small></div></article>
+    <article><span class="people-stat-icon purple">↗</span><div><span>People managers</span><strong>{{peopleStats.managers}}</strong><small>With direct reports</small></div></article>
+    <article><span class="people-stat-icon orange">⌖</span><div><span>Countries</span><strong>{{peopleStats.regions}}</strong><small>Across the organization</small></div></article>
+  </section>
   <mat-card class="matrix-table-workspace"
             appearance="outlined"
             role="region"
@@ -492,7 +499,7 @@
       <span class="directory-result-summary">Organization members</span>
       <button type="button"
               class="gp-button gp-primary directory-register-button"
-              (click)="openCreateForm()">
+              *ngIf="canCreateUsers" (click)="openCreateForm()">
         <span class="btn-indicator-pulse"></span>
         Create user
       </button>
@@ -504,7 +511,7 @@
           <button type="button"
                   class="directory-tab-btn"
                   [class.active]="currentStatusTab === 'active'"
-                  (click)="currentStatusTab = 'active'">
+                  (click)="currentStatusTab = 'active'; pageIndex = 0">
             <span class="tab-indicator state-active"></span>
             Active
             <span class="tab-counter-badge">
@@ -515,7 +522,7 @@
           <button type="button"
                   class="directory-tab-btn"
                   [class.active]="currentStatusTab === 'inactive'"
-                  (click)="currentStatusTab = 'inactive'">
+                  (click)="currentStatusTab = 'inactive'; pageIndex = 0">
             <span class="tab-indicator state-inactive"></span>
             Inactive
             <span class="tab-counter-badge">
@@ -540,6 +547,7 @@
 
         <input type="text"
                [(ngModel)]="searchTerm"
+               (ngModelChange)="pageIndex = 0"
                [placeholder]="'Search ' + currentStatusTab + ' users…'"
                autocomplete="off" />
 
@@ -554,6 +562,13 @@
 
       </div>
 
+      <div class="people-directory-filters">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic"><mat-label>Roles / designations</mat-label><mat-select multiple [(ngModel)]="selectedRoleFilters" (selectionChange)="pageIndex = 0"><mat-option *ngFor="let role of directoryRoleOptions" [value]="role">{{role}}</mat-option></mat-select></mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic"><mat-label>Region</mat-label><mat-select multiple [(ngModel)]="selectedRegionFilters" (selectionChange)="pageIndex = 0"><mat-option *ngFor="let region of directoryRegionOptions" [value]="region">{{region}}</mat-option></mat-select></mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic"><mat-label>Work model</mat-label><mat-select [(ngModel)]="workModelFilter" (selectionChange)="pageIndex = 0"><mat-option value="">All work models</mat-option><mat-option *ngFor="let model of directoryWorkModels" [value]="model">{{model}}</mat-option></mat-select></mat-form-field>
+        <button mat-button type="button" (click)="resetDirectoryFilters()">Clear filters</button>
+      </div>
+      <p *ngIf="directoryLoading" class="people-directory-loading" role="status">Loading people…</p>
       <div class="matrix-data-frame" *ngIf="users$ | async as users">
         <div class="matrix-row matrix-header-row">
           <div class="cell">User</div>
@@ -565,7 +580,7 @@
         <div class="matrix-row-scroller"
              *ngIf="filterUsersByStatusAndSearch(users).length; else noUsers">
           <article class="matrix-row data-row user-directory-row"
-                   *ngFor="let user of filterUsersByStatusAndSearch(users); trackBy: trackByUserId"
+                   *ngFor="let user of pagedUsers(users); trackBy: trackByUserId"
                    role="button" tabindex="0"
                    [attr.aria-label]="'Open profile for ' + user.fullName"
                    (click)="viewUser(user)"
@@ -646,6 +661,7 @@
             <p>Try changing the status tab or search query.</p>
           </div>
         </ng-template>
+        <mat-paginator [length]="filterUsersByStatusAndSearch(users).length" [pageSize]="pageSize" [pageIndex]="pageIndex" [pageSizeOptions]="[10, 25, 50, 100]" showFirstLastButtons (page)="onDirectoryPage($event)" aria-label="Users list pages"></mat-paginator>
       </div>
     </mat-card-content>
   </mat-card>

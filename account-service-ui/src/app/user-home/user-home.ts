@@ -1,3 +1,9 @@
+import {WorkspaceSettingsService} from '../shared/workspace-settings.service';
+import { SuiteAppMenu } from '../shared/suite-app-menu';
+import { SuiteAppFrame } from '../shared/suite-app-frame';
+import { SuiteSessionService } from '../shared/suite-session.service';
+import { ChatlyLauncher } from '../shared/chatly-launcher.service';
+import { NotificationCenter } from '../shared/notification-center';
 import { ChangeDetectorRef } from '@angular/core';
 import { ProjectWorkService } from '../shared/project-work.service';
 import { RecentWorkService, RecentWork } from '../shared/recent-work.service';
@@ -52,7 +58,6 @@ import { WorkItems } from '../work-items/work-items';
 import { Issues } from '../issues/issues';
 import { Testcases } from '../testcases/testcases';
 import { Releases } from '../releases/releases';
-import { Docs } from '../docs/docs';
 import { Boards } from '../boards/boards';
 import { KanbanBoard } from '../kanban-board/kanban-board';
 import { SprintPlanning } from '../sprint-planning/sprint-planning';
@@ -62,7 +67,9 @@ import { SprintPlanning } from '../sprint-planning/sprint-planning';
   standalone: true,
 
   imports: [
+    SuiteAppMenu, SuiteAppFrame,
     FullscreenDialogHost,
+    NotificationCenter,
     CommonModule,
     FormsModule,
     RouterOutlet,
@@ -78,21 +85,24 @@ import { SprintPlanning } from '../sprint-planning/sprint-planning';
     SprintPlanning,
     Issues,
     Testcases,
-    Releases,
-    Docs
+    Releases
   ],
 
   templateUrl: './user-home.html',
   styleUrls: ['./user-home.css', '../shared/field-controls.css']
 })
 export class UserHome implements OnInit {
+  readonly workspaceSettings=inject(WorkspaceSettingsService);
+  readonly chatly=inject(ChatlyLauncher);
+  readonly suite=inject(SuiteSessionService);
+
   readonly itemDialog = inject(WorkItemDialogService);
   readonly recentWork = inject(RecentWorkService);
   private readonly workData = inject(ProjectWorkService);
   private readonly cdr=inject(ChangeDetectorRef);
   globalPeople:any[]=[];
   recentMenuOpen = false;
-  recentCollapsed = false;
+
   openRecent(item:RecentWork):void { this.recentMenuOpen=false; this.globalWorkSearchOpen=false; this.itemDialog.open(item.projectId,item.type,item.id); }
   avatarTone(id: number): string { return ['violet','indigo','blue','green','yellow','orange','red'][Math.abs(Number(id)||0)%7]; }
   projectInitials(name: string): string { return name.split(/\s+/).filter(Boolean).slice(0,2).map(word=>word[0]).join('').toUpperCase(); }
@@ -115,6 +125,14 @@ export class UserHome implements OnInit {
     new Date().getFullYear();
 
   isCollapsed = false;
+  sidebarWidth=240;
+  private resizingSidebar=false;
+  beginSidebarResize(event:PointerEvent):void{event.preventDefault();this.resizingSidebar=true;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);}
+  resizeSidebar(delta:number):void{this.sidebarWidth=Math.max(180,Math.min(380,this.sidebarWidth+delta));if(isPlatformBrowser(this.platformId))localStorage.setItem('gp-sidebar-width',String(this.sidebarWidth));}
+  @HostListener('document:pointermove',['$event']) onSidebarMove(event:PointerEvent):void{if(this.resizingSidebar)this.resizeSidebar(event.clientX-this.sidebarWidth);}
+  @HostListener('document:pointercancel') cancelSidebarResize():void{this.resizingSidebar=false;}
+  @HostListener('document:pointerup') finishSidebarResize():void{this.resizingSidebar=false;}
+
 
   searchQuery = '';
 
@@ -170,7 +188,9 @@ export class UserHome implements OnInit {
   ];
 
   readonly knowledgeNavigation = [
-    { id: 'docs', label: 'Documentation', icon: 'docs' }
+    { id: 'docs', label: 'Docsy', icon: 'docs' },
+    { id: 'chatly', label: 'Chatly', icon: 'chat' },
+    { id: 'calendar', label: 'Timely', icon: 'calendar' }
   ];
 
   readonly peopleNavigation = [
@@ -250,7 +270,11 @@ export class UserHome implements OnInit {
   // =========================================================
 
   ngOnInit(): void {
+    this.workspaceSettings.start();
+    if(isPlatformBrowser(this.platformId))this.sidebarWidth=Math.max(180,Math.min(380,Number(localStorage.getItem('gp-sidebar-width'))||240));
+    void this.suite.register().catch(()=>null);
     this.recentWork.refreshForCurrentUser();
+    this.http.get<any>(this.baseUrl+'/session/access',{headers:this.auth.getAuthHeaders()}).subscribe({next:session=>{this.auth.updateCurrentUser(session.user);this.cdr.markForCheck();},error:()=>{}});
     this.loadCurrentAccount();
     this.projectContext.loadProjects();
 
@@ -684,21 +708,9 @@ export class UserHome implements OnInit {
   // LOGOUT
   // =========================================================
 
-  logout(): void {
-
-    if (
-      isPlatformBrowser(
-        this.platformId
-      )
-    ) {
-
-      sessionStorage.clear();
-      localStorage.clear();
-    }
-
-    this.router.navigate([
-      '/login'
-    ]);
+  async logout(): Promise<void> {
+    try {await this.suite.logout();} catch {this.auth.logout();}
+    await this.router.navigate(['/login']);
   }
 
   // =========================================================

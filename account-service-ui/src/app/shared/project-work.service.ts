@@ -12,6 +12,7 @@ import {
 } from 'rxjs/operators';
 import { environment } from '../../environment';
 import { AuthService } from '../auth.service';
+import { WorkspaceSettingsService } from './workspace-settings.service';
 export interface ProjectWorkItem {
   id: number;
   kind: 'EPIC' | 'STORY' | 'TASK' | 'ISSUE';
@@ -46,6 +47,7 @@ export function workItemTitle(row: any, kind: ProjectWorkItem['kind']): string {
 }
 @Injectable({ providedIn: 'root' })
 export class ProjectWorkService {
+  private workflow = inject(WorkspaceSettingsService);
   private inFlight = new Map<number, Observable<ProjectWorkSnapshot>>();
   private http = inject(HttpClient);
   private auth = inject(AuthService);
@@ -262,7 +264,7 @@ export class ProjectWorkService {
     return request;
   }
   done(status: string): boolean {
-    return ['DONE', 'COMPLETED', 'CLOSED', 'RESOLVED', 'RELEASED'].includes(
+    return this.workflow.done(status) || ['DONE', 'COMPLETED', 'CLOSED', 'RESOLVED', 'RELEASED'].includes(
       String(status).toUpperCase(),
     );
   }

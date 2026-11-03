@@ -81,7 +81,7 @@
       <button type="button" class="work-items-status-trigger" [class.is-open]="bulkStatusMenuOpen" [attr.aria-expanded]="bulkStatusMenuOpen" aria-haspopup="listbox" (click)="toggleBulkStatusMenu($event)">{{ bulkStatusValue || 'Choose status' }}<svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 7.5 5 5 5-5"></path></svg></button>
       <div class="work-items-status-menu" *ngIf="bulkStatusMenuOpen" role="listbox" aria-label="Status options">
         <div class="work-items-status-menu-heading">Choose status</div>
-        <button type="button" role="option" *ngFor="let status of bulkStatusOptions" [attr.aria-selected]="bulkStatusValue === status" [class.is-selected]="bulkStatusValue === status" (click)="chooseBulkStatus(status, $event)"><span class="work-status-dot" [ngClass]="statusClass(status)"></span><span>{{ status }}</span><svg *ngIf="bulkStatusValue === status" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 8 3 3 7-7"></path></svg></button>
+        <button type="button" role="option" *ngFor="let status of bulkStatusOptions" [attr.aria-selected]="bulkStatusValue === status" [class.is-selected]="bulkStatusValue === status" (click)="chooseBulkStatus(status, $event)"><span class="work-status-dot" [style.background]="workflow.color(status)" [ngClass]="statusClass(status)"></span><span>{{ status }}</span><svg *ngIf="bulkStatusValue === status" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 8 3 3 7-7"></path></svg></button>
       </div>
     </div></div>
     <button type="button" class="work-items-apply-status" (click)="applyBulkStatus()" [disabled]="!bulkStatusValue || bulkUpdating">{{ bulkUpdating ? 'Updating…' : 'Apply to selected' }}</button>
@@ -118,7 +118,7 @@
         </ng-container>
 
         <ng-container matColumnDef="priority"><th mat-header-cell *matHeaderCellDef>Priority</th><td mat-cell *matCellDef="let item"><span class="work-priority" [ngClass]="priorityClass(item.priority)">{{ item.priority }}</span></td></ng-container>
-        <ng-container matColumnDef="status"><th mat-header-cell *matHeaderCellDef>Status</th><td mat-cell *matCellDef="let item"><span class="work-status" [ngClass]="statusClass(item.status)">{{ item.status }}</span></td></ng-container>
+        <ng-container matColumnDef="status"><th mat-header-cell *matHeaderCellDef>Status</th><td mat-cell *matCellDef="let item"><span class="work-status" [style.color]="workflow.color(item.status)" [ngClass]="statusClass(item.status)">{{ item.status }}</span></td></ng-container>
         <ng-container matColumnDef="resolution"><th mat-header-cell *matHeaderCellDef>Resolution</th><td mat-cell *matCellDef="let item"><span class="work-resolution" [class.is-resolved]="item.resolution !== 'Unresolved'">{{ item.resolution }}</span></td></ng-container>
         <ng-container matColumnDef="created"><th mat-header-cell *matHeaderCellDef>Created</th><td mat-cell *matCellDef="let item" class="work-created-cell">{{ formatDate(item.createdAt) }}</td></ng-container>
 

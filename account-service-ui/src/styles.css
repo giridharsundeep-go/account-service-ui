@@ -1,3 +1,4 @@
+@import '@greatley-poshley/design-system/tokens.css';
 /* You can add global styles to this file, and also import other style files */
 @import '@angular/material/prebuilt-themes/indigo-pink.css';
 @import './app/shared/workspace-system.css';
@@ -1544,3 +1545,67 @@ body .cdk-overlay-container app-user-select-dialog .user-row.people-card.selecte
 @media(max-width:850px) {
  #gp-app .releases-page .release-directory-card { grid-template-columns:1fr!important; }
 }
+
+/* Shared card elevation and people layouts. Keep dense table rows flat. */
+:root {
+  --gp-card-shadow: 0 3px 12px rgba(23, 43, 77, .08), 0 1px 3px rgba(23, 43, 77, .04);
+  --gp-card-shadow-hover: 0 7px 20px rgba(23, 43, 77, .12), 0 2px 5px rgba(23, 43, 77, .05);
+}
+#gp-app :is(mat-card, .product-card, .profile-section-card, .form-section-card, .pulse-tile,
+  .overview-metric, .agile-panel, .kb-work-card, .kb-column, .agile-metrics > article,
+  .agile-freshness > article, .team-profile-stat-card, .release-profile-stat-card, .release-profile-card,
+  .release-directory-card, .project-allocated-team, .docs-document-card, .docs-template-paper,
+  .directory-panel, .project-table-shell, .work-items-table-card, .team-summary-card,
+  .profile-person-card, .person-card, .people-stat-grid > article) {
+  box-shadow: var(--gp-card-shadow) !important;
+}
+#gp-app :is(.product-card[tabindex], .kb-work-card, .docs-document-card):hover {
+  box-shadow: var(--gp-card-shadow-hover) !important;
+}
+.gp-people-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,245px),1fr)); align-items:stretch; gap:16px; }
+app-login .login-card, app-create-account .signup-card, app-organisation :is(.org-card, .profile-card),
+app-super-reg .step-panel { box-shadow:var(--gp-card-shadow)!important; }
+#gp-app app-projects .profile-section-card.profile-step-card { padding:24px!important; margin-top:20px!important; }
+.project-allocated-team-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr)); gap:16px; margin:16px 0 28px; }
+.project-allocated-team { display:flex; align-items:center; gap:14px; padding:20px; border:1px solid #dce3ec; border-radius:10px; background:white; min-width:0; }
+.project-allocated-team > div { display:flex; flex-direction:column; gap:6px; flex:1; min-width:0; }
+.project-allocated-team strong { font-size:16px; overflow-wrap:anywhere; }
+.project-allocated-team[role=button] { cursor:pointer; }
+.project-allocated-team[role=button]:hover { border-color:#9bb8dd; }
+.project-allocated-team[role=button]:focus-visible { outline:2px solid #175fc2; outline-offset:3px; }
+.project-allocated-team small { font-size:13px; color:#6c788b; }
+.allocated-team-avatar { display:grid; place-items:center; width:44px; height:44px; flex:none; border-radius:10px; color:#175fc2; background:#e7efff; }
+.project-allocation-actions { display:flex; flex-wrap:wrap; gap:10px; }
+.project-save-error { margin:16px 24px; padding:14px 16px; border-radius:10px; background:#fff0ee; color:#ac3f34; }
+#gp-app .people-stat-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; margin:24px 0; }
+#gp-app .people-stat-grid > article { display:flex; align-items:center; gap:18px; border:1px solid #dce3ec; border-radius:10px; padding:24px; background:#fff; }
+#gp-app .people-stat-grid article > div { display:flex; flex-direction:column; gap:6px; min-width:0; }
+#gp-app .people-stat-grid article strong { font-size:32px; line-height:1.2; color:#172b4d; }
+#gp-app .people-stat-grid article span { font-size:14px; color:#65748a; }
+#gp-app .people-stat-grid article small { font-size:12px; color:#7b8797; }
+#gp-app .people-stat-grid .people-stat-icon { display:grid; place-items:center; width:48px; height:48px; flex:none; border-radius:10px; font-size:24px; }
+#gp-app .people-stat-icon.blue { background:#e6efff; color:#175fc2; }
+#gp-app .people-stat-icon.green { background:#e6f5eb; color:#288858; }
+#gp-app .people-stat-icon.purple { background:#f1eaff; color:#7854bd; }
+#gp-app .people-stat-icon.orange { background:#fff2e2; color:#ba711f; }
+#gp-app .people-directory-filters { display:flex; flex-wrap:wrap; align-items:center; gap:12px; padding:16px 24px; border-top:1px solid #edf0f4; }
+#gp-app .people-directory-filters mat-form-field { flex:1 1 190px; min-width:0; }
+#gp-app .people-directory-loading { padding:0 24px; color:#6c788b; }
+/* Material menus must scroll when there are many designations or regions. */
+.mat-mdc-select-panel, .mat-mdc-autocomplete-panel { overflow-y:auto!important; overscroll-behavior:contain; max-height:320px!important; }
+.gp-people-autocomplete.mat-mdc-autocomplete-panel { max-height: min(440px, 65vh) !important; padding: 0 !important; background: #fff !important; }
+.gp-people-search { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 10px; padding: 12px; border-bottom: 1px solid #e4e7ec; background: #fff; }
+.gp-people-search > span { color: #64748b; font-size: 24px; }
+.gp-people-search > input { width: 100%; min-width: 0; height: 44px !important; border: 1px solid #b7c0cc !important; border-radius: 10px !important; padding: 0 12px !important; box-shadow: none !important; font-size: 14px !important; color: #243247 !important; }
+.gp-people-autocomplete .mat-mdc-option { min-height: 68px; padding: 10px 16px !important; color: #243247 !important; }
+.gp-people-option { display: flex; align-items: center; gap: 12px; width: 100%; }
+.gp-people-avatar { display: grid; place-items: center; width: 40px; height: 40px; flex: 0 0 40px; overflow: hidden; border-radius: 50%; color: #fff; font-size: 13px; font-weight: 700; }
+.gp-people-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.gp-people-tone-0 { background: #d66b29; } .gp-people-tone-1 { background: #cf4757; } .gp-people-tone-2 { background: #349568; } .gp-people-tone-3 { background: #2765c5; } .gp-people-tone-4 { background: #7253c7; }
+.gp-people-copy { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
+.gp-people-copy strong { color: #243247; font-size: 15px; font-weight: 650; }
+.gp-people-copy small { color: #667085; font-size: 12px; overflow-wrap: anywhere; }
+.gp-people-more { position: sticky; bottom: 0; z-index: 2; padding: 10px 12px; border-top: 1px solid #e4e7ec; background: #fff; }
+.gp-people-more button { width: 100%; padding: 10px; border: 0; border-radius: 8px; color: #1456b8; background: #edf4ff; font: inherit; font-size: 14px; cursor: pointer; }
+@media(max-width:1100px) { #gp-app .people-stat-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:600px) { #gp-app .people-stat-grid { grid-template-columns:1fr; } #gp-app .people-directory-filters { padding:16px; } #gp-app app-projects .profile-section-card.profile-step-card { padding:16px!important; } }

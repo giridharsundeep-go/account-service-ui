@@ -1,3 +1,4 @@
+import {WorkspaceSettingsService} from '../shared/workspace-settings.service';
 import { untracked } from '@angular/core';
 import { WorkItemDialogService } from '../shared/work-item-dialog.service';
 import { CommonModule } from '@angular/common';
@@ -87,6 +88,8 @@ interface ProjectWorkCollections {
   styleUrls: ['./work-items.css', '../shared/field-controls.css']
 })
 export class WorkItems implements OnInit {
+  readonly workflow=inject(WorkspaceSettingsService);
+  private readonly liveRefresh=effect(()=>{if(this.workflow.revision()>0)untracked(()=>this.loadWorkItems());});
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
   private readonly itemDialog = inject(WorkItemDialogService);
@@ -141,7 +144,7 @@ export class WorkItems implements OnInit {
   actionMessageIsError = false;
   bulkStatusValue = '';
   bulkStatusMenuOpen = false;
-  readonly bulkStatusOptions = ['Backlog', 'To Do', 'In Progress', 'In Review', 'Testing', 'Done', 'Blocked'];
+  get bulkStatusOptions(){return this.workflow.names;}
   visibleItemCount = 50;
   readonly pageSize = 50;
   private readonly projectContextSync = effect(() => {
@@ -349,7 +352,7 @@ export class WorkItems implements OnInit {
     const reporter = this.resolvePerson(reporterId, reporterRaw);
     const title = this.text(raw?.title ?? raw?.name ?? raw?.summary, `${this.kindLabel(kind)} ${sourceId}`);
     const key = this.text(raw?.epic_code ?? raw?.epicCode ?? raw?.story_code ?? raw?.storyCode ?? raw?.task_code ?? raw?.taskCode ?? raw?.issue_code ?? raw?.issueCode ?? raw?.key, `${kind}-${sourceId}`);
-    const status = this.label(raw?.status ?? raw?.workflow_status ?? raw?.workflowStatus ?? raw?.state, 'Unknown');
+    const status = this.workflow.label(raw?.status ?? raw?.workflow_status ?? raw?.workflowStatus ?? raw?.state);
     const rawResolution = raw?.resolution?.name ?? raw?.resolution_name ?? raw?.resolutionName ?? raw?.resolution;
     const resolution = rawResolution ? this.label(rawResolution, 'Unresolved') : (/done|complete|resolved|closed/i.test(status) ? 'Done' : 'Unresolved');
     return {
@@ -453,7 +456,7 @@ export class WorkItems implements OnInit {
   get allVisibleSelected(): boolean { return this.visibleItems.length > 0 && this.visibleItems.every(item => this.selectedItemIds.has(item.id)); }
   get partiallyVisibleSelected(): boolean { return this.visibleItems.some(item => this.selectedItemIds.has(item.id)); }
 
-  get statusOptions(): string[] { return [...new Set(this.items.map(item => item.status))].sort((a, b) => a.localeCompare(b)); }
+  get statusOptions(): string[] { return [...new Set([...this.workflow.names,...this.items.map(item => item.status)])]; }
   get priorityOptions(): string[] { return [...new Set(this.items.map(item => item.priority))].sort((a, b) => a.localeCompare(b)); }
   get resolutionOptions(): string[] { return [...new Set(this.items.map(item => item.resolution))].sort((a, b) => a.localeCompare(b)); }
   get assigneeOptions(): WorkItemPerson[] { return this.peopleOptions('assigneeId'); }
@@ -703,7 +706,7 @@ export class WorkItems implements OnInit {
       selectedItems.forEach((item, index) => {
         if (!outcomes[index]) return;
         item.status = this.label(requestedStatus, requestedStatus);
-        if (/done|complete|resolved|closed/i.test(item.status)) item.resolution = 'Done';
+        if (this.workflow.done(item.status)) item.resolution = 'Done';
         else if (/backlog|to do|todo|in progress|testing|blocked/i.test(item.status)) item.resolution = 'Unresolved';
         this.selectedItemIds.delete(item.id);
       });
@@ -717,42 +720,9 @@ export class WorkItems implements OnInit {
     });
   }
 
-  private bulkStatusRequest(item: WorkItemRow, status: string): Observable<any> {
-    const raw = item.raw ?? {};
-    const assigneeId = this.number(raw?.assignee_user_id ?? raw?.assigneeUserId ?? raw?.assignee_id ?? raw?.assigneeId);
-    const reporterId = this.number(raw?.reporter_user_id ?? raw?.reporterUserId ?? raw?.reporter_id ?? raw?.reporterId);
-    const sprintId = this.number(raw?.sprint_id ?? raw?.sprintId ?? raw?.sprint?.id);
-    const common = { status, sprint_id: sprintId, assignee_user_id: assigneeId, reporter_user_id: reporterId };
-    if (item.kind === 'EPIC') {
-      return this.http.put(`${this.baseUrl}/epics/${item.sourceId}`, {
-        ...common, name: raw?.name ?? item.title, description: raw?.description ?? ''
-      }, this.headers());
-    }
-    if (item.kind === 'STORY') {
-      return this.http.put(`${this.baseUrl}/stories/${item.sourceId}`, {
-        ...common, title: raw?.title ?? item.title, description: raw?.description ?? '',
-        story_points: Number(raw?.story_points ?? raw?.storyPoints ?? 0),
-        priority: raw?.priority ?? 'MEDIUM',
-        epic_id: this.number(raw?.epic_id ?? raw?.epicId ?? raw?.epic?.id)
-      }, this.headers());
-    }
-    if (item.kind === 'TASK') {
-      return this.http.put(`${this.baseUrl}/tasks/${item.sourceId}`, {
-        ...common, title: raw?.title ?? item.title, description: raw?.description ?? ''
-      }, this.headers());
-    }
-    return this.http.put(`${this.baseUrl}/v1/issues/${item.sourceId}`, { ...raw, status }, this.headers());
-  }
+  private bulkStatusRequest(item:WorkItemRow,status:string):Observable<any>{return this.http.patch(`${this.baseUrl}/tickets/${item.kind}/${item.sourceId}/placement`,{status},this.headers());}
 
-  private backendStatus(status: string): string {
-    const normalized = status.trim().toLowerCase();
-    const aliases: Record<string, string> = {
-      'to do': 'TODO', 'todo': 'TODO', 'in progress': 'IN_PROGRESS',
-      'in review': 'IN_REVIEW', 'completed': 'COMPLETED', 'done': 'DONE',
-      'backlog': 'BACKLOG', 'blocked': 'BLOCKED', 'testing': 'TESTING'
-    };
-    return aliases[normalized] ?? normalized.replace(/[^a-z0-9]+/g, '_').toUpperCase();
-  }
+  private backendStatus(status:string):string{return this.workflow.code(status);}
 
   openWorkItem(item: WorkItemRow): void {
     this.itemDialog.open(Number(item.projectId), item.kind, item.sourceId);

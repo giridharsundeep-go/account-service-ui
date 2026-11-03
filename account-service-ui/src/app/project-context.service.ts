@@ -20,6 +20,7 @@ export class ProjectContextService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly storageKey = 'greatley-poshley-selected-project';
   private loaded = false;
+  private loadedForUser: number | null = null;
   private loading = false;
 
   readonly projects = signal<ProjectContextOption[]>([]);
@@ -29,9 +30,12 @@ export class ProjectContextService {
   );
 
   loadProjects(): void {
+    const userId=this.auth.getCurrentUserId();
+    if(this.loadedForUser!==userId){this.loadedForUser=userId;this.loaded=false;this.loading=false;this.projects.set([]);}
     if (this.loaded || this.loading) return;
     this.loading = true;
     this.projectCollection(['/projects', '/project']).subscribe(projects => {
+      if(userId!==this.loadedForUser)return;
       this.projects.set(projects);
       this.loaded = true;
       this.loading = false;

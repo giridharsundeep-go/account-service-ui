@@ -1,6 +1,8 @@
+import { ChatlyLauncher } from '../shared/chatly-launcher.service';
+import { TeamWorkComponent } from '../shared/team-work';
 
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../environment';
@@ -8,6 +10,7 @@ import { environment } from '../../environment';
 import {
   Observable,
   BehaviorSubject,
+  forkJoin,
   of,
   Subscription
 } from 'rxjs';
@@ -20,6 +23,8 @@ import {
 
 import { AuthService } from '../auth.service';
 import { WorkspaceHeroComponent } from '../shared/workspace-hero';
+import { PersonCard } from '../shared/person-card';
+import { peopleRows, personDesignation } from '../shared/people-directory';
 
 // Angular Material
 import { MatCardModule } from '@angular/material/card';
@@ -64,8 +69,10 @@ interface TeamView {
   standalone: true,
   imports: [
     CommonModule,
+    TeamWorkComponent,
     FormsModule,
     WorkspaceHeroComponent,
+    PersonCard,
     MatCardModule,
     MatButtonModule,
     MatFormFieldModule,
@@ -80,6 +87,8 @@ interface TeamView {
   styleUrls: ['./teams.css', '../shared/field-controls.css']
 })
 export class Teams implements OnInit, OnDestroy {
+  readonly chatly=inject(ChatlyLauncher);
+
 
   baseUrl = environment.apiBaseUrlM;
 
@@ -94,6 +103,7 @@ export class Teams implements OnInit, OnDestroy {
   teams: TeamView[] = [];
 
   allUsers: UserPayload[] = [];
+  private peopleRoles: any[] = [];
 
   name = '';
   description = '';
@@ -266,11 +276,12 @@ export class Teams implements OnInit, OnDestroy {
   // ============================================================
 
   loadUsersBackground(): void {
-    this.http.get<any>(
-      `${this.baseUrl}/users`,
-      { headers: this.auth.getAuthHeaders() }
-    ).subscribe({
-      next: (res: any) => {
+    const headers = this.auth.getAuthHeaders();
+    forkJoin({users: this.http.get<any>(`${this.baseUrl}/users`, {headers}),
+      roles: this.http.get<any>(`${this.baseUrl}/roles`, {headers}).pipe(catchError(() => of([])))
+    }).subscribe({
+      next: ({users: res, roles}) => {
+        this.peopleRoles = peopleRows(roles);
         const rawUsers = this.extractUsersArray(res);
 
         this.allUsers = rawUsers
@@ -353,6 +364,7 @@ export class Teams implements OnInit, OnDestroy {
 
   private normalizeUser(user: any): UserPayload {
     return {
+      designation: personDesignation(user, this.peopleRoles),
       id: Number(user?.id ?? user?.user_id ?? user?.userId ?? user?.user_account_id),
       name: this.resolveDisplayName(user),
       email: user?.email || 'No email available',
@@ -590,11 +602,7 @@ export class Teams implements OnInit, OnDestroy {
   }
 
   getMemberRoleLabel(member: any): string {
-    const role = String(
-      member?.role_name ?? member?.roleName ?? member?.role?.name ?? member?.user?.role_name ?? ''
-    ).trim();
-    if (/lead|manager/i.test(role)) return 'Team lead';
-    return role || 'Team member';
+    return personDesignation(this.findKnownUser(this.getMemberId(member)) || member, this.peopleRoles);
   }
 
   // Arrow property keeps the component context when Angular calls trackBy.

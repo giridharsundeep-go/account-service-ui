@@ -1,6 +1,8 @@
+import {WorkspaceSettingsService} from '../shared/workspace-settings.service';
+import {WorkspaceSettingsComponent} from '../shared/workspace-settings';
 
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { environment } from '../../environment';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -16,7 +18,7 @@ import { MatInputModule } from '@angular/material/input';
   selector: 'app-roles',
   standalone: true,
   imports: [
-    CommonModule,
+    CommonModule, WorkspaceSettingsComponent,
     FormsModule,
     WorkspaceHeroComponent,
     MatFormFieldModule,
@@ -27,6 +29,7 @@ import { MatInputModule } from '@angular/material/input';
   styleUrls: ['./roles.css', '../shared/field-controls.css']
 })
 export class Roles implements OnInit {
+  readonly workspace=inject(WorkspaceSettingsService);
   baseUrl = environment.apiBaseUrlM;
 
   roles$: Observable<any[]> | undefined;

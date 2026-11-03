@@ -174,38 +174,10 @@
           </mat-select>
         </mat-form-field>
 
-        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filter-wide">
-          <mat-label>Assignee search</mat-label>
-          <input matInput [ngModel]="assigneeQuery()" (ngModelChange)="onAssigneeAutocompleteInput($event)"
-            (focus)="assigneeAutocompleteOpen.set(true)" placeholder="Name, employee code or email" />
-          <mat-icon matSuffix>person_search</mat-icon>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filter-wide">
-          <mat-label>Reporter search</mat-label>
-          <input matInput [ngModel]="reporterQuery()" (ngModelChange)="onReporterAutocompleteInput($event)"
-            (focus)="reporterAutocompleteOpen.set(true)" placeholder="Name, employee code or email" />
-          <mat-icon matSuffix>person_search</mat-icon>
-        </mat-form-field>
+        <div class="filter-wide"><span>Assignee</span><app-person-picker [people]="boardPeopleOptions()" [value]="selectedAssigneeFilter() === 'ALL' ? null : +selectedAssigneeFilter()" label="Assignee" emptyLabel="All assignees" (selected)="selectBoardPersonFilter('assignee', $event)"></app-person-picker></div>
+        <div class="filter-wide"><span>Reporter</span><app-person-picker [people]="boardPeopleOptions()" [value]="selectedReporterFilter() === 'ALL' ? null : +selectedReporterFilter()" label="Reporter" emptyLabel="All reporters" (selected)="selectBoardPersonFilter('reporter', $event)"></app-person-picker></div>
       </mat-card-content>
 
-      <div class="filter-suggestions" *ngIf="assigneeAutocompleteOpen()">
-        <button mat-button *ngFor="let user of filteredAssigneeUsers()"
-          (click)="selectAssigneeFilterUser(user); assigneeAutocompleteOpen.set(false)">
-          <span class="mini-avatar" [ngClass]="personToneClass(user.id)">{{ initials(user.id) }}</span>
-          <span class="person-option-copy"><strong>{{ user.name }}</strong><small>{{ workItemUserDesignation(user) }}</small></span>
-        </button>
-        <button mat-button *ngIf="!filteredAssigneeUsers().length" disabled>No users found</button>
-      </div>
-
-      <div class="filter-suggestions" *ngIf="reporterAutocompleteOpen()">
-        <button mat-button *ngFor="let user of filteredReporterUsers()"
-          (click)="selectReporterFilterUser(user); reporterAutocompleteOpen.set(false)">
-          <span class="mini-avatar" [ngClass]="personToneClass(user.id)">{{ initials(user.id) }}</span>
-          <span class="person-option-copy"><strong>{{ user.name }}</strong><small>{{ workItemUserDesignation(user) }}</small></span>
-        </button>
-        <button mat-button *ngIf="!filteredReporterUsers().length" disabled>No users found</button>
-      </div>
     </mat-card>
 
     <!-- ACTIVE FILTER CHIPS -->
@@ -305,7 +277,7 @@
 
         <div class="kanban-board" cdkDropListGroup>
           <section class="kanban-column" *ngFor="let column of columns">
-            <div class="column-header" [ngClass]="{
+            <div class="column-header" [style.border-bottom-color]="workflow.color(column.id)" [ngClass]="{
                 'backlog-header': column.id === 'BACKLOG',
                 'todo-header': column.id === 'TODO',
                 'progress-header': column.id === 'IN_PROGRESS',
@@ -313,7 +285,7 @@
                 'completed-header': column.id === 'COMPLETED',
                 'blocked-header': column.id === 'BLOCKED'
               }">
-              <div class="column-title"><span class="status-dot"></span>
+              <div class="column-title"><span class="status-dot" [style.background]="workflow.color(column.id)"></span>
                 <h3>{{ column.label }}</h3>
               </div>
               <span class="item-count">{{ columnCount(column.id) }}</span>
@@ -1084,7 +1056,7 @@
   <div class="focus-overlay" *ngIf="showScrumBoard()">
     <div class="focus-shell">
       <mat-toolbar class="focus-toolbar focus-toolbar-title-only">
-        <span class="focus-title"><strong>{{ selectedBoard()?.name || selectedProjectName() }}</strong></span>
+        <span class="focus-title"><strong>{{ selectedBoard()?.name || selectedProjectName() }}</strong><small *ngIf="currentSprint()">{{ currentSprint()?.name }}</small></span>
         <span class="toolbar-spacer"></span>
         <div class="focus-create-actions" aria-label="Create work item">
           <button mat-stroked-button type="button" (click)="openCreateWorkItem('EPIC')"><mat-icon>add</mat-icon> Epic</button>
@@ -1112,9 +1084,11 @@
           </mat-chip>
         </mat-chip-set>
       </div>
+      <div *ngIf="loading()" class="board-work-loading" role="status">Loading board items…</div>
+      <div *ngIf="errorMessage()" class="board-work-error" role="alert">{{ errorMessage() }}</div>
       <div class="kanban-board focus-kanban-board" cdkDropListGroup>
         <section class="kanban-column" *ngFor="let column of columns">
-          <div class="column-header" [ngClass]="{
+          <div class="column-header" [style.border-bottom-color]="workflow.color(column.id)" [ngClass]="{
               'backlog-header': column.id === 'BACKLOG',
               'todo-header': column.id === 'TODO',
               'progress-header': column.id === 'IN_PROGRESS',
@@ -1122,7 +1096,7 @@
               'completed-header': column.id === 'COMPLETED',
               'blocked-header': column.id === 'BLOCKED'
             }">
-            <div class="column-title"><span class="status-dot"></span>
+            <div class="column-title"><span class="status-dot" [style.background]="workflow.color(column.id)"></span>
               <h3>{{ column.label }}</h3>
             </div>
             <span class="item-count">{{ columnCount(column.id) }}</span>
@@ -1169,7 +1143,7 @@
                 </button>
               </mat-card-actions>
             </mat-card>
-            <div class="column-empty" *ngIf="!columnCards()[column.id]?.length">
+            <div class="column-empty" *ngIf="!loading() && !columnCards()[column.id]?.length">
               <mat-icon>inbox</mat-icon><strong>Nothing here</strong><span>Drag work into this stage.</span>
             </div>
           </div>

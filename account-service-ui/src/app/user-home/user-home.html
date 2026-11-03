@@ -1,6 +1,6 @@
 <div
   class="app-shell"
-  [class.nav-collapsed]="isCollapsed">
+  [class.nav-collapsed]="isCollapsed" [style.--sidebar-width]="sidebarWidth + 'px'">
 
   <!-- =========================================================
        TOP HEADER
@@ -269,9 +269,10 @@
       </button>
 
 
+      <app-suite-menu></app-suite-menu><app-notification-center></app-notification-center>
       <div class="header-recent" (click)="$event.stopPropagation()">
         <button type="button" class="icon-button" aria-label="Recent activity" title="Recently opened or worked on" [attr.aria-expanded]="recentMenuOpen" (click)="recentMenuOpen = !recentMenuOpen">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"></path></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
         </button>
         <section *ngIf="recentMenuOpen" class="header-recent-popover" aria-label="Your recent activity">
           <header><div><strong>Your recent work</strong><span>Opened or updated by you</span></div><button type="button" aria-label="Close recent activity" (click)="recentMenuOpen=false">×</button></header>
@@ -449,7 +450,7 @@
            NAVIGATION
       ====================================================== -->
 
-      <section class="recent-navigation" *ngIf="!isCollapsed"><button class="recent-navigation-toggle" type="button" (click)="recentCollapsed=!recentCollapsed" [attr.aria-expanded]="!recentCollapsed"><strong>Recently opened or worked on</strong><span>{{recentCollapsed ? '▸' : '▾'}}</span></button><div *ngIf="!recentCollapsed"><button type="button" *ngFor="let item of recentWork.items().slice(0,8)" (click)="openRecent(item)" [title]="item.title"><span [attr.data-tone]="avatarTone(item.id)">{{item.type === 'ISSUE' ? '!' : item.type[0]}}</span><div><strong>{{item.title}}</strong><small>{{item.key}} · {{item.action || 'Opened'}}</small></div></button><p *ngIf="!recentWork.items().length">Your recent work appears here.</p></div></section>
+
       <nav class="navigation" aria-label="Main navigation">
         <ng-container *ngTemplateOutlet="navigationGroup; context: { title: '', items: primaryNavigation, first: true }"></ng-container>
         <ng-container *ngTemplateOutlet="navigationGroup; context: { title: 'Plan & Track', items: planningNavigation }"></ng-container>
@@ -474,7 +475,7 @@
             <svg *ngIf="item.icon === 'tests'" viewBox="0 0 24 24"><path d="M4 5h16v14H4z"></path><path d="M7 9l2 2 4-4M7 15h8"></path></svg>
             <svg *ngIf="item.icon === 'issues'" viewBox="0 0 24 24"><path d="M12 3l9 17H3z"></path><path d="M12 9v5M12 17v.01"></path></svg>
             <svg *ngIf="item.icon === 'releases'" viewBox="0 0 24 24"><path d="M5 19L19 5M9 5h10v10"></path></svg>
-            <svg *ngIf="item.icon === 'docs'" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"></path><path d="M15 3v5h4M9 12h6M9 16h6"></path></svg>
+            <svg *ngIf="item.icon === 'chat'" viewBox="0 0 24 24"><path d="M4 4h16v12H9l-5 4zM8 8h8M8 12h5"></path></svg><svg *ngIf="item.icon === 'calendar'" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M7 3v4M17 3v4M3 10h18"></path></svg><svg *ngIf="item.icon === 'docs'" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"></path><path d="M15 3v5h4M9 12h6M9 16h6"></path></svg>
             <svg *ngIf="item.icon === 'roles'" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6z"></path><path d="M9 12l2 2 4-4"></path></svg>
             <svg *ngIf="item.icon === 'users'" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20a7 7 0 0 1 14 0"></path></svg>
             <svg *ngIf="item.icon === 'teams'" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"></circle><circle cx="17" cy="9" r="2.5"></circle><path d="M3 20a6 6 0 0 1 12 0M15 15a5 5 0 0 1 6 5"></path></svg>
@@ -538,6 +539,7 @@
 
       </div>
 
+      <div *ngIf="!isCollapsed" class="sidebar-resizer" role="separator" aria-orientation="vertical" aria-label="Resize navigation" tabindex="0" [attr.aria-valuenow]="sidebarWidth" aria-valuemin="180" aria-valuemax="380" (pointerdown)="beginSidebarResize($event)" (keydown.arrowleft)="resizeSidebar(-10)" (keydown.arrowright)="resizeSidebar(10)" (dblclick)="resizeSidebar(240-sidebarWidth)"></div>
     </aside>
 
 
@@ -613,9 +615,9 @@
           </app-releases>
 
 
-          <app-docs
-            *ngIf="activeMenu === 'docs'">
-          </app-docs>
+          <app-suite-frame *ngIf="activeMenu === 'docs'" app="documents" [projectId]="projectContext.selectedProjectId()"></app-suite-frame>
+          <app-suite-frame *ngIf="activeMenu === 'chatly'" app="chatly" [projectId]="projectContext.selectedProjectId()"></app-suite-frame>
+          <app-suite-frame *ngIf="activeMenu === 'calendar'" app="calendar" [projectId]="projectContext.selectedProjectId()"></app-suite-frame>
 
         </ng-container>
 

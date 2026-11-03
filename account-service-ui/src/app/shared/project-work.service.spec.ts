@@ -4,6 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { HttpHeaders } from '@angular/common/http';
 import { AuthService } from '../auth.service';
 import { ProjectWorkService, ProjectWorkSnapshot } from './project-work.service';
+import { WorkspaceSettingsService } from './workspace-settings.service';
 
 describe('ProjectWorkService', () => {
   let service: ProjectWorkService;
@@ -15,6 +16,7 @@ describe('ProjectWorkService', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         ProjectWorkService,
+        { provide: WorkspaceSettingsService, useValue: { done: (status: string) => status === 'APPROVED' } },
         { provide: AuthService, useValue: { getAuthHeaders: () => new HttpHeaders() } },
       ],
     });
@@ -22,6 +24,12 @@ describe('ProjectWorkService', () => {
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());
+
+  it('counts custom organization statuses in the done category as complete', () => {
+    expect(service.done('APPROVED')).toBe(true);
+    expect(service.done('COMPLETED')).toBe(true);
+    expect(service.done('IN_PROGRESS')).toBe(false);
+  });
 
   it('includes every page, scopes global tasks, and resolves ownership through parent records', () => {
     let snapshot!: ProjectWorkSnapshot;

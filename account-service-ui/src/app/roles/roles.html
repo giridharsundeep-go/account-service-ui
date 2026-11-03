@@ -65,16 +65,17 @@
     </div>
   </section>
 
+  <app-workspace-settings></app-workspace-settings>
   <main class="matrix-table-workspace roles-table-workspace">
     <div class="roles-workspace-header">
       <div>
-        <h3>Role directory</h3>
-        <p>Review and manage organization roles.</p>
+        <h3>Designation directory</h3>
+        <p>Job titles such as CEO or Software Engineer are independent of access roles.</p>
       </div>
 
       <button
         type="button"
-        class="gp-button gp-primary roles-add-button"
+        class="gp-button gp-primary roles-add-button" *ngIf="workspace.can('DESIGNATIONS.CREATE')"
         (click)="resetForm(); editingRoleId = 0"
       >
         <span class="btn-indicator-pulse"></span>
@@ -156,7 +157,7 @@
           <div class="cell action-runtime-cell text-right">
             <button
               type="button"
-              class="gp-action-trigger edit-trigger"
+              class="gp-action-trigger edit-trigger" *ngIf="workspace.can('DESIGNATIONS.UPDATE')"
               (click)="editRole(role)"
             >
               Edit
@@ -164,7 +165,7 @@
 
             <button
               type="button"
-              class="gp-action-trigger delete-trigger"
+              class="gp-action-trigger delete-trigger" *ngIf="workspace.can('DESIGNATIONS.DELETE')"
               (click)="deleteRole(role.id)"
             >
               Delete

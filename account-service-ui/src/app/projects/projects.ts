@@ -13,13 +13,16 @@ import {
   Observable,
   combineLatest,
   forkJoin,
+  from,
   of
 } from 'rxjs';
 import {
   finalize,
   switchMap,
   map,
-  catchError
+  catchError,
+  concatMap,
+  toArray
 } from 'rxjs/operators';
 
 import { environment } from '../../environment';
@@ -48,6 +51,11 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatStepperModule } from '@angular/material/stepper';
 
 import { UserSelectDialog } from '../user-select-dialog/user-select-dialog';
+import { PersonCard } from '../shared/person-card';
+import { PlanningWorkTableComponent } from '../shared/planning-work-table';
+import { TeamSelectDialog } from '../shared/team-select-dialog';
+import { TeamPeopleDialog } from '../shared/team-people-dialog';
+import { personDesignation, personRegions } from '../shared/people-directory';
 
 
 export interface UserAccountNode {
@@ -91,7 +99,7 @@ export interface StrategicInitiative {
   project_code: string;
   description: string;
 
-  status: 'ACTIVE' | 'ARCHIVED' | 'ON_HOLD';
+  status: 'ACTIVE' | 'ARCHIVED' | 'ON_HOLD' | 'COMPLETED';
 
   methodology:
     | 'AGILE_SCRUM'
@@ -160,6 +168,8 @@ export interface SprintItem {
     CommonModule,
     FormsModule,
     WorkspaceHeroComponent,
+    PersonCard,
+    PlanningWorkTableComponent,
 
     MatIconModule,
     MatCardModule,
@@ -185,6 +195,8 @@ export interface SprintItem {
   ]
 })
 export class Projects implements OnInit {
+  get canManageProjects():boolean{return this.auth.isAdmin();}
+
   projectRoles: any[] = [];
   planningVisited=false;
   private openPlanningAfterCreate = false;
@@ -217,10 +229,24 @@ export class Projects implements OnInit {
   openProjectPlanning(project: StrategicInitiative): void { this.planningVisited=true; this.selectedProjectTabIndex=4; }
   memberDesignation(member:any): string {
     const user:any=this.organizationPersonnel.find(u=>Number(u.id)===Number(member.id));
-    const assignedRole=this.projectRoles.find(r=>Number(r.id??r.role_id)===Number(user?.roleId));
-    const role=member.designation||member.jobTitle||user?.designation||user?.jobTitle||assignedRole?.name||assignedRole?.role_name||assignedRole?.roleName||member.role||user?.role;
-    return typeof role==='object' ? String(role?.name??role?.role_name??'Team member') : String(role||'Team member');
+    return personDesignation(user || member, this.projectRoles);
   }
+  get allocatedTeams(): FunctionalTeamNode[] { return this.liveActiveTeams.filter(team => this.isTeamSelected(team.id)); }
+  get individualMembers(): any[] { return this.chipUserObjects.filter(member => this.selectedUsers.includes(Number(member.id))); }
+  public openAllocatedTeam(team: FunctionalTeamNode): void {
+    const members = (team.members || []).map(member => {
+      const user = this.organizationPersonnel.find(person => Number(person.id) === Number(member.id)) || member;
+      return {...member, ...user, designation: this.memberDesignation(user), location: personRegions(user).join(' · '), employeeCode: [user.employeeIdPrefix,user.employeeIdNumber].filter(Boolean).join('/')};
+    });
+    this.dialog.open(TeamPeopleDialog, {width:'1040px',maxWidth:'96vw',data:{name:team.name,members}});
+  }
+  public openTeamSelectionDialog(): void {
+    this.dialog.open(TeamSelectDialog, {width:'760px', maxWidth:'96vw', data:{teams:this.liveActiveTeams, selected:this.selectedTeamIds}})
+      .afterClosed().subscribe((ids:string[] | undefined) => { if(ids) this.onTeamSelectionChange(ids); });
+  }
+  public removeAllocatedTeam(id:number|string): void { this.onTeamSelectionChange(this.selectedTeamIds.filter(value=>value!==String(id))); }
+  private deliveryPlanChanged = false;
+  public deliveryParametersChanged(): void { this.deliveryPlanChanged = true; this.generateSprintPreview(); }
 
 
   baseUrl = environment.apiBaseUrlM;
@@ -349,6 +375,7 @@ export class Projects implements OnInit {
     SprintItem[] = [];
 
   private sprintLoadSequence = 0;
+  private composerLoadSequence = 0;
 
   public isSprintModalOpen = false;
 
@@ -385,6 +412,9 @@ export class Projects implements OnInit {
   public selectedProjectTabIndex = 0;
   public isProfileEditing = false;
   public isProfileCreating = false;
+  public projectSaveError = '';
+  private projectSaveStage = 'project details';
+  public allocationLoadError = '';
   public projectDisplayedColumns = ['project', 'status', 'deadline', 'actions'];
   public profileSprintDisplayedColumns = ['sprint', 'sprintStatus', 'start', 'end', 'velocity'];
   private profileEditSnapshot: StrategicInitiative | null = null;
@@ -876,6 +906,9 @@ Math: any;
    */
   private normalizeProject(project: Partial<StrategicInitiative> | null | undefined): StrategicInitiative {
     const source = project ?? {};
+    const scope = Math.max(0, Number(source.total_backlog_points ?? 120));
+    const velocity = Math.max(1, Math.round(Number(source.target_velocity ?? 30) * this.agileTuning.focusFactor));
+    const count = Math.ceil(Math.round(scope * (1 + this.agileTuning.scopeBufferPercent / 100)) / velocity);
     return {
       ...(source as any),
       id: source.id,
@@ -891,8 +924,8 @@ Math: any;
       sprint_duration_weeks: source.sprint_duration_weeks ?? 2,
       target_velocity: source.target_velocity ?? 30,
       auto_rollover_backlog: source.auto_rollover_backlog ?? true,
-      computed_sprint_count: source.computed_sprint_count ?? 0,
-      computed_total_duration_weeks: source.computed_total_duration_weeks ?? 0,
+      computed_sprint_count: count,
+      computed_total_duration_weeks: count * Number(source.sprint_duration_weeks ?? 2),
       associatedTeamIds: [...(source.associatedTeamIds ?? [])],
       associatedUserIds: [...(source.associatedUserIds ?? [])]
     };
@@ -904,11 +937,13 @@ Math: any;
     const normalized = this.normalizeProject(project);
     this.selectedProject = normalized;
     this.loadProjectWork(Number(normalized.id));
+    this.loadSprintsBackground(Number(normalized.id));
     this.selectedSprint = null;
     this.selectedProjectTabIndex = 0;
     this.planningVisited = false;
     this.isProfileCreating = false;
     this.isProfileEditing = false;
+    this.projectSaveError = '';
     this.profileEditSnapshot = this.normalizeProject(normalized);
     this.projectForm = this.normalizeProject(normalized);
     this.selectedTeamIds = [...(normalized.associatedTeamIds || [])];
@@ -920,6 +955,8 @@ Math: any;
 
 
   public closeProjectDetails(): void {
+    this.composerLoadSequence++;
+    this.isLoadingResources = false;
     this.selectedProject = null;
     this.selectedProjectTabIndex = 0;
     this.isProfileCreating = false;
@@ -952,6 +989,7 @@ Math: any;
   }
 
   public getProjectProfileSprints(project: StrategicInitiative): SprintItem[] {
+    if (this.isProfileEditing) return this.calculatedSprintsPreview as SprintItem[];
     return this.globalSprintsCollection
       .filter(sprint => Number(sprint.project_id) === Number(project.id))
       .sort((a, b) => Number(a.sprint_number) - Number(b.sprint_number));
@@ -966,10 +1004,13 @@ Math: any;
     this.selectedProjectTabIndex = 0;
     this.isProfileCreating = false;
     this.isProfileEditing = true;
+    this.deliveryPlanChanged = false;
+    this.projectSaveError = '';
     this.selectedUsers = [];
     this.selectedTeamIds = [];
     this.chipUserObjects = [];
     this.loadComposerResources(Number(project.id), project);
+    this.generateSprintPreview();
     this.cdr.detectChanges();
   }
 
@@ -978,37 +1019,37 @@ Math: any;
       this.closeProjectDetails();
       return;
     }
-    if (this.profileEditSnapshot) this.projectForm = this.normalizeProject(this.profileEditSnapshot);
+    if (this.profileEditSnapshot) {
+      this.projectForm = this.normalizeProject(this.profileEditSnapshot);
+      this.selectedTeamIds = this.projectForm.associatedTeamIds.map(String);
+      this.selectedUsers = this.projectForm.associatedUserIds.map(Number);
+      this.rebuildChipsMatrix();
+    }
     this.selectedProjectTabIndex = 0;
     this.isProfileEditing = false;
     this.cdr.detectChanges();
   }
 
   public saveProfileProject(): void {
-    if (!this.projectForm.name?.trim() || this.isSaving) return;
-    if (this.isProfileCreating || !this.projectForm.id) {
-      this.commitProjectToSystem();
-      return;
-    }
+    if (!this.projectForm.name?.trim() || this.isSaving || this.isLoadingResources || this.allocationLoadError) return;
+    this.generateSprintPreview();
+    this.commitProjectToSystem();
+  }
+
+  public createMissingProjectSprints(): void {
+    const id = Number(this.selectedProject?.id);
+    if (!id || this.isSaving || this.isProfileEditing) return;
+    this.projectForm = this.normalizeProject(this.selectedProject);
+    this.deliveryPlanChanged = false;
+    this.generateSprintPreview();
     this.isSaving = true;
-    const body = { ...this.projectForm };
-    this.http.put<any>(`${this.baseUrl}/projects/${this.projectForm.id}`, body, {
-      headers: this.auth.getAuthHeaders()
-    }).pipe(finalize(() => {
+    this.projectSaveError = '';
+    this.saveProjectSprints(id, true).pipe(finalize(() => {
       this.isSaving = false;
-      this.cdr.detectChanges();
+      this.cdr.markForCheck();
     })).subscribe({
-      next: (response: any) => {
-        const updated = response?.data || response?.project || body;
-        const mergedProject = { ...(this.selectedProject || body), ...body, ...updated };
-        this.selectedProject = this.normalizeProject(mergedProject);
-        this.profileEditSnapshot = this.normalizeProject(this.selectedProject);
-        this.selectedProjectTabIndex = 0;
-        this.isProfileEditing = false;
-        this.projectsRefresh$.next();
-        this.cdr.detectChanges();
-      },
-      error: error => console.error('Failed to update project:', error, error?.error)
+      next: () => this.loadSprintsBackground(id),
+      error: error => { this.projectSaveError = 'Unable to create sprints: ' + (error?.error?.message || error.message); }
     });
   }
 
@@ -1125,11 +1166,13 @@ Math: any;
     this.isComposerOpen = false;
     this.isProfileCreating = true;
     this.isProfileEditing = true;
+    this.deliveryPlanChanged = true;
+    this.projectSaveError = '';
     this.selectedProjectTabIndex = 0;
     this.selectedSprint = null;
     this.profileEditSnapshot = null;
     this.selectedProject = this.normalizeProject(this.projectForm);
-    this.calculateAgileMetrics();
+    this.generateSprintPreview();
     this.loadComposerResources();
     this.cdr.detectChanges();
   }
@@ -1480,7 +1523,7 @@ Math: any;
           .project_code
           ?.trim()
           ? `${this.projectForm.project_code.trim()}-`
-          : 'SPRINT-';
+          : '';
 
 
       for (
@@ -1520,20 +1563,19 @@ Math: any;
           );
 
 
-        const randomSequenceId =
-          Math.floor(
-            1000000 +
-            Math.random() *
-            9000000
-          );
+        const existing = this.globalSprintsCollection.find(sprint =>
+          Number(sprint.project_id) === Number(this.projectForm.id) && sprint.sprint_number === i);
 
 
         mockSprintsArray.push({
 
+          id: existing?.id,
+          project_id: this.projectForm.id,
+
           sprint_number: i,
 
           name:
-            `${prefixCode}${randomSequenceId} (Cycle ${i})`,
+            existing?.name || `${prefixCode}SPRINT-${i} (Cycle ${i})`,
 
           status:
             'PLANNED',
@@ -1613,7 +1655,11 @@ Math: any;
       return;
     }
 
+    this.generateSprintPreview();
+
     this.isSaving = true;
+    this.projectSaveError = '';
+    this.projectSaveStage = 'project details';
 
     const isExistingProject =
       !!this.projectForm.id;
@@ -1652,6 +1698,7 @@ Math: any;
     request$
       .pipe(
         switchMap((projectRes: any) => {
+          this.requireSaveSuccess(projectRes, 'Project');
 
           const responseData =
             projectRes?.data ||
@@ -1673,59 +1720,34 @@ Math: any;
               'Could not resolve project ID.'
             );
           }
+          // A retry after a related-resource failure must update this project,
+          // rather than create a second project with the same draft.
+          this.projectForm.id = confirmedProjectId;
+          if (this.selectedProject) this.selectedProject.id = confirmedProjectId;
 
-          const requests: Record<string, any> = {
-
-            teamsSync:
-              this.http.post(
-                `${this.baseUrl}/project-teams/sync`,
-                {
-                  project_id: confirmedProjectId,
-                  team_ids: numericTeamIds
-                },
-                {
-                  headers: this.auth.getAuthHeaders()
-                }
-              ),
-
-            individualsSync:
-              this.http.post(
-                `${this.baseUrl}/project-individuals/sync`,
-                {
-                  project_id: confirmedProjectId,
-                  user_account_ids: numericUserIds
-                },
-                {
-                  headers: this.auth.getAuthHeaders()
-                }
-              ),
-
-            /*
-             * Sprints belong to the project, so project save must also
-             * persist the generated sprint preview through the sprint APIs.
-             *
-             * CREATE:
-             *   POST /sprints/create for every generated sprint.
-             *
-             * EDIT:
-             *   GET /sprints?project_id={id}, then reconcile by
-             *   sprint_number using PUT /sprints/{id} for existing planned
-             *   sprints, POST /sprints/create for new ones, and DELETE
-             *   /sprints/{id} for planned sprints removed from the preview.
-             *
-             * ACTIVE/COMPLETED/PAUSED sprints are intentionally preserved;
-             * they represent delivery history/state and should not be
-             * replaced by a newly calculated preview.
-             */
-            sprintsSync:
-              this.saveProjectSprints(
-                confirmedProjectId,
-                isExistingProject
-              )
-
-          };
-
-          return forkJoin(requests);
+          const headers = this.auth.getAuthHeaders();
+          // Complete allocations first so a sprint error cannot cancel member persistence.
+          this.projectSaveStage = 'team allocations';
+          return this.http.post<any>(`${this.baseUrl}/project-teams/sync`,
+            {project_id: confirmedProjectId, team_ids: numericTeamIds}, {headers}).pipe(
+            map(response => this.requireSaveSuccess(response, 'Team allocations')),
+            switchMap(() => {
+              this.projectSaveStage = 'individual members';
+              return this.http.post<any>(`${this.baseUrl}/project-individuals/sync`,
+                {project_id: confirmedProjectId, user_account_ids: numericUserIds}, {headers});
+            }),
+            map(response => {
+              this.requireSaveSuccess(response, 'Individual members');
+              const count = response?.data?.allocated_individuals_count;
+              if (count != null && Number(count) !== numericUserIds.length)
+                throw new Error('The API did not save every selected individual member.');
+              return response;
+            }),
+            switchMap(() => {
+              this.projectSaveStage = 'sprints';
+              return this.saveProjectSprints(confirmedProjectId, isExistingProject);
+            })
+          );
 
         }),
         finalize(() => {
@@ -1738,27 +1760,32 @@ Math: any;
         next: () => {
           this.isComposerOpen = false;
           this.sprintLoadError = '';
-          if (this.isProfileCreating && savedProjectSnapshot) {
+          if (this.selectedProject && savedProjectSnapshot) {
             const created = this.normalizeProject({
-              ...this.projectForm,
+              ...body,
               ...savedProjectSnapshot,
-              id: savedProjectSnapshot?.id ?? savedProjectSnapshot?.project_id ?? savedProjectSnapshot?.projectId
+              id: savedProjectSnapshot?.id ?? savedProjectSnapshot?.project_id ?? savedProjectSnapshot?.projectId ?? this.projectForm.id,
+              associatedTeamIds: numericTeamIds.map(String),
+              associatedUserIds: [...numericUserIds]
             });
             this.selectedProject = created;
             this.projectForm = this.normalizeProject(created);
             this.profileEditSnapshot = this.normalizeProject(created);
             this.isProfileCreating = false;
             this.isProfileEditing = false;
+            this.deliveryPlanChanged = false;
             this.selectedProjectTabIndex = this.openPlanningAfterCreate ? 4 : 0;
             this.planningVisited = this.openPlanningAfterCreate;
             this.openPlanningAfterCreate = false;
             this.loadComposerResources(Number(created.id), created);
+            this.loadSprintsBackground(Number(created.id));
           }
           this.projectsRefresh$.next();
           this.cdr.detectChanges();
         },
 
         error: err => {
+          this.projectSaveError = `Unable to save ${this.projectSaveStage}: ${err?.error?.message || err?.message || 'Please try again.'}`;
           console.error(
             'Failed saving project:',
             err,
@@ -1832,184 +1859,38 @@ Math: any;
   }
 
 
-  private saveProjectSprints(
-    projectId: number,
-    isExistingProject: boolean
-  ): Observable<any> {
+  private requireSaveSuccess(response: any, label: string): any {
+    if (response?.success === false) throw new Error(response?.message || label + ' could not be saved.');
+    return response;
+  }
 
-    const previewSprints =
-      Array.isArray(this.calculatedSprintsPreview)
-        ? this.calculatedSprintsPreview
-            .filter((sprint: any) => !!sprint)
-        : [];
-
-    if (!isExistingProject) {
-
-      if (!previewSprints.length) {
-        return of([]);
-      }
-
-      const createRequests =
-        previewSprints.map((sprint: any) =>
-          this.http.post(
-            `${this.baseUrl}/sprints/create`,
-            this.buildSprintPersistencePayload(
-              projectId,
-              sprint
-            ),
-            {
-              headers: this.auth.getAuthHeaders()
-            }
-          )
+  private saveProjectSprints(projectId: number, isExistingProject: boolean): Observable<any> {
+    const headers = this.auth.getAuthHeaders();
+    const existing$ = isExistingProject
+      ? this.http.get<any>(`${this.baseUrl}/sprints?project_id=${projectId}`, {headers})
+      : of([]);
+    return existing$.pipe(
+      map(response => this.requireSaveSuccess(response, 'Sprint list')),
+      switchMap(response => {
+        const existing = this.extractApiArray(response).map(row => this.normalizeSprint(row)).filter((row): row is SprintItem => !!row);
+        const byNumber = new Map(existing.map(sprint => [sprint.sprint_number, sprint]));
+        const operations: Observable<any>[] = [];
+        for (const preview of this.calculatedSprintsPreview) {
+          const saved = byNumber.get(Number(preview.sprint_number));
+          const payload = this.buildSprintPersistencePayload(projectId, preview);
+          if (!saved) {
+            operations.push(this.http.post<any>(`${this.baseUrl}/sprints/create`, payload, {headers}));
+          } else if (this.deliveryPlanChanged && saved.status === 'PLANNED' && saved.id) {
+            operations.push(this.http.put<any>(`${this.baseUrl}/sprints/${saved.id}`, payload, {headers}));
+          }
+        }
+        // Fill missing cycles without deleting existing sprints or their assigned work.
+        return from(operations).pipe(
+          concatMap(operation => operation.pipe(map(response => this.requireSaveSuccess(response, 'Sprint')))),
+          toArray()
         );
-
-      return forkJoin(createRequests);
-    }
-
-    return this.http.get<any>(
-      `${this.baseUrl}/sprints?project_id=${projectId}`,
-      {
-        headers: this.auth.getAuthHeaders()
-      }
-    ).pipe(
-      map((response: any) =>
-        this.extractApiArray(response)
-          .map((item: any) =>
-            this.normalizeSprint(item)
-          )
-          .filter((sprint: SprintItem | null): sprint is SprintItem =>
-            !!sprint &&
-            sprint.id !== null &&
-            sprint.id !== undefined
-          )
-      ),
-      switchMap((existingSprints: SprintItem[]) => {
-
-        const existingByNumber =
-          new Map<number, SprintItem>();
-
-        existingSprints.forEach((sprint: SprintItem) => {
-          const number =
-            Number(sprint.sprint_number);
-
-          if (
-            Number.isFinite(number) &&
-            number > 0
-          ) {
-            existingByNumber.set(
-              number,
-              sprint
-            );
-          }
-        });
-
-        const requestedNumbers =
-          new Set<number>();
-
-        const operations: Observable<any>[] =
-          [];
-
-        previewSprints.forEach((sprint: any) => {
-
-          const sprintNumber =
-            Number(sprint?.sprint_number) || 1;
-
-          requestedNumbers.add(
-            sprintNumber
-          );
-
-          const existing =
-            existingByNumber.get(
-              sprintNumber
-            );
-
-          if (
-            existing &&
-            existing.id !== null &&
-            existing.id !== undefined
-          ) {
-
-            /*
-             * Preserve already-running/completed/paused sprints.
-             * Only PLANNED rows participate in project recalculation.
-             */
-            if (
-              existing.status !== 'PLANNED'
-            ) {
-              return;
-            }
-
-            operations.push(
-              this.http.put(
-                `${this.baseUrl}/sprints/${existing.id}`,
-                this.buildSprintPersistencePayload(
-                  projectId,
-                  sprint
-                ),
-                {
-                  headers:
-                    this.auth.getAuthHeaders()
-                }
-              )
-            );
-
-            return;
-          }
-
-          operations.push(
-            this.http.post(
-              `${this.baseUrl}/sprints/create`,
-              this.buildSprintPersistencePayload(
-                projectId,
-                sprint
-              ),
-              {
-                headers:
-                  this.auth.getAuthHeaders()
-              }
-            )
-          );
-
-        });
-
-        /*
-         * Remove only old planned sprints that no longer exist in the
-         * recalculated project preview. Historical/current sprints stay.
-         */
-        existingSprints.forEach((existing: SprintItem) => {
-
-          const sprintNumber =
-            Number(existing.sprint_number);
-
-          if (
-            existing.status === 'PLANNED' &&
-            Number.isFinite(sprintNumber) &&
-            !requestedNumbers.has(sprintNumber) &&
-            existing.id !== null &&
-            existing.id !== undefined
-          ) {
-
-            operations.push(
-              this.http.delete(
-                `${this.baseUrl}/sprints/${existing.id}`,
-                {
-                  headers:
-                    this.auth.getAuthHeaders()
-                }
-              )
-            );
-
-          }
-
-        });
-
-        return operations.length > 0
-          ? forkJoin(operations)
-          : of([]);
-
       })
     );
-
   }
 
 
@@ -2184,7 +2065,11 @@ Math: any;
       response?.data?.sprints,
       response?.data?.data,
       response?.result,
-      response?.result?.data
+      response?.result?.data,
+      response?.content,
+      response?.data?.content,
+      ...Object.values(response?._embedded || {}),
+      ...Object.values(response?.data?._embedded || {})
     ];
 
     for (const candidate of candidates) {
@@ -2270,7 +2155,7 @@ Math: any;
 
     const projectId =
       item?.project_id ??
-      item?.projectId;
+      item?.projectId ?? item?.project?.id;
 
     return {
 
@@ -3031,6 +2916,8 @@ Math: any;
   ): void {
 
     this.isLoadingResources = true;
+    this.allocationLoadError = '';
+    const requestSequence = ++this.composerLoadSequence;
 
     const users$ =
       this.http.get<any>(
@@ -3166,6 +3053,7 @@ Math: any;
     })
     .pipe(
       finalize(() => {
+        if (requestSequence !== this.composerLoadSequence) return;
 
         this.isLoadingResources = false;
 
@@ -3178,6 +3066,10 @@ Math: any;
       })
     )
     .subscribe((result: any) => {
+      if (requestSequence !== this.composerLoadSequence) return;
+      if (!result.users.ok || !result.teams.ok || !result.individuals.ok || !result.projectTeams.ok) {
+        this.allocationLoadError = 'Some allocation data could not be loaded. Reopen this project before saving to preserve its assignments.';
+      }
 
       /*
        * Canonical user list for the composer and the user-select dialog.
@@ -3241,8 +3133,7 @@ Math: any;
                   item?.userAccountId ??
                   item?.user_id ??
                   item?.userId ??
-                  item?.id ??
-                  0
+                  item?.id ?? item ?? 0
                 )
               )
               .filter((id: number) =>
@@ -3283,6 +3174,11 @@ Math: any;
 
         this.projectForm.associatedTeamIds =
           [...this.selectedTeamIds];
+        if (this.selectedProject) {
+          this.selectedProject.associatedTeamIds = [...this.selectedTeamIds];
+          this.selectedProject.associatedUserIds = [...this.selectedUsers];
+          this.profileEditSnapshot = this.normalizeProject(this.selectedProject);
+        }
 
       }
 
@@ -3302,6 +3198,7 @@ Math: any;
   ): UserAccountNode {
 
     return {
+      ...user,
       roleId: Number(user?.role_id ?? user?.roleId ?? user?.role?.id) || undefined,
       designation: String(user?.designation ?? user?.job_title ?? user?.jobTitle ?? user?.role_name ?? user?.roleName ?? user?.role?.name ?? ''),
       jobTitle: user?.jobTitle ?? user?.job_title,
@@ -3314,7 +3211,7 @@ Math: any;
         ),
 
       name:
-        user?.name ||
+        user?.name || user?.fullName || [user?.firstName ?? user?.first_name, user?.lastName ?? user?.last_name].filter(Boolean).join(' ') ||
         user?.username ||
         user?.displayName ||
         user?.email ||
@@ -3414,11 +3311,10 @@ Math: any;
 
     const id =
       Number(
-        member?.id ??
-        member?.user_id ??
+        member?.user_account_id ?? member?.userAccountId ?? member?.user_id ??
         member?.userId ??
         member?.memberId ??
-        rawUser?.id ??
+        rawUser?.id ?? member?.id ?? (typeof member === 'number' ? member : undefined) ??
         0
       );
 
@@ -3481,7 +3377,7 @@ Math: any;
       this.projectForm.associatedUserIds = (this.projectForm.associatedUserIds || [])
         .filter(selectedId => Number(selectedId) !== id);
     }
-    this.chipUserObjects = this.chipUserObjects.filter(member => Number(member.id) !== id);
+    this.rebuildChipsMatrix();
     this.cdr.detectChanges();
   }
 
@@ -3494,6 +3390,8 @@ Math: any;
           width: '1000px',
 
           data: {
+
+            title: 'Add individual project members',
 
             users:
               this.organizationPersonnel,
@@ -3733,7 +3631,7 @@ Math: any;
                 employeeCode: identity.employeeCode,
                 profilePictureUrl:
                   identity.profilePictureUrl,
-                designation: member?.designation ?? member?.jobTitle ?? member?.title ?? member?.role ?? null,
+                designation: this.memberDesignation(member),
                 jobTitle: member?.jobTitle ?? null,
                 title: member?.title ?? null,
                 role: member?.role ?? null,

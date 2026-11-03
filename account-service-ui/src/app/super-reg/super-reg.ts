@@ -129,7 +129,7 @@ export class SuperReg {
           '',
           [
             Validators.required,
-            Validators.minLength(8),
+            Validators.minLength(12),
             Validators.maxLength(128)
           ]
         ],
@@ -335,114 +335,12 @@ export class SuperReg {
       orgRole: 'SUPER_USER'
     };
 
-    // Safe diagnostic: never print the password itself.
-    console.info('Registration request prepared:', {
-      endpoint: this.buildApiUrl(this.createUserEndpoint),
-      firstNamePresent: Boolean(masterUserPayload.firstName),
-      lastNamePresent: Boolean(masterUserPayload.lastName),
-      emailPresent: Boolean(masterUserPayload.email),
-      phonePresent: Boolean(masterUserPayload.phone),
-      genderPresent: Boolean(masterUserPayload.gender),
-      passwordPresent: Boolean(masterUserPayload.password),
-      passwordLength: masterUserPayload.password.length
-    });
-
-    this.isSubmitting = true;
-
-    const headers = this.auth.getAuthHeaders();
-
-    this.http
-      .post<unknown>(
-        this.buildApiUrl(this.createOrganisationEndpoint),
-        organisationPayload,
-        { headers }
-      )
-      .pipe(
-        catchError(error => {
-          const message = this.extractErrorMessage(error);
-
-          const duplicateSlug =
-            error?.status === 409 &&
-            /organisation slug already exists/i.test(message);
-
-          if (!duplicateSlug) {
-            return throwError(() => error);
-          }
-
-          const lookupUrl =
-            `${this.buildApiUrl(this.getOrganisationBySlugEndpoint)}/` +
-            encodeURIComponent(slug);
-
-          return this.http.get<unknown>(
-            lookupUrl,
-            { headers }
-          );
-        }),
-
-        switchMap(organisationResponse => {
-          const orgId =
-            this.extractOrganisationId(organisationResponse);
-
-          if (orgId === null) {
-            return throwError(
-              () =>
-                new Error(
-                  'The organisation was created or found, but its ID ' +
-                  'was missing from the API response. The master account ' +
-                  'was not created.'
-                )
-            );
-          }
-
-          const createUserUrl =
-            `${this.buildApiUrl(this.createUserEndpoint)}` +
-            `?orgId=${encodeURIComponent(orgId)}`;
-
-          // Explicitly construct the request body with the password.
-          // This is the object Angular serializes into the POST JSON.
-          const userRequestBody = {
-            firstName: masterUserPayload.firstName,
-            lastName: masterUserPayload.lastName,
-            email: masterUserPayload.email,
-            phone: masterUserPayload.phone,
-            gender: masterUserPayload.gender,
-            password: masterUserPayload.password,
-            orgRole: masterUserPayload.orgRole
-          };
-
-          console.info('Submitting master-user request:', {
-            url: createUserUrl,
-            passwordIncluded: Object.prototype.hasOwnProperty.call(
-              userRequestBody,
-              'password'
-            ),
-            passwordNonEmpty: userRequestBody.password.length > 0
-          });
-
-          return this.http.post<{
-            success?: boolean;
-            message?: string;
-            data?: unknown;
-          }>(
-            createUserUrl,
-            userRequestBody,
-            {
-              headers
-            }
-          );
-        }),
-
-        catchError(error => {
-          this.submitError = this.extractErrorMessage(error);
-          this.submitSuccess = '';
-
-          return throwError(() => error);
-        }),
-
-        finalize(() => {
-          this.isSubmitting = false;
-        })
-      )
+    if(password.length<12 || new TextEncoder().encode(password).length>72){this.submitError='Use a password with at least 12 characters and at most 72 bytes.';return;}
+    this.isSubmitting=true;
+    this.http.post<{success?:boolean;message?:string;data?:unknown}>(this.buildApiUrl('/auth/register'),{organisation:organisationPayload,user:masterUserPayload}).pipe(
+      catchError(error=>{this.submitError=this.extractErrorMessage(error);this.submitSuccess='';return throwError(()=>error);}),
+      finalize(()=>this.isSubmitting=false)
+    )
       .subscribe({
         next: userResponse => {
           if (userResponse?.success === false) {

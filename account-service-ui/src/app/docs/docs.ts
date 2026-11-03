@@ -1116,14 +1116,14 @@ private getRequestedUserId(): number | null {
       return Number.isFinite(id) && id > 0 ? id : null;
     };
 
-    // AuthService.setSession() stores JSON.stringify(data.user.id).
+    // Accept the full account session and older numeric-ID sessions.
     const storedUser = localStorage.getItem('user');
 
     if (storedUser) {
       try {
         const parsed = JSON.parse(storedUser);
 
-        // Current format: user is a numeric ID.
+        // Resolve the account ID from either supported session format.
         const id = readId(
           typeof parsed === 'object' && parsed !== null
             ? parsed.id ?? parsed.user_id ?? parsed.userId

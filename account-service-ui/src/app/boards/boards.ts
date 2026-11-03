@@ -1,3 +1,4 @@
+import {WorkspaceSettingsService} from '../shared/workspace-settings.service';
 import { untracked } from '@angular/core';
 import { WorkItemDialogService } from '../shared/work-item-dialog.service';
 import {
@@ -30,6 +31,8 @@ import { environment } from '../../environment';
 import { WorkspaceHeroComponent } from '../shared/workspace-hero';
 import { ProjectContextService } from '../project-context.service';
 import { AuthService } from '../auth.service';
+import { ApiCollectionService } from '../shared/api-collection.service';
+import { PersonPickerComponent } from '../shared/person-picker';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTabsModule } from '@angular/material/tabs';
@@ -87,6 +90,7 @@ interface Board { id: number; projectId: number; ownerUserId?: number | null; na
 interface BoardFilter { id?: number; boardId: number; filterType: string; filterValue: string; }
 
 interface BoardCard {
+  projectId?: number | null;
   key: string;
   type: 'EPIC' | 'STORY' | 'TASK' | 'ISSUE' | 'TEST_CASE';
   id: number;
@@ -139,13 +143,16 @@ interface BoardCard {
     MatExpansionModule,
     MatTableModule,
     MatProgressBarModule,
-    MatListModule
+    MatListModule,
+    PersonPickerComponent
   ],
   templateUrl: './boards.html',
-  styleUrls: ['./boards.css', '../shared/field-controls.css'],
+  styleUrls: ['./boards.css', '../shared/field-controls.css', '../shared/board-surface.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Boards implements OnInit {
+  private readonly collections = inject(ApiCollectionService);
+  private workItemsRequestId = 0;
   private readonly itemDialog = inject(WorkItemDialogService);
   private lastItemRevision = this.itemDialog.revision();
   private readonly itemRefresh = effect(() => {
@@ -161,7 +168,9 @@ export class Boards implements OnInit {
 
   readonly baseUrl = environment.apiBaseUrlM;
 
-  readonly columns = [
+  readonly workflow=inject(WorkspaceSettingsService);
+  private readonly liveRefresh=effect(()=>{if(this.workflow.revision()>0)untracked(()=>{if(!this.boardHome())this.loadWorkItems();});});
+  private readonly legacyColumns = [
     { id: 'BACKLOG', label: 'Backlog' },
     { id: 'TODO', label: 'To Do' },
     { id: 'IN_PROGRESS', label: 'In Progress' },
@@ -170,6 +179,7 @@ export class Boards implements OnInit {
     { id: 'BLOCKED', label: 'Blocked' }
   ];
 
+  get columns(){return this.workflow.statuses.filter(status=>status.active||this.cards().some(card=>this.workflow.code(card.status)===status.code)).map(status=>({id:status.code,label:status.name}));}
   projects = signal<Project[]>([]);
   private readonly projectContextSync = effect(() => {
     const sharedProjectId = this.projectContext.selectedProjectId();
@@ -255,6 +265,16 @@ export class Boards implements OnInit {
   filteredReporterUsers = computed(() => this.filterUsersForAutocomplete(this.reporterQuery(), this.selectedReporterFilter()));
   filteredCreateAssigneeUsers = computed(() => this.filterUsersForAutocomplete(this.createAssigneeQuery(), this.createAssigneeFilter()));
   filteredCreateReporterUsers = computed(() => this.filterUsersForAutocomplete(this.createReporterQuery(), this.createReporterFilter()));
+  boardPeopleOptions = computed(() => this.users().map(user => ({
+    id: user.id, name: this.userName(user.id), initials: this.initials(user.id),
+    email: user.email, designation: this.workItemUserDesignation(user),
+  })));
+
+  selectBoardPersonFilter(field: 'assignee' | 'reporter', id: number | null): void {
+    if (field === 'assignee') this.selectedAssigneeFilter.set(id ?? 'ALL');
+    else this.selectedReporterFilter.set(id ?? 'ALL');
+    this.selectedTeamMemberId.set(null);
+  }
 
   readonly priorities = [
     'LOW',
@@ -521,33 +541,13 @@ export class Boards implements OnInit {
     return [];
   }
 
-  normalizeStatus(status: any): string {
-    const value = String(status || 'BACKLOG')
-      .trim()
-      .toUpperCase()
-      .replace(/[\s-]+/g, '_');
-
-    if (value === 'INPROGRESS' || value === 'IN_PROGRESS') {
-      return 'IN_PROGRESS';
-    }
-
-    if (value === 'DONE' || value === 'COMPLETE' || value === 'COMPLETED') {
-      return 'COMPLETED';
-    }
-
-    if (value === 'TO_DO') return 'TODO';
-    if (value === 'TEST') return 'TESTING';
-
-    return this.columns.some(c => c.id === value)
-      ? value
-      : 'BACKLOG';
-  }
+  normalizeStatus(status:any):string{const code=this.workflow.code(status);if(this.workflow.statuses.some(s=>s.code===code))return code;return ({DRAFT:'BACKLOG',READY:'TODO',PASSED:'COMPLETED',FAILED:'BLOCKED',SKIPPED:'BACKLOG'} as Record<string,string>)[code]||code;}
 
   private normalizeSprint(value: any): Sprint {
     return {
       ...value,
       id: Number(value.id),
-      projectId: value.projectId ?? value.project_id,
+      projectId: value.projectId ?? value.project_id ?? value.project?.id,
       project_id: value.project_id ?? value.projectId,
       name: value.name || value.title || `Sprint ${value.id}`,
       startDate: value.startDate ?? value.start_date,
@@ -557,11 +557,12 @@ export class Boards implements OnInit {
   }
 
   private normalizeTeam(value: any): Team {
-    const members = Array.isArray(value?.members)
-      ? value.members.map((m: any) => this.normalizeUser(m))
-      : [];
-    const memberIds = Array.isArray(value?.memberIds)
-      ? value.memberIds.map((id: any) => Number(id)).filter((id: number) => Number.isFinite(id))
+    const rawMembers = value?.members ?? value?.teamMembers ?? value?.team_members ?? value?.users ?? [];
+    const members = Array.isArray(rawMembers)
+      ? rawMembers.map((m: any) => this.normalizeUser(m.user ?? m.userAccount ?? m.member ?? m)) : [];
+    const rawIds = value?.memberIds ?? value?.member_ids;
+    const memberIds = Array.isArray(rawIds)
+      ? rawIds.map((id: any) => Number(id)).filter((id: number) => Number.isFinite(id))
       : members.map((m: User) => Number(m.id));
 
     return {
@@ -576,7 +577,7 @@ export class Boards implements OnInit {
   private normalizeUser(value: any): User {
     return {
       ...value,
-      id: Number(value.id),
+      id: Number(value.user_account_id ?? value.userAccountId ?? value.user_id ?? value.id),
       name:
         value.name ||
         value.full_name ||
@@ -639,7 +640,7 @@ export class Boards implements OnInit {
         // Project IDs are now known. Load supporting board configuration next.
         forkJoin({
           sprints: this.http.get<any>(`${this.baseUrl}/sprints`, this.headers()).pipe(catchError(() => of([]))),
-          users: this.http.get<any>(`${this.baseUrl}/users`, this.headers()).pipe(catchError(() => of([]))),
+          users: this.collections.read(`${this.baseUrl}/users`).pipe(catchError(() => of([]))),
           teams: this.http.get<any>(`${this.baseUrl}/teams`, this.headers()).pipe(catchError(() => of([]))),
           boards: this.http.get<any>(`${this.baseUrl}/boards`, this.headers()).pipe(catchError(() => of([])))
         }).subscribe({
@@ -650,7 +651,7 @@ export class Boards implements OnInit {
             const boards = this.extractArray(result.boards).map(v => ({
               ...v,
               id: Number(v.id),
-              projectId: Number(v.projectId ?? v.project_id),
+              projectId: Number(v.projectId ?? v.project_id ?? v.project?.id),
               name: v.name || `Board ${v.id}`,
               status: v.status || 'ACTIVE'
             }));
@@ -721,6 +722,8 @@ export class Boards implements OnInit {
     this.boardHome.set(false);
     this.activeView.set('BOARD');
     this.selectedBoardId.set(id);
+    ++this.workItemsRequestId;
+    this.cards.set([]);
     this.selectedTeamMemberId.set(null);
     this.selectedTeamFilter.set('ALL');
     this.selectedAssigneeFilter.set('ALL');
@@ -798,7 +801,7 @@ export class Boards implements OnInit {
     forkJoin(requests).subscribe(result => {
       const map: Record<number, BoardFilter[]> = {};
       for (const board of boards) {
-        map[Number(board.id)] = this.extractArray(result[String(board.id)]) as BoardFilter[];
+        map[Number(board.id)] = this.normalizeBoardFilters(result[String(board.id)]);
       }
       this.boardFilters.set(map);
     });
@@ -810,17 +813,16 @@ export class Boards implements OnInit {
       this.loading.set(true);
       this.http.get<any>(`${this.baseUrl}/board-filters/board/${boardId}`, this.headers()).pipe(catchError(() => of([]))).subscribe({
         next: response => {
-          const filters = this.extractArray(response) as BoardFilter[];
+          if (boardId !== this.selectedBoardId()) return;
+          const filters = this.normalizeBoardFilters(response);
           this.activeBoardFilters.set(filters);
 
           // Do not apply the current sprint unless the saved board explicitly
           // contains a SPRINT filter.
-          const sprintFilter = filters.find(f =>
-            String(f.filterType).toUpperCase() === 'SPRINT'
-          );
+          const sprintFilters = filters.filter(f => f.filterType === 'SPRINT' && f.filterValue !== 'ALL');
           this.selectedSprintId.set(
-            sprintFilter && sprintFilter.filterValue !== 'ALL'
-              ? Number(sprintFilter.filterValue)
+            sprintFilters.length === 1
+              ? Number(sprintFilters[0].filterValue)
               : 'ALL'
           );
 
@@ -838,16 +840,28 @@ export class Boards implements OnInit {
   private matchesSavedFilters(card: BoardCard, filters: BoardFilter[]): boolean {
     const matches = (type: string, actual: any) => {
       const values = filters.filter(f => String(f.filterType).toUpperCase() === type);
-      return !values.length || values.some(f => String(f.filterValue).toUpperCase() === String(actual ?? '').toUpperCase());
+      const normalize = (value: any) => type === 'STATUS' ? this.normalizeStatus(value) : String(value ?? '').trim().toUpperCase();
+      return !values.length || values.some(f => f.filterValue === 'ALL' || normalize(f.filterValue) === normalize(actual));
     };
 
     const teamFilters = filters.filter(f => String(f.filterType).toUpperCase() === 'TEAM');
-    const teamMatches = !teamFilters.length || teamFilters.some(f => this.cardBelongsToTeam(card, Number(f.filterValue)));
+    const teamMatches = !teamFilters.length || teamFilters.some(f => f.filterValue === 'ALL' || this.cardBelongsToTeam(card, Number(f.filterValue)));
+    const boardProjectId = Number(this.selectedBoard()?.projectId);
+    if (boardProjectId > 0 && Number(card.projectId) !== boardProjectId) return false;
 
-    return matches('TYPE', card.type) && matches('WORK_TYPE', card.type) &&
+    return matches('PROJECT', card.projectId) && matches('SPACE', card.projectId) && matches('TYPE', card.type) && matches('WORK_TYPE', card.type) &&
       matches('SPRINT', card.sprintId) && matches('ASSIGNEE', card.assigneeId) &&
       matches('REPORTER', card.reporterId) && teamMatches &&
       matches('PRIORITY', card.priority) && matches('STATUS', this.normalizeStatus(card.status));
+  }
+
+  private normalizeBoardFilters(response: any): BoardFilter[] {
+    return this.collections.rows(response).map(filter => ({
+      ...filter,
+      boardId: Number(filter.boardId ?? filter.board_id),
+      filterType: String(filter.filterType ?? filter.filter_type ?? '').trim().toUpperCase(),
+      filterValue: String(filter.filterValue ?? filter.filter_value ?? '').trim(),
+    }));
   }
 
   private cardBelongsToTeam(card: BoardCard, teamId: number): boolean {
@@ -1140,7 +1154,7 @@ export class Boards implements OnInit {
       byStatus[key] = (byStatus[key] || 0) + 1;
     }
 
-    const completedCards = sprintCards.filter(card => this.normalizeStatus(card.status) === 'COMPLETED');
+    const completedCards = sprintCards.filter(card => this.workflow.done(card.status));
     const totalPoints = sprintCards.reduce((sum, card) => sum + (Number(card.points) || 0), 0);
     const completedPoints = completedCards.reduce((sum, card) => sum + (Number(card.points) || 0), 0);
     this.boardSprintProgress.set({
@@ -1194,7 +1208,7 @@ export class Boards implements OnInit {
   scrumParticipants = computed(() => {
     const ids = new Set<number>();
     for (const card of this.filteredCards()) {
-      if (this.normalizeStatus(card.status) === 'COMPLETED') continue;
+      if (this.workflow.done(card.status)) continue;
       const id = Number(card.assigneeId);
       if (Number.isFinite(id) && id > 0) ids.add(id);
     }
@@ -1252,7 +1266,7 @@ export class Boards implements OnInit {
 
   scrumItemsForUser(userId: number): BoardCard[] {
     return this.filteredCards().filter(card => {
-      if (this.normalizeStatus(card.status) === 'COMPLETED') return false;
+      if (this.workflow.done(card.status)) return false;
       return Number(card.assigneeId) === Number(userId);
     });
   }
@@ -1347,13 +1361,13 @@ export class Boards implements OnInit {
       this.boardItemModalOpen.set(true);
       return;
     }
-    const projectId=Number(card.raw?.project_id ?? card.raw?.projectId ?? card.raw?.project?.id ?? this.selectedBoard()?.projectId ?? this.selectedProjectId() ?? this.projectContext.selectedProjectId());
+    const projectId=Number(card.projectId ?? card.raw?.project_id ?? card.raw?.projectId ?? card.raw?.project?.id ?? this.selectedBoard()?.projectId ?? this.selectedProjectId() ?? this.projectContext.selectedProjectId());
     if (!projectId) { this.errorMessage.set('This item has no project. Open it from Work Items to review its details.'); return; }
     this.itemDialog.open(projectId, card.type, card.id);
   }
 
   openCreateWorkItem(type: 'EPIC' | 'STORY' | 'TASK' | 'ISSUE' | 'TEST_CASE'): void {
-    const projectId = this.selectedProjectId();
+    const projectId = this.selectedBoard()?.projectId || this.selectedProjectId();
     if (!projectId) {
       this.errorMessage.set('Select a project before creating a work item.');
       return;
@@ -1844,8 +1858,14 @@ export class Boards implements OnInit {
   }
 
   private loadWorkItems(): void {
+    const requestId = ++this.workItemsRequestId;
+    const boardProjectId = Number(this.selectedBoard()?.projectId);
+    const savedProjectIds = this.activeBoardFilters().filter(f => ['PROJECT', 'SPACE'].includes(f.filterType))
+      .map(f => Number(f.filterValue)).filter(id => id > 0);
     const projects = this.projects()
-      .filter(project => Number.isFinite(Number(project.id)) && Number(project.id) > 0);
+      .filter(project => Number.isFinite(Number(project.id)) && Number(project.id) > 0)
+      .filter(project => boardProjectId > 0 ? Number(project.id) === boardProjectId :
+        savedProjectIds.length ? savedProjectIds.includes(Number(project.id)) : Number(project.id) === Number(this.selectedProjectId()));
 
     if (!projects.length) {
       this.cards.set([]);
@@ -1854,27 +1874,25 @@ export class Boards implements OnInit {
     }
 
     this.loading.set(true);
-    const headers = this.headers();
     const testcaseBase = environment.apiBaseUrl2 || environment.apiBaseUrl || this.baseUrl;
 
-    // Fetch each project's work-item collections before applying any board or
-    // UI filters. Project-scoped endpoints are called once per project ID.
-    // Some deployments ignore projectId for tasks/test cases, so results are
-    // deduplicated and scoped locally below as well.
+    // Read only the board's project, then enforce its saved filters locally.
+    // Tasks/test cases may ignore the project query, so also scope descendants.
     const projectRequests = projects.map(project => {
       const projectId = Number(project.id);
       return forkJoin({
         projectId: of(projectId),
-        epics: this.http.get<any>(`${this.baseUrl}/projects/${projectId}/epics`, headers).pipe(catchError(() => of([]))),
-        stories: this.http.get<any>(`${this.baseUrl}/projects/${projectId}/stories`, headers).pipe(catchError(() => of([]))),
-        tasks: this.http.get<any>(`${this.baseUrl}/tasks?projectId=${projectId}`, headers).pipe(catchError(() => of([]))),
-        issues: this.http.get<any>(`${this.baseUrl}/v1/issues?projectId=${projectId}`, headers).pipe(catchError(() => of([]))),
-        testCases: this.http.get<any>(`${testcaseBase}/v1/testcases?projectId=${projectId}`, headers).pipe(catchError(() => of([])))
+        epics: this.collections.read(`${this.baseUrl}/projects/${projectId}/epics`).pipe(catchError(() => of([]))),
+        stories: this.collections.read(`${this.baseUrl}/projects/${projectId}/stories`).pipe(catchError(() => of([]))),
+        tasks: this.collections.read(`${this.baseUrl}/tasks?projectId=${projectId}`).pipe(catchError(() => of([]))),
+        issues: this.collections.read(`${this.baseUrl}/v1/issues?projectId=${projectId}`).pipe(catchError(() => of([]))),
+        testCases: this.collections.read(`${testcaseBase}/v1/testcases?projectId=${projectId}`).pipe(catchError(() => of([])))
       });
     });
 
     forkJoin(projectRequests).subscribe({
       next: projectResults => {
+        if (requestId !== this.workItemsRequestId) return;
         const flattenUnique = (key: 'epics' | 'stories' | 'tasks' | 'issues' | 'testCases'): any[] => {
           const byId = new Map<string, any>();
           for (const projectResult of projectResults) {
@@ -1883,7 +1901,8 @@ export class Boards implements OnInit {
               if (id === null || id === undefined || id === '') continue;
               const stableKey = String(id);
               // Prefer the first complete object returned for this ID.
-              if (!byId.has(stableKey)) byId.set(stableKey, item);
+              if (!byId.has(stableKey)) byId.set(stableKey, ['epics', 'stories'].includes(key)
+                ? { ...item, __boardProjectId: projectResult.projectId } : item);
             }
           }
           return Array.from(byId.values());
@@ -1907,10 +1926,12 @@ export class Boards implements OnInit {
           return pid == null || projectIds.has(Number(pid));
         });
         const storyIds = new Set(stories.map((story: any) => Number(story.id)));
+        const projectSprintIds = new Set(this.sprints().filter(sprint => projectIds.has(Number(sprint.projectId))).map(sprint => Number(sprint.id)));
         const tasks = allTasks.filter((task: any) => {
           const pid = task.project_id ?? task.projectId ?? task.project?.id;
           const sid = Number(task.story_id ?? task.storyId ?? task.story?.id ?? task.parentStory?.id ?? task.parent_story?.id);
-          return (pid != null && projectIds.has(Number(pid))) || (Number.isFinite(sid) && storyIds.has(sid));
+          return (pid != null && projectIds.has(Number(pid))) || (pid == null &&
+            (storyIds.has(sid) || projectSprintIds.has(Number(task.sprint_id ?? task.sprintId ?? task.sprint?.id))));
         });
         const issues = allIssues;
         const testCases = allTestCases;
@@ -2062,18 +2083,47 @@ export class Boards implements OnInit {
           issues: [], testCases: []
         }));
 
-        this.cards.set([
+        const cards: BoardCard[] = [
           ...epicCards,
           ...storyCards,
           ...taskCards,
           ...issueCards,
           ...testCaseCards
-        ]);
+        ];
+        // APIs return both flat foreign keys and nested entity references.
+        // Resolve them before applying saved sprint/team/people filters.
+        const relationId = (raw: any, name: string): number | null => this.nullableNumber(
+          raw[`${name}_user_id`] ?? raw[`${name}UserId`] ?? raw[`${name}_user_account_id`] ?? raw[`${name}UserAccountId`] ??
+          raw[`${name}_id`] ?? raw[`${name}Id`] ?? raw[name]?.user_account_id ?? raw[name]?.id);
+        const taskById = new Map(tasks.map(task => [Number(task.id), task]));
+        const projectFor = (raw: any, kind: string): number | null => {
+          const task = taskById.get(Number(raw.task_id ?? raw.taskId ?? raw.task?.id));
+          const story = storyById.get(Number(raw.story_id ?? raw.storyId ?? raw.story?.id ?? raw.userStory?.id ?? raw.user_story?.id));
+          const epic = epicById.get(Number(raw.epic_id ?? raw.epicId ?? raw.epic?.id));
+          const parent = kind === 'TASK' ? story : kind === 'STORY' ? epic : task ?? story ?? epic;
+          const parentKind = kind === 'TASK' ? 'STORY' : kind === 'STORY' ? 'EPIC' : task ? 'TASK' : story ? 'STORY' : 'EPIC';
+          return this.nullableNumber(raw.project_id ?? raw.projectId ?? raw.project?.id ?? raw.__boardProjectId) ??
+            this.nullableNumber(this.sprints().find(sprint => Number(sprint.id) === relationId(raw, 'sprint'))?.projectId) ??
+            (parent && parent !== raw ? projectFor(parent, parentKind) : null);
+        };
+        for (const card of cards) {
+          const raw = card.raw ?? {};
+          card.projectId = projectFor(raw, card.type);
+          card.sprintId = relationId(raw, 'sprint') ?? card.sprintId;
+          card.assigneeId = relationId(raw, 'assignee') ?? card.assigneeId;
+          card.reporterId = relationId(raw, 'reporter') ?? card.reporterId;
+          card.priority = String(card.priority || 'MEDIUM').toUpperCase();
+          const parent = card.type === 'STORY' ? epicById.get(Number(card.epicId)) :
+            card.type === 'TASK' ? storyById.get(Number(card.storyId)) : null;
+          card.teamId = relationId(raw, 'team') ?? (parent ? relationId(parent, 'team') : null) ?? card.teamId;
+        }
+        this.cards.set(cards.filter(card => card.projectId != null && projectIds.has(Number(card.projectId))));
 
         this.lastUpdated.set(new Date());
         this.loading.set(false);
       },
       error: () => {
+        if (requestId !== this.workItemsRequestId) return;
         this.cards.set([]);
         this.errorMessage.set('Unable to load board work items.');
         this.loading.set(false);
@@ -2149,10 +2199,11 @@ export class Boards implements OnInit {
     ));
 
     const payload = { ...(card.raw || {}), status: nextStatus };
-    this.http.put(url, payload, this.headers()).subscribe({
+    const request=card.type==='TEST_CASE'?this.http.put(url,payload,this.headers()):this.http.patch(`${this.baseUrl}/tickets/${card.type}/${card.id}/placement`,{status:nextStatus},this.headers());
+    request.subscribe({
       next: updated => {
         this.cards.set(this.cards().map(c =>
-          c.key === card.key ? { ...c, ...this.toUpdatedCard(updated, c) } : c
+          c.key === card.key ? {...c,status:nextStatus,raw:{...c.raw,status:nextStatus}} : c
         ));
         this.errorMessage.set('');
         this.successMessage.set(`${card.code} moved to ${nextStatus.replace(/_/g, ' ')}.`);
