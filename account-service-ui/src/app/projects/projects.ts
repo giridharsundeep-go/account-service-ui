@@ -1,3 +1,4 @@
+import {Agents} from '../agents/agents';
 import { SprintPlanning } from '../sprint-planning/sprint-planning';
 import { untracked, effect } from '@angular/core';
 import { Router } from '@angular/router';
@@ -165,7 +166,7 @@ export interface SprintItem {
   styleUrls: ['./projects.css', '../shared/field-controls.css'],
 
   imports: [
-    CommonModule,
+    CommonModule, Agents,
     FormsModule,
     WorkspaceHeroComponent,
     PersonCard,

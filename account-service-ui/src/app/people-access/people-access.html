@@ -1,0 +1,40 @@
+<gp-workspace-shell
+  current="people"
+  [user]="user"
+  [token]="token"
+  [projects]="project.projects()"
+  [projectId]="project.selectedProjectId()"
+  [attr.active-page]="activePage"
+  search-placeholder="Search people by name or email"
+  (gp-navigate)="navigate($any($event).detail)"
+  (gp-project-change)="project.setSelectedProject($any($event).detail)"
+  (gp-search-input)="onSearchInput($any($event).detail)"
+  (gp-search)="onSearchSubmit()">
+  <nav slot="navigation-extra" class="people-nav" aria-label="People and access">
+    <p class="people-nav-label">PEOPLE &amp; ACCESS</p>
+    <button *ngFor="let page of pages; trackBy: trackPage" type="button" class="people-nav-item" [class.active]="activePage===page.id" (click)="navigate(page.id)">
+      <span class="people-nav-icon" aria-hidden="true">{{ page.icon }}</span>
+      <span class="people-nav-copy"><strong>{{ page.label }}</strong><small>{{ page.detail }}</small></span>
+    </button>
+    <div class="people-nav-help"><strong>Need to find someone?</strong><span>Search by name or email from the bar above.</span></div>
+  </nav>
+
+  <div slot="search-suggestions" class="people-search-suggestions" *ngIf="searchOpen" role="listbox" aria-label="People search results">
+    <button *ngFor="let person of filteredPeople; trackBy: trackPerson" type="button" role="option" class="people-search-result" (click)="openPerson(person)">
+      <span class="person-search-avatar">{{ (person.fullName || person.name || '?').slice(0, 1) }}</span><span><strong>{{ person.fullName || person.name }}</strong><small>{{ person.email }}</small></span>
+    </button>
+    <p *ngIf="searchText.trim().length >= 2 && !filteredPeople.length">No matching people. Try another name or email.</p>
+  </div>
+
+  <section class="people-access-view">
+    <header class="people-access-heading" *ngIf="!currentUserProfileId"><div><span>PEOPLE APP · {{ activePage | uppercase }}</span><h1>{{ activePage === 'structure' ? 'Organization structure' : activePageLabel }}</h1><p>{{ activePageDetail }}</p></div><div class="people-access-current"><span class="people-access-status"></span><span>Connected to your workspace</span></div></header>
+    <app-users *ngIf="activePage==='users'" [currentUserProfileId]="currentUserProfileId" [profileOpenRequest]="profileOpenRequest" (profileClosed)="onProfileClosed()"></app-users>
+    <app-teams *ngIf="activePage==='teams'"></app-teams>
+    <app-agents *ngIf="activePage==='agents'"></app-agents>
+    <app-workspace-settings *ngIf="activePage==='workflows'" section="workflows"></app-workspace-settings>
+    <app-workspace-settings *ngIf="activePage==='structure'" section="structure"></app-workspace-settings>
+    <app-roles *ngIf="activePage==='roles'" section="roles"></app-roles>
+    <app-workspace-settings *ngIf="activePage==='permissions'" section="permissions"></app-workspace-settings>
+    <app-roles *ngIf="activePage==='designations'" section="designations"></app-roles>
+  </section>
+</gp-workspace-shell>

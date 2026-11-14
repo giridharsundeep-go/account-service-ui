@@ -1,6 +1,11 @@
 <div class="issues-container">
 
-  <app-workspace-hero eyebrow="QUALITY · TRIAGE · RESOLUTION" title="Issues" subtitle="Triage bugs, remove blockers, and keep fixes connected to the work they affect." image="assets/covers/issues.png" imageAlt="Engineering teammates reviewing and resolving issue reports"></app-workspace-hero>
+  <app-workspace-hero eyebrow="QUALITY · TRIAGE · RESOLUTION" title="Issues" subtitle="Triage bugs, remove blockers, and keep fixes connected to the work they affect." image="assets/covers/issues.png" imageAlt="Engineering teammates reviewing and resolving issue reports">    <div workspace-actions class="google-header-actions">
+      <button type="button" class="google-primary-button header-create" (click)="openCreateIssue()">
+        <mat-icon>add</mat-icon>
+        Create issue
+      </button>
+    </div></app-workspace-hero>
 
   <!-- Google Search-style top bar -->
   <header class="google-header">
@@ -32,12 +37,7 @@
       </button>
     </div>
 
-    <div class="google-header-actions">
-      <button type="button" class="google-primary-button header-create" (click)="openCreateIssue()">
-        <mat-icon>add</mat-icon>
-        Create issue
-      </button>
-    </div>
+
   </header>
 
   <!-- Google-style lightweight toast -->

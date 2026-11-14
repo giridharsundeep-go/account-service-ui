@@ -28,9 +28,7 @@
       <!-- BRAND -->
       <div class="brand">
 
-        <span class="brand-name">
-          Greatley Poshley
-        </span>
+        <app-workspace-brand class="header-brand"></app-workspace-brand>
 
       </div>
 
@@ -302,7 +300,7 @@
           type="button"
           class="profile-button"
           (click)="toggleProfileMenu($event)"
-          aria-label="Account">
+          aria-label="Account" aria-haspopup="dialog" [attr.aria-expanded]="profileMenuOpen">
 
           <span class="profile-avatar">
             {{ userInitials }}
@@ -425,33 +423,7 @@
       class="sidebar"
       [class.collapsed]="isCollapsed">
 
-
-      <!-- CREATE -->
-      <div class="sidebar-create">
-
-        <button
-          type="button"
-          class="sidebar-create-button"
-          [class.open]="createMenuOpen"
-          (click)="toggleCreateMenu($event)">
-
-          <svg viewBox="0 0 24 24">
-
-            <path d="M12 5v14"></path>
-            <path d="M5 12h14"></path>
-
-          </svg>
-
-          <span *ngIf="!isCollapsed">
-            Create
-          </span>
-
-        </button>
-
-      </div>
-
-
-      <!-- =====================================================
+<!-- =====================================================
            NAVIGATION
       ====================================================== -->
 

@@ -1,0 +1,37 @@
+{
+  "projectId": 3734,
+  "agentId": 5,
+  "enrolled": true,
+  "serviceId": 19,
+  "supportId": 1,
+  "issueId": 301003,
+  "jobId": "e6aa1662a57b4a1daad618666297329b",
+  "releaseId": 304,
+  "checksPassed": true,
+  "independentAcceptancePassed": true,
+  "artifactAttachmentId": 2,
+  "artifactBytes": 4374,
+  "artifactFiles": [
+    "implementation.py",
+    "test_implementation.py",
+    "README.md",
+    "run-evidence.json",
+    "architecture.json",
+    "REVIEW.md"
+  ],
+  "sourceHashes": {
+    "implementation.py": "d6e470a98f91eedd071b5a48d8725ce708fd173ee6bdb247607f2c1ae4482752",
+    "test_implementation.py": "cd4d1c6e459d58f11656d2ee47166652f227e6c3b46810cf1ea63e46e9690913"
+  },
+  "issueStatus": "COMPLETED",
+  "releaseStatus": "PLANNED",
+  "productionChanges": false,
+  "organizationBoundaryCheck": "403 for out-of-scope project",
+  "releaseRetryCheck": "Two concurrent retries returned release 304; one service link",
+  "runtimeIssueLookupCheck": "200 after canonical /v1/issues lookup",
+  "uiAvailability": "4200, 4210, 4211: HTTP 200",
+  "atlasCorsCheck": "Approved localhost:4211 preflight",
+  "backendFocusedTests": 12,
+  "runtimeFocusedTests": 18,
+  "launcherFocusedTests": 4
+}

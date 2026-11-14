@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectorRef, signal } from '@angular/core';
 import { HttpClient, HttpHeaders, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -10,6 +10,8 @@ import { Users } from '../users/users';
 import { Projects } from '../projects/projects';
 import { ProjectContextService } from '../project-context.service';
 import { ProjectWorkService } from './project-work.service';
+import { ChatlyLauncher } from './chatly-launcher.service';
+import { WorkspaceSettingsService } from './workspace-settings.service';
 
 describe('People selection and project allocation regressions', () => {
   let http: HttpTestingController;
@@ -24,6 +26,8 @@ describe('People selection and project allocation regressions', () => {
         {provide: MAT_DIALOG_DATA, useValue:{users:[],currentSelection:[]}},
         {provide: MatDialogRef, useValue:{close:()=>{}}},
         {provide: AuthService, useValue: auth}, {provide: MatDialog, useValue: {}},
+        {provide: ChatlyLauncher, useValue: {person: vi.fn(), team: vi.fn()}},
+        {provide: WorkspaceSettingsService, useValue: {can: () => true, revision: signal(0)}},
         {provide: ProjectContextService, useValue: {}}, {provide: ProjectWorkService, useValue: {}}]
     });
     http = TestBed.inject(HttpTestingController);
@@ -48,7 +52,9 @@ describe('People selection and project allocation regressions', () => {
     picker.toggleVisible();
     expect(picker.localSelectedIds).toEqual([3]);
     picker.resetFilters();
-    expect(picker.getFilteredUsers().length).toBe(3);
+    expect(picker.getFilteredUsers()).toEqual([]);
+    picker.searchQuery = 'dana';
+    expect(picker.getFilteredUsers().map(user => user.id)).toEqual([3]);
   });
 
   it('a checkbox click toggles selection exactly once', async () => {
@@ -56,6 +62,7 @@ describe('People selection and project allocation regressions', () => {
     fixture.detectChanges();
     http.expectOne(request=>request.url.endsWith('/users')).flush([{id:1,name:'Maya Chen',email:'maya@example.test',roleId:7}]);
     http.expectOne(request=>request.url.endsWith('/roles')).flush([{id:7,roleName:'CEO'}]);
+    fixture.componentInstance.searchQuery = 'maya';
     fixture.detectChanges();
     const checkbox = fixture.nativeElement.querySelector('.member-option input') as HTMLInputElement;
     checkbox.click(); fixture.detectChanges();
@@ -65,7 +72,7 @@ describe('People selection and project allocation regressions', () => {
   });
 
   it('pages the filtered user directory and computes real organization totals', () => {
-    const directory = new Users(client, auth as any, cdr);
+    const directory = TestBed.runInInjectionContext(() => new Users(client, auth as any, cdr));
     directory.loadUsers(); directory.loadRoles();
     http.expectOne(request=>request.url.endsWith('/users')).flush(Array.from({length:61},(_,i)=>({
       id:i+1,firstName:'Person',lastName:String(i+1),email:`person${i+1}@example.test`,

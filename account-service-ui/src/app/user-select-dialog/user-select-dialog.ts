@@ -11,6 +11,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { catchError, forkJoin, of } from 'rxjs';
+import { PersonCard } from '../shared/person-card';
 import { peopleRows, personDesignation, personRegions, personRoleLabels } from '../shared/people-directory';
 
 export interface UserPayload {
@@ -42,7 +43,7 @@ export interface UserSelectDialogData {
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
-    MatIconModule, MatSelectModule
+    MatIconModule, MatSelectModule, PersonCard
   ],
   templateUrl: './user-select-dialog.html',
   styleUrls: ['./user-select-dialog.css', '../shared/field-controls.css']
@@ -336,6 +337,7 @@ export class UserSelectDialog implements OnInit {
   getFilteredUsers(): UserPayload[] {
     const users = this.users ?? [];
     const query = this.searchQuery.trim().toLowerCase();
+    if (query.length < 2 && !this.selectedRoles.length && !this.selectedRegions.length) return [];
 
     return users.filter(user =>
       (!this.selectedRoles.length || user.roleLabels?.some(role => this.selectedRoles.includes(role))) &&
@@ -345,6 +347,10 @@ export class UserSelectDialog implements OnInit {
       (user.designation ?? '').toLowerCase().includes(query) ||
       this.getEmployeeCode(user).toLowerCase().includes(query))
     );
+  }
+
+  get needsSearch(): boolean {
+    return this.searchQuery.trim().length < 2 && !this.selectedRoles.length && !this.selectedRegions.length;
   }
 
   get roleOptions(): string[] { return [...new Set(this.users.flatMap(user => user.roleLabels ?? []))].sort(); }

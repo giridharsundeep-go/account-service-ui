@@ -86,7 +86,7 @@ export class ProjectWorkService {
     const pending = this.inFlight.get(projectId);
     if (pending) return pending;
     const unavailable: string[] = [];
-    const read = (label: string, path: string) => {
+    const read = (label: string, path: string): Observable<any[]> => {
       const unavailableSource = () => {
         if (!unavailable.includes(label)) unavailable.push(label);
       };
@@ -136,8 +136,10 @@ export class ProjectWorkService {
       projectTeams: read('Project teams', `/project-teams/${projectId}`),
       teams: read('Teams', '/teams'),
       users: read('People', '/users'),
+      agents: read('Agents', `/workspace/agents?projectId=${projectId}`),
     }).pipe(
       map((data) => {
+        data.users.push(...data.agents.map(a=>({...a,id:-Number(a.id),user_id:-Number(a.id),actorType:'AGENT'})));
         const scoped = (r: any) => !this.pid(r) || this.pid(r) === projectId;
         const epics = data.epics.filter(scoped),
           stories = data.stories.filter(scoped);

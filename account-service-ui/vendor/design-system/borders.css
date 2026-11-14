@@ -1,0 +1,23 @@
+@import './borderless.css';
+/* Shared UI border color. Keep authored editor content and border geometry intact. */
+@layer gp-borders {
+  :root {
+    --gp-border-color:#a0a6b1!important;
+    --gp-border:var(--gp-border-color)!important;
+    --gp-border-soft:var(--gp-border-color)!important;
+    --gp-brand-border:var(--gp-border-color)!important;
+    --gp-separator:var(--gp-border-color)!important;
+    --gp-workspace-line:var(--gp-border-color)!important;
+    --gp-field-border:var(--gp-border-color)!important;
+    --gp-field-border-hover:var(--gp-border-color)!important;
+    --gp-field-border-focus:var(--gp-border-color)!important;
+    --mat-sys-outline:var(--gp-border-color)!important;
+    --mat-sys-outline-variant:var(--gp-border-color)!important;
+    --mdc-outlined-text-field-outline-color:var(--gp-border-color)!important;
+    --mdc-outlined-text-field-hover-outline-color:var(--gp-border-color)!important;
+    --mdc-outlined-text-field-focus-outline-color:var(--gp-border-color)!important;
+    --mdc-outlined-text-field-disabled-outline-color:var(--gp-border-color)!important;
+    --mdc-outlined-button-outline-color:var(--gp-border-color)!important;
+    --mat-divider-color:var(--gp-border-color)!important;
+  }
+}

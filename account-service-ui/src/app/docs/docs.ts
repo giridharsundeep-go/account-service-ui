@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild, inject, OnDestroy, effect, untracked } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild, inject, OnDestroy, effect, untracked, SecurityContext } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer } from '@angular/platform-browser';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../auth.service';
 import { environment } from '../../environment';
@@ -25,6 +26,7 @@ type FolderNode = AnyRecord & { children: FolderNode[]; expanded?: boolean; dept
 export class Docs implements OnInit, OnDestroy {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
+  private readonly sanitizer = inject(DomSanitizer);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly baseUrl = `${environment.apiBaseUrlM}/docs`;
   readonly projectContext = inject(ProjectContextService);
@@ -177,7 +179,7 @@ export class Docs implements OnInit, OnDestroy {
     // Set the editor HTML only when Angular creates the editor element. Updating
     // [innerHTML] on every change-detection pass resets the caret and can make
     // typing appear reversed or jump to the beginning.
-    if (ref) ref.nativeElement.innerHTML = this.editorHtml || '';
+    if (ref) ref.nativeElement.innerHTML = this.cleanDocumentHtml(this.editorHtml);
   }
 
   spaceDraft: AnyRecord = this.emptySpace();
@@ -444,14 +446,39 @@ private getRequestedUserId(): number | null {
   }
 
   contentToEditorHtml(content: string, format?: string): string {
-    if ((format || '').toUpperCase() === 'HTML') return content || '';
+    if ((format || '').toUpperCase() === 'HTML') return this.cleanDocumentHtml(content || '');
     return (content || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\r?\n/g, '<br>');
+  }
+
+  private cleanDocumentHtml(value: unknown): string {
+    return this.sanitizer.sanitize(SecurityContext.HTML, String(value ?? '')) ?? '';
+  }
+
+  pasteDocument(event: ClipboardEvent): void {
+    this.insertSafeDocumentMarkup(event.clipboardData, event);
+  }
+
+  dropDocument(event: DragEvent): void {
+    this.insertSafeDocumentMarkup(event.dataTransfer, event);
+  }
+
+  private insertSafeDocumentMarkup(transfer: DataTransfer | null, event: Event): void {
+    if (!transfer) return;
+    event.preventDefault();
+    const html = transfer.getData('text/html');
+    const text = transfer.getData('text/plain');
+    const markup = html
+      ? this.cleanDocumentHtml(html)
+      : this.cleanDocumentHtml(String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\r?\n/g, '<br>'));
+    document.execCommand('insertHTML', false, markup);
+    this.syncEditorAfterCommand();
   }
 
   onDocumentInput(event: Event): void {
     const editor = event.target as HTMLElement;
-    this.editorHtml = editor.innerHTML;
-    this.pageDraft.content = this.editorHtml;
+    this.editorHtml = this.cleanDocumentHtml(editor.innerHTML);
+    if (editor.innerHTML !== this.editorHtml) editor.innerHTML = this.editorHtml;
+    this.pageDraft.content = this.cleanDocumentHtml(this.editorHtml);
     this.pageDraft.contentFormat = 'HTML';
     this.scheduleDocumentSave();
   }
@@ -477,8 +504,9 @@ private getRequestedUserId(): number | null {
     document.execCommand(command, false);
     const editor = document.querySelector('.rich-document-editor') as HTMLElement | null;
     if (editor) {
-      this.editorHtml = editor.innerHTML;
-      this.pageDraft.content = this.editorHtml;
+      this.editorHtml = this.cleanDocumentHtml(editor.innerHTML);
+      if (editor.innerHTML !== this.editorHtml) editor.innerHTML = this.editorHtml;
+      this.pageDraft.content = this.cleanDocumentHtml(this.editorHtml);
       this.pageDraft.contentFormat = 'HTML';
       this.scheduleDocumentSave();
       editor.focus();
@@ -530,7 +558,7 @@ private getRequestedUserId(): number | null {
   private syncEditorAfterCommand(): void {
     const editor = document.querySelector('.rich-document-editor') as HTMLElement | null;
     if (!editor) return;
-    this.editorHtml = editor.innerHTML;
+    this.editorHtml = this.cleanDocumentHtml(editor.innerHTML);
     this.pageDraft.content = this.editorHtml;
     this.pageDraft.contentFormat = 'HTML';
     this.scheduleDocumentSave();
@@ -548,7 +576,7 @@ private getRequestedUserId(): number | null {
     this.saving = true;
     this.editorSaveLabel='Saving to cloud…';
     this.clearMessages();
-    this.pageDraft.content = this.editorHtml;
+    this.pageDraft.content = this.cleanDocumentHtml(this.editorHtml);
     this.pageDraft.contentFormat = 'HTML';
     const payload = {
       ...this.pageDraft,

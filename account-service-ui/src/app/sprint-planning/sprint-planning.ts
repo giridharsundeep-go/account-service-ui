@@ -1,3 +1,5 @@
+import {FilterMenu} from '../shared/filter-menu';
+import { ActorIconComponent } from '../shared/actor-icon';
 import {WorkspaceSettingsService} from '../shared/workspace-settings.service';
 import { SprintLifecycleComponent } from '../shared/sprint-lifecycle';
 import { untracked } from '@angular/core';
@@ -24,6 +26,7 @@ import { PlanningWorkTableComponent } from '../shared/planning-work-table';
 
 type WorkKind = 'EPIC' | 'STORY' | 'TASK' | 'ISSUE';
 type TypeFilter = 'ALL' | WorkKind;
+type BacklogAssigneeFilter = 'ALL' | 'UNASSIGNED' | 'ASSIGNED';
 
 interface ProjectOption {
   id: number;
@@ -89,20 +92,19 @@ interface PlanningAssigneeGroup {
 
 interface PlanningSprintGroup {
   key: string;
-  sprintId: number | null;
+  sprintId: number;
   name: string;
   sprint?: SprintOption;
   items: PlanningItem[];
   assigneeGroups: PlanningAssigneeGroup[];
   totalPoints: number;
-  isBacklog: boolean;
   isFocus: boolean;
 }
 
 @Component({
   selector: 'app-sprint-planning',
   standalone: true,
-  imports: [SprintLifecycleComponent, CommonModule, A11yModule, FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, WorkspaceHeroComponent, PersonPickerComponent, PlanningWorkTableComponent],
+  imports: [FilterMenu,ActorIconComponent, SprintLifecycleComponent, CommonModule, A11yModule, FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, WorkspaceHeroComponent, PersonPickerComponent, PlanningWorkTableComponent],
   templateUrl: './sprint-planning.html',
   styleUrls: ['../kanban-board/kanban-board.css', './sprint-planning.css', '../shared/field-controls.css'],
 })
@@ -158,6 +160,7 @@ export class SprintPlanning implements OnInit {
   typeFilter: TypeFilter = 'ALL';
   searchQuery = '';
   backlogSearch = '';
+  backlogAssigneeFilter: BacklogAssigneeFilter = 'ALL';
   selectedPersonId: number | 'ALL' = 'ALL';
   selectedItemIds = new Set<string>();
   collapsedSprintGroupKeys = new Set<string>();
@@ -203,9 +206,11 @@ export class SprintPlanning implements OnInit {
   readonly workflow=inject(WorkspaceSettingsService);
   get createStatuses(){return this.workflow.names;}
   private readonly liveRefresh=effect(()=>{if(this.workflow.revision()>0)untracked(()=>{if(this.selectedProjectId&&!this.saving)this.loadProjectItems(this.selectedProjectId,true);});});
+  private sprintGroupsInitialized = false;
   readonly descriptionColors = ['#202124', '#2563eb', '#7c3aed', '#16834a', '#c2410c'];
   draggedItemId: string | null = null;
   dropTarget: 'backlog' | number | null = null;
+  assignmentDropTarget: string | null = null;
   private readonly projectContextSync = effect(() => {
     const sharedProjectId = this.planningProjectId || this.projectContext.selectedProjectId();
     if (!sharedProjectId || !this.projects.length || sharedProjectId === this.selectedProjectId) return;
@@ -335,9 +340,8 @@ export class SprintPlanning implements OnInit {
     this.loadingTeamMembers = false;
     const team = this.selectedTeam;
     this.teamMembers = this.enrichTeamPeople(team?.members ?? []);
-    const initiallyExpandedSprint = this.selectedSprint ?? this.activeSprint ?? this.planningSprints[0];
     for (const sprint of this.sprints) {
-      if (sprint.id !== initiallyExpandedSprint?.id) this.collapsedSprintGroupKeys.add(this.sprintGroupKey(sprint.id));
+      this.collapsedSprintGroupKeys.add(this.sprintGroupKey(sprint.id));
     }
     if (this.selectedTeamId !== null) this.loadTeamMembers(this.selectedTeamId);
   }
@@ -399,6 +403,7 @@ export class SprintPlanning implements OnInit {
   onProjectChange(value: number | string | null): void {
     this.selectedPersonId = 'ALL';
     this.backlogSearch = '';
+    this.backlogAssigneeFilter = 'ALL';
     const projectId = Number(value);
     if (!Number.isFinite(projectId) || projectId <= 0) {
       this.selectedProjectId = null;
@@ -412,6 +417,7 @@ export class SprintPlanning implements OnInit {
       this.loadingItems = false;
       this.selectedItemIds.clear();
       this.collapsedSprintGroupKeys.clear();
+      this.sprintGroupsInitialized = false;
       this.expandedAssigneeGroupKeys.clear();
       this.loadError = '';
       this.notice = '';
@@ -432,6 +438,7 @@ export class SprintPlanning implements OnInit {
     this.typeFilter = 'ALL';
     this.selectedItemIds.clear();
     this.collapsedSprintGroupKeys.clear();
+    this.sprintGroupsInitialized = false;
     this.expandedAssigneeGroupKeys.clear();
     this.notice = '';
     this.loadProjectItems(projectId);
@@ -521,7 +528,10 @@ export class SprintPlanning implements OnInit {
   }
 
   openCreateDialog(kind: WorkKind): void {
-    if (!this.selectedProjectId || (!this.projectScope && !this.selectedTeamId)) return;
+    if (!this.selectedProjectId) {
+      this.notice = 'Choose a project before creating work.';
+      return;
+    }
     this.createKind = kind;
     this.createTitle = '';
     this.createDescription = '';
@@ -555,7 +565,7 @@ export class SprintPlanning implements OnInit {
 
   createWorkItem(): void {
     const title = this.createTitle.trim();
-    if (!title || !this.selectedProjectId || (!this.projectScope && !this.selectedTeamId) || this.creatingWorkItem) return;
+    if (!title || !this.selectedProjectId || this.creatingWorkItem) return;
     if (this.createKind === 'EPIC' && !this.createEpicCode.trim()) {
       this.createError = 'Enter an Epic code before creating this item.';
       return;
@@ -684,7 +694,7 @@ export class SprintPlanning implements OnInit {
   }
 
   onDragOver(target: 'backlog' | number, event: DragEvent): void {
-    if (target !== 'backlog' && target <= 0) return;
+    if (!this.draggedItemId || this.saving || (target !== 'backlog' && target <= 0)) return;
     event.preventDefault();
     if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
     this.dropTarget = target;
@@ -699,18 +709,46 @@ export class SprintPlanning implements OnInit {
 
   onDrop(target: 'backlog' | number, event: DragEvent): void {
     event.preventDefault();
-    const id = event.dataTransfer?.getData('text/plain') || this.draggedItemId;
-    const item = this.items.find(candidate => candidate.id === id);
+    const item = this.draggedPlanningItem();
     const destination = target === 'backlog' ? null : target;
-    this.dropTarget = null;
-    this.draggedItemId = null;
+    this.onDragEnd();
     if (!item || destination === item.sprintId) return;
     this.moveItem(item, destination);
+  }
+
+  private draggedPlanningItem(): PlanningItem | undefined {
+    return this.draggedItemId ? this.items.find(item => item.id === this.draggedItemId) : undefined;
+  }
+
+  onAssigneeDragOver(key: string, personId: number | null, event: DragEvent): void {
+    if (personId === null || this.saving || this.draggedPlanningItem()?.assigneeId !== null) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+    this.dropTarget = null;
+    this.assignmentDropTarget = key;
+  }
+
+  onAssigneeDragLeave(key: string, event: DragEvent): void {
+    const current = event.currentTarget as HTMLElement | null;
+    const next = event.relatedTarget as Node | null;
+    if (current && next && current.contains(next)) return;
+    if (this.assignmentDropTarget === key) this.assignmentDropTarget = null;
+  }
+
+  onAssigneeDrop(personId: number | null, name: string, event: DragEvent, sprintId?: number): void {
+    const item = this.draggedPlanningItem();
+    if (personId === null || this.saving || !item || item.assigneeId !== null) return;
+    event.preventDefault();
+    event.stopPropagation();
+    this.onDragEnd();
+    this.updateItems([item], sprintId ?? item.sprintId, { personId, name });
   }
 
   onDragEnd(): void {
     this.draggedItemId = null;
     this.dropTarget = null;
+    this.assignmentDropTarget = null;
   }
 
   private loadProjectItems(projectId: number, background = false): void {
@@ -729,10 +767,11 @@ export class SprintPlanning implements OnInit {
       sprints: this.collection([`${this.baseUrl}/sprints?project_id=${projectId}`, `${this.baseUrl}/sprints`]),
       teams: this.http.get<any>(`${this.baseUrl}/teams`, this.headers()).pipe(catchError(() => of([]))),
       projectTeams: this.http.get<any>(`${this.baseUrl}/project-teams/${projectId}`, this.headers()).pipe(catchError(() => of([]))),
+      agents: this.http.get<any[]>(`${this.baseUrl}/workspace/agents?projectId=${projectId}`, this.headers()).pipe(catchError(() => of([]))),
       users: this.collections.read(`${this.baseUrl}/users`).pipe(catchError(() => of([]))),
       roles: this.http.get<any>(`${this.baseUrl}/roles`, this.headers()).pipe(catchError(() => of([])))
     }).subscribe({
-      next: ({ epics, stories, tasks, issues, sprints, teams, projectTeams, users, roles }) => {
+      next: ({ epics, stories, tasks, issues, sprints, teams, projectTeams, users, roles, agents }) => {
         if (projectAtRequest !== this.selectedProjectId) return;
         this.sprints = this.extractArray(sprints).map(raw => ({
           id: Number(raw?.id ?? raw?.sprint_id ?? raw?.sprintId),
@@ -750,6 +789,10 @@ export class SprintPlanning implements OnInit {
             const bStart = b.startDate ? new Date(b.startDate).getTime() : Number.MAX_SAFE_INTEGER;
             return aStart - bStart || a.name.localeCompare(b.name);
           });
+        if (!this.sprintGroupsInitialized) {
+          for (const sprint of this.sprints) this.collapsedSprintGroupKeys.add(this.sprintGroupKey(sprint.id));
+          this.sprintGroupsInitialized = true;
+        }
         if (this.selectedSprintId !== null && !this.planningSprints.some(sprint => sprint.id === this.selectedSprintId)) {
           this.selectedSprintId = null;
         }
@@ -778,6 +821,7 @@ export class SprintPlanning implements OnInit {
           const role = roleRows.find(role => Number(role.id ?? role.role_id) === Number(raw?.role_id ?? raw?.roleId));
           return person.designation === 'Team member' && role ? { ...person, designation: role.name ?? role.role_name ?? person.designation } : person;
         });
+        this.userDirectory.push(...agents.map(a=>({id:-Number(a.id),name:a.name,initials:a.name.split(/\s+/).slice(0,2).map((p:string)=>p[0]).join(''),avatarUrl:null,designation:(a.designation||'Workspace agent')+' · Agent'})));
         const projectStoryIds = new Set(storyRows.map(row => Number(row?.id ?? row?.story_id ?? row?.storyId)).filter(Number.isFinite));
         const epicById = new Map<number, any>(epicRows.map(row => [Number(row?.id ?? row?.epic_id ?? row?.epicId), row]));
         const storyById = new Map<number, any>(storyRows.map(row => [Number(row?.id ?? row?.story_id ?? row?.storyId), row]));
@@ -816,7 +860,8 @@ export class SprintPlanning implements OnInit {
           if (!Number.isFinite(sourceId) || sourceId <= 0) return;
           const rowProjectId = this.numberOrNull(raw?.project_id ?? raw?.projectId ?? raw?.project?.id);
           if (rowProjectId !== null && rowProjectId > 0 && rowProjectId !== projectId) return;
-          const sprintId = this.numberOrNull(raw?.sprint_id ?? raw?.sprintId ?? raw?.sprint?.id);
+          const rawSprintId = this.numberOrNull(raw?.sprint_id ?? raw?.sprintId ?? raw?.sprint?.id);
+          const sprintId = rawSprintId !== null && rawSprintId > 0 ? rawSprintId : null;
           const sprint = sprintId === null ? undefined : sprintById.get(sprintId);
           const teamId = this.itemTeamId(raw) ?? inheritedTeamId;
           const assigned = raw?.assignee_user ?? raw?.assigneeUser ?? raw?.assignee ?? raw?.assigned_user ?? raw?.assignedUser ?? raw?.assigned_to ?? raw?.assignedTo;
@@ -825,7 +870,7 @@ export class SprintPlanning implements OnInit {
             raw?.assigned_user_id ?? raw?.assignedUserId ?? raw?.assigned_to_id ?? raw?.assignedToId ??
             assigned?.user_account_id ?? assigned?.userAccountId ?? assigned?.user_id ?? assigned?.userId ?? assigned?.id ?? assigned?.user?.id ??
             (typeof assigned === 'number' || typeof assigned === 'string' ? assigned : null)
-          );
+          ) || null;
           const resolvedAssignee = this.findPerson(assigneeId);
           const assigneeName = resolvedAssignee?.name ?? this.displayText(
             raw?.assignee_name ?? raw?.assigneeName ?? raw?.assigned_to_name ?? raw?.assignedToName ?? assigned?.user ?? assigned,
@@ -910,10 +955,11 @@ export class SprintPlanning implements OnInit {
 
   get teamItems(): PlanningItem[] { return this.items; }
 
-  get filteredItems(): PlanningItem[] {
+  get filteredSprintItems(): (PlanningItem & { sprintId: number })[] {
     const query = this.searchQuery.trim().toLowerCase();
     const kindOrder: Record<WorkKind, number> = { EPIC: 0, STORY: 1, TASK: 2, ISSUE: 3 };
-    return this.teamItems.filter(item => {
+    return this.teamItems.filter((item): item is PlanningItem & { sprintId: number } => {
+      if (item.sprintId === null) return false;
       const typeMatches = this.typeFilter === 'ALL' || item.kind === this.typeFilter;
       const queryMatches = !query || [item.key, item.title, item.description, item.parentName, item.status, item.priority]
         .some(value => value.toLowerCase().includes(query));
@@ -924,15 +970,14 @@ export class SprintPlanning implements OnInit {
   }
 
   get filteredSprintGroups(): PlanningSprintGroup[] {
-    const visibleItems = this.filteredItems;
-    const itemsBySprint = new Map<number | null, PlanningItem[]>();
-    for (const item of visibleItems) {
+    const itemsBySprint = new Map<number, PlanningItem[]>();
+    for (const item of this.filteredSprintItems) {
       const groupItems = itemsBySprint.get(item.sprintId) ?? [];
       groupItems.push(item);
       itemsBySprint.set(item.sprintId, groupItems);
     }
 
-    const hasFilters = this.typeFilter !== 'ALL' || this.selectedPersonId !== 'ALL' || Boolean(this.searchQuery.trim());
+    const hasWorkFilters = this.typeFilter !== 'ALL' || Boolean(this.searchQuery.trim());
     const groups: PlanningSprintGroup[] = [];
 
     const orderedSprints = [...this.sprints].sort((a, b) => {
@@ -945,28 +990,38 @@ export class SprintPlanning implements OnInit {
     const knownSprintIds = new Set(orderedSprints.map(sprint => sprint.id));
     for (const sprint of orderedSprints) {
       const sprintItems = itemsBySprint.get(sprint.id) ?? [];
-      if (hasFilters && !sprintItems.length && sprint.id !== this.selectedSprintId) continue;
+      if (!sprintItems.length && (this.selectedPersonId !== 'ALL' || (hasWorkFilters && sprint.id !== this.selectedSprintId))) continue;
       groups.push(this.createSprintGroup(sprint.id, sprint.name, sprintItems, sprint));
     }
 
     const unknownSprintIds = [...itemsBySprint.keys()]
-      .filter((id): id is number => id !== null && !knownSprintIds.has(id))
+      .filter(id => !knownSprintIds.has(id))
       .sort((a, b) => a - b);
     for (const sprintId of unknownSprintIds) {
       const sprintItems = itemsBySprint.get(sprintId) ?? [];
       groups.push(this.createSprintGroup(sprintId, sprintItems[0]?.sprintName || `Sprint ${sprintId}`, sprintItems));
     }
-    const unscheduled=(itemsBySprint.get(null)||[]).filter(item=>String(item.status).toUpperCase()!=='BACKLOG');
-    if(unscheduled.length)groups.push(this.createSprintGroup(null,'Unscheduled work',unscheduled));
     return groups;
   }
 
   get backlogItems(): PlanningItem[] {
     const query = this.backlogSearch.trim().toLowerCase();
-    return this.items.filter(item => String(item.status).toUpperCase().replace(/[ _-]/g,'') === 'BACKLOG' &&
+    return this.teamItems.filter(item => item.sprintId === null &&
       (this.typeFilter === 'ALL' || item.kind === this.typeFilter) &&
-      (this.selectedPersonId === 'ALL' || item.assigneeId === this.selectedPersonId) &&
+      (this.selectedPersonId === 'ALL' || item.assigneeId === null || item.assigneeId === this.selectedPersonId) &&
+      (this.backlogAssigneeFilter === 'ALL' || this.backlogAssigneeFilter === (item.assigneeId === null ? 'UNASSIGNED' : 'ASSIGNED')) &&
       (!query || [item.key,item.title,item.parentName,item.assigneeName].join(' ').toLowerCase().includes(query)));
+  }
+
+  setBacklogAssigneeFilter(filter: BacklogAssigneeFilter): void {
+    if (this.backlogAssigneeFilter === filter) return;
+    this.backlogAssigneeFilter = filter;
+    if (!this.selectedItemIds.size) return;
+
+    const visibleIds = new Set(this.backlogItems.map(item => item.id));
+    for (const item of this.selectedItems) {
+      if (item.sprintId === null && !visibleIds.has(item.id)) this.selectedItemIds.delete(item.id);
+    }
   }
   private enrichTeamPeople(members: PlanningPerson[]): PlanningPerson[] {
     return members.map(member => {
@@ -982,14 +1037,25 @@ export class SprintPlanning implements OnInit {
   }
 
   personItemCount(id: number): number { return this.teamItems.filter(item=>item.assigneeId===id).length; }
-  selectPlanningPerson(id: number | 'ALL'): void { this.selectedPersonId = id; }
-  get selectedBacklogItems(): PlanningItem[] { return this.selectedItems.filter(item => String(item.status).toUpperCase().replace(/[ _-]/g,'') === 'BACKLOG'); }
+  selectPlanningPerson(id: number | 'ALL'): void {
+    if (this.selectedPersonId === id) return;
+    this.selectedPersonId = id;
+    this.clearItemSelection();
+  }
+
+  get selectedBacklogItems(): PlanningItem[] {
+    return this.backlogItems.filter(item => this.selectedItemIds.has(item.id));
+  }
   moveBacklogSelectionToFocus(): void {
     if (this.selectedSprintId !== null) this.updateItems(this.selectedBacklogItems, this.selectedSprintId);
   }
 
-  private createSprintGroup(sprintId: number | null, name: string, items: PlanningItem[], sprint?: SprintOption): PlanningSprintGroup {
-    const key = sprintId === null ? 'backlog' : this.sprintGroupKey(sprintId);
+  moveBacklogSelectionToNextSprint(): void {
+    if (this.nextPlanningSprint) this.updateItems(this.selectedBacklogItems, this.nextPlanningSprint.id);
+  }
+
+  private createSprintGroup(sprintId: number, name: string, items: PlanningItem[], sprint?: SprintOption): PlanningSprintGroup {
+    const key = this.sprintGroupKey(sprintId);
     return {
       key,
       sprintId,
@@ -998,8 +1064,7 @@ export class SprintPlanning implements OnInit {
       items,
       assigneeGroups: this.createAssigneeGroups(items, key),
       totalPoints: items.reduce((total, item) => total + (item.points ?? 0), 0),
-      isBacklog: sprintId === null,
-      isFocus: sprintId !== null && sprintId === this.selectedSprintId
+      isFocus: sprintId === this.selectedSprintId
     };
   }
 
@@ -1248,7 +1313,7 @@ export class SprintPlanning implements OnInit {
   }
   get selectedItems(): PlanningItem[] { return this.teamItems.filter(item => this.selectedItemIds.has(item.id)); }
   get selectedItemCount(): number { return this.selectedItems.length; }
-  get selectedBacklogCount(): number { return this.selectedItems.filter(item => item.sprintId !== null || String(item.status).toUpperCase().replace(/[ _-]/g,'') !== 'BACKLOG').length; }
+  get selectedBacklogCount(): number { return this.selectedItems.filter(item => item.sprintId !== null).length; }
   get selectedNextSprintCount(): number {
     return this.nextPlanningSprint ? this.selectedItems.filter(item => item.sprintId !== this.nextPlanningSprint?.id).length : 0;
   }
@@ -1276,19 +1341,13 @@ export class SprintPlanning implements OnInit {
     checked ? this.selectedItemIds.add(id) : this.selectedItemIds.delete(id);
   }
 
-  toggleVisibleSelection(checked: boolean): void {
-    for (const item of this.filteredItems) {
-      checked ? this.selectedItemIds.add(item.id) : this.selectedItemIds.delete(item.id);
-    }
-  }
-
   clearItemSelection(): void {
     this.selectedItemIds.clear();
     this.moveDestinationSprintId = null;
   }
 
   moveSelectedToBacklog(): void {
-    this.updateItems(this.selectedItems.filter(item => item.sprintId !== null || String(item.status).toUpperCase() !== 'BACKLOG'), null);
+    this.updateItems(this.selectedItems.filter(item => item.sprintId !== null), null);
   }
 
   moveSelectedToNextSprint(): void {
@@ -1309,22 +1368,29 @@ export class SprintPlanning implements OnInit {
     this.updateItems([item], sprintId);
   }
 
-  private updateItems(items: PlanningItem[], sprintId: number | null): void {
+  private updateItems(items: PlanningItem[], sprintId: number | null, assignee?: { personId: number; name: string }): void {
     if (!items.length || this.saving) return;
     this.saving = true;
     this.saveError = '';
     this.notice = '';
-    const requests = items.map(item => this.updateRequest(item, sprintId).pipe(catchError(error => of({ __planningError: error, item }))));
+    const requests = items.map(item => this.updateRequest(item, sprintId, assignee?.personId).pipe(catchError(error => of({ __planningError: error, item }))));
     forkJoin(requests).subscribe(results => {
       this.saving = false;
       const failed = results.filter(result => result?.__planningError);
       const succeeded=new Set(items.filter(item=>!failed.some(result=>result.item.id===item.id)).map(item=>item.id));
       this.selectedItemIds=new Set([...this.selectedItemIds].filter(id=>!succeeded.has(id)));
-      if (failed.length) {
+      if (failed.length && assignee) {
+        const error = failed[0].__planningError;
+        this.saveError = error?.error?.detail || error?.error?.message || (error?.status === 409
+          ? 'This item was already assigned. The latest values have been requested.'
+          : `Could not assign this item to ${assignee.name}.`);
+      } else if (failed.length) {
         this.saveError = `${failed.length} item${failed.length === 1 ? '' : 's'} could not be updated. The board has been refreshed with the latest saved values.`;
       } else {
         const destination = sprintId === null ? 'the backlog' : this.sprints.find(sprint => sprint.id === sprintId)?.name ?? 'the selected sprint';
-        this.notice = `${items.length} item${items.length === 1 ? '' : 's'} moved to ${destination}.`;
+        this.notice = assignee
+          ? `${items[0].key} assigned to ${assignee.name}${items[0].sprintId === sprintId ? '' : ` and moved to ${destination}`}.`
+          : `${items.length} item${items.length === 1 ? '' : 's'} moved to ${destination}.`;
       }
       if(!failed.length)this.moveDestinationSprintId = null;
       this.cdr.markForCheck();
@@ -1332,7 +1398,15 @@ export class SprintPlanning implements OnInit {
     });
   }
 
-  private updateRequest(item:PlanningItem,sprintId:number|null):Observable<any>{return this.http.patch(`${this.baseUrl}/tickets/${item.kind}/${item.sourceId}/placement`,{sprintId},this.headers());}
+  private updateRequest(item: PlanningItem, sprintId: number | null, assigneeId?: number): Observable<any> {
+    const ticket = `${this.baseUrl}/tickets/${item.kind}/${item.sourceId}`;
+    return assigneeId === undefined
+      ? this.http.patch(`${ticket}/placement`, { sprintId }, this.headers())
+      : this.http.patch(`${ticket}/assignment`, {
+          assigneeId,
+          ...(sprintId !== item.sprintId ? { sprintId } : {}),
+        }, this.headers());
+  }
 
   private statusLabel(value:any):string{return this.workflow.label(value);}
 

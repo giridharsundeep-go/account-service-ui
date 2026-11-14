@@ -1,0 +1,102 @@
+/* Post is the suite's visual contract. App-specific canvases keep their own geometry. */
+:root {
+  --gp-page:#fff!important; --gp-surface:#fff!important; --gp-surface-muted:#f5f5f7!important;
+  --gp-text:#151519!important; --gp-muted:#68686e!important; --gp-border:var(--gp-border-color, #a0a6b1)!important;
+  --gp-separator:var(--gp-border-color, #a0a6b1)!important; --gp-accent:#1769ff!important; --gp-selection:#edf3ff!important;
+  --gp-radius:20px!important; --gp-field-height:50px!important; --gp-field-radius:12px!important;
+  --gp-field-border:var(--gp-border-color, #a0a6b1)!important; --gp-field-border-hover:var(--gp-border-color, #a0a6b1)!important; --gp-field-border-focus:var(--gp-border-color, #a0a6b1)!important;
+  --gp-field-background:var(--gp-surface)!important; --gp-field-text:var(--gp-text)!important;
+  --gp-field-muted:var(--gp-muted)!important; --gp-control-radius:24px!important;
+  --gp-shadow:0 2px 10px rgb(0 0 0 / 4%)!important; --gp-card-shadow:var(--gp-shadow)!important;
+  --gp-float-shadow:0 14px 42px rgb(0 0 0 / 12%)!important;
+  --gp-space-page:24px clamp(16px,3vw,40px)!important; --gp-title-size:32px!important;
+  --gp-ease:cubic-bezier(.22,1,.36,1); --gp-ease-in:cubic-bezier(.4,0,1,1);
+  --gp-duration-fast:160ms; --gp-duration:280ms; --gp-duration-slow:380ms;
+}
+:root[data-theme=dark] {
+  --gp-page:#101012!important; --gp-surface:#18181c!important; --gp-surface-muted:#242429!important;
+  --gp-text:#f5f5f7!important; --gp-muted:#acacb6!important; --gp-border:var(--gp-border-color, #a0a6b1)!important;
+  --gp-separator:var(--gp-border-color, #a0a6b1)!important; --gp-accent:#8db6ff!important; --gp-selection:#203250!important;
+  --gp-field-border:var(--gp-border-color, #a0a6b1)!important; --gp-field-border-hover:var(--gp-border-color, #a0a6b1)!important; --gp-field-border-focus:var(--gp-border-color, #a0a6b1)!important;
+  --gp-shadow:0 2px 12px rgb(0 0 0 / 14%)!important; --gp-float-shadow:0 18px 50px rgb(0 0 0 / 42%)!important;
+}
+/* One full-width, padded working surface in every app; editors remain full bleed. */
+:root :is(.post-workspace,.suite-body,.instru-page,.saas-container,.products-page,.boards-page,.kb-page,.testcases-page,.agents-page,.roles-page,.projects-dashboard,.teams-page,.users-page,.roles-container,.releases-page,.planning-page,.tc-page,.work-items-page,.agile-dashboard,.roadmap-page,.retro-page) {
+  width:100%!important; max-width:none!important; min-width:0!important; margin-inline:0!important;
+  padding:var(--gp-space-page)!important; box-sizing:border-box!important;
+}
+:root gp-workspace-shell > .suite-page {width:100%!important;max-width:none!important;margin-inline:0!important}
+:root :is(.suite-body,.post-workspace,.instru-page,.workspace-title,.workspace-heading,.page-heading,.agile-heading,.gp-workspace-hero,.mail-heading,.roadmap-header,.retro-heading) h1:not(.document-paper *):not(.sheet-grid *):not(.slide-page *):not(.present-slide *),
+:root :is(.projects-title,.users-title,.teams-title,.roles-title,.releases-title,.planning-title,.work-items-title) {
+  font-size:32px!important;line-height:1.18!important;font-weight:780!important;letter-spacing:-.035em!important;color:var(--gp-text)!important;
+}
+:root :is(.mail-heading,.workspace-title,.workspace-heading,.page-heading,.agile-heading,.roadmap-header,.retro-heading) {gap:20px!important;margin-bottom:24px!important}
+:root :is(.workspace-title,.workspace-heading,.page-heading,.section-heading,.agile-heading,.mail-heading,.roadmap-header,.retro-heading) p {font-size:15px!important;line-height:1.6!important;color:var(--gp-muted)!important}
+:root :is(.surface,.profile-section-card,.stats-card,.stat-card,.overview-metric,.metric-card,.chart-card,.account-card,.file-card,.document-card,.meeting-card,.team-card,.project-card,.board-card,.release-card,.agent-card,.mail-list,.mail-detail,.mat-mdc-card,.kb-detail-section-card,.work-item-section-card) {
+  border:1px solid var(--gp-border-color, #a0a6b1)!important;border-radius:20px!important;background:var(--gp-surface)!important;color:var(--gp-text)!important;box-shadow:var(--gp-card-shadow)!important;
+}
+:root :is(.surface,.profile-section-card,.account-card,.kb-detail-section-card,.work-item-section-card){padding:24px!important}
+:root :is(.workspace-dialog,.suite-dialog,.instru-dialog,.forge-dialog,.tc-dialog,.new-dialog,.work-item-dialog,.document-share-dialog,.compose-dialog,.mat-mdc-dialog-surface){border-radius:24px!important;border-color:var(--gp-border-color, #a0a6b1)!important;box-shadow:var(--gp-float-shadow)!important}
+:root :is(.suite-form-grid,.form-grid,.fields-grid,.profile-form-grid,.account-form){gap:20px!important}
+:root :is(.suite-dialog,.new-dialog,.workspace-dialog,.account-form,.compose-body,.profile-form-grid) label{font-size:14px!important;line-height:1.5!important;gap:8px!important;color:var(--gp-text)!important}
+:root :is(.button,.gp-button,.btn-primary,.btn-secondary,.kb-button,.teams-create-button,.users-create-button,.roles-create-button,.projects-create-button,.kb-create-submit,.gp-workspace-hero__actions>button,.workspace-filter-trigger){
+  height:48px!important;min-height:48px!important;border-radius:24px!important;padding-inline:20px!important;font-size:15px!important;font-weight:650!important;line-height:1.2!important;
+}
+:root :is(.button.primary,.gp-button.primary,.btn-primary,.teams-create-button,.users-create-button,.roles-create-button,.projects-create-button,.kb-create-submit){background:var(--gp-accent)!important;color:var(--gp-on-accent,#fff)!important;border-color:transparent!important}
+:root[data-theme=dark]{--gp-on-accent:#102039}
+:root :is(.button.outline,.gp-button.outline,.btn-secondary,.kb-button,.workspace-filter-trigger){background:var(--gp-surface)!important;color:var(--gp-text)!important;border:1px solid var(--gp-border-color, #a0a6b1)!important}
+:root :is(.mat-mdc-table,.users-table,.work-items-table,.projects-mat-table,.items-table,.google-table,.compact-work-table,.tc-table,.planning-table,.table-scroll>table,.table-wrap>table) :is(th,td){padding-inline:16px!important;border-color:var(--gp-border-color, #a0a6b1)!important}
+:root :is(.mat-mdc-table,.users-table,.work-items-table,.projects-mat-table,.items-table,.google-table,.compact-work-table,.tc-table,.planning-table,.table-scroll>table,.table-wrap>table) td{font-size:15px!important;line-height:1.5!important;padding-block:16px!important}
+:root :is(.mat-mdc-table,.users-table,.work-items-table,.projects-mat-table,.items-table,.google-table,.compact-work-table,.tc-table,.planning-table,.table-scroll>table,.table-wrap>table) tbody tr:hover{background:var(--gp-surface-muted)!important}
+:root :is(.mail-avatar,.gp-avatar,.work-items-avatar,.user-avatar,.assignee-avatar,.reporter-avatar){border-radius:30%!important}
+:root :is(.app-symbol,.metric-icon.app-logo){background:transparent!important}
+/* A single search outline: compound fields own the border, inner inputs never do. */
+:root :is(.search-shell,.search-field,.search-box,.global-search,.global-project-search,.global-work-search-field,.work-items-search,.kb-board-search,.team-search,.docs-search,.work-filter-search,.matrix-search-input-frame,.gp-people-search,.roles-search,.products-search) input:not([type=checkbox]):not([type=radio]){border:0!important;border-radius:0!important;outline:0!important;box-shadow:none!important;min-width:0!important;background:transparent!important}
+:root .mat-mdc-form-field .mdc-text-field--outlined{border-radius:var(--gp-field-radius)!important}
+
+/* Native form fields use the same treatment as Post's composer. Compound searches own one outline. */
+:root :is(input,select,textarea):not(:where([type=checkbox],[type=radio],[type=color],[type=range],[type=file],[type=button],[type=submit],.mat-mdc-input-element,.document-paper *,.sheet-grid *,.slide-page *,.present-slide *,.office-tools *,.toolbar *,.document-toolbar *,.file-titlebar *,.document-titlebar *,.formula-bar *,.file-menubar *,.title-input,.kb-title-edit-input,.work-item-header-title-input,.team-inline-title,.event-title-input input,.search-shell input,.search-field input,.search-box input,.search-bar input,.inline-search input,.global-search input,.global-project-search input,.global-work-search-field input,.work-items-search input,.kb-board-search input,.team-search input,.docs-search input,.work-filter-search input,.matrix-search-input-frame input,.gp-people-search input,.roles-search input,.products-search input,.search-wrapper input,.planning-backlog-search input,.team-profile-member-search input,.users-search input,.google-search-shell input,.epics-filter-search input,.add-testcases-search input,.search-control input,.release-search-field input,.password-field input)){
+  height:50px!important;min-height:50px!important;width:100%;padding:0 14px!important;box-sizing:border-box!important;border:1px solid var(--gp-field-border)!important;border-radius:var(--gp-field-radius)!important;background:var(--gp-surface)!important;color:var(--gp-text)!important;font-family:var(--gp-font,system-ui)!important;font-size:16px!important;line-height:1.5!important;outline:0!important;box-shadow:none!important;
+}
+:root :is(textarea,.google-textarea):not(:where(.document-paper *,.sheet-grid *,.slide-page *,.present-slide *,.title-input,.kb-title-edit-input,.work-item-header-title-input,.team-inline-title,.composer>textarea)){height:auto!important;min-height:132px!important;padding:14px!important;line-height:1.65!important;resize:vertical}
+:root :is(.mat-mdc-form-field .mat-mdc-input-element,.mat-mdc-form-field .mat-mdc-select-value,.mat-mdc-form-field .mat-mdc-select-placeholder){font-size:16px!important}
+:root app-user-home .app-body>.main>main.content{padding:0!important}
+:root :is(.projects-dashboard>.projects-main,.projects-dashboard>.project-profile-page){padding-inline:0!important;max-width:none!important;width:100%!important}
+:root :is(.kb-page.kb-fullscreen,.planning-page.fullscreen-fallback,.planning-page:fullscreen){padding:16px!important}
+:root :is(.filter-trigger,.filter-popover footer button){border-radius:24px!important;font-size:15px!important}
+:root .filter-popover{border-radius:22px!important}
+
+/* Motion stays on interface surfaces, never on document pages, grid cells or draggable work. */
+@keyframes gp-page-in{from{opacity:0}to{opacity:1}}
+@keyframes gp-panel-in{from{opacity:0;translate:0 10px;scale:.985}to{opacity:1;translate:0 0;scale:1}}
+@keyframes gp-fade-in{from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:no-preference){
+  :root :is(app-dashboard,app-products,app-projects,app-boards,app-kanban-board,app-sprint-planning,app-work-items,app-testcases,app-releases,app-teams,app-users,app-roles,app-agents,app-roadmap,app-retrospectives),
+  :root gp-workspace-shell:not([editor-mode=true]) > :is(.suite-page,.post-workspace,.instru-page){animation:gp-page-in var(--gp-duration-slow) var(--gp-ease)!important}
+  :root :is(.workspace-dialog,.suite-dialog,.instru-dialog,.forge-dialog,.tc-dialog,.new-dialog,.work-item-dialog,.document-share-dialog,.compose-dialog,.mat-mdc-dialog-surface,.workspace-filter-panel,.filter-popover,.apps-panel,.work-items-status-menu){animation:gp-panel-in var(--gp-duration) var(--gp-ease) both!important;transform-origin:top center}
+  :root :is(.cdk-overlay-backdrop,.dialog-backdrop,.modal-backdrop,.compose-backdrop){animation:gp-fade-in var(--gp-duration-fast) ease-out both!important}
+  :root :is(.button,.gp-button,.kb-button,.teams-create-button,.users-create-button,.projects-create-button,.roles-create-button,.workspace-filter-trigger,.icon-button,.nav-item,.menu-item,.conversation,.mail-row,.mail-star,.file-card,.document-card,.meeting-card,.project-card,.board-card,.agent-card,.service-row){transition:background-color var(--gp-duration-fast) ease,border-color var(--gp-duration-fast) ease,box-shadow var(--gp-duration) var(--gp-ease),translate var(--gp-duration) var(--gp-ease),scale var(--gp-duration-fast) var(--gp-ease)!important}
+  :root :is(.button,.gp-button,.kb-button,.icon-button,.workspace-filter-trigger):active:not(:disabled){scale:.97}
+  :root :is(.file-card,.document-card,.meeting-card,.project-card,.board-card,.agent-card):hover{translate:0 -2px;box-shadow:0 6px 20px rgb(0 0 0 / 7%)!important}
+  :root :is(.sidebar,.conversation-list,.details-panel){transition:width var(--gp-duration) var(--gp-ease),background-color var(--gp-duration-fast) ease!important}
+  :root :is(.resizing,.resizing-navigation) :is(.sidebar,.conversation-list),:root .sidebar:has(+.sidebar-resizer:active),:root .conversation-list:has(.conversation-resizer:active){transition:none!important}
+}
+@media(prefers-reduced-motion:reduce){
+  :root{--gp-duration-fast:0ms;--gp-duration:0ms;--gp-duration-slow:0ms}
+  :root :is(app-root,gp-workspace-shell) *:not(.document-paper *):not(.sheet-grid *):not(.slide-page *){animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}
+@media(max-width:800px){:root{--gp-space-page:20px 16px!important} :root :is(.mail-heading,.workspace-title,.workspace-heading,.page-heading,.agile-heading,.roadmap-header,.retro-heading){flex-wrap:wrap!important}}
+@media(max-width:560px){:root :is(.surface,.profile-section-card,.account-card,.kb-detail-section-card,.work-item-section-card){padding:18px!important}:root :is(.workspace-title,.workspace-heading,.page-heading,.agile-heading,.mail-heading) h1{font-size:28px!important}}
+
+/* Page actions belong to the title row, anchored to its top-right corner. */
+:root .gp-workspace-hero__heading{display:flex!important;align-items:flex-start!important;justify-content:space-between!important;gap:20px!important;width:100%!important;min-width:0!important}
+:root .gp-workspace-hero__heading>h1{flex:1;min-width:0;margin-top:0!important}
+:root .gp-workspace-hero__heading .gp-workspace-hero__actions{display:flex;justify-content:flex-end!important;align-self:flex-start!important;margin:0 0 0 auto!important;flex:0 1 auto!important}
+:root :is(.workspace-title,.workspace-heading,.page-heading,.mail-heading,.tc-page-heading,.roadmap-heading,.retro-heading,.kb-scrum-header){align-items:flex-start!important}
+:root :is(.page-heading,.workspace-heading,.mail-heading,.tc-page-heading,.roadmap-heading,.retro-heading)>.heading-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:10px;margin-left:auto}
+@media(max-width:700px){:root .gp-workspace-hero__heading{flex-wrap:wrap!important}}
+
+:root .gp-workspace-hero__heading { flex-wrap:wrap; }
+:root .gp-workspace-hero__heading>h1 { flex:1 1 220px!important; }
+:root .gp-workspace-hero__actions { min-width:0; max-width:100%; }
+:root .gp-workspace-hero__actions>div { display:flex; align-items:flex-start; justify-content:flex-end; gap:10px; flex-wrap:wrap; max-width:100%; }

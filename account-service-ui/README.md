@@ -57,3 +57,13 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+## Product planning
+
+The project Roadmap view supports initiatives, owners, target dates and linked tickets. See [the three-year product roadmap](docs/product-roadmap-2026-2029.md) for the proposed November 2026 to October 2029 delivery sequence and future human and agent collaboration gates.
+
+## Connected apps and agents
+
+See [workspace apps](docs/workspace-apps.md) for ports, setup, agents, sharing, implemented editor features, and current limits.
+
+Suite UI, Post mail, photo storage, dashboard, Forge and security changes are described in [the November 4 implementation notes](docs/improvements-2026-11-04.md). Post uses UI port 4210 and API port 8095.

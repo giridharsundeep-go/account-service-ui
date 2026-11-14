@@ -3,155 +3,180 @@
     {{ successMessage }}
   </div>
 
-  <app-workspace-hero *ngIf="!selectedProfileUser" eyebrow="PEOPLE · TALENT · GROWTH" title="Users" subtitle="Manage organization members, roles, reporting lines, and workplace details." image="assets/covers/users.png" imageAlt="Colleagues sharing ideas and building a team"></app-workspace-hero>
+  <app-workspace-hero *ngIf="!selectedProfileUser" eyebrow="PEOPLE · TALENT · GROWTH" title="Users" subtitle="Manage organization members, roles, reporting lines, and workplace details." image="assets/covers/users.png" imageAlt="Colleagues sharing ideas and building a team"><button workspace-actions type="button" class="gp-button gp-outline" *ngIf="canManageUsers" (click)="manageOrganizationStructure()">Organization structure</button><button workspace-actions type="button" class="gp-button gp-primary" *ngIf="canCreateUsers" (click)="openCreateForm()">+ Create user</button></app-workspace-hero>
 
   <ng-container *ngIf="selectedProfileUser as profile; else usersDirectory">
-    <section class="user-profile-page atlassian-profile-layout">
-      <div class="user-profile-breadcrumb">
-        <button mat-stroked-button type="button" class="user-back-button" (click)="closeUserProfile()" aria-label="Back to users">←</button>
-        <span>People</span><span class="breadcrumb-separator">/</span>
-        <button mat-button type="button" class="breadcrumb-link" (click)="closeUserProfile()">Users</button>
-        <span class="breadcrumb-separator">/</span><strong>{{ profile.fullName }}</strong>
-      </div>
-
-      <section class="users-profile-cover-wall atlassian-profile-cover" aria-label="Profile cover">
-        <div class="users-profile-cover-copy"><span>PEOPLE · TALENT · GROWTH</span><h1>Great people build great products.</h1><p>People, skills and ideas come together here.</p></div>
-        <button class="profile-cover-camera" type="button" (click)="editProfileUser(profile)" aria-label="Edit profile cover" title="Edit profile">📷</button>
-      </section>
-
-      <section class="user-profile-hero atlassian-profile-hero">
-        <div class="user-profile-identity-wrap">
-          <div class="user-profile-avatar-wrap">
-            <div class="user-profile-avatar">
-              <img *ngIf="profile.profile_picture_url" [src]="getAvatarDisplaySrc(profile.profile_picture_url)" [alt]="profile.fullName" />
-              <span *ngIf="!profile.profile_picture_url">{{ getAvatarInitials(profile.fullName) }}</span>
+    <section class="user-profile-page people-profile-page">
+      <div class="people-profile-shell">
+        <button class="people-profile-back" type="button" (click)="closeUserProfile()" aria-label="Back to people"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5m7 7-7-7 7-7"/></svg><span>Back to people</span></button>
+        <section class="people-profile-header">
+          <div class="people-profile-cover" aria-hidden="true"></div>
+          <div class="people-profile-hero">
+            <div class="people-profile-avatar-wrap">
+              <div class="people-profile-avatar">
+                <img *ngIf="profile.profile_picture_url" [src]="getAvatarDisplaySrc(profile.profile_picture_url)" [alt]="profile.fullName" />
+                <span *ngIf="!profile.profile_picture_url">{{ getAvatarInitials(profile.fullName) }}</span>
+              </div>
+              <button *ngIf="canEditPerson(profile)" class="people-profile-avatar-camera" type="button" (click)="editProfileUser(profile)" aria-label="Change profile photo" title="Change profile photo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5h3l1.5-2h7l1.5 2h3v10H4z"/><circle cx="12" cy="13.5" r="3.5"/></svg></button>
             </div>
-            <button class="profile-avatar-camera" type="button" (click)="editProfileUser(profile)" aria-label="Change profile photo" title="Edit profile photo">📷</button>
-          </div>
-          <div class="atlassian-profile-identity">
-            <div class="profile-name-pronouns">
-              <h2>{{ profileCreating ? (fullName || 'New user') : profile.fullName }}</h2>
+            <div class="people-profile-identity">
+              <h1>{{ profileCreating ? (fullName || 'New user') : profile.fullName }}</h1>
+              <p class="people-profile-role">{{ getDesignation(profile) || profile.org_role || 'Designation not assigned' }}</p>
+              <p class="people-profile-location"><span>{{ profile.locationCity || profile.locationState || profile.locationCountry || 'Location not added' }}</span><span *ngIf="profile.locationCountry">· {{ profile.locationCountry }}</span><span>· {{ profile.is_active ? 'Active' : 'Inactive' }}</span></p>
+              <a class="people-profile-email" [href]="'mailto:' + profile.email">{{ profile.email }}</a>
             </div>
-            <p class="user-profile-role">{{ getDesignation(profile) || profile.org_role || 'Designation not assigned' }}</p>
-            <div class="profile-contact-line">
-              <span><ng-container *ngIf="profile.locationCity || profile.locationState || profile.locationCountry; else noProfileLocation">
-                {{ profile.locationCity }}<span *ngIf="profile.locationCity && profile.locationState">, </span>{{ profile.locationState }}<span *ngIf="(profile.locationCity || profile.locationState) && profile.locationCountry">, </span>{{ profile.locationCountry }}
+            <div class="people-profile-actions">
+              <ng-container *ngIf="!profileEditMode; else profileEditActions">
+                <button class="people-profile-icon-action people-profile-message" type="button" (click)="messageInHello(profile)" aria-label="Message in Hello" title="Message in Hello"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H5l-2 2v-7.5A7.5 7.5 0 1 1 20 11.5Z"/><path d="M8 11.5h8M8 14.5h5"/></svg></button>
+                <a class="people-profile-icon-action" [href]="'mailto:' + profile.email" aria-label="Email user" title="Email"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="m4.5 7 7.5 6 7.5-6"/></svg></a>
+                <button *ngIf="canCreateSetupLink" class="people-profile-icon-action" type="button" (click)="createSetupLink(profile)" aria-label="Create password setup link" title="Password setup link"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 14.5 6 17a3 3 0 0 1-4.2-4.2l4-4A3 3 0 0 1 10 9"/><path d="m15.5 9.5 2.5-2.5a3 3 0 0 1 4.2 4.2l-4 4A3 3 0 0 1 14 15"/><path d="m8 16 8-8"/></svg></button>
+                <button *ngIf="canEditPerson(profile)" class="people-profile-icon-action" type="button" (click)="editProfileUser(profile)" aria-label="Edit profile" title="Edit profile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16.5-.8 4.3 4.3-.8L19 8.5 15.5 5z"/><path d="m13.8 6.7 3.5 3.5"/></svg></button>
+                <button *ngIf="profile.is_active && canDeactivateUsers" mat-stroked-button type="button" class="user-deactivate-button" (click)="deactivateUser(profile)">Deactivate</button>
+                <button class="people-profile-icon-action people-profile-close" type="button" (click)="closeUserProfile()" aria-label="Close profile" title="Close profile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
               </ng-container>
-              <ng-template #noProfileLocation>Location not added</ng-template></span>
-              <span class="profile-contact-dot">·</span>
-              <a [href]="'mailto:' + profile.email">{{ profile.email }}</a>
-            </div>
-            <div class="profile-quick-meta">
-              <span class="profile-status-dot" [class.inactive]="!profile.is_active"></span>
-              <span>{{ profile.is_active ? 'Active account' : 'Inactive account' }}</span>
-              <span class="profile-meta-separator">·</span>
-              <span>{{ profile.employee_id_prefix || 'EMP' }}-{{ profile.employee_id_number || '—' }}</span>
+              <ng-template #profileEditActions>
+                <button mat-stroked-button class="people-profile-form-button people-profile-cancel-button" type="button" (click)="cancelProfileEdit()" [disabled]="loading">Cancel</button>
+                <button mat-flat-button color="primary" class="people-profile-form-button people-profile-save-button" type="button" (click)="saveUser()" [disabled]="loading || !canSave">{{ loading ? 'Saving…' : profileCreating ? 'Create user' : 'Save changes' }}</button>
+              </ng-template>
             </div>
           </div>
-        </div>
-        <div class="user-profile-actions">
-          <ng-container *ngIf="!profileEditMode; else profileEditActions">
-            <button *ngIf="canEditPerson(profile)" class="profile-edit-icon" mat-icon-button type="button" (click)="editProfileUser(profile)" aria-label="Edit profile" title="Edit profile">✎</button>
-            <button mat-stroked-button type="button" (click)="closeUserProfile()">Back</button><button *ngIf="canCreateSetupLink" mat-stroked-button type="button" (click)="createSetupLink(profile)">Password setup link</button><label *ngIf="invitationUrl && canCreateSetupLink && invitationForUserId===profile.id">Copy this single-use link<input readonly [value]="invitationUrl" aria-label="Password setup link" (click)="$any($event.target).select()"></label>
-            <button *ngIf="profile.is_active && canDeactivateUsers" mat-stroked-button type="button" class="user-deactivate-button" (click)="deactivateUser(profile)">Deactivate</button>
-          </ng-container>
-          <ng-template #profileEditActions>
-            <button mat-stroked-button type="button" (click)="cancelProfileEdit()" [disabled]="loading">Cancel</button>
-            <button mat-flat-button color="primary" type="button" (click)="saveUser()" [disabled]="loading || !canSave">{{ loading ? 'Saving…' : profileCreating ? 'Create user' : 'Save changes' }}</button>
-          </ng-template>
-        </div>
-      </section>
+          <div class="people-profile-link-banner" *ngIf="invitationUrl && canCreateSetupLink && invitationForUserId===profile.id">
+            <span class="people-profile-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8.5 14.5 6 17a3 3 0 0 1-4.2-4.2l4-4A3 3 0 0 1 10 9"/><path d="m15.5 9.5 2.5-2.5a3 3 0 0 1 4.2 4.2l-4 4A3 3 0 0 1 14 15"/><path d="m8 16 8-8"/></svg></span>
+            <div class="people-profile-link-copy"><strong>Single-use setup link ready</strong><span>Click the link to select it, then copy and share it with the user.</span></div>
+            <input class="people-profile-link-input" readonly [value]="invitationUrl" aria-label="Password setup link" (click)="$any($event.target).select()">
+          </div>
+          <nav class="people-profile-tabs" role="tablist" aria-label="Profile sections">
+          <button type="button" role="tab" id="profile-summary-tab" aria-controls="profile-summary-panel" [attr.aria-selected]="activeProfileSection==='profile'" [class.active]="activeProfileSection==='profile'" (click)="activeProfileSection='profile'">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg><span>Profile</span>
+          </button>
+          <button type="button" role="tab" id="profile-reporting-tab" aria-controls="profile-reporting-panel" [attr.aria-selected]="activeProfileSection==='reporting'" [class.active]="activeProfileSection==='reporting'" (click)="activeProfileSection='reporting'">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5v4m0 0H5v5m7-5h7v5"/></svg><span>Reporting line</span><span class="people-profile-tab-count">{{ getDirectReports(profile).length }}</span>
+          </button>
+          </nav>
+        </section>
 
-      <nav class="user-profile-tabs" aria-label="User profile sections"><button mat-button type="button" class="active">Overview</button></nav>
-
-      <div class="user-profile-content user-profile-overview atlassian-profile-overview">
-        <main class="user-overview-main-column">
-          <ng-container *ngIf="!profileEditMode; else profileEditMain">
-            <section class="atlassian-overview-block">
-              <h3 class="user-overview-section-title">Personal information</h3>
-              <div class="atlassian-readonly-grid">
-                <div class="atlassian-readonly-field"><label>First name</label><strong>{{ profile.firstName || '—' }}</strong></div>
-                <div class="atlassian-readonly-field"><label>Last name</label><strong>{{ profile.lastName || '—' }}</strong></div>
-                <div class="atlassian-readonly-field"><label>Email</label><strong>{{ profile.email || '—' }}</strong></div>
-                <div class="atlassian-readonly-field"><label>Phone</label><strong>{{ profile.phone || '—' }}</strong></div>
-                <div class="atlassian-readonly-field"><label>Gender</label><strong>{{ profile.gender || '—' }}</strong></div>
-              </div>
-            </section>
-            <section class="atlassian-overview-block">
-              <h3 class="user-overview-section-title">Employment details</h3>
-              <div class="atlassian-readonly-grid">
-                <div class="atlassian-readonly-field"><label>Designation</label><strong>{{ getDesignation(profile) || 'Not assigned' }}</strong></div>
-                <div class="atlassian-readonly-field"><label>Employee ID</label><strong>{{ (profile.employee_id_prefix || 'EMP') + '-' + (profile.employee_id_number || '—') }}</strong></div>
-              </div>
-              <h4 class="user-overview-subtitle">Work location</h4>
-              <div class="atlassian-readonly-grid">
-                <div class="atlassian-readonly-field"><label>Country</label><strong>{{ profile.locationCountry || '—' }}</strong></div>
-                <div class="atlassian-readonly-field"><label>State</label><strong>{{ profile.locationState || '—' }}</strong></div>
-                <div class="atlassian-readonly-field"><label>City</label><strong>{{ profile.locationCity || '—' }}</strong></div>
-                <div class="atlassian-readonly-field"><label>Work model</label><strong>{{ profile.locationWorkModel || '—' }}</strong></div>
-                <div class="atlassian-readonly-field"><label>Desk code</label><strong>{{ profile.locationDeskCode || '—' }}</strong></div>
-              </div>
-            </section>
-          </ng-container>
-          <ng-template #profileEditMain>
-            <section class="atlassian-overview-block profile-edit-section">
-              <h3 class="user-overview-section-title">Personal information</h3>
-              <div class="profile-edit-grid">
-                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>First name</mat-label><input matInput [(ngModel)]="firstName" name="profileFirstName" required maxlength="100" /></mat-form-field>
-                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Last name</mat-label><input matInput [(ngModel)]="lastName" name="profileLastName" required maxlength="100" /></mat-form-field>
-                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Email</mat-label><input matInput type="email" [(ngModel)]="email" name="profileEmail" required maxlength="150" /></mat-form-field>
-                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Phone</mat-label><input matInput type="tel" [(ngModel)]="phone" name="profilePhone" required maxlength="15" /></mat-form-field>
-                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Gender</mat-label><mat-select [(ngModel)]="gender" name="profileGender" required><mat-option value="male">Male</mat-option><mat-option value="female">Female</mat-option><mat-option value="other">Other</mat-option></mat-select></mat-form-field>
-              </div>
-            </section>
-            <section class="atlassian-overview-block profile-edit-section">
-              <h3 class="user-overview-section-title">Employment details</h3>
-              <div class="profile-edit-grid">
-                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Designation</mat-label><mat-select [(ngModel)]="roleId" name="profileRole"><mat-option [value]="null">Not assigned</mat-option><mat-option *ngFor="let role of (roles$ | async)" [value]="+(role.id ?? role.roleId ?? role.role_id)">{{ role.roleName ?? role.role_name ?? role.name ?? role.title }}</mat-option></mat-select></mat-form-field>
-                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Organization role</mat-label><input matInput [(ngModel)]="orgRole" name="profileOrgRole" maxlength="100" readonly /></mat-form-field>
-                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Employee ID prefix</mat-label><mat-select [(ngModel)]="employeeIdPrefix" name="profileEmployeePrefix"><mat-option value="EMP">EMP</mat-option><mat-option value="CON">CON</mat-option><mat-option value="EXC">EXC</mat-option></mat-select></mat-form-field>
-                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Employee ID number</mat-label><input matInput [(ngModel)]="employeeIdNumber" name="profileEmployeeNumber" maxlength="50" /></mat-form-field>
-                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Account status</mat-label><mat-select [(ngModel)]="isActive" name="profileIsActive"><mat-option [value]="true">Active</mat-option><mat-option [value]="false">Inactive</mat-option></mat-select></mat-form-field>
-              </div>
-              <h4 class="user-overview-subtitle">Work location</h4>
-              <div class="profile-edit-grid">
-                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Country</mat-label><mat-select [(ngModel)]="locationCountry" name="profileCountry"><mat-option value="IN">India</mat-option><mat-option value="US">United States</mat-option><mat-option value="GB">United Kingdom</mat-option><mat-option value="CA">Canada</mat-option><mat-option value="AU">Australia</mat-option></mat-select></mat-form-field>
-                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>State</mat-label><input matInput [(ngModel)]="locationState" name="profileState" maxlength="100" /></mat-form-field>
-                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>City</mat-label><input matInput [(ngModel)]="locationCity" name="profileCity" maxlength="100" /></mat-form-field>
-                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Work model</mat-label><mat-select [(ngModel)]="locationWorkModel" name="profileWorkModel"><mat-option value="HQ">Office / HQ</mat-option><mat-option value="HYBRID">Hybrid</mat-option><mat-option value="REMOTE">Remote</mat-option></mat-select></mat-form-field>
-                <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Desk code</mat-label><input matInput [(ngModel)]="locationDeskCode" name="profileDeskCode" maxlength="50" [disabled]="locationWorkModel === 'REMOTE'" /></mat-form-field>
-              </div>
-              <div class="profile-photo-edit-row">
-                <div class="profile-photo-preview"><img *ngIf="localPreviewUrl || profilePictureUrl" [src]="localPreviewUrl || getAvatarDisplaySrc(profilePictureUrl)" alt="Profile photo preview" /><span *ngIf="!localPreviewUrl && !profilePictureUrl">{{ getAvatarInitials(fullName) }}</span></div>
-                <div><strong>Profile photo</strong><p>Update the profile picture if needed.</p><input #profilePhotoInput type="file" accept="image/*" hidden (change)="onFileSelected($event)" /><button mat-stroked-button type="button" (click)="profilePhotoInput.click()">Choose photo</button><button *ngIf="profilePictureUrl || localPreviewUrl" mat-button type="button" (click)="clearProfilePicture()">Remove</button></div>
-              </div>
-            </section>
-          </ng-template>
-        </main>
-
-        <aside class="user-overview-side-column">
-          <section class="atlassian-overview-block reporting-hierarchy-block">
-            <h3 class="user-overview-section-title">Reporting line</h3>
-            <div class="profile-manager-edit" *ngIf="profileEditMode">
-              <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Manager</mat-label><input matInput [(ngModel)]="managerSearchText" name="profileManager" [matAutocomplete]="profileManagerAuto" (input)="onManagerSearchInput()" /><button *ngIf="managerId" matSuffix mat-icon-button type="button" aria-label="Clear manager" (click)="clearManagerSelection()">×</button><mat-autocomplete #profileManagerAuto="matAutocomplete" [displayWith]="displayManager" (optionSelected)="onManagerSelected($event)"><mat-option *ngFor="let manager of filteredManagers" [value]="manager"><div class="profile-manager-option"><strong>{{ manager.fullName }}</strong><small>{{ manager.email }}</small></div></mat-option></mat-autocomplete></mat-form-field>
-              <p class="profile-edit-hint">Choose a manager to update this user's reporting line.</p>
-            </div>
-            <div class="reporting-line-visual" *ngIf="getManagerName(profile) !== 'Not assigned'; else noManager">
-              <div class="reporting-person reporting-manager"><div class="reporting-avatar">{{ getAvatarInitials(getManagerName(profile)) }}</div><div><strong>{{ getManagerName(profile) }}</strong><small>Manager</small></div></div>
-              <div class="reporting-connector reporting-connector-down"></div>
-              <div class="reporting-person reporting-current"><div class="reporting-avatar">{{ getAvatarInitials(profile.fullName) }}</div><div><strong>{{ profile.fullName }}</strong><small>{{ getDesignation(profile) || 'Team member' }}</small></div></div>
-              <div class="reporting-directs" *ngIf="getDirectReports(profile).length > 0">
-                <div class="reporting-connector reporting-connector-down"></div>
-                <div class="reporting-directs-list"><div class="reporting-person" *ngFor="let person of getDirectReports(profile)"><div class="reporting-avatar">{{ getAvatarInitials(person.fullName) }}</div><div><strong>{{ person.fullName }}</strong><small>{{ getDesignation(person) || 'Direct report' }}</small></div></div></div>
-              </div>
-            </div>
-            <ng-template #noManager>
-              <div class="reporting-empty"><div class="reporting-empty-icon">↗</div><strong>No reporting line configured</strong><p>Assign a manager to display the reporting hierarchy for this user.</p></div>
+        <ng-container *ngIf="activeProfileSection==='profile'">
+        <div class="people-profile-main-layout" role="tabpanel" id="profile-summary-panel" aria-labelledby="profile-summary-tab">
+          <main class="people-profile-primary">
+            <ng-container *ngIf="!profileEditMode; else profileEditMain">
+              <section class="people-profile-card people-profile-verification">
+                <div class="people-profile-verification-main"><span class="people-profile-verification-icon" [class.verified]="profile.emailVerified">{{ profile.emailVerified ? '✓' : '!' }}</span><div><strong>{{ profile.emailVerified ? 'Email verified' : 'Email verification needed' }}</strong><p>{{ profile.emailVerified ? 'This address is confirmed for account updates.' : 'Verify this address to keep account updates and recovery links reliable.' }}</p></div><button *ngIf="!profile.emailVerified && canVerifyEmail(profile)" type="button" [disabled]="sendingEmailVerificationFor===profile.id" (click)="sendEmailVerification(profile)">{{ sendingEmailVerificationFor===profile.id ? 'Sending…' : 'Send verification email' }}</button></div>
+              </section>
+              <section class="people-profile-card">
+                <h2>Contact information</h2>
+                <div class="people-profile-facts">
+                  <div><label>Email</label><a [href]="'mailto:' + profile.email">{{ profile.email || 'Not added' }}</a></div>
+                  <div><label>Chat</label><button type="button" class="people-profile-chat-link" (click)="messageInHello(profile)">Message in Hello ↗</button></div>
+                  <div><label>Mobile</label><span>{{ profile.phone || 'Not added' }}</span></div>
+                  <div><label>Work location</label><span>{{ profile.locationCity || profile.locationState || profile.locationCountry || 'Not added' }}</span></div>
+                  <div><label>Job title</label><span>{{ getDesignation(profile) || 'Not assigned' }}</span></div>
+                  <div><label>Department</label><span>{{ profile['departmentName'] || 'Not assigned' }}</span></div>
+                  <div><label>Business address</label><span>{{ profile.locationCity || 'Not added' }}<ng-container *ngIf="profile.locationCountry">, {{ profile.locationCountry }}</ng-container></span></div>
+                </div>
+              </section>
+              <section class="people-profile-card">
+                <h2>About</h2>
+                <p class="people-profile-about-copy">{{ getDesignation(profile) || profile.org_role || 'This person is part of the organization.' }}<ng-container *ngIf="profile['departmentName']"> · {{ profile['departmentName'] }}</ng-container></p>
+                <div class="people-profile-facts people-profile-facts-compact">
+                  <div><label>Employee ID</label><span>{{ (profile.employee_id_prefix || 'EMP') + '-' + (profile.employee_id_number || '—') }}</span></div>
+                  <div><label>Function</label><span>{{ profile['functionName'] || 'Not assigned' }}</span></div>
+                  <div><label>Division</label><span>{{ profile['divisionName'] || 'Not assigned' }}</span></div>
+                  <div><label>Work model</label><span>{{ profile.locationWorkModel || 'Not set' }}</span></div>
+                </div>
+              </section>
+            </ng-container>
+            <ng-template #profileEditMain>
+              <section class="people-profile-card people-profile-edit-section">
+                <h2>Personal information</h2>
+                <div class="profile-edit-grid">
+                  <mat-form-field appearance="outline" class="saas-form-field"><mat-label>First name</mat-label><input matInput [(ngModel)]="firstName" name="profileFirstName" required maxlength="100" /></mat-form-field>
+                  <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Last name</mat-label><input matInput [(ngModel)]="lastName" name="profileLastName" required maxlength="100" /></mat-form-field>
+                  <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Email</mat-label><input matInput type="email" [(ngModel)]="email" name="profileEmail" required maxlength="150" /></mat-form-field>
+                  <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Phone</mat-label><input matInput type="tel" [(ngModel)]="phone" name="profilePhone" required maxlength="15" /></mat-form-field>
+                  <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Gender</mat-label><mat-select [(ngModel)]="gender" name="profileGender" required><mat-option value="male">Male</mat-option><mat-option value="female">Female</mat-option><mat-option value="other">Other</mat-option></mat-select></mat-form-field>
+                </div>
+              </section>
+              <section class="people-profile-card people-profile-edit-section">
+                <h2>Employment details</h2>
+                <div class="profile-edit-grid">
+                  <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Designation</mat-label><mat-select [(ngModel)]="roleId" name="profileRole"><mat-option [value]="null">Not assigned</mat-option><mat-option *ngFor="let role of (roles$ | async)" [value]="+(role.id ?? role.roleId ?? role.role_id)">{{ role.roleName ?? role.role_name ?? role.name ?? role.title }}</mat-option></mat-select></mat-form-field>
+                  <mat-form-field appearance="outline" class="saas-form-field" *ngIf="canManageUsers || (profileCreating && canCreateUsers)"><mat-label>Department</mat-label><mat-select [(ngModel)]="departmentId" name="department"><mat-option [value]="null">Not assigned</mat-option><mat-option *ngFor="let unit of units('DEPARTMENT')" [value]="unit.id">{{unit.name}}</mat-option></mat-select><button matSuffix mat-icon-button type="button" *ngIf="canManageUsers" (click)="$event.stopPropagation();addOrganizationUnit('DEPARTMENT')" aria-label="Add department">+</button></mat-form-field>
+                  <mat-form-field appearance="outline" class="saas-form-field" *ngIf="canManageUsers || (profileCreating && canCreateUsers)"><mat-label>Function</mat-label><mat-select [(ngModel)]="functionId" name="function"><mat-option [value]="null">Not assigned</mat-option><mat-option *ngFor="let unit of units('FUNCTION')" [value]="unit.id">{{unit.name}}</mat-option></mat-select><button matSuffix mat-icon-button type="button" *ngIf="canManageUsers" (click)="$event.stopPropagation();addOrganizationUnit('FUNCTION')" aria-label="Add function">+</button></mat-form-field>
+                  <mat-form-field appearance="outline" class="saas-form-field" *ngIf="canManageUsers || (profileCreating && canCreateUsers)"><mat-label>Division</mat-label><mat-select [(ngModel)]="divisionId" name="division"><mat-option [value]="null">Not assigned</mat-option><mat-option *ngFor="let unit of units('DIVISION')" [value]="unit.id">{{unit.name}}</mat-option></mat-select><button matSuffix mat-icon-button type="button" *ngIf="canManageUsers" (click)="$event.stopPropagation();addOrganizationUnit('DIVISION')" aria-label="Add division">+</button></mat-form-field>
+                  <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Organization role</mat-label><input matInput [(ngModel)]="orgRole" name="profileOrgRole" maxlength="100" readonly /></mat-form-field>
+                  <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Employee ID prefix</mat-label><mat-select [(ngModel)]="employeeIdPrefix" name="profileEmployeePrefix"><mat-option value="EMP">EMP</mat-option><mat-option value="CON">CON</mat-option><mat-option value="EXC">EXC</mat-option></mat-select></mat-form-field>
+                  <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Employee ID number</mat-label><input matInput [(ngModel)]="employeeIdNumber" name="profileEmployeeNumber" maxlength="50" /></mat-form-field>
+                  <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Account status</mat-label><mat-select [(ngModel)]="isActive" name="profileIsActive"><mat-option [value]="true">Active</mat-option><mat-option [value]="false">Inactive</mat-option></mat-select></mat-form-field>
+                </div>
+                <h3 class="people-profile-subheading">Work location</h3>
+                <div class="profile-edit-grid">
+                  <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Country</mat-label><mat-select [(ngModel)]="locationCountry" name="profileCountry"><mat-option value="IN">India</mat-option><mat-option value="US">United States</mat-option><mat-option value="GB">United Kingdom</mat-option><mat-option value="CA">Canada</mat-option><mat-option value="AU">Australia</mat-option></mat-select></mat-form-field>
+                  <mat-form-field appearance="outline" class="saas-form-field"><mat-label>State</mat-label><input matInput [(ngModel)]="locationState" name="profileState" maxlength="100" /></mat-form-field>
+                  <mat-form-field appearance="outline" class="saas-form-field"><mat-label>City</mat-label><input matInput [(ngModel)]="locationCity" name="profileCity" maxlength="100" /></mat-form-field>
+                  <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Work model</mat-label><mat-select [(ngModel)]="locationWorkModel" name="profileWorkModel"><mat-option value="HQ">Office / HQ</mat-option><mat-option value="HYBRID">Hybrid</mat-option><mat-option value="REMOTE">Remote</mat-option></mat-select></mat-form-field>
+                  <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Desk code</mat-label><input matInput [(ngModel)]="locationDeskCode" name="profileDeskCode" maxlength="50" [disabled]="locationWorkModel === 'REMOTE'" /></mat-form-field>
+                </div>
+                <div class="profile-photo-edit-row"><div class="profile-photo-preview"><img *ngIf="localPreviewUrl || profilePictureUrl" [src]="localPreviewUrl || getAvatarDisplaySrc(profilePictureUrl)" alt="Profile photo preview" /><span *ngIf="!localPreviewUrl && !profilePictureUrl">{{ getAvatarInitials(fullName) }}</span></div><div><strong>Profile photo</strong><p>Update the profile picture if needed.</p><input #profilePhotoInput type="file" accept="image/*" hidden (change)="onFileSelected($event)" /><button mat-stroked-button type="button" (click)="profilePhotoInput.click()">Choose photo</button><button *ngIf="profilePictureUrl || localPreviewUrl" mat-button type="button" (click)="clearProfilePicture()">Remove</button></div></div>
+              </section>
             </ng-template>
-          </section>
-        </aside>
+          </main>
+          <aside class="people-profile-sidebar">
+            <section class="people-profile-card">
+              <h2>Profile details</h2>
+              <div class="people-profile-sidebar-row"><span>Work location</span><strong>{{ profile.locationCity || profile.locationState || profile.locationCountry || 'Not added' }}</strong></div>
+              <div class="people-profile-sidebar-row"><span>Work model</span><strong>{{ profile.locationWorkModel || 'Not set' }}</strong></div>
+              <div class="people-profile-sidebar-row"><span>Employee ID</span><strong>{{ (profile.employee_id_prefix || 'EMP') + '-' + (profile.employee_id_number || '—') }}</strong></div>
+            </section>
+          </aside>
+        </div>
+        <section class="people-profile-access" *ngIf="profile.id > 0"><h2>Workspace access</h2><app-user-access-panel [userId]="profile.id"></app-user-access-panel></section>
+        </ng-container>
+
+        <section class="people-profile-reporting-page" *ngIf="activeProfileSection==='reporting'" role="tabpanel" id="profile-reporting-panel" aria-labelledby="profile-reporting-tab">
+          <header class="people-reporting-heading"><div><span>PEOPLE · ORGANIZATION</span><h2>Reporting line</h2><p>See the manager, this person, and the people they lead.</p></div><div class="people-reporting-heading-actions"><div class="people-reporting-total"><strong>{{ getDirectReports(profile).length }}</strong><span>direct reports</span></div><button *ngIf="!profileEditMode && canEditPerson(profile)" class="people-reporting-edit-button" type="button" (click)="editReportingLine(profile)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16.5-.8 4.3 4.3-.8L19 8.5 15.5 5z"/><path d="m13.8 6.7 3.5 3.5"/></svg>Edit reporting line</button></div></header>
+          <div class="people-reporting-edit" *ngIf="profileEditMode">
+            <div><strong>Update manager</strong><p>Search by name or email, then choose a person.</p></div>
+            <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Search manager</mat-label><input matInput [(ngModel)]="managerSearchText" name="profileManager" [matAutocomplete]="profileManagerAuto" (input)="onManagerSearchInput()" /><button *ngIf="managerId" matSuffix mat-icon-button type="button" aria-label="Clear manager" (click)="clearManagerSelection()">×</button><mat-autocomplete #profileManagerAuto="matAutocomplete" [displayWith]="displayManager" (optionSelected)="onManagerSelected($event)"><mat-option *ngFor="let manager of filteredManagers" [value]="manager"><div class="profile-manager-option"><strong>{{ manager.fullName }}</strong><small>{{ manager.email }}</small></div></mat-option></mat-autocomplete></mat-form-field>
+          </div>
+          <div class="people-reporting-chart">
+            <div class="people-reporting-manager-node" *ngIf="getManagerName(profile) !== 'Not assigned'; else noManagerNode">
+              <span class="people-reporting-level">MANAGER</span>
+              <div class="people-reporting-person-card">
+                <span class="people-reporting-avatar"><img *ngIf="getReportingManager(profile)?.profile_picture_url as managerPhoto" [src]="getAvatarDisplaySrc(managerPhoto)" [alt]="getManagerName(profile)" /><span *ngIf="!getReportingManager(profile)?.profile_picture_url">{{ getAvatarInitials(getManagerName(profile)) }}</span></span>
+                <span class="people-reporting-person-copy"><strong>{{ getManagerName(profile) }}</strong><small>{{ getReportingManagerDesignation(profile) }}</small></span>
+                <span class="people-reporting-node-badge" aria-label="Manager">↑</span>
+              </div>
+            </div>
+            <ng-template #noManagerNode>
+              <div class="people-reporting-unassigned"><span class="people-reporting-unassigned-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18"/></svg></span><span><strong>No manager assigned</strong><small>This person currently has no reporting manager.</small></span><button *ngIf="!profileEditMode && canEditPerson(profile)" type="button" (click)="editReportingLine(profile)">Assign manager</button></div>
+            </ng-template>
+            <div class="people-reporting-connector" aria-hidden="true"></div>
+            <div class="people-reporting-current-node">
+              <span class="people-reporting-level">THIS PERSON</span>
+              <div class="people-reporting-person-card is-current">
+                <span class="people-reporting-avatar"><img *ngIf="profile.profile_picture_url" [src]="getAvatarDisplaySrc(profile.profile_picture_url)" [alt]="profile.fullName" /><span *ngIf="!profile.profile_picture_url">{{ getAvatarInitials(profile.fullName) }}</span></span>
+                <span class="people-reporting-person-copy"><strong>{{ profile.fullName }}</strong><small>{{ getDesignation(profile) || 'Team member' }}</small></span>
+                <span class="people-reporting-node-badge" aria-label="Selected person">●</span>
+              </div>
+            </div>
+            <ng-container *ngIf="getDirectReports(profile).length; else noDirectReports">
+              <div class="people-reporting-connector" aria-hidden="true"></div>
+              <div class="people-reporting-reports"><div class="people-reporting-reports-heading"><div><strong>Direct reports</strong><span>People reporting to {{ profile.fullName }}</span></div></div>
+                <div class="people-reporting-directory-tools"><label class="people-reporting-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.3"/><path d="m15.5 15.5 4.3 4.3"/></svg><input type="search" [(ngModel)]="reportingSearchText" aria-label="Search direct reports" placeholder="Search direct reports" autocomplete="off" /></label><span class="people-reporting-count">{{ getFilteredDirectReports(profile).length }} people</span></div>
+                <div class="people-reporting-no-match" *ngIf="reportingSearchText.trim() && !getFilteredDirectReports(profile).length"><strong>No direct reports match that search.</strong><button type="button" (click)="reportingSearchText=''">Clear search</button></div>
+                <div class="people-reporting-people-grid">
+                  <button class="people-reporting-person-card people-reporting-person-button" type="button" *ngFor="let person of getVisibleDirectReports(profile); trackBy: trackByUserId" (click)="viewUser(person)" [attr.aria-label]="'Open profile for ' + person.fullName">
+                    <span class="people-reporting-avatar"><img *ngIf="person.profile_picture_url" [src]="getAvatarDisplaySrc(person.profile_picture_url)" [alt]="person.fullName" /><span *ngIf="!person.profile_picture_url">{{ getAvatarInitials(person.fullName) }}</span></span><span class="people-reporting-person-copy"><strong>{{ person.fullName }}</strong><small>{{ getDesignation(person) || 'Team member' }}</small></span><svg class="people-reporting-open-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>
+                  </button>
+                </div>
+                <button class="people-reporting-show-more" type="button" *ngIf="!reportingShowAll && getFilteredDirectReports(profile).length > getVisibleDirectReports(profile).length" (click)="reportingShowAll=true">Show all {{ getFilteredDirectReports(profile).length }} direct reports</button>
+                <button class="people-reporting-show-more" type="button" *ngIf="reportingShowAll && getFilteredDirectReports(profile).length > 12" (click)="reportingShowAll=false">Show fewer people</button>
+              </div>
+            </ng-container>
+            <ng-template #noDirectReports><div class="people-reporting-no-reports"><span class="people-reporting-no-reports-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M17 8h4m-2-2v4"/></svg></span><span><strong>No direct reports yet</strong><small>Direct reports will appear here when a manager is assigned to them.</small></span></div></ng-template>
+          </div>
+        </section>
       </div>
-      <app-user-access-panel *ngIf="profile.id > 0" [userId]="profile.id"></app-user-access-panel>
     </section>
   </ng-container>
 
@@ -497,12 +522,7 @@
             aria-label="Users directory">
     <mat-card-header class="gp-material-card-header directory-card-header directory-card-header-compact">
       <span class="directory-result-summary">Organization members</span>
-      <button type="button"
-              class="gp-button gp-primary directory-register-button"
-              *ngIf="canCreateUsers" (click)="openCreateForm()">
-        <span class="btn-indicator-pulse"></span>
-        Create user
-      </button>
+
     </mat-card-header>
 
     <mat-card-content class="directory-card-content">
@@ -601,7 +621,7 @@
 
               <div class="matrix-identity-details">
                 <div class="identity-top-row">
-                  <h4>{{ user.fullName }}</h4>
+                  <h4><app-actor-icon [actorId]="user.id"></app-actor-icon> {{ user.fullName }}</h4>
                   <code class="matrix-tag-id" *ngIf="user.employee_id_prefix">
                     {{ user.employee_id_prefix }}-{{ user.employee_id_number || '—' }}
                   </code>

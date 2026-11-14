@@ -15,12 +15,12 @@
       *ngIf="dashboardViewMode === 'projects'">
 
       <section class="directory-section" *ngIf="!selectedProject">
-        <app-workspace-hero eyebrow="PLAN · DELIVER · GROW" title="Projects" subtitle="Organize initiatives, track deadlines, and keep every delivery cycle connected." image="assets/covers/projects.png" imageAlt="A team coordinating a project plan"></app-workspace-hero>
+        <app-workspace-hero eyebrow="PLAN · DELIVER · GROW" title="Projects" subtitle="Organize initiatives, track deadlines, and keep every delivery cycle connected." image="assets/covers/projects.png" imageAlt="A team coordinating a project plan"><button workspace-actions type="button" mat-flat-button color="primary" class="create-project-creative-button" *ngIf="canManageProjects" (click)="initiateNewProject()"><mat-icon>add</mat-icon><span>Create project</span><mat-icon class="create-project-sparkle">auto_awesome</mat-icon></button></app-workspace-hero>
 
         <ng-container *ngIf="projects$ | async as projectsList; else loadingProjects">
           <div class="projects-list-toolbar">
             <div><h2>All projects</h2><p>Open a project to view its plan, people and delivery cycles.</p></div>
-            <button type="button" mat-flat-button color="primary" class="create-project-creative-button" *ngIf="canManageProjects" (click)="initiateNewProject()"><mat-icon>add</mat-icon><span>Create project</span><mat-icon class="create-project-sparkle">auto_awesome</mat-icon></button>
+
           </div>
           <div class="project-table-shell" *ngIf="getFilteredProjects(projectsList).length; else noProjects">
             <table mat-table [dataSource]="getFilteredProjects(projectsList)" class="projects-mat-table">
@@ -244,7 +244,7 @@
               (click)="openSprintDetails(sprint)">
 
               <mat-card-header class="sprint-card-header">
-                
+
                 <mat-card-title>
                   {{ sprint.name }}
                 </mat-card-title>
@@ -255,7 +255,7 @@
 
               <mat-card-content class="sprint-card-content">
                 <p class="sprint-description">
-                  
+
                 </p>
                 <div class="sprint-card-meta">
                   <div class="sprint-meta-item">
@@ -270,7 +270,7 @@
                     <span>Progress</span>
                     <strong>{{ getSprintProgress(sprint) }}%</strong>
                   </div>
-                 
+
                 </div>
               </mat-card-content>
 
@@ -350,7 +350,7 @@
               (click)="openSprintDetails(sprint)">
 
               <mat-card-header class="sprint-card-header">
-               
+
                 <mat-card-title>
                   {{ sprint.name }}
                 </mat-card-title>
@@ -376,7 +376,7 @@
                     <span>Velocity</span>
                     <strong>{{ sprint.target_velocity || 0 }} pts</strong>
                   </div>
-                 
+
                 </div>
               </mat-card-content>
 
@@ -560,6 +560,7 @@
         <button type="button" class="project-profile-tab" [class.active]="selectedProjectTabIndex === 2" [attr.aria-selected]="selectedProjectTabIndex === 2" (click)="selectedProjectTabIndex = 2">Parameters</button>
         <button type="button" class="project-profile-tab" [class.active]="selectedProjectTabIndex === 3" [attr.aria-selected]="selectedProjectTabIndex === 3" (click)="selectedProjectTabIndex = 3">Sprints preview</button>
         <button type="button" class="project-profile-tab" [class.active]="selectedProjectTabIndex === 4" (click)="openProjectPlanning(profile)">Project planning</button>
+        <button type="button" class="project-profile-tab" [class.active]="selectedProjectTabIndex === 5" (click)="selectedProjectTabIndex = 5">Agents</button>
       </nav>
 
       <ng-container *ngIf="selectedProjectTabIndex === 0">
@@ -592,7 +593,7 @@
             </section>
           </div>
         </section>
-      
+
       </ng-container>
 
       <ng-container *ngIf="selectedProjectTabIndex === 1">
@@ -606,7 +607,7 @@
           <div class="gp-people-grid" *ngIf="individualMembers.length; else viewNoMembers"><app-person-card *ngFor="let member of individualMembers" [id]="member.id" [name]="member.name" [email]="member.email" [designation]="memberDesignation(member)" [avatar]="member.profilePictureUrl"></app-person-card></div>
           <ng-template #viewNoMembers><p class="profile-empty-note">Team member details will appear here when allocations are available.</p></ng-template>
         </section>
-      
+
       </ng-container>
 
       <ng-container *ngIf="selectedProjectTabIndex === 2">
@@ -615,7 +616,7 @@
           <div class="parameter-slider-grid"><div class="parameter-control"><div class="parameter-label"><label>Backlog scope</label><strong>{{ profile.total_backlog_points }} points</strong></div><mat-slider min="0" max="1000" step="10" disabled><input matSliderThumb [value]="profile.total_backlog_points" /></mat-slider><div class="parameter-scale"><span>0</span><span>1,000 points</span></div></div><div class="parameter-control"><div class="parameter-label"><label>Target velocity</label><strong>{{ profile.target_velocity }} pts / sprint</strong></div><mat-slider min="1" max="150" step="1" disabled><input matSliderThumb [value]="profile.target_velocity" /></mat-slider><div class="parameter-scale"><span>1</span><span>150 pts</span></div></div><div class="parameter-control"><div class="parameter-label"><label>Sprint duration</label><strong>{{ profile.sprint_duration_weeks }} weeks</strong></div><mat-slider min="1" max="6" step="1" disabled><input matSliderThumb [value]="profile.sprint_duration_weeks" /></mat-slider><div class="parameter-scale"><span>1 week</span><span>6 weeks</span></div></div></div>
           <div class="parameter-results"><div><span>Estimated sprints</span><strong>{{ profile.computed_sprint_count }}</strong></div><div><span>Estimated duration</span><strong>{{ profile.computed_total_duration_weeks }} weeks</strong></div><div><span>Backlog rollover</span><strong>{{ profile.auto_rollover_backlog ? 'Enabled' : 'Disabled' }}</strong></div></div>
         </section>
-      
+
       </ng-container>
 
       <ng-container *ngIf="selectedProjectTabIndex === 3">
@@ -626,9 +627,10 @@
           <div class="profile-section-heading"><div><h2>Sprints preview</h2><p>Planned delivery cycles for {{ profile.name || (isProfileCreating ? 'New project' : 'Untitled project') }}.</p></div><button mat-stroked-button type="button" (click)="switchToSprintsForProject(profile.project_code, profile.id)">Open sprint directory</button></div>
           <section class="project-sprint-scope"><header><h3>Sprint work items</h3><button type="button" class="gp-button gp-primary" (click)="openProjectPlanning(profile)">Project planning</button></header><p *ngIf="projectWorkLoading">Loading sprint work…</p><p *ngIf="projectWorkError" role="status">{{projectWorkError}}</p><details *ngFor="let sprint of getProjectProfileSprints(profile)"><summary>{{sprint.name}} <b>{{sprintPreviewItems(sprint).length}} items</b></summary><app-planning-work-table [items]="sprintPreviewItems(sprint)" [showAssignee]="true" [sprintLabel]="sprint.name" (itemOpened)="openProjectWorkItem($event)"></app-planning-work-table><p *ngIf="!sprintPreviewItems(sprint).length">No work assigned to this sprint.</p></details></section><div class="project-table-shell profile-sprints-table-shell"><table mat-table [dataSource]="getProjectProfileSprints(profile)" class="projects-mat-table profile-sprints-table"><ng-container matColumnDef="sprint"><th mat-header-cell *matHeaderCellDef>Sprint</th><td mat-cell *matCellDef="let sprint"><button type="button" class="sprint-table-link" (click)="openSprintDetails(sprint)"><strong>{{ sprint.name }}</strong><small>{{ sprint.projectCode }} · Sprint {{ sprint.sprint_number }}</small></button></td></ng-container><ng-container matColumnDef="sprintStatus"><th mat-header-cell *matHeaderCellDef>Status</th><td mat-cell *matCellDef="let sprint"><span class="project-status-badge"><span class="status-dot"></span>{{ sprint.status | titlecase }}</span></td></ng-container><ng-container matColumnDef="start"><th mat-header-cell *matHeaderCellDef>Start date</th><td mat-cell *matCellDef="let sprint">{{ sprint.scheduled_start_date || '—' }}</td></ng-container><ng-container matColumnDef="end"><th mat-header-cell *matHeaderCellDef>End date</th><td mat-cell *matCellDef="let sprint">{{ sprint.scheduled_end_date || '—' }}</td></ng-container><ng-container matColumnDef="velocity"><th mat-header-cell *matHeaderCellDef>Velocity</th><td mat-cell *matCellDef="let sprint">{{ sprint.target_velocity || 0 }} pts</td></ng-container><tr mat-header-row *matHeaderRowDef="profileSprintDisplayedColumns"></tr><tr mat-row *matRowDef="let row; columns: profileSprintDisplayedColumns"></tr></table><div class="project-table-empty" *ngIf="getProjectProfileSprints(profile).length === 0"><mat-icon>event_busy</mat-icon><strong>No sprints yet</strong><span>Sprints will appear here once they are created.</span></div></div>
         </section>
-      
+
       </ng-container>
 
+      <section *ngIf="selectedProjectTabIndex === 5"><app-agents [projectId]="profile.id || 0" [embedded]="true"></app-agents></section>
       <section class="project-planning-tab" [hidden]="selectedProjectTabIndex !== 4"><app-sprint-planning *ngIf="planningVisited" [projectScope]="true" [planningProjectId]="profile.id || null"></app-sprint-planning></section>
     </div>
 
@@ -661,7 +663,7 @@
             </div>
           </ng-template>
         </section>
-      
+
       </ng-container>
 
       <ng-container *ngIf="selectedProjectTabIndex === 1">
@@ -680,7 +682,7 @@
           <div class="gp-people-grid" *ngIf="individualMembers.length"><app-person-card *ngFor="let member of individualMembers" [id]="member.id" [name]="member.name" [email]="member.email" [designation]="memberDesignation(member)" [avatar]="member.profilePictureUrl" [removable]="true" (remove)="removeProfileMember(member.id)"></app-person-card></div>
           <p class="profile-empty-note" *ngIf="!individualMembers.length">No individual members added. Use Add individuals to select people.</p>
         </section>
-      
+
       </ng-container>
 
       <ng-container *ngIf="selectedProjectTabIndex === 2">
@@ -695,7 +697,7 @@
           <div class="parameter-results"><div><span>Estimated sprints</span><strong>{{ isProfileEditing ? projectForm.computed_sprint_count : profile.computed_sprint_count }}</strong></div><div><span>Estimated duration</span><strong>{{ isProfileEditing ? projectForm.computed_total_duration_weeks : profile.computed_total_duration_weeks }} weeks</strong></div><div><span>Backlog rollover</span><strong>{{ (isProfileEditing ? projectForm.auto_rollover_backlog : profile.auto_rollover_backlog) ? 'Enabled' : 'Disabled' }}</strong></div></div>
           <div class="project-form-full project-rollover-row" *ngIf="isProfileEditing"><mat-slide-toggle [(ngModel)]="projectForm.auto_rollover_backlog" name="profileRollover">Automatically roll incomplete backlog forward</mat-slide-toggle></div>
         </section>
-      
+
       </ng-container>
 
       <ng-container *ngIf="selectedProjectTabIndex === 3">
@@ -714,7 +716,7 @@
           <div class="project-edit-actions" *ngIf="isProfileEditing"><button mat-stroked-button type="button" (click)="cancelProfileEdit()">Cancel</button><button mat-flat-button color="primary" type="button" [disabled]="isSaving || isLoadingResources || !!allocationLoadError || !projectForm.name.trim()" (click)="saveProfileProject()"><mat-spinner *ngIf="isSaving" diameter="18"></mat-spinner><mat-icon *ngIf="!isSaving">save</mat-icon>{{ isSaving ? 'Saving…' : (isProfileCreating ? 'Create project' : 'Save changes') }}</button></div>
           <div class="profile-step-actions" *ngIf="!isProfileEditing"><button mat-button matStepperPrevious type="button"><mat-icon>arrow_back</mat-icon> Parameters</button><button mat-flat-button color="primary" type="button" *ngIf="canManageProjects" (click)="editProjectInProfile(profile)"><mat-icon>edit</mat-icon> Edit project</button></div>
         </section>
-      
+
       </ng-container>
 
       <section class="project-planning-tab" *ngIf="selectedProjectTabIndex === 4">

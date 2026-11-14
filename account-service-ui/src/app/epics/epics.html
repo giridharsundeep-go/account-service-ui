@@ -1,6 +1,16 @@
 <section class="epics-page">
 
-  <app-workspace-hero eyebrow="STRATEGY · SCOPE · OUTCOMES" title="Epics &amp; work" subtitle="Connect the larger outcomes to the stories and tasks that move them forward." image="assets/covers/epics.png" imageAlt="A product team mapping a strategic initiative across a roadmap"></app-workspace-hero>
+  <app-workspace-hero eyebrow="STRATEGY · SCOPE · OUTCOMES" title="Epics &amp; work" subtitle="Connect the larger outcomes to the stories and tasks that move them forward." image="assets/covers/epics.png" imageAlt="A product team mapping a strategic initiative across a roadmap">    <details workspace-actions class="epics-create-dropdown epics-header-create-dropdown">
+      <summary class="epics-create-dropdown-trigger" aria-label="Create work item">
+        <mat-icon>add</mat-icon><span>Create</span><mat-icon class="dropdown-chevron">expand_more</mat-icon>
+      </summary>
+      <div class="epics-create-dropdown-menu" role="menu">
+        <button type="button" role="menuitem" (click)="openCreateEpic()"><mat-icon>flag</mat-icon><span>Create Epic</span></button>
+        <button type="button" role="menuitem" (click)="openCreateStory()"><mat-icon>auto_stories</mat-icon><span>Create Story</span></button>
+        <button type="button" role="menuitem" (click)="openCreateTask()"><mat-icon>task_alt</mat-icon><span>Create Task</span></button>
+        <button type="button" role="menuitem" (click)="openCreateIssue()"><mat-icon>bug_report</mat-icon><span>Create Issue</span></button>
+      </div>
+    </details></app-workspace-hero>
 
 <!-- Same Google-style header structure as Boards -->
   <header class="google-header epics-google-header">
@@ -39,17 +49,7 @@
       </div>
     </div>
 
-    <details class="epics-create-dropdown epics-header-create-dropdown">
-      <summary class="epics-create-dropdown-trigger" aria-label="Create work item">
-        <mat-icon>add</mat-icon><span>Create</span><mat-icon class="dropdown-chevron">expand_more</mat-icon>
-      </summary>
-      <div class="epics-create-dropdown-menu" role="menu">
-        <button type="button" role="menuitem" (click)="openCreateEpic()"><mat-icon>flag</mat-icon><span>Create Epic</span></button>
-        <button type="button" role="menuitem" (click)="openCreateStory()"><mat-icon>auto_stories</mat-icon><span>Create Story</span></button>
-        <button type="button" role="menuitem" (click)="openCreateTask()"><mat-icon>task_alt</mat-icon><span>Create Task</span></button>
-        <button type="button" role="menuitem" (click)="openCreateIssue()"><mat-icon>bug_report</mat-icon><span>Create Issue</span></button>
-      </div>
-    </details>
+
   </header>
 
   <section class="epics-current-sprint-strip epics-cycle-toolbar" *ngIf="activeTab() === 'KANBAN'">

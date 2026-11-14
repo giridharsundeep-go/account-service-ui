@@ -1,4 +1,7 @@
 /* Shared canvas for Kanban item details and both work-item creation flows. */
+/* Use the first shared layer so page density overrides cannot add another
+   gutter or change this canvas differently from one entry point to another. */
+@layer gp-compact {
 #gp-app .kb-item-dialog-backdrop,
 #gp-app .planning-create-overlay {
   position: fixed !important;
@@ -12,6 +15,7 @@
   display: contents !important;
 }
 #gp-app .kb-work-item-dialog.kb-item-page {
+  --kb-ticket-body-size: 15px;
   box-sizing: border-box !important;
   position: fixed !important;
   inset: auto !important;
@@ -30,10 +34,10 @@
   margin: 0 !important;
   padding: 0 !important;
   overflow: hidden !important;
-  border: 1px solid #dce4ef !important;
+  border: 1px solid var(--gp-border-color, #a0a6b1) !important;
   border-radius: 10px !important;
-  background: #fff !important;
-  box-shadow: 0 24px 80px rgba(18, 32, 54, .24) !important;
+  background: var(--gp-surface, #fff) !important;
+  box-shadow: none !important;
 }
 #gp-app .kb-work-item-dialog *,
 #gp-app .kb-work-item-dialog *::before,
@@ -54,8 +58,8 @@
   gap: 10px 16px !important;
   min-width: 0 !important;
   margin: 0 !important;
-  padding: 14px 24px !important;
-  border-bottom: 1px solid #e5eaf1 !important;
+  padding: 12px 20px !important;
+  border-bottom: 1px solid var(--gp-border-color, #a0a6b1) !important;
 }
 #gp-app .kb-work-item-dialog .kb-item-breadcrumb {
   flex: 1 1 300px !important;
@@ -90,8 +94,8 @@
   height: 36px;
   border: 0;
   border-radius: 10px;
-  background: #f2f5f9;
-  color: #455267;
+  background: var(--gp-surface-muted, #f5f5f5);
+  color: var(--gp-text, #111);
   font-size: 24px;
   cursor: pointer;
 }
@@ -101,7 +105,7 @@
   width: 100% !important;
   min-width: 0 !important;
   min-height: 0 !important;
-  padding: 24px !important;
+  padding: 20px !important;
   margin: 0 !important;
   overflow-x: hidden !important;
   overflow-y: auto !important;
@@ -110,32 +114,37 @@
 }
 #gp-app .kb-work-item-dialog .kb-item-title-row {
   display: grid !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  grid-template-areas: "status assignee" "priority reporter" "title title" !important;
   align-items: start !important;
-  gap: 24px !important;
-  margin: 0 0 24px !important;
-  padding: 0 0 20px !important;
-  border-bottom: 1px solid #e5eaf1 !important;
+  gap: 12px 20px !important;
+  margin: 0 0 20px !important;
+  padding: 0 !important;
+  border: 0 !important;
 }
+#gp-app .kb-work-item-dialog .kb-item-title-row > .kb-detail-status-cell { grid-area: status !important; max-width: none !important; }
+#gp-app .kb-work-item-dialog .kb-item-title-row > .kb-detail-priority-cell { grid-area: priority !important; }
+#gp-app .kb-work-item-dialog .kb-item-title-row > .kb-detail-assignee-cell { grid-area: assignee !important; }
+#gp-app .kb-work-item-dialog .kb-item-title-row > .kb-detail-reporter-cell { grid-area: reporter !important; }
+#gp-app .kb-work-item-dialog .kb-item-title-row > .kb-detail-title-section { grid-area: title !important; }
 #gp-app .kb-work-item-dialog :is(.kb-detail-data-cell, .kb-detail-title-section) {
   position: relative !important;
   width: 100% !important;
   min-width: 0 !important;
-  min-height: 80px !important;
+  min-height: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
-  grid-column: auto !important;
   align-self: start !important;
 }
 #gp-app .kb-work-item-dialog .kb-detail-label {
   display: block !important;
-  min-height: 24px !important;
+  min-height: 18px !important;
   margin: 0 0 6px !important;
   padding: 0 !important;
-  color: #69758a !important;
+  color: var(--gp-muted, #494b50) !important;
   font-size: 12px !important;
   font-weight: 600 !important;
-  line-height: 24px !important;
+  line-height: 18px !important;
 }
 #gp-app .kb-work-item-dialog .kb-detail-title-view,
 #gp-app .kb-work-item-dialog input.kb-title-edit-input.kb-title-edit-input {
@@ -146,14 +155,14 @@
   min-height: 50px !important;
   max-height: 50px !important;
   margin: 0 !important;
-  padding: 0 28px 0 0 !important;
+  padding: 0 34px 0 0 !important;
   border: 0 !important;
-  border-bottom: 1px solid #dce3ed !important;
+  border-bottom: 1px solid var(--gp-border-color, #a0a6b1) !important;
   border-radius: 0 !important;
   outline: 0 !important;
   background: transparent !important;
-  color: #172b4d !important;
-  font: 600 24px/32px "Google Sans", Arial, sans-serif !important;
+  color: var(--gp-text, #111) !important;
+  font: 600 24px/32px var(--gp-font, Arial, sans-serif) !important;
   box-shadow: none !important;
 }
 #gp-app .kb-work-item-dialog .kb-detail-title-view h1 {
@@ -167,9 +176,9 @@
   font: inherit !important;
   letter-spacing: -.3px !important;
 }
+#gp-app .kb-work-item-dialog .kb-detail-title-view:focus-visible,
 #gp-app .kb-work-item-dialog input.kb-title-edit-input.kb-title-edit-input:focus {
-  border: 0 !important;
-  border-bottom: 1px solid #65758c !important;
+  border-bottom-color: var(--gp-accent, #1558d6) !important;
   outline: 0 !important;
   box-shadow: none !important;
 }
@@ -177,7 +186,7 @@
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) 320px !important;
   align-items: start !important;
-  gap: 24px !important;
+  gap: 20px !important;
   width: 100% !important;
   min-width: 0 !important;
   margin: 0 !important;
@@ -200,10 +209,16 @@
   height: auto !important;
   min-height: 0 !important;
   margin: 0 !important;
-  padding: 16px !important;
-  border: 1px solid #e1e7ef !important;
-  border-radius: 10px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
   box-shadow: none !important;
+}
+#gp-app .kb-work-item-dialog .kb-detail-description-section {
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
 }
 #gp-app .kb-work-item-dialog .kb-detail-fields-grid {
   display: grid !important;
@@ -219,11 +234,11 @@
   justify-content: flex-start !important;
   text-align: left !important;
   width: 100% !important;
-  min-height: 50px !important;
-  height: 50px !important;
+  min-height: 44px !important;
+  height: 44px !important;
   margin: 0 !important;
-  padding: 0 24px 0 0 !important;
-  border: 0 !important;
+  padding: 0 34px 0 12px !important;
+  border: 1px solid var(--gp-border-color, #a0a6b1) !important;
   border-radius: 10px !important;
   background: transparent !important;
 }
@@ -235,8 +250,8 @@
   padding: 0 !important;
   border: 0 !important;
   background: transparent !important;
-  color: #303e52 !important;
-  font-size: 14px !important;
+  color: var(--gp-text, #111) !important;
+  font-size: var(--kb-ticket-body-size) !important;
   font-weight: 500 !important;
   overflow-wrap: anywhere !important;
 }
@@ -256,11 +271,11 @@
   margin: 0 !important;
 }
 #gp-app .kb-work-item-dialog .kb-inline-actions button { width: 24px !important; height: 24px !important; }
-#gp-app .kb-work-item-dialog .kb-detail-description-section { position: relative; margin: 0 !important; padding: 0 !important; }
+#gp-app .kb-work-item-dialog .kb-detail-description-section { position: relative; margin: 0 !important; }
 #gp-app .kb-work-item-dialog :is(.kb-detail-description-section, .kb-detail-section-card) h2 {
   margin: 0 0 12px !important;
-  color: #273b58 !important;
-  font-size: 16px !important;
+  color: var(--gp-text, #111) !important;
+  font-size: 18px !important;
   font-weight: 600 !important;
   line-height: 24px !important;
   letter-spacing: 0 !important;
@@ -273,32 +288,34 @@
   justify-content: flex-start !important;
   align-content: start !important;
   width: 100% !important;
-  min-height: 200px !important;
+  min-height: 120px !important;
   margin: 0 !important;
-  padding: 12px 28px 12px 0 !important;
+  padding: 0 22px 0 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
   text-align: left !important;
   background: transparent !important;
   white-space: normal !important;
 }
-#gp-app .kb-work-item-dialog .kb-description-editor { width: 100% !important; min-width: 0 !important; margin: 0 !important; border-radius: 10px !important; box-shadow: none !important; }
-#gp-app .kb-work-item-dialog .kb-description-editable { min-height: 156px !important; max-height: none !important; padding: 12px 14px !important; }
+#gp-app .kb-work-item-dialog .kb-description-editor { width: 100% !important; min-width: 0 !important; margin: 0 !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+#gp-app .kb-work-item-dialog .kb-description-editable { min-height: 120px !important; max-height: none !important; padding: 0 !important; border: 0 !important; outline: 0 !important; }
+#gp-app .kb-work-item-dialog .kb-description-toolbar { margin-bottom: 12px !important; padding-inline: 0 !important; }
 #gp-app .kb-work-item-dialog :is(.kb-description-rich-text, .kb-description-editable, .kb-inline-empty-trigger) {
-  color: #35445a !important;
-  font-size: 16px !important;
-  line-height: 1.75 !important;
-  font-family: "Google Sans", Arial, sans-serif !important;
+  color: var(--gp-text, #111) !important;
+  font-size: var(--kb-ticket-body-size) !important;
+  line-height: 1.55 !important;
+  font-family: var(--gp-font, Arial, sans-serif) !important;
   overflow-wrap: anywhere !important;
 }
 #gp-app .kb-work-item-dialog .kb-description-rich-text { min-height: 0 !important; padding: 0 !important; white-space: pre-line !important; }
 #gp-app .kb-work-item-dialog .kb-description-rich-text :is(p, ul, ol) { margin-block: 0 12px; }
+#gp-app .kb-work-item-dialog :is(.kb-description-rich-text, .kb-description-editable) :is(p, li) { font-size: inherit; line-height: inherit; }
 #gp-app .kb-work-item-dialog .kb-description-rich-text :is(img, video, iframe, table) { max-width: 100%; }
 #gp-app .kb-work-item-dialog .kb-description-rich-text :is(ul, ol) { padding-left: 24px; }
 #gp-app .kb-work-item-dialog .kb-detail-section-card > header { margin: 0 0 12px !important; }
 #gp-app .kb-work-item-dialog .kb-detail-section-card > header p { margin: 4px 0 0 !important; font-size: 13px !important; line-height: 1.5 !important; }
 #gp-app .kb-work-item-dialog :is(.kb-detail-empty, .kb-create-helper) { margin: 8px 0 0 !important; font-size: 14px !important; line-height: 1.6 !important; }
-#gp-app .kb-work-item-dialog .kb-detail-activity-full { margin: 24px 0 0 !important; padding: 20px 0 0 !important; }
+#gp-app .kb-work-item-dialog .kb-detail-activity-full { margin: 20px 0 0 !important; padding: 0 !important; }
 #gp-app .kb-work-item-dialog .kb-create-error { flex: 0 0 auto; margin: 12px 24px 0 !important; }
 #gp-app .kb-work-item-dialog .kb-create-extra-fields { gap: 16px !important; }
 #gp-app .kb-work-item-dialog select.kb-create-type-select.kb-create-type-select {
@@ -323,9 +340,7 @@
   #gp-app .kb-work-item-dialog .kb-item-page-nav { padding: 12px 16px !important; gap: 8px !important; }
   #gp-app .kb-work-item-dialog .kb-item-breadcrumb { order: 3 !important; flex-basis: 100% !important; }
   #gp-app .kb-work-item-dialog .kb-breadcrumb-project { max-width: 220px !important; }
-  #gp-app .kb-work-item-dialog .kb-item-detail-layout { padding: 20px 16px !important; }
-  #gp-app .kb-work-item-dialog .kb-item-title-row { grid-template-columns: minmax(0, 1fr) !important; gap: 16px !important; }
-  #gp-app .kb-work-item-dialog .kb-detail-status-cell { max-width: 180px !important; }
+  #gp-app .kb-work-item-dialog .kb-item-detail-layout { padding: 16px !important; }
   #gp-app .kb-work-item-dialog .kb-detail-content { grid-template-columns: minmax(0, 1fr) !important; gap: 20px !important; }
   #gp-app .kb-work-item-dialog .kb-detail-sidebar { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; }
   #gp-app .kb-work-item-dialog .kb-detail-title-view,
@@ -339,24 +354,57 @@
 #gp-app .kb-work-item-dialog .status-completed { --item-status-bg: #e4f6eb; --item-status-ink: #18864b; }
 #gp-app .kb-work-item-dialog .status-blocked { --item-status-bg: #ffebe9; --item-status-ink: #c4312b; }
 
-#gp-app .kb-work-item-dialog details.kb-detail-secondary-fields > summary {
-  cursor: pointer;
-  color: #273b58;
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 24px;
-}
-#gp-app .kb-work-item-dialog details.kb-detail-secondary-fields[open] > summary { margin-bottom: 16px; }
 #gp-app .kb-work-item-dialog .kb-detail-section-card { position: relative; }
 #gp-app .kb-work-item-dialog .kb-detail-extra-row dd { position: relative; }
 
-#gp-app .kb-work-item-dialog .kb-item-title-row .kb-detail-title-section { grid-column:1 / -1!important; }
 #gp-app .kb-work-item-dialog .kb-detail-secondary-fields > .kb-detail-data-cell { margin:0 0 16px!important; }
 body:has(.kb-work-item-dialog) .cdk-overlay-container { z-index:130000!important; }
 #gp-app .shared-item-loading { position:fixed;inset:0;z-index:120001;background:#12203666;display:grid;place-items:center;padding:24px; }
-#gp-app .shared-item-loading>div { width:min(520px,100%);border-radius:10px;padding:24px;background:white;color:#172b4d; }
+#gp-app .shared-item-loading>div { width:min(520px,100%);border-radius:10px;padding:24px;background:var(--gp-surface,#fff);color:var(--gp-text,#111); }
 #gp-app .shared-item-loading button { float:right;border:0;background:transparent;font-size:24px;cursor:pointer; }
-@media(max-width:900px){ #gp-app .kb-work-item-dialog .kb-item-title-row{grid-template-columns:repeat(2,minmax(0,1fr))!important} }
-@media(max-width:500px){ #gp-app .kb-work-item-dialog .kb-item-title-row{grid-template-columns:1fr!important} }
+@media(max-width:500px){
+  #gp-app .kb-work-item-dialog .kb-item-title-row {
+    grid-template-columns:minmax(0,1fr)!important;
+    grid-template-areas:"status" "priority" "assignee" "reporter" "title"!important;
+  }
+}
 
 #gp-app .kb-work-item-dialog .kb-user-value { gap:10px!important; }
+
+/* Ticket focus mode stays in the same dialog and preserves the underlying workspace. */
+#gp-app .kb-work-item-dialog.kb-item-page.kb-ticket-fullscreen { width:100vw !important; max-width:100vw !important; height:100dvh !important; max-height:100dvh !important; border-radius:0 !important; }
+#gp-app .kb-work-item-dialog .kb-agent-work-body { flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; }
+#gp-app .kb-work-item-dialog app-ticket-actions { flex-shrink:0; }
+
+/* Lists and section headings share the body gutter. Only editable fields have
+   full outlines; linked work remains a compact list with quiet separators. */
+#gp-app .kb-work-item-dialog .kb-detail-related-list { gap: 0 !important; margin: 12px 0 0 !important; }
+#gp-app .kb-work-item-dialog .kb-detail-related-list > button {
+  display: grid !important;
+  grid-template-columns: minmax(110px, 26%) minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 4px 12px !important;
+  min-height: 44px !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 8px 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--gp-border-color, #a0a6b1) 35%, transparent) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  text-align: left !important;
+}
+#gp-app .kb-work-item-dialog .kb-detail-related-key { grid-column: 1 !important; grid-row: 1 !important; font: 600 12px/1.4 var(--gp-font, Arial, sans-serif) !important; white-space: normal !important; overflow-wrap: anywhere !important; }
+#gp-app .kb-work-item-dialog .kb-detail-related-title { grid-column: 2 !important; grid-row: 1 !important; font: 400 var(--kb-ticket-body-size)/1.55 var(--gp-font, Arial, sans-serif) !important; white-space: normal !important; overflow-wrap: anywhere !important; }
+#gp-app .kb-work-item-dialog .kb-detail-related-status { grid-column: 3 !important; grid-row: 1 !important; align-self: center !important; font: 600 12px/1.4 var(--gp-font, Arial, sans-serif) !important; }
+#gp-app .kb-work-item-dialog .kb-detail-related-list > button:hover { background: var(--gp-surface-muted, #f5f5f5) !important; }
+#gp-app .kb-work-item-dialog .kb-detail-extra-fields { margin-top: 16px !important; }
+#gp-app .kb-work-item-dialog .kb-detail-extra-fields > h3 { margin: 0 !important; font: 600 15px/1.55 var(--gp-font, Arial, sans-serif) !important; }
+#gp-app .kb-work-item-dialog .kb-detail-extra-row { grid-template-columns: minmax(0, 1fr) !important; gap: 6px !important; border: 0 !important; padding: 0 !important; margin: 0 0 12px !important; }
+#gp-app .kb-work-item-dialog .kb-detail-extra-trigger { border: 1px solid var(--gp-border-color, #a0a6b1) !important; border-radius: 10px !important; padding: 10px 34px 10px 12px !important; font: 400 15px/1.55 var(--gp-font, Arial, sans-serif) !important; }
+@media (max-width: 500px) {
+  #gp-app .kb-work-item-dialog .kb-detail-related-list > button { grid-template-columns: minmax(0, 1fr) auto !important; }
+  #gp-app .kb-work-item-dialog .kb-detail-related-title { grid-column: 1 !important; grid-row: 2 !important; }
+  #gp-app .kb-work-item-dialog .kb-detail-related-status { grid-column: 2 !important; grid-row: 1 / 3 !important; }
+}
+}

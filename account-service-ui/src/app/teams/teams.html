@@ -93,15 +93,12 @@
       <ng-container *ngIf="filterTeams(teams) as filteredTeams">
         <ng-container *ngIf="filteredTeams.length > 0; else emptyTeams">
 
-          <mat-card class="example-card" appearance="outlined"
+          <mat-card class="example-card team-directory-card" appearance="outlined"
                     *ngFor="let team of filteredTeams; trackBy: trackTeam">
-            <mat-card-header class="team-name-card-header">
-              <mat-card-title>{{ team.name }}</mat-card-title>
-            </mat-card-header>
-            <mat-card-actions class="team-name-card-actions">
-              <button mat-button type="button" class="team-action-button team-action-primary"
-                      (click)="openTeamDetails(team)">VIEW</button>
-            </mat-card-actions>
+            <div class="team-directory-card-heading"><span class="team-directory-icon"><mat-icon fontSet="material-icons">groups</mat-icon></span><div><h2>{{ team.name }}</h2><p>{{ getTeamMembers(team).length }} {{ getTeamMembers(team).length === 1 ? 'member' : 'members' }}</p></div></div>
+            <p class="team-directory-description">{{ team.description || 'Bring people together around shared goals.' }}</p>
+            <div class="team-directory-lead"><span>Team lead</span><strong>{{ getTeamLeadName(team) }}</strong></div>
+            <footer class="team-directory-footer"><div class="team-directory-avatars" aria-label="Team members"><span *ngFor="let member of getTeamMembers(team).slice(0, 4)" [title]="getMemberName(member)">{{ getInitials(getMemberName(member)) }}</span><small *ngIf="getTeamMembers(team).length > 4">+{{ getTeamMembers(team).length - 4 }}</small></div><button mat-button type="button" class="team-action-button team-action-primary" (click)="openTeamDetails(team)">Open team <span aria-hidden="true">↗</span></button></footer>
           </mat-card>
 
         </ng-container>
@@ -219,6 +216,7 @@
           </div>
         </div>
 
+        <p *ngIf="memberUpdateNotice" role="status">{{memberUpdateNotice}}</p>
         <ng-container *ngIf="selectedTeam as currentTeam">
           <ng-container *ngIf="getTeamMembers(currentTeam) as teamMembers">
             <div class="gp-people-grid"

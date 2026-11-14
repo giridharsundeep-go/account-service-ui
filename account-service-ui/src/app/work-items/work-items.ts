@@ -1,3 +1,5 @@
+import {FilterMenu} from '../shared/filter-menu';
+import { ActorIconComponent } from '../shared/actor-icon';
 import {WorkspaceSettingsService} from '../shared/workspace-settings.service';
 import { untracked } from '@angular/core';
 import { WorkItemDialogService } from '../shared/work-item-dialog.service';
@@ -83,7 +85,7 @@ interface ProjectWorkCollections {
 @Component({
   selector: 'app-work-items',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatCheckboxModule, MatTableModule, WorkspaceHeroComponent],
+  imports: [FilterMenu,ActorIconComponent, CommonModule, FormsModule, MatCheckboxModule, MatTableModule, WorkspaceHeroComponent],
   templateUrl: './work-items.html',
   styleUrls: ['./work-items.css', '../shared/field-controls.css']
 })
@@ -107,6 +109,7 @@ export class WorkItems implements OnInit {
 
   readonly displayedColumns = ['select', 'work', 'assignee', 'reporter', 'priority', 'status', 'resolution', 'created'];
   readonly kindOptions: WorkItemKind[] = ['EPIC', 'STORY', 'TASK', 'ISSUE'];
+  get filterCount(){return this.primaryFilterKeys.concat(this.extraFilterKeys).filter(key=>this.selectionForTemplate(key).size>0).length;}
   readonly primaryFilterKeys: FilterKey[] = ['project', 'assignee', 'kind', 'status', 'sprint', 'reporter'];
   readonly extraFilterKeys: FilterKey[] = ['priority', 'resolution'];
   readonly filterLabels: Record<FilterKey, string> = {

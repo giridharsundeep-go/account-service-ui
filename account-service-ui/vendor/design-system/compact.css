@@ -1,0 +1,384 @@
+/* Suite density: UI chrome only. Authored documents, sheets, slides, charts,
+   video stages and chat messages keep their content dimensions. This first
+   layer wins over the historical page-specific !important density rules. */
+@layer gp-compact {
+  :root {
+    --gp-field-height:44px!important;
+    --gp-control-height:40px!important;
+    --gp-space-page:12px 16px!important;
+    --gp-title-size:24px!important;
+    --gp-header-shadow:0 2px 10px rgb(32 33 36 / 10%)!important;
+    --gp-kanban-card-shadow:0 2px 8px rgb(32 33 36 / 10%)!important;
+    --gp-kanban-card-shadow-hover:0 4px 14px rgb(32 33 36 / 16%)!important;
+    --mat-form-field-container-height:44px!important;
+    --mat-form-field-container-vertical-padding:10px!important;
+  }
+
+  :root[data-theme="dark"] {
+    --gp-header-shadow:0 2px 12px rgb(0 0 0 / 30%)!important;
+    --gp-kanban-card-shadow:0 2px 10px rgb(0 0 0 / 28%)!important;
+    --gp-kanban-card-shadow-hover:0 4px 16px rgb(0 0 0 / 38%)!important;
+  }
+  /* Only top-level app headers cast a shadow, not section/card headings. */
+  :root :is(.app-header,.suite-header,.gp-auth-header) {
+    position:relative;box-shadow:var(--gp-header-shadow)!important;
+  }
+  :root .gp-auth-header {z-index:2;}
+
+  /* One page gutter, short headings, and consistently spaced sections. */
+  :root :is(app-user-home,app-viewer) .content {padding:0!important;}
+  :root :is(.saas-container,.products-page,.projects-dashboard,.boards-page,.kb-page,.planning-page,.work-items-page,.testcases-page,.dashboard-page,.roadmap-page,.retro-page,.forge-page,.instru-page,.desk-page,.post-workspace,.suite-body) {
+    width:100%!important;max-width:none!important;min-width:0!important;box-sizing:border-box!important;padding:12px 16px!important;
+  }
+  :root gp-workspace-shell>.workspace {padding:12px 16px!important;}
+  :root app-workspace-hero {display:block!important;margin:0 0 14px!important;}
+  :root :is(.gp-workspace-hero,.workspace-hero,.suite-hero) {padding:0 0 12px!important;margin:0 0 14px!important;min-height:0!important;gap:12px!important;}
+  :root .gp-workspace-hero__copy {padding:0!important;}
+  :root :is(.gp-workspace-hero__heading,.workspace-heading,.workspace-title,.page-heading,.agile-heading,.roadmap-heading,.retro-heading,.desk-heading,.directory-heading,.tc-page-heading,.roles-workspace-header,.mail-heading) {min-height:0!important;padding-block:0!important;margin-block:0 14px!important;gap:12px!important;}
+  :root :is(.gp-workspace-hero,.workspace-hero,.workspace-heading,.workspace-title,.page-heading,.agile-heading,.roadmap-heading,.retro-heading,.desk-heading,.directory-heading,.tc-page-heading,.mail-heading,.team-profile-hero,.project-profile-header,.release-profile-header,.atlassian-profile-identity) :is(h1,h2),
+  :root :is(.projects-title,.users-title,.teams-title,.roles-title,.releases-title,.planning-title,.work-items-title) {font-size:24px!important;line-height:1.25!important;letter-spacing:-.4px!important;margin:0!important;}
+  :root :is(.gp-workspace-hero,.workspace-hero,.workspace-heading,.workspace-title,.page-heading,.agile-heading,.roadmap-heading,.retro-heading,.desk-heading,.directory-heading,.mail-heading) p {font-size:14px!important;line-height:1.45!important;margin:6px 0 0!important;}
+  :root :is(.gp-workspace-hero__actions,.heading-actions,.page-actions,.kb-heading-actions,.planning-page-header-actions,.planning-create-actions,.team-profile-actions,.project-profile-actions,.release-profile-actions) {gap:8px!important;align-items:center!important;margin-block:0!important;flex-wrap:wrap!important;}
+  :root :is(.breadcrumb,.work-items-breadcrumb,.team-profile-breadcrumb,.user-profile-breadcrumb,.project-profile-breadcrumb,.releases-breadcrumb) {min-height:28px!important;margin:0 0 10px!important;padding-block:0!important;gap:8px!important;font-size:12px!important;}
+
+  /* Toolbars wrap without leaving empty rows. */
+  :root :is(.teams-toolbar,.products-toolbar,.projects-list-toolbar,.roles-toolbar,.users-toolbar,.kb-board-toolbar,.planning-toolbar,.roadmap-toolbar,.retro-toolbar,.tc-list-toolbar,.queue-toolbar,.release-workspace-toolbar,.work-items-filters,.suite-filters,.suite-action-row,.team-profile-members-toolbar) {min-height:0!important;padding:8px 0!important;margin-block:0 12px!important;gap:8px!important;align-items:center!important;flex-wrap:wrap!important;}
+  :root :is(.form-grid,.suite-form-grid,.fields-grid,.profile-form-grid,.profile-edit-grid,.roles-form-grid,.account-form,.release-edit-fields,.atlassian-readonly-grid) {gap:12px!important;}
+  :root :is(.profile-section-card,.form-section-card,.account-card,.kb-detail-section-card,.work-item-section-card,.release-profile-card,.atlassian-overview-block) {padding:12px!important;min-height:0!important;}
+  :root :is(.profile-section-heading,.form-section-heading,.section-heading,.release-section-heading,.team-profile-section-header,.kb-activity-heading) {margin:0 0 12px!important;gap:10px!important;min-height:0!important;}
+  :root :is(.profile-section-heading,.form-section-heading,.section-heading,.release-section-heading,.team-profile-section-header,.kb-activity-heading,.settings-card) :is(h2,h3) {font-size:18px!important;line-height:1.35!important;margin:0!important;}
+  :root :is(.profile-section-heading,.form-section-heading,.section-heading,.release-section-heading,.team-profile-section-header) p {font-size:13px!important;line-height:1.45!important;margin:4px 0 0!important;}
+  :root :is(.team-profile-content,.project-profile-content,.release-profile-content,.user-profile-content,.account-content,.kb-detail-content,.kb-detail-main,.kb-detail-sidebar,.release-profile-main,.release-profile-aside,.project-profile-form-grid) {gap:12px!important;}
+
+  /* Compact, readable controls; no forced height on multiline editors. */
+  :root :is(.button,.gp-button,.btn-primary,.btn-secondary,.kb-button,.tc-primary,.teams-create-button,.users-create-button,.roles-create-button,.projects-create-button,.kb-create-submit,.mat-mdc-button-base:not(.mat-mdc-icon-button),.workspace-filter-trigger,.filter-trigger) {min-height:40px!important;height:40px!important;padding-inline:14px!important;font-size:14px!important;line-height:1.3!important;}
+  :root :is(.search-shell,.search-field,.search-box,.search-wrapper,.search-bar,.global-work-search-field,.work-items-search,.kb-board-search,.team-search,.docs-search,.work-filter-search,.matrix-search-input-frame,.gp-people-search,.roles-search,.products-search,.users-search,.inline-search,.team-profile-member-search) {height:44px!important;min-height:44px!important;padding-block:0!important;}
+  :root :is(.search-shell,.search-field,.search-box,.search-wrapper,.search-bar,.global-work-search-field,.work-items-search,.kb-board-search,.team-search,.docs-search,.work-filter-search,.matrix-search-input-frame,.gp-people-search,.roles-search,.products-search,.users-search,.inline-search,.team-profile-member-search) input {height:100%!important;min-height:0!important;padding-block:0!important;font-size:15px!important;}
+  :root :is(.suite-dialog,.new-dialog,.workspace-dialog,.instru-dialog,.forge-dialog,.event-dialog,.case-dialog,.create-dialog,.form-grid,.profile-form-field,.profile-edit-grid,.create-field-card) :is(input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=range]):not([type=file]):not([type=hidden]),select):not(.mat-mdc-input-element) {height:44px!important;min-height:44px!important;font-size:15px!important;padding-block:8px!important;}
+  :root .mat-mdc-form-field:not(:has(textarea)) .mat-mdc-text-field-wrapper {height:44px!important;min-height:44px!important;}
+  :root .mat-mdc-form-field:not(:has(textarea)) .mat-mdc-form-field-infix {min-height:44px!important;padding-top:10px!important;padding-bottom:10px!important;}
+  :root :is(.mat-mdc-select-value,.mat-mdc-option,.mat-mdc-form-field .mat-mdc-input-element) {font-size:15px!important;}
+  :root :is(.kb-detail-value-field,.kb-detail-value,.profile-inline-value,.profile-field-value,.atlassian-readonly-field>strong,.readonly-field>strong) {min-height:40px!important;padding-block:8px!important;font-size:15px!important;line-height:1.4!important;}
+  :root :is(.tabs,.repo-tabs,.roadmap-tabs,.release-status-tabs,.team-profile-tabs,.user-profile-tabs,.project-profile-tabs,.project-profile-view-tabs,.release-profile-tabs,.calendar-view-tabs) {min-height:40px!important;height:auto!important;gap:4px!important;margin-block:0 12px!important;}
+  :root :is(.tabs,.repo-tabs,.roadmap-tabs,.release-status-tabs,.team-profile-tabs,.user-profile-tabs,.project-profile-tabs,.project-profile-view-tabs,.release-profile-tabs,.calendar-view-tabs)>button {height:40px!important;min-height:40px!important;padding:8px 14px!important;font-size:14px!important;}
+
+  /* UI tables and lists only: office content retains authored cell geometry. */
+  :root :is(.mat-mdc-table,.users-table,.work-items-table,.projects-mat-table,.items-table,.google-table,.compact-work-table,.tc-table,.planning-table,.suite-table,.table-scroll>table,.table-wrap>table) :is(td,th):not(:where(.document-paper,.sheet-grid,.slide-page,.present-slide,.thumb-preview,[data-gp-preserve-borders]) *) {padding:10px 12px!important;font-size:14px!important;line-height:1.45!important;height:auto!important;}
+  :root :is(.mat-mdc-table,.users-table,.work-items-table,.projects-mat-table,.items-table,.google-table,.compact-work-table,.tc-table,.planning-table,.suite-table,.table-scroll>table,.table-wrap>table) td strong:not(:where(.document-paper,.sheet-grid,.slide-page,.present-slide,.thumb-preview,[data-gp-preserve-borders]) *) {font-size:14px!important;}
+  :root :is(.repo-row,.service-row,.source-row,.agenda-event,.deployment-row,.trace-row,.timeline-row,.matrix-row,.scope-item,.kb-linked-item,.release-list-card,.planning-sprint-group-heading,.planning-assignee-group-heading) {padding:10px 12px!important;gap:10px!important;min-height:44px!important;}
+  :root :is(.kb-work-card,.kanban-work-item-card,.scrum-item-card,.planning-backlog-card,.team-card,.project-card,.board-card,.agent-card,.example-card) {padding:12px!important;min-height:0!important;gap:10px!important;}
+  :root :is(.kb-work-card,.kanban-work-item-card,.scrum-item-card,.planning-backlog-card) :is(h3,h4) {font-size:14px!important;line-height:1.45!important;margin:4px 0 10px!important;min-height:0!important;}
+  :root .kb-card-metrics {margin-top:10px!important;padding-block:6px!important;}
+  :root .kb-card-bottom {padding-top:8px!important;margin-top:8px!important;gap:8px!important;}
+  :root :is(.kb-columns,.kanban-columns,.board-columns,.people-card-grid,.gp-people-grid,.file-grid,.documents-grid,.team-profile-stat-grid,.release-profile-stat-grid,.teams-overview,.people-stat-grid,.agile-metrics,.metrics-strip,.summary-grid,.tc-stats,.roadmap-stats,.retro-overview) {gap:12px!important;margin-block:0 14px!important;}
+  :root :is(.overview-metric,.stats-card,.stat-card,.team-profile-stat-card,.release-profile-stat-card,.agile-metrics>article,.metrics-strip>article,.summary-grid>article,.tc-stats>article,.roadmap-stats>article,.retro-overview>article) {padding:12px!important;min-height:0!important;gap:12px!important;}
+  :root :is(.overview-metric,.stats-card,.stat-card,.team-profile-stat-card,.release-profile-stat-card,.agile-metrics>article,.metrics-strip>article,.summary-grid>article,.tc-stats>article,.roadmap-stats>article,.retro-overview>article) strong {font-size:22px!important;line-height:1.3!important;}
+  :root :is(.overview-metric,.stats-card,.stat-card,.team-profile-stat-card,.release-profile-stat-card) :is(.metric-icon,.team-profile-stat-icon,.release-profile-stat-icon) {width:36px!important;height:36px!important;min-width:36px!important;}
+  :root :is(.team-profile-hero,.team-profile-reference-hero,.project-profile-header,.release-profile-header,.user-profile-hero) {padding:16px!important;margin-block:0 12px!important;min-height:0!important;gap:16px!important;}
+  :root :is(.team-profile-cover-wall,.project-profile-cover-wall,.users-profile-cover-wall) {height:120px!important;min-height:120px!important;margin-bottom:0!important;}
+  :root .user-profile-avatar {width:88px!important;height:88px!important;}
+  :root .user-profile-avatar-wrap {width:88px!important;min-width:88px!important;}
+  :root :is(.team-profile-avatar,.project-profile-avatar,.team-profile-reference-icon) {width:64px!important;height:64px!important;min-width:64px!important;}
+  :root .gp-person-surface {padding:10px!important;min-height:68px!important;gap:10px!important;grid-template-columns:40px minmax(0,1fr) 32px!important;}
+  :root .gp-person-surface>.gp-person-avatar {width:40px!important;height:40px!important;}
+  :root :is(.kb-person-chip,.planning-person-chip,.focus-person-chip,.person-chip,.people-chip) {min-height:36px!important;height:36px!important;padding:3px 9px 3px 4px!important;font-size:13px!important;gap:7px!important;}
+  :root :is(.kb-person-chip,.planning-person-chip,.focus-person-chip) :is(.kb-avatar,.gp-avatar,.avatar) {width:28px!important;height:28px!important;min-width:28px!important;}
+
+  /* Full outlines belong to header dropdown triggers and their open panels. */
+  :root :is(.app-header,.suite-header) :is(.global-project-trigger,.header-create-button,.apps-trigger,button[aria-haspopup],select) {border:1px solid var(--gp-border-color,#a0a6b1)!important;border-radius:10px!important;}
+  :root :is(.app-header,.suite-header) :is(.global-project-trigger,.header-create-button,.apps-trigger) {height:44px!important;min-height:44px!important;padding:5px 12px!important;font-size:14px!important;}
+  :root :is(.app-header,.suite-header) .global-project-trigger strong {font-size:14px!important;line-height:1.3!important;}
+  :root :is(.app-header,.suite-header) .global-project-caption {font-size:9px!important;line-height:1.2!important;}
+  :root :is(.app-header,.suite-header) .profile-button {border-radius:50%!important;width:40px!important;height:40px!important;padding:2px!important;}
+  :root :is(.app-header,.suite-header) .profile-avatar {width:34px!important;height:34px!important;font-size:13px!important;}
+  :root :is(.global-project-popover,.global-work-search-popover,.create-popover,.profile-popover,.apps-panel) {border:1px solid var(--gp-border-color,#a0a6b1)!important;border-radius:10px!important;}
+  :root :is(app-user-home,app-viewer) .app-header {height:auto!important;min-height:64px!important;padding:8px 16px!important;gap:12px!important;}
+  :root :is(.app-header,.suite-header) .header-right {gap:8px!important;}
+  :root :is(.app-footer,.workspace-footer) {padding:8px 16px!important;font-size:12px!important;}
+  :root :is(.event-dialog-body,.dialog-body,.dialog-content,.mat-mdc-dialog-content) {padding:16px!important;}
+  :root :is(.suite-dialog,.workspace-dialog,.instru-dialog,.forge-dialog,.case-dialog,.create-dialog,.new-dialog)>:is(header,footer),
+  :root .event-dialog>:is(header,footer) {padding:12px 16px!important;min-height:0!important;gap:10px!important;}
+  :root .kb-work-item-dialog .kb-item-page-nav {padding:12px 16px!important;min-height:0!important;gap:10px!important;}
+  :root .kb-work-item-dialog .kb-detail-content {padding:16px!important;gap:16px!important;}
+  :root :is(.file-titlebar,.document-titlebar,.document-menubar,.file-menubar) {padding:8px 16px!important;gap:10px!important;min-height:40px!important;}
+
+  /* Fields have a complete outline, without framing every content section.
+     Draw Material's outline on its wrapper to avoid three curved notch segments. */
+  :root .mat-mdc-form-field .mat-mdc-text-field-wrapper {
+    border:1px solid var(--gp-border-color,#a0a6b1)!important;border-radius:10px!important;box-sizing:border-box!important;
+  }
+  :root .mat-mdc-form-field .mat-mdc-text-field-wrapper:focus-within {border-color:var(--gp-accent,#1558d6)!important;}
+  :root .mat-mdc-form-field .mdc-notched-outline,
+  :root .mat-mdc-form-field .mdc-notched-outline>* {border:0!important;border-radius:0!important;}
+  :root .mat-mdc-form-field .mdc-floating-label--float-above {background:var(--gp-surface,#fff)!important;padding-inline:4px!important;}
+  :root .mat-mdc-form-field .mdc-text-field--outlined .mdc-floating-label {top:22px!important;}
+  :root .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-text-field-wrapper {border-color:var(--gp-danger,#b3261e)!important;}
+  :root .mat-mdc-form-field.mat-form-field-disabled .mat-mdc-text-field-wrapper {border-style:dashed!important;opacity:.7;}
+  :root :is(form,.form-grid,.suite-form-grid,.workspace-filter-field,.gp-auth-form,.create-field-card,.selector-field,.compose-body,.suite-dialog,.new-dialog,.workspace-dialog,.instru-dialog,.forge-dialog,.event-dialog,.case-dialog,.create-dialog,.profile-edit-grid) :is(input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=range]):not([type=file]):not([type=hidden]),select,textarea):not(.mat-mdc-input-element):not(:where(.document-paper,.sheet-grid,.slide-page,.present-slide,.thumb-preview,[data-gp-preserve-borders]) *) {
+    border:1px solid var(--gp-border-color,#a0a6b1)!important;border-radius:10px!important;padding:10px 12px!important;box-sizing:border-box!important;outline:0!important;
+  }
+  :root :is(form,.form-grid,.suite-form-grid,.workspace-filter-field,.gp-auth-form,.create-field-card,.selector-field,.compose-body,.suite-dialog,.new-dialog,.workspace-dialog,.instru-dialog,.forge-dialog,.event-dialog,.case-dialog,.create-dialog,.profile-edit-grid) :is(input,select,textarea):focus:not(:where(.document-paper,.sheet-grid,.slide-page,.present-slide,.thumb-preview,[data-gp-preserve-borders]) *) {border-color:var(--gp-accent,#1558d6)!important;}
+  :root :is(.filter-trigger,.workspace-filter-trigger,.work-items-filter-trigger,.work-items-more-filter,.kb-filter-trigger,.kb-sprint-select,.work-items-filter-select,.selector-field select) {border:1px solid var(--gp-border-color,#a0a6b1)!important;border-radius:10px!important;padding-inline:12px!important;}
+  :root :is(.workspace-filter-panel,.filter-popover,.filter-panel,.work-filter-panel,.gp-person-preview,.mat-mdc-select-panel,.mat-mdc-autocomplete-panel,.mat-mdc-menu-panel) {border:1px solid var(--gp-border-color,#a0a6b1)!important;border-radius:10px!important;}
+  :root :is(form,.form-grid,.suite-form-grid,.compose-body,.gp-auth-form) :is(.search-shell,.search-field,.search-box,.search-wrapper,.search-bar,.global-search,.global-project-search,.work-items-search,.kb-board-search,.team-search,.docs-search,.work-filter-search,.matrix-search-input-frame,.gp-people-search,.roles-search,.products-search,.users-search,.inline-search,.address-entry,.gp-auth-password) input,
+  :root .mat-mdc-form-field :is(input,select,textarea) {border:0!important;border-radius:0!important;outline:0!important;}
+  :root :is(.search-shell,.search-field,.search-box,.search-wrapper,.search-bar,.global-search,.global-project-search,.global-work-search-field,.work-items-search,.kb-board-search,.team-search,.docs-search,.work-filter-search,.matrix-search-input-frame,.gp-people-search,.roles-search,.products-search,.users-search,.inline-search,.team-profile-member-search,.gp-auth-password,.address-entry,.gp-control,.gp-field,.kb-detail-value-field,.kb-detail-read-item,.profile-inline-value,.profile-field-value,.field-display,.field-value,.readonly-field>strong,.atlassian-readonly-field>strong,.kb-title-edit-input,.work-item-header-title-input,.title-input,.team-inline-title) {
+    border:1px solid var(--gp-border-color,#a0a6b1)!important;border-radius:10px!important;box-sizing:border-box!important;padding-inline:12px!important;
+  }
+  :root :is(.search-shell,.search-field,.search-box,.search-wrapper,.search-bar,.global-search,.global-project-search,.global-work-search-field,.work-items-search,.kb-board-search,.team-search,.docs-search,.work-filter-search,.matrix-search-input-frame,.gp-people-search,.roles-search,.products-search,.users-search,.inline-search,.team-profile-member-search,.gp-auth-password,.address-entry,.gp-control,.gp-field,.kb-detail-value-field,.kb-detail-read-item,.profile-inline-value,.profile-field-value,.field-display,.field-value,.kb-title-edit-input,.work-item-header-title-input,.title-input,.team-inline-title):is(:focus,:focus-within) {border-color:var(--gp-accent,#1558d6)!important;outline:0!important;}
+  :root :is(.search-shell,.search-field,.search-box,.search-wrapper,.search-bar,.global-search,.global-project-search,.global-work-search-field,.work-items-search,.kb-board-search,.team-search,.docs-search,.work-filter-search,.matrix-search-input-frame,.gp-people-search,.roles-search,.products-search,.users-search,.inline-search,.team-profile-member-search,.gp-control,.gp-field) :is(input,select,textarea,[role=combobox]) {border:0!important;border-radius:0!important;outline:0!important;}
+  :root :is(.search-shell,.search-field,.search-box,.search-wrapper,.search-bar,.global-search,.roles-search,.products-search,.users-search,.inline-search,.gp-control,.gp-field):has(:is(.search-shell,.search-field,.search-box,.search-wrapper,.search-bar,.gp-control,.gp-field,.mat-mdc-text-field-wrapper)) {border:0!important;border-radius:0!important;padding:0!important;}
+  :root .kb-detail-value-field>strong {border:0!important;}
+
+  /* Quiet row separators and no oversized identity rows. */
+  :root .planning-work-table-scroll {overflow-x:auto!important;}
+  :root :is(.planning-sprint-group,.project-sprint-scope>details) {margin-block:0 10px!important;}
+  :root .project-sprint-scope>details>summary {padding:12px!important;font-size:15px!important;line-height:1.4!important;font-weight:600!important;}
+  :root :is(.planning-sprint-group,.project-sprint-scope>details) .planning-work-table-scroll {border:0!important;border-radius:0!important;}
+  :root .mat-mdc-table :is(td,th) {vertical-align:middle!important;}
+  :root .mat-mdc-table :is(.mat-mdc-row,.mat-mdc-header-row) {height:auto!important;min-height:44px!important;}
+  :root .mat-mdc-table th {height:44px!important;font-weight:600!important;}
+  :root .planning-work-table .mat-column-points {width:72px!important;white-space:nowrap!important;text-overflow:clip!important;}
+  :root :is(.planning-work-copy,.case-work-title,.project-table-copy) {gap:4px!important;min-width:0!important;}
+  :root :is(.planning-work-copy button,.case-work-title strong) {font-size:14px!important;line-height:1.4!important;}
+  :root :is(.planning-work-key,.case-work-title small) {font-size:12px!important;line-height:1.35!important;}
+  :root :is(.planning-work-person,.planning-table-person,.case-person,.work-person-cell) {display:flex!important;align-items:center!important;gap:8px!important;min-width:0!important;line-height:1.4!important;font-size:14px!important;}
+  :root :is(.planning-work-person,.case-person)>i,
+  :root .work-person-cell>:is(img,span) {width:30px!important;height:30px!important;min-width:30px!important;flex:0 0 30px!important;border-radius:50%!important;margin:0!important;object-fit:cover!important;}
+  :root .work-person-cell>strong {min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;font-size:14px!important;}
+
+  /* All identity children occupy the same row. Legacy four-row avatar spans
+     otherwise force the information button beneath the name and designation. */
+  :root .gp-person-surface {display:grid!important;grid-template-rows:auto!important;align-items:center!important;text-align:left!important;overflow:hidden!important;}
+  :root .gp-person-surface>.gp-person-avatar {grid-column:1!important;grid-row:1!important;margin:0!important;border:0!important;border-radius:50%!important;font-size:14px!important;color:#fff!important;}
+  :root .gp-person-surface>.gp-person-copy {grid-column:2!important;grid-row:1!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:center!important;min-width:0!important;width:auto!important;padding:0!important;gap:3px!important;}
+  :root .gp-person-copy>strong {display:flex!important;align-items:center!important;gap:6px!important;min-width:0!important;font-size:14px!important;line-height:1.4!important;}
+  :root .gp-person-name {display:block!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;}
+  :root .gp-person-copy>.gp-person-designation {display:block!important;min-width:0!important;margin:0!important;font-size:12px!important;line-height:1.4!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;}
+  :root .gp-person-surface>.gp-person-details {grid-column:3!important;grid-row:1!important;position:static!important;align-self:center!important;justify-self:end!important;width:32px!important;height:32px!important;min-height:32px!important;display:grid!important;place-items:center!important;}
+  :root .gp-people-option {display:flex!important;align-items:center!important;gap:10px!important;min-width:0!important;}
+  :root .gp-people-avatar {width:34px!important;height:34px!important;flex:0 0 34px!important;border-radius:50%!important;overflow:hidden!important;}
+  :root .gp-people-copy {min-width:0!important;display:flex!important;flex-direction:column!important;gap:2px!important;line-height:1.35!important;}
+  :root .gp-people-copy>strong {display:flex!important;align-items:center!important;gap:6px!important;font-size:14px!important;}
+  :root .member-option {min-height:68px!important;padding-block:0!important;}
+  :root .kb-work-item-dialog :is(.kb-description-rich-text,.kb-description-editable,.kb-inline-empty-trigger,.kb-detail-value-field,.kb-detail-read-item,.kb-detail-related-title,.kb-linked-item) {font-size:15px!important;line-height:1.55!important;font-family:var(--gp-font)!important;}
+  :root .kb-work-item-dialog :is(.kb-detail-value-field>strong,.kb-detail-read-item>strong,.kb-detail-control .mat-mdc-input-element,.kb-detail-control .mat-mdc-select,.gp-person-picker-field .mat-mdc-input-element) {font-size:15px!important;line-height:1.55!important;font-family:var(--gp-font)!important;}
+  :root .kb-work-item-dialog :is(.kb-detail-description-section,.kb-detail-section-card) h2 {font-size:18px!important;line-height:1.35!important;margin:0 0 12px!important;}
+  :root .kb-work-item-dialog :is(.kb-detail-description-view,.kb-inline-empty-trigger) {min-height:120px!important;padding:12px!important;}
+  :root .kb-work-item-dialog :is(.kb-description-editor,.kb-detail-description-view,.kb-inline-empty-trigger) {border:1px solid var(--gp-border-color,#a0a6b1)!important;border-radius:10px!important;}
+  :root .kb-work-item-dialog :is(.kb-description-editor,.kb-detail-description-view,.kb-inline-empty-trigger):focus-within {border-color:var(--gp-accent,#1558d6)!important;}
+  :root .kb-work-item-dialog .kb-detail-related-list>button {padding:8px 10px!important;min-height:44px!important;gap:10px!important;}
+  :root .kb-work-item-dialog :is(.kb-detail-related-key,.kb-detail-related-status) {font-size:12px!important;line-height:1.4!important;}
+  :root :is(.gp-auth-gallery,.gp-auth-form-pane) {padding:24px clamp(20px,3vw,48px)!important;}
+  :root .gp-auth-form {gap:14px!important;margin-top:18px!important;}
+  :root .gp-auth-subtitle {margin-bottom:18px!important;}
+  :root .gp-auth-password {height:44px!important;}
+  :root .gp-auth-form .gp-auth-password input {height:42px!important;}
+  :root .gp-auth-form input:not([type=checkbox]) {height:44px!important;}
+  :root .gp-auth-form .gp-auth-submit {min-height:44px!important;padding:10px 16px!important;}
+  :root .post-workspace .mail-list>article {padding-block:2px!important;}
+  :root .post-workspace .mail-row {padding-block:8px!important;min-height:44px!important;}
+  /* Frame real cards, not every nested section or layout container. */
+  :root :is(.card,.mat-mdc-card,.gp-person-surface,.team-card,.project-card,.board-card,.agent-card,.scrum-item-card,.planning-backlog-card,.document-card,.meeting-card,.file-card,.release-card,.release-profile-card,.profile-section-card,.form-section-card,.account-card,.metric-card,.chart-card,.overview-metric,.stats-card,.stat-card,.team-profile-stat-card,.release-profile-stat-card,.dashboard-card,.insight-card,.repo-card,.service-card,.incident-card,.agile-metrics>article,.delivery-indicators>article,.tc-stats>article,.roadmap-stats>article,.metrics-strip>article,.summary-grid>article,.people-stat-grid>article,.gp-metric-grid>article,.desk-metrics>article):not(:where(.document-paper,.sheet-grid,.slide-page,.present-slide,.thumb-preview,[data-gp-preserve-borders],svg)):not(:where(.document-paper,.sheet-grid,.slide-page,.present-slide,.thumb-preview,[data-gp-preserve-borders],svg) *) {
+    border:1px solid var(--gp-border-color,#a0a6b1)!important;border-radius:10px!important;box-shadow:none!important;
+  }
+  /* Board work cards use elevation only; Material's generic card frame must
+     not add an outline when the workspace is loaded through another view. */
+  :root #gp-app :is(.kb-work-card,.kanban-work-item-card) {
+    border:0!important;box-shadow:var(--gp-kanban-card-shadow)!important;
+  }
+  :root #gp-app :is(.kb-work-card,.kanban-work-item-card):is(:hover,:focus-visible) {
+    border:0!important;box-shadow:var(--gp-kanban-card-shadow-hover)!important;
+  }
+  :root :is(.repo-row,.service-row,.source-row,.agenda-event,.deployment-row,.trace-row,.timeline-row,.matrix-row,.scope-item,.linked-item,.kb-linked-item,.release-list-card) {
+    border:0!important;border-bottom:1px solid var(--gp-list-separator,color-mix(in srgb,#a0a6b1 35%,transparent))!important;border-radius:0!important;
+  }
+  :root :is(.mat-mdc-table,.users-table,.work-items-table,.projects-mat-table,.items-table,.google-table,.compact-work-table,.tc-table,.planning-table,.suite-table) :is(th,td):not(:where(.document-paper,.sheet-grid,.slide-page,.present-slide,.thumb-preview,[data-gp-preserve-borders]) *) {
+    border:0!important;border-bottom:1px solid var(--gp-list-separator,color-mix(in srgb,#a0a6b1 35%,transparent))!important;
+  }
+  /* Editor chrome is one compact surface. Only the title header is elevated;
+     the canvas wrapper is unframed and the authored page keeps its own edge. */
+  :root gp-workspace-shell[editor-mode="true"]>.workspace {padding:0!important;}
+  :root gp-workspace-shell[editor-mode="true"] :is(.document-titlebar,.file-titlebar) {
+    position:relative!important;z-index:30!important;flex:none!important;
+    display:flex!important;align-items:center!important;flex-wrap:wrap!important;
+    min-height:64px!important;gap:8px!important;padding:10px 16px!important;
+    margin:0!important;border:0!important;border-radius:0!important;
+    background:var(--gp-surface,#fff)!important;box-shadow:var(--gp-header-shadow)!important;
+  }
+  :root gp-workspace-shell[editor-mode="true"] :is(.document-titlebar,.file-titlebar)>gp-brand {flex:0 0 auto!important;}
+  :root gp-workspace-shell[editor-mode="true"] .document-title-copy {
+    flex:1 1 260px!important;min-width:160px!important;display:flex!important;flex-direction:column!important;gap:4px!important;
+  }
+  :root gp-workspace-shell[editor-mode="true"] :is(.document-title-copy>input,.file-titlebar>input) {
+    flex:1 1 240px!important;min-width:120px!important;max-width:100%!important;width:100%!important;
+    min-height:36px!important;height:36px!important;padding:4px 8px!important;
+    border:0!important;border-bottom:1px solid var(--gp-border-color,#a0a6b1)!important;border-radius:0!important;
+    background:transparent!important;box-shadow:none!important;font:600 20px/1.35 var(--gp-font,Arial,sans-serif)!important;
+    color:var(--gp-text,#111)!important;text-overflow:ellipsis!important;
+  }
+  :root gp-workspace-shell[editor-mode="true"] .document-title-copy>input {flex:none!important;}
+  :root gp-workspace-shell[editor-mode="true"] :is(.document-title-copy>input,.file-titlebar>input):focus {
+    border-bottom-color:var(--gp-accent,#1558d6)!important;outline:0!important;
+  }
+  :root gp-workspace-shell[editor-mode="true"] .document-title-copy>small {
+    display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:4px!important;
+    padding:0 8px!important;white-space:normal!important;font-size:12px!important;line-height:1.4!important;color:var(--gp-muted,#494b50)!important;
+  }
+  :root .document-title-copy>small>strong {display:inline-flex!important;align-items:center!important;gap:4px!important;}
+  :root gp-workspace-shell[editor-mode="true"] :is(.document-save-state,.file-titlebar>small) {
+    flex:0 0 auto!important;font-size:12px!important;line-height:1.4!important;white-space:nowrap!important;
+  }
+  :root gp-workspace-shell[editor-mode="true"] :is(.document-menubar,.file-menubar) {
+    display:flex!important;align-items:center!important;flex-wrap:wrap!important;
+    gap:4px!important;min-height:40px!important;padding:6px 16px!important;margin:0!important;
+    background:var(--gp-surface,#fff)!important;border:0!important;border-radius:0!important;
+    position:relative!important;z-index:25!important;
+  }
+  :root gp-workspace-shell[editor-mode="true"] :is(.document-menubar,.file-menubar)>details {position:relative!important;}
+  :root gp-workspace-shell[editor-mode="true"] :is(.document-menubar,.file-menubar)>button,
+  :root gp-workspace-shell[editor-mode="true"] :is(.document-menubar,.file-menubar)>details>summary {
+    display:inline-flex!important;align-items:center!important;justify-content:center!important;
+    width:auto!important;min-width:0!important;min-height:32px!important;height:32px!important;
+    padding:6px 12px!important;border:0!important;border-radius:8px!important;
+    background:transparent!important;box-shadow:none!important;font:500 14px/1.4 var(--gp-font,Arial,sans-serif)!important;
+    color:var(--gp-text,#111)!important;white-space:nowrap!important;cursor:pointer!important;list-style:none!important;
+  }
+  :root gp-workspace-shell[editor-mode="true"] :is(.document-menubar,.file-menubar) summary::-webkit-details-marker {display:none!important;}
+  :root gp-workspace-shell[editor-mode="true"] :is(.document-menubar,.file-menubar)>button:hover,
+  :root gp-workspace-shell[editor-mode="true"] :is(.document-menubar,.file-menubar)>details:is([open],:hover)>summary {
+    background:var(--gp-selection,#eaf1fe)!important;
+  }
+  :root gp-workspace-shell[editor-mode="true"] :is(.document-menubar,.file-menubar)>span {margin-left:auto!important;font-size:12px!important;}
+  :root gp-workspace-shell[editor-mode="true"] :is(.document-menubar,.file-menubar) :is(.menu,.document-menu) {
+    position:absolute!important;z-index:50!important;inset:calc(100% + 4px) auto auto 0!important;
+    min-width:220px!important;max-width:calc(100vw - 32px)!important;max-height:60dvh!important;overflow:auto!important;
+    padding:6px!important;background:var(--gp-surface,#fff)!important;border:1px solid var(--gp-border-color,#a0a6b1)!important;border-radius:10px!important;
+  }
+  :root gp-workspace-shell[editor-mode="true"] :is(.document-menubar,.file-menubar) :is(.menu,.document-menu) button {
+    display:block!important;width:100%!important;min-height:36px!important;height:auto!important;padding:8px 12px!important;
+    border:0!important;border-radius:6px!important;text-align:left!important;white-space:normal!important;
+  }
+  :root gp-workspace-shell[editor-mode="true"] :is(.document-toolbar,.toolbar,.slide-arrange-tools,.sheet-data-tools) {
+    gap:6px!important;padding:8px 12px!important;min-height:48px!important;margin:0!important;border:0!important;border-radius:0!important;
+  }
+  :root gp-workspace-shell[editor-mode="true"] :is(.document-toolbar,.toolbar,.slide-arrange-tools,.sheet-data-tools) :is(select,input[type=number]) {
+    height:34px!important;min-height:34px!important;border:1px solid var(--gp-border-color,#a0a6b1)!important;
+    border-radius:8px!important;padding:4px 8px!important;background:var(--gp-surface,#fff)!important;
+  }
+  :root gp-workspace-shell[editor-mode="true"] :is(.document-toolbar,.toolbar) input[type=number] {
+    flex:0 0 60px!important;width:60px!important;min-width:60px!important;max-width:60px!important;
+  }
+  :root gp-workspace-shell[editor-mode="true"] :is(.document-toolbar,.toolbar) select {width:auto!important;max-width:180px!important;}
+  :root gp-workspace-shell[editor-mode="true"] :is(.document-toolbar,.toolbar,.slide-arrange-tools,.sheet-data-tools) :is(select,input):focus {border-color:var(--gp-accent,#1558d6)!important;}
+  :root gp-workspace-shell[editor-mode="true"] :is(.document-toolbar,.toolbar,.slide-arrange-tools,.sheet-data-tools) button {
+    width:auto!important;min-width:32px!important;min-height:34px!important;height:34px!important;padding:4px 8px!important;border-radius:8px!important;
+  }
+  :root .paper-canvas {border:0!important;border-radius:0!important;}
+  :root .slide-viewport {
+    border:0!important;border-radius:0!important;box-shadow:none!important;
+    max-height:none!important;padding:24px!important;background:var(--gp-surface-muted,#f5f7f9)!important;
+  }
+  :root .slide-center {background:var(--gp-surface-muted,#f5f7f9)!important;}
+  :root .slide-center>.speaker-notes {
+    display:flex!important;flex-direction:column!important;gap:8px!important;
+    margin:0!important;padding:12px 20px!important;border:0!important;border-top:1px solid var(--gp-list-separator,#dfe1e5)!important;
+    border-radius:0!important;background:var(--gp-surface,#fff)!important;font-size:13px!important;font-weight:600!important;
+  }
+  :root .slide-center>.speaker-notes>textarea {
+    border:0!important;border-radius:0!important;padding:4px 0!important;min-height:56px!important;height:64px!important;
+    max-height:140px!important;font:400 14px/1.5 var(--gp-font,Arial,sans-serif)!important;background:transparent!important;resize:vertical!important;
+  }
+  :root .slide-center>.muted {margin:0!important;padding:6px 20px!important;font-size:12px!important;}
+  :root .slide-inspector {border:0!important;border-left:1px solid var(--gp-list-separator,#dfe1e5)!important;border-radius:0!important;padding:16px!important;}
+  :root .slide-inspector>h2 {font-size:18px!important;margin:0 0 12px!important;}
+  :root .slide-inspector>h3 {font-size:13px!important;margin:16px 0 8px!important;}
+  :root .slide-inspector .theme-choice {min-height:52px!important;height:52px!important;font-size:16px!important;padding:10px!important;margin-block:0 8px!important;border-radius:10px!important;}
+
+  /* Both launchers (Angular and the shared web component) frame the same tiles. */
+  :root .apps-panel .apps-list {gap:8px!important;padding:12px!important;}
+  :root .apps-panel .apps-list>a {
+    min-width:0!important;gap:10px!important;padding:10px!important;
+    border:1px solid var(--gp-border-color,#a0a6b1)!important;border-radius:10px!important;
+    background:var(--gp-surface,#fff)!important;color:var(--gp-text,#111)!important;
+  }
+  :root .apps-panel .apps-list>a:is(:hover,[aria-current]) {border-color:var(--gp-accent,#1558d6)!important;background:var(--gp-selection,#eaf1fe)!important;}
+  :root .apps-panel .apps-list>a>span:nth-child(2) {min-width:0!important;}
+  :root .apps-panel .apps-list>a strong {white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+
+  /* A long participant list must never stretch and vertically centre prejoin. */
+  :root gp-workspace-shell[current="meetings"] .room-stage:not(.in-call) {
+    height:calc(100dvh - 132px)!important;min-height:400px!important;overflow:hidden!important;
+    border:0!important;border-radius:10px!important;
+  }
+  :root gp-workspace-shell[current="meetings"] .room-stage>.room-header {
+    display:flex!important;align-items:center!important;justify-content:space-between!important;
+    padding:12px 16px!important;gap:12px!important;min-height:64px!important;flex-wrap:wrap!important;
+  }
+  :root gp-workspace-shell[current="meetings"] .room-title {min-width:0!important;}
+  :root gp-workspace-shell[current="meetings"] .room-title h1 {font-size:22px!important;line-height:1.3!important;overflow-wrap:anywhere!important;}
+  :root gp-workspace-shell[current="meetings"] .room-actions {display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:8px!important;}
+  :root gp-workspace-shell[current="meetings"] .meeting-room-body {grid-template-columns:minmax(0,1fr) 340px!important;overflow:hidden!important;}
+  :root gp-workspace-shell[current="meetings"] .meeting-room-body.panel-closed {grid-template-columns:minmax(0,1fr)!important;}
+  :root gp-workspace-shell[current="meetings"] .meeting-main {padding:20px!important;overflow:auto!important;overscroll-behavior:contain!important;}
+  :root gp-workspace-shell[current="meetings"] .prejoin {
+    width:100%!important;max-width:1100px!important;margin:24px auto!important;padding:0!important;
+    grid-template-columns:minmax(0,1.3fr) minmax(240px,1fr)!important;gap:28px!important;align-items:center!important;flex:none!important;
+  }
+  :root gp-workspace-shell[current="meetings"] .preview-stage {min-height:220px!important;aspect-ratio:16/10!important;}
+  :root gp-workspace-shell[current="meetings"] .join-copy {gap:14px!important;padding:0!important;min-width:0!important;}
+  :root gp-workspace-shell[current="meetings"] .join-copy h2 {font-size:28px!important;line-height:1.25!important;}
+  :root gp-workspace-shell[current="meetings"] .join-copy p {font-size:14px!important;line-height:1.5!important;}
+  :root gp-workspace-shell[current="meetings"] .meeting-side-panel {
+    padding:16px!important;border:0!important;border-left:1px solid var(--gp-list-separator,#dfe1e5)!important;
+    background:var(--gp-surface,#fff)!important;overscroll-behavior:contain!important;
+  }
+  :root gp-workspace-shell[current="meetings"] .meeting-context {padding:16px 0!important;}
+  :root gp-workspace-shell[current="meetings"] .meeting-context h3 {margin:6px 0 10px!important;font-size:16px!important;line-height:1.4!important;overflow-wrap:anywhere!important;}
+  :root gp-workspace-shell[current="meetings"] .participant-filters {display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;}
+  :root gp-workspace-shell[current="meetings"] .participant-filters>button {min-width:0!important;padding:6px!important;font-size:12px!important;white-space:nowrap!important;justify-content:center!important;}
+  :root gp-workspace-shell[current="meetings"] .participant-filters>input {grid-column:1/-1!important;width:100%!important;min-width:0!important;}
+  :root gp-workspace-shell[current="meetings"] .participant-list {gap:0!important;}
+  :root gp-workspace-shell[current="meetings"] .participant-list>.person-row {
+    display:grid!important;grid-template-columns:40px minmax(0,1fr)!important;align-items:center!important;gap:4px 10px!important;
+    min-width:0!important;margin:0!important;padding:12px 0!important;border:0!important;
+    border-bottom:1px solid var(--gp-list-separator,#dfe1e5)!important;border-radius:0!important;box-shadow:none!important;
+  }
+  :root gp-workspace-shell[current="meetings"] .person-row>.person-avatar {grid-column:1!important;grid-row:1!important;width:40px!important;height:40px!important;margin:0!important;border-radius:50%!important;}
+  :root gp-workspace-shell[current="meetings"] .person-row>div {min-width:0!important;}
+  :root gp-workspace-shell[current="meetings"] .person-row>div:not(.agent-actions) {grid-column:2!important;grid-row:1!important;}
+  :root gp-workspace-shell[current="meetings"] .person-row strong {font-size:14px!important;line-height:1.4!important;overflow-wrap:anywhere!important;}
+  :root gp-workspace-shell[current="meetings"] .person-row small {font-size:12px!important;line-height:1.5!important;}
+  :root gp-workspace-shell[current="meetings"] .person-row>.agent-actions {
+    grid-column:2!important;grid-row:2!important;display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:4px 10px!important;
+  }
+  :root gp-workspace-shell[current="meetings"] .agent-actions>button {min-height:28px!important;height:auto!important;padding:4px 0!important;font-size:12px!important;white-space:normal!important;}
+  :root gp-workspace-shell[current="meetings"] .in-call .meeting-main {overflow:hidden!important;padding:16px!important;}
+  @media(max-width:1200px) {
+    :root gp-workspace-shell[current="meetings"] .prejoin {grid-template-columns:minmax(0,1fr)!important;max-width:640px!important;margin:8px auto!important;gap:20px!important;}
+  }
+  @media(max-width:760px) {
+    :root gp-workspace-shell[editor-mode="true"] :is(.document-titlebar,.file-titlebar) {padding:8px 12px!important;}
+    :root gp-workspace-shell[editor-mode="true"] .document-title-copy {min-width:160px!important;flex-basis:calc(100% - 200px)!important;}
+    :root gp-workspace-shell[editor-mode="true"] .document-save-state {display:none!important;}
+    :root .slide-viewport {padding:16px!important;}
+    :root gp-workspace-shell[current="meetings"] .room-stage:not(.in-call) {min-height:0!important;height:calc(100dvh - 156px)!important;}
+    :root gp-workspace-shell[current="meetings"] .meeting-room-body {position:relative!important;display:block!important;}
+    :root gp-workspace-shell[current="meetings"] .meeting-main {height:100%!important;padding:12px!important;}
+    :root gp-workspace-shell[current="meetings"] .meeting-side-panel {position:absolute!important;inset:0 0 0 auto!important;width:min(340px,100%)!important;height:100%!important;z-index:20!important;}
+  }
+  @media(max-width:700px) {
+    :root {--gp-space-page:12px!important;}
+    :root :is(.saas-container,.products-page,.projects-dashboard,.boards-page,.kb-page,.planning-page,.work-items-page,.testcases-page,.dashboard-page,.roadmap-page,.retro-page,.forge-page,.instru-page,.desk-page,.post-workspace,.suite-body),
+    :root gp-workspace-shell>.workspace {padding:12px!important;}
+    :root :is(.button,.gp-button,.btn-primary,.btn-secondary,.kb-button,.tc-primary,.mat-mdc-button-base:not(.mat-mdc-icon-button),.workspace-filter-trigger,.filter-trigger) {height:44px!important;min-height:44px!important;}
+    :root :is(.team-profile-cover-wall,.project-profile-cover-wall,.users-profile-cover-wall) {height:96px!important;min-height:96px!important;}
+  }
+}
+
+@layer gp-compact {
+ .editor-actions { display:flex!important;align-items:center!important;gap:8px!important;flex-wrap:wrap;flex:none; }
+ .document-provenance { display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:12px 20px;color:var(--gp-muted,#555);font-size:12px; }
+ .document-provenance strong { display:inline-flex;align-items:center;gap:5px; }
+ @media(max-width:900px){.editor-actions{gap:4px!important}.editor-actions .button{padding-inline:12px!important}}
+}

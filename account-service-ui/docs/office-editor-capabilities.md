@@ -1,0 +1,17 @@
+# Office editor capabilities
+
+Folio, Grid and Prism now use focused file-editor layouts: title and file actions at the top, menu/formatting tools below, and a document/grid/slide workspace. Opening a file removes the library navigation from the editing canvas. Sharing, owner/reader/editor permissions, autosave, revisions, tags and comments remain connected to workspace APIs.
+
+| Product | Implemented in this iteration | Practical limits / remaining work |
+| --- | --- | --- |
+| Folio | Page setup and pageless mode, ruler/spellcheck toggles, headings, font/size/color/highlight, bold/italic/underline/strike, super/subscript, alignment/indentation, links/images, editable tables with row/column actions, checklists, page breaks, word counts, HTML/text/DOCX import, editable DOCX export and PDF via printing | DOCX conversion is not lossless for advanced layouts. No full suggestions engine, footnote/citation system or character-level simultaneous collaboration. Browser rich-text editing is used. Page breaks and advanced pagination are not a full print-layout engine. |
+| Grid | Formula bar, cross-sheet formulas/ranges, logical/text/date/math/conditional functions, number/currency/percent/date formats, relative fill with absolute references, dropdown validation, conditional formatting, merge/unmerge checks, static pivot summaries, saved bar charts, sheet duplication/rename, column width controls, CSV/XLSX/JSON import/export, undo/redo, filters and sorting | Formula coverage is a subset, not all Google Sheets functions. Pivots are snapshots of raw numerical values. No scripting/macros, array-spill engine or simultaneous cell-level collaboration. Sorting currently keeps original formula references; review formulas after sorting. XLSX export does not preserve every chart/validation/style setting. |
+| Prism | Filmstrip and object inspector, layout choices, themes across slides, text/shapes/images/tables/bar charts, selection/shift multiselect, align/distribute, keyboard nudging, grid snapping, rotation, thumbnail drag reorder, skipped slides, speaker notes, presentation controls, JSON import/export, PPTX export and PDF via printing | No PPTX import, master-slide system, arbitrary object animations, recording or simultaneous object-level collaboration. Tables/charts export to PPTX as images. Advanced export fidelity and multi-object drag/grouping remain partial. |
+
+Grid is limited to 1,000 rows, 52 columns and 20 imported sheets. Workbook and presentation payloads remain bounded by the existing service limits. Folio imports are capped at 3 MB and converted editor content at 1.8 MB. Prism JSON import caps slide count and validates geometry/content; small embedded images are supported.
+
+The shared light theme uses white application surfaces. Status colors, selected controls, avatars and authored file content retain their useful colors. Dark mode changes application chrome; document paper and authored slide backgrounds are preserved.
+
+## Focused checks
+
+`node --test scripts/office-editors.test.mjs scripts/suite-icons.test.mjs` verifies formula/error behavior, reference shifts, merges, pivot snapshots, number formats, CSV handling, slide geometry, a real editable DOCX round trip, human/agent identity, and the nine-app launcher. Development builds cover the edited Angular apps. These checks do not establish feature parity or replace browser testing of editing, clipboard, printing and media permissions.

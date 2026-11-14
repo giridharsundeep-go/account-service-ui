@@ -1,10 +1,14 @@
+import {FilterMenu} from '../shared/filter-menu';
+import { TicketActionsComponent } from '../shared/ticket-actions';
+import { AgentWorkViewComponent } from '../shared/agent-work-view';
+import { ActorIconComponent } from '../shared/actor-icon';
 import {WorkspaceSettingsService} from '../shared/workspace-settings.service';
 import {untracked} from '@angular/core';
 import { TicketCollaborationComponent } from '../shared/ticket-collaboration';
 import { RecentWorkService } from '../shared/recent-work.service';
 import { CommonModule } from '@angular/common';
 import { A11yModule } from '@angular/cdk/a11y';
-import { ChangeDetectorRef, Component, EventEmitter, Input, Output, OnInit, HostListener, effect, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChanges, HostListener, effect, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -61,13 +65,17 @@ interface WorkItem {
 @Component({
   selector: 'app-kanban-board',
   standalone: true,
-  imports: [TicketCollaborationComponent, CommonModule, A11yModule, FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, WorkspaceHeroComponent, PersonPickerComponent],
+  imports: [FilterMenu,TicketActionsComponent, AgentWorkViewComponent, ActorIconComponent, TicketCollaborationComponent, CommonModule, A11yModule, FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, WorkspaceHeroComponent, PersonPickerComponent],
   templateUrl: './kanban-board.html',
   styleUrls: ['./kanban-board.css', '../shared/field-controls.css', '../shared/board-surface.css']
 })
-export class KanbanBoard implements OnInit {
+export class KanbanBoard implements OnInit, OnChanges {
   @Input() dialogRequest: WorkItemDialogRequest | null = null;
   fullscreenMode = false;
+  ticketFullscreen = false;
+  ticketView: 'details' | 'agent-work' = 'details';
+  ngOnChanges(changes:SimpleChanges):void { if(changes['dialogRequest'] && !changes['dialogRequest'].firstChange && this.dialogRequest) { this.selectedItem=null;this.ngOnInit(); } }
+  showClone(clone:{id:number;kind:string;projectId:number}):void { this.ticketView='details';this.pendingOpenItem={type:clone.kind as WorkItemDialogRequest['type'],id:clone.id};this.selectedItem=null;this.ticketRevision++;this.loadProjectContext(); }
   @HostListener('document:keydown.escape') closeOnEscape(): void {
     if (this.dialogRequest) return;
     if (this.sprintProgressOpen) { this.sprintProgressOpen = false; return; }
@@ -173,6 +181,7 @@ export class KanbanBoard implements OnInit {
 
   ngOnInit(): void {
     if (this.dialogRequest) {
+      this.ticketView=this.dialogRequest.view || 'details';
       this.requestedProjectId = this.dialogRequest.projectId;
       if (this.dialogRequest.create) this.pendingCreateType = this.dialogRequest.type === 'ISSUE' ? 'Bug' : this.dialogRequest.type === 'EPIC' ? 'Epic' : this.dialogRequest.type === 'STORY' ? 'Story' : 'Task';
       else this.pendingOpenItem = { type: this.dialogRequest.type, id: this.dialogRequest.id };
@@ -355,10 +364,11 @@ export class KanbanBoard implements OnInit {
     forkJoin({
       project: this.dialogRequest ? this.http.get<any>(`${this.baseUrl}/projects/${projectId}`, this.headers()).pipe(catchError(() => of(null))) : of(null),
       users: this.http.get<any>(`${this.baseUrl}/project-individuals/${projectId}`, this.headers()).pipe(catchError(() => of([]))),
+      agents: this.http.get<any[]>(`${this.baseUrl}/workspace/agents?projectId=${projectId}`, this.headers()).pipe(catchError(() => of([]))),
       allUsers: this.collections.read(`${this.baseUrl}/users`).pipe(catchError(() => of([]))),
       roles: this.http.get<any>(`${this.baseUrl}/roles`, this.headers()).pipe(catchError(() => of([]))),
       sprints: this.http.get<any>(`${this.baseUrl}/sprints`, this.headers()).pipe(catchError(() => of([])))
-    }).subscribe(({ project, users, allUsers, roles, sprints }) => {
+    }).subscribe(({ project, users, allUsers, roles, sprints, agents }) => {
       // Ignore late responses if the user switched projects while requests were in flight.
       if (projectId !== this.selectedProjectId) return;
       const profile = project?.data ?? project?.project ?? project;
@@ -404,6 +414,8 @@ export class KanbanBoard implements OnInit {
       };
       const projectPeople = this.extractArray(users).map(normalizePerson).filter((person): person is PersonOption => Boolean(person));
       const directoryPeople = this.extractArray(allUsers).map(normalizePerson).filter((person): person is PersonOption => Boolean(person));
+      const agentPeople:PersonOption[]=agents.filter(a=>a.status==='ACTIVE').map(a=>({...a,id:-Number(a.id),lookupIds:[-Number(a.id)],name:a.name,initials:a.name.split(/\s+/).slice(0,2).map((p:string)=>p[0]).join(''),designation:(a.designation||'Workspace agent')+' · Agent'}));
+      projectPeople.push(...agentPeople);
       this.personDirectory = this.mergePeople(directoryPeople, projectPeople);
       this.people = this.mergePeople(projectPeople, directoryPeople);
 
@@ -939,6 +951,7 @@ export class KanbanBoard implements OnInit {
   closeItemDetails(): void {
     const restoreBoardScroll = this.boardScrollY;
     this.selectedItem = null;
+    this.ticketFullscreen=false;this.ticketView='details';
     this.detailEditError = '';
     this.detailEditMode = false;
     this.detailDraft = null;
@@ -1209,7 +1222,17 @@ export class KanbanBoard implements OnInit {
   }
 
   detailPersonName(id: number | null): string {
-    return id === null ? 'Unassigned' : this.findPersonById(id)?.name ?? `User ${id}`;
+    const numericId=this.numberOrNull(id);
+    if(numericId===null||numericId===0)return 'Unassigned';
+    return this.findPersonById(numericId)?.name ?? `${numericId<0?'Agent':'User'} ${Math.abs(numericId)}`;
+  }
+
+  detailCreator(item: WorkItem): {id:number|null;name:string;type:string} {
+    const raw=item.raw || {};const creator=raw.creator || raw.createdBy || {};
+    const id=this.numberOrNull(raw.creator_user_id ?? raw.creatorUserId ?? raw.created_by ?? raw.createdById ?? creator.id);
+    const type=creator.actorType || raw.creatorActorType || (id && id<0 ? 'AGENT' : 'HUMAN');
+    const name=creator.name || [creator.firstName || creator.first_name,creator.lastName || creator.last_name].filter(Boolean).join(' ') || (id ? this.detailPersonName(id) : 'Not recorded');
+    return {id,name,type};
   }
 
   detailComments(item: WorkItem): any[] {

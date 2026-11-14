@@ -1,5 +1,12 @@
 <main class="products-page">
-  <app-workspace-hero eyebrow="PRODUCTS · INNOVATION · IMPACT" title="Products" subtitle="Turn ideas into impactful products. Maintain your product registry and platform portfolio." image="assets/covers/products.png" imageAlt="A team shaping a product idea together"></app-workspace-hero>
+  <app-workspace-hero eyebrow="PRODUCTS · INNOVATION · IMPACT" title="Products" subtitle="Turn ideas into impactful products. Maintain your product registry and platform portfolio." image="assets/covers/products.png" imageAlt="A team shaping a product idea together"><button workspace-actions
+      mat-flat-button
+      class="primary-action"
+      type="button"
+      (click)="initiateNewProduct()">
+      <mat-icon>add</mat-icon>
+      <span>Create Product</span>
+    </button></app-workspace-hero>
 
   <header class="google-header products-toolbar">
     <div class="header-search">
@@ -22,14 +29,7 @@
       </div>
     </div>
 
-    <button
-      mat-flat-button
-      class="primary-action"
-      type="button"
-      (click)="initiateNewProduct()">
-      <mat-icon>add</mat-icon>
-      <span>Create Product</span>
-    </button>
+
   </header>
 
   <div class="modal-backdrop" *ngIf="isComposerOpen" (click)="closeComposerDrawer()">
@@ -85,7 +85,7 @@
           *ngFor="let product of filterProducts(productsList); trackBy: trackProduct">
 
           <mat-card-header>
-            
+
             <mat-card-title>{{ product.name }}</mat-card-title>
             <mat-card-subtitle>Product</mat-card-subtitle>
           </mat-card-header>

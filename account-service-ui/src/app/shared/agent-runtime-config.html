@@ -1,0 +1,20 @@
+<section class="runtime">
+ <header><div><h2>Repository, runtime &amp; skills</h2><p>Set this agent’s defaults. Each ticket can override them before a run starts.</p></div><span class="pill" [class.good]="config?.worker?.online">{{config?.worker?.online?'Worker online':'Worker offline'}}</span></header>
+ <p role="alert" *ngIf="error">{{error}}</p><p role="status" *ngIf="notice">{{notice}}</p>
+ <ng-container *ngIf="config">
+  <div class="grid"><label>Local Ollama model<input [(ngModel)]="config.model" [disabled]="!admin"></label><label class="check"><input type="checkbox" [(ngModel)]="config.enabled" [disabled]="!admin">Enable execution for assigned tickets</label></div>
+  <h3>Default repository</h3>
+  <div class="grid">
+   <label>Repository<select [(ngModel)]="config.executionDefaults.repositoryId" [disabled]="!admin"><option [ngValue]="0">Set separately on each ticket</option><option *ngFor="let repo of repos" [ngValue]="repo.id">{{repo.name}}</option></select></label>
+   <label>Base branch<input [(ngModel)]="config.executionDefaults.baseBranch" [disabled]="!admin"></label>
+   <label>Test profile<select [(ngModel)]="config.executionDefaults.testProfile" [disabled]="!admin"><option value="PYTHON_UNITTEST">Python · unittest</option><option value="NODE_TEST">Node · built-in tests</option></select></label>
+   <label>Test directory<input [(ngModel)]="config.executionDefaults.testDirectory" [disabled]="!admin"></label>
+   <label>Editable files / directories<input [(ngModel)]="paths" placeholder="src, tests" [disabled]="!admin"></label>
+  </div><button *ngIf="reposNext>=0" (click)="loadRepos(true)">Load more repositories</button>
+  <h3>Enabled skills</h3><p class="help">Choose what this agent may use. Installed availability is reported separately by the enrolled worker; checking a box does not install software.</p>
+  <div class="skill-grid"><label *ngFor="let skill of catalog"><input type="checkbox" [checked]="enabled(skill.id)" (change)="toggle(skill.id)" [disabled]="!admin"><span><strong>{{skill.name}}</strong><small>{{skill.setup}}</small><span class="pill" [class.good]="installed(skill.id)?.available">{{installed(skill.id)?.available?'Available · '+installed(skill.id).version:'Not detected'}}</span></span></label></div>
+  <div class="readiness"><strong>Worker report</strong><p>{{config.worker?.workerId||'Not enrolled'}} · {{config.worker?.runtimeVersion||'No capability report yet'}}</p><small>Last capability check: {{config.worker?.reportedAt?(config.worker.reportedAt|date:'medium'):'Not received'}}. Status refreshes every 10 seconds.</small></div>
+  <div class="actions"><button class="primary" (click)="save()" [disabled]="busy||!admin">Save configuration</button><button (click)="enroll()" [disabled]="busy||!admin">Enroll / rotate credential</button></div>
+  <p class="help">Only administrators configure workers. Rotating enrollment revokes the old credential. Python and Node profiles run without network access or package installation, in isolated workspaces; repository changes require human review.</p>
+ </ng-container>
+</section>

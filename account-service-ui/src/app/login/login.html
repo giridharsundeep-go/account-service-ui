@@ -1,8 +1,19 @@
-<main class="sign-in-bridge" aria-labelledby="sign-in-heading">
-  <span class="brand-mark" aria-hidden="true">g<span>p</span></span>
-  <p class="eyebrow">GREATLEY POSHLEY</p>
-  <h1 id="sign-in-heading">One account. Connected work.</h1>
-  <p>Opening your shared sign-in for Professy, Chatly, Documents, and Calendar.</p>
-  <p *ngIf="error" class="error" role="alert">{{ error }}</p>
-  <button type="button" [disabled]="busy" (click)="signIn()">{{ busy ? 'Opening sign-in…' : 'Continue to sign-in' }}</button>
-</main>
+<div class="gp-auth-page">
+  <header class="gp-auth-header">
+    <a href="/login" aria-label="Greatley Poshley sign in"><app-workspace-brand [app]="''" [name]="'Greatley Poshley'" [iconOnly]="false"></app-workspace-brand></a>
+  </header>
+  <main class="gp-auth-split">
+    <app-auth-app-gallery></app-auth-app-gallery>
+    <section class="gp-auth-form-pane" aria-labelledby="sign-in-heading">
+      <div class="gp-auth-form-content sign-in-bridge">
+        <h2 id="sign-in-heading">Sign in</h2>
+        <p class="gp-auth-subtitle">One account for all your apps.</p>
+        <p class="gp-auth-notice" role="status" *ngIf="busy">Opening your secure sign-in…</p>
+        <p *ngIf="error" class="error" role="alert">{{error}}</p>
+        <button type="button" class="gp-auth-submit" [disabled]="busy" (click)="signIn()">{{busy?'Opening sign-in…':'Continue to sign in'}}</button>
+        <p class="gp-auth-switch">New to Greatley Poshley? <a href="/super-reg">Create an account</a></p>
+      </div>
+    </section>
+  </main>
+  <footer class="gp-auth-footer">© {{currentYear}} Greatley Poshley Ltd. All rights reserved.</footer>
+</div>

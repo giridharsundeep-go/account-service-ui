@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Poshley Sans · Font specimen</title>
+<link rel="stylesheet" href="../../fonts.css">
+<style>
+*{box-sizing:border-box}body{font-family:"Poshley Sans",Arial,sans-serif;margin:0;background:#fff;color:#202124;line-height:1.65}
+main{max-width:1040px;margin:auto;padding:56px 28px}header{border-bottom:1px solid #dadce0;padding-bottom:28px}small{color:#60646c}h1{font-size:64px;font-weight:500;letter-spacing:-2px;line-height:1.15;margin:14px 0}h2{font-size:28px;font-weight:600;margin-top:40px}p{font-size:17px}label{font-size:14px;display:block}input{accent-color:#1558d6;width:min(400px,100%)}.sample{font-size:28px;overflow-wrap:anywhere}.weights{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:24px}.weights p{font-size:22px;margin:0}.weights small{display:block;font-size:13px}.table{width:100%;border-collapse:collapse}.table th,.table td{text-align:left;padding:16px;border-bottom:1px solid #e3e5e8}.table th{font-weight:600}.pill{border-radius:20px;background:#eaf1fe;color:#1558d6;padding:6px 12px;font-weight:500}.italic{font-style:italic}.digits{font-variant-numeric:tabular-nums}footer{margin-top:48px;border-top:1px solid #dadce0;padding-top:24px;color:#60646c}a{color:#1558d6}
+</style>
+<main>
+<header><small>GREATLEY POSHLEY · SELF-HOSTED VARIABLE FONT KIT</small><h1>Poshley Sans</h1><p>A clear voice for people, ideas, and work.</p><small>Distinct Latin UI edition · Version 1.200 · Optical size 18 · Upright and italic · 400–700 weight</small></header>
+<h2>A recognizable character</h2><p class="sample">a · l · Q · 7 &nbsp; Il1 &nbsp; á à â ã ä å</p><p>Single-storey a, a footed l, a crossed 7, a revised Q, and open spacing. This is an OFL-licensed derivative; visual changes are not a legal percentage threshold.</p><h2>Comfortable at every weight</h2>
+<label>Font weight <output id="value">400</output><br><input id="weight" type="range" min="400" max="700" value="400" step="1"></label>
+<p class="sample" id="sample">Build better work, together.<br>Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll Mm<br>Nn Oo Pp Qq Rr Ss Tt Uu Vv Ww Xx Yy Zz<br>0123456789 · $ € £ ₹ — &amp; @ # % ! ?</p>
+<div class="weights"><p style="font-weight:400">Body text<small>400 Regular</small></p><p style="font-weight:500">Next steps<small>500 Medium</small></p><p style="font-weight:600">Project overview<small>600 Semibold</small></p><p style="font-weight:700">Ready for release<small>700 Bold</small></p></div>
+<h2>Readable lists and tables</h2>
+<table class="table"><thead><tr><th>Work item</th><th>Assignee</th><th>Status</th></tr></thead><tbody><tr><td><strong>Improve the project dashboard</strong><br><small>Plan, prioritize, and measure outcomes.</small></td><td>Arjun Saxena</td><td><span class="pill">In progress</span></td></tr><tr><td><strong>Review the next release</strong><br><small>Evidence, tests, and useful details.</small></td><td>Quality agent</td><td><span class="pill">In review</span></td></tr></tbody></table>
+<p class="italic">True italic: thoughtful details make everyday work easier.</p><p class="digits">Tabular numbers: 0123456789 · 19,480.25 · 24/11/2026</p>
+<footer>Original glyphs © Google Sans Project Authors, under <a href="OFL.txt">SIL OFL 1.1</a>. Poshley Sans is a Greatley Poshley UI adaptation; no Google affiliation or endorsement. See <a href="README.md">kit notes</a> for source provenance and use.</footer>
+</main>
+<script>const weight=document.querySelector('#weight');weight.addEventListener('input',()=>{document.querySelector('#sample').style.fontWeight=weight.value;document.querySelector('#value').value=weight.value;});</script>
+</html>

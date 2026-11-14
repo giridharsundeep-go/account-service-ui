@@ -9,7 +9,7 @@
   top: 0;
   z-index: 10;
   background: #ffffff;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--gp-border-color, #a0a6b1);
 }
 
 .brand {
@@ -29,7 +29,7 @@
 .sidebar {
   width: 260px;
   background: #ffffff;
-  border-right: 1px solid #eee;
+  border-right: 1px solid var(--gp-border-color, #a0a6b1);
   padding: 20px;
 
   position: sticky;
@@ -112,7 +112,7 @@
 .role-create-card input,
 .role-create-card textarea {
   padding: 10px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--gp-border-color, #a0a6b1);
   border-radius: 8px;
 }
 
@@ -199,7 +199,7 @@ html, body {
 
   background: white;
   backdrop-filter: blur(14px);
-  border-right: 1px solid rgba(0,0,0,0.05);
+  border-right: 1px solid var(--gp-border-color, #a0a6b1);
 }
 
 /* 👤 USER MINI */
@@ -443,7 +443,7 @@ html, body {
 }
 
 .org-row {
-  border-top: 1px solid #f1f1f1;
+  border-top: 1px solid var(--gp-border-color, #a0a6b1);
   cursor: pointer;
   transition: 0.2s;
 }
@@ -496,7 +496,7 @@ html, body {
   cursor: pointer;
   transition: 0.25s;
   width: 100%;
-  border: 1px solid #f1f1f1;
+  border: 1px solid var(--gp-border-color, #a0a6b1);
 }
 
 .org-card:hover {
@@ -583,7 +583,7 @@ html, body {
   gap: 4px;
   background: #f1f5f9;
   color: #0b57d0;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--gp-border-color, #a0a6b1);
   border-radius: 6px;
   padding: 2px 8px;
   font-size: 12px;

@@ -1,10 +1,13 @@
+import {FilterMenu} from '../shared/filter-menu';
+import { ActorIconComponent } from '../shared/actor-icon';
 import {WorkspaceSettingsService} from '../shared/workspace-settings.service';
 import { untracked } from '@angular/core';
 import { WorkItemDialogService } from '../shared/work-item-dialog.service';
 import {
   ChangeDetectionStrategy,
   Component,
-  OnInit,
+  OnInit, OnDestroy,
+  ViewChild, TemplateRef,
   computed,
   effect,
   inject,
@@ -13,6 +16,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -118,8 +122,8 @@ interface BoardCard {
 @Component({
   selector: 'app-boards',
   standalone: true,
-  imports: [
-    CommonModule,
+  imports: [FilterMenu,ActorIconComponent,
+    CommonModule, MatDialogModule,
     FormsModule,
     WorkspaceHeroComponent,
     MatOptionModule,
@@ -150,7 +154,19 @@ interface BoardCard {
   styleUrls: ['./boards.css', '../shared/field-controls.css', '../shared/board-surface.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class Boards implements OnInit {
+export class Boards implements OnInit, OnDestroy {
+  @ViewChild('boardForm') private boardForm!: TemplateRef<unknown>;
+  private readonly dialogs=inject(MatDialog);
+  private boardFormRef:MatDialogRef<unknown>|null=null;
+  private presentBoardForm(){
+    this.boardFormRef?.close();
+    const ref=this.dialogs.open(this.boardForm,{width:'1040px',maxWidth:'94vw',maxHeight:'92dvh',autoFocus:'first-tabbable',ariaLabel:this.showEditBoard()?'Edit board':'Create board'});
+    this.boardFormRef=ref;
+    ref.afterClosed().subscribe(()=>{if(this.boardFormRef===ref){this.boardFormRef=null;this.showCreateBoard.set(false);this.showEditBoard.set(false);}});
+  }
+  ngOnDestroy(){this.boardFormRef?.close();}
+
+
   private readonly collections = inject(ApiCollectionService);
   private workItemsRequestId = 0;
   private readonly itemDialog = inject(WorkItemDialogService);
@@ -640,6 +656,7 @@ export class Boards implements OnInit {
         // Project IDs are now known. Load supporting board configuration next.
         forkJoin({
           sprints: this.http.get<any>(`${this.baseUrl}/sprints`, this.headers()).pipe(catchError(() => of([]))),
+          agents: this.http.get<any[]>(`${this.baseUrl}/workspace/agents`, this.headers()).pipe(catchError(() => of([]))),
           users: this.collections.read(`${this.baseUrl}/users`).pipe(catchError(() => of([]))),
           teams: this.http.get<any>(`${this.baseUrl}/teams`, this.headers()).pipe(catchError(() => of([]))),
           boards: this.http.get<any>(`${this.baseUrl}/boards`, this.headers()).pipe(catchError(() => of([])))
@@ -656,6 +673,7 @@ export class Boards implements OnInit {
               status: v.status || 'ACTIVE'
             }));
 
+            users.push(...result.agents.map(a=>({...a,id:-Number(a.id),name:a.name,actorType:'AGENT'})));
             this.users.set(users);
             this.teams.set(teams);
             this.sprints.set(sprints);
@@ -920,7 +938,7 @@ export class Boards implements OnInit {
     this.resetBoardForm();
     // Project is selected inside Board Filters. Do not require a page-level project selection.
     this.createProjectFilter.set(Number(this.selectedProjectId()) || 'ALL');
-    this.showCreateBoard.set(true);
+    this.showEditBoard.set(false); this.errorMessage.set(''); this.showCreateBoard.set(true); this.presentBoardForm();
   }
 
   openEditBoardFor(board: Board): void {
@@ -942,10 +960,10 @@ export class Boards implements OnInit {
         case 'TYPE': case 'WORK_TYPE': this.createTypeFilter.set(v); break;
       }
     }
-    this.showEditBoard.set(true);
+    this.showCreateBoard.set(false); this.errorMessage.set(''); this.showEditBoard.set(true); this.presentBoardForm();
   }
 
-  closeBoardDialog(): void { this.showCreateBoard.set(false); this.showEditBoard.set(false); }
+  closeBoardDialog(): void { this.boardFormRef?.close();this.boardFormRef=null; this.showCreateBoard.set(false); this.showEditBoard.set(false); }
 
   private resetBoardForm(): void {
     this.createProjectFilter.set(Number(this.selectedProjectId()) || 'ALL');
@@ -962,6 +980,7 @@ export class Boards implements OnInit {
   }
 
   saveBoard(): void {
+    if(this.savingBoard())return;
     const projectId = Number(this.createProjectFilter()); const name = this.boardName().trim();
     if (!projectId || !name) { this.errorMessage.set('Project and board name are required.'); return; }
     this.savingBoard.set(true);
@@ -980,14 +999,8 @@ export class Boards implements OnInit {
   }
 
   private replaceBoardFilters(boardId: number): void {
-    this.http.delete(`${this.baseUrl}/board-filters/board/${boardId}`, this.headers()).pipe(catchError(() => of(null))).subscribe(() => {
-      const filters = this.boardFilterPayload(boardId);
-      if (!filters.length) { this.finishBoardSave(filters); return; }
-      forkJoin(filters.map(f => this.http.post(`${this.baseUrl}/board-filters`, f, this.headers()))).subscribe({
-        next: () => this.finishBoardSave(filters),
-        error: e => { this.savingBoard.set(false); this.errorMessage.set(e?.error?.message || 'Board saved but filters could not be saved.'); }
-      });
-    });
+    const filters=this.boardFilterPayload(boardId);
+    this.http.put(`${this.baseUrl}/board-filters/board/${boardId}`,filters,this.headers()).subscribe({next:()=>this.finishBoardSave(filters),error:e=>{this.savingBoard.set(false);this.errorMessage.set(e?.error?.message||'The board was saved. Retry to save its filters.');}});
   }
 
   private finishBoardSave(filters: BoardFilter[]): void {

@@ -1,0 +1,213 @@
+<section class="agents-page">
+  <ng-template #agentPageActions><div class="heading-actions">    <button
+      type="button"
+      class="gp-button gp-action"
+      *ngIf="!selected && !editing"
+      (click)="create()"
+    >
+      ＋ Create agent</button
+    ><button
+      type="button"
+      class="gp-button gp-cancel"
+      *ngIf="selected || editing"
+      (click)="selected = null; editing = false"
+    >
+      ← All agents
+    </button>
+</div></ng-template>
+  <app-workspace-hero
+    *ngIf="!embedded"
+    [title]="editing ? (selected ? 'Edit agent' : 'Create agent') : selected ? selected.name : 'Agents'"
+    subtitle="Give every agent a clear purpose, project access, and accountable ownership."
+    image="assets/covers/teams.jpeg"
+  ><ng-container workspace-actions [ngTemplateOutlet]="agentPageActions"></ng-container></app-workspace-hero>
+  <header class="page-heading" *ngIf="embedded">
+    <div>
+      <small>PEOPLE & ACCESS / AGENTS</small>
+      <h1>
+        {{
+          editing ? (selected ? 'Edit agent' : 'Create agent') : selected ? selected.name : 'Agents'
+        }}
+      </h1>
+    </div>
+    <ng-container [ngTemplateOutlet]="agentPageActions"></ng-container>
+  </header>
+  <p role="alert" class="error" *ngIf="error">
+    {{ error }} <button type="button" class="gp-button gp-cancel" (click)="load()">Retry</button>
+  </p>
+  <p role="status" *ngIf="loading">Loading agents…</p>
+  <ng-container *ngIf="!selected && !editing"
+    ><div class="agents-toolbar">
+      <input
+        type="search"
+        [(ngModel)]="query"
+        (input)="load()"
+        placeholder="Search agents by name or designation"
+        aria-label="Search agents"
+      /><span>{{ agents.length }} agents</span>
+    </div>
+    <section class="agent-grid">
+      <button type="button" class="agent-card" *ngFor="let agent of agents" (click)="open(agent)">
+        <app-actor-icon actorType="AGENT"></app-actor-icon><span class="avatar" [attr.data-tone]="agent.id % 5">{{ initials(agent.name) }}</span>
+        <div>
+          <h2>{{ agent.name }}</h2>
+          <strong>{{ agent.designation || 'Workspace agent' }}</strong>
+          <p>{{ agent.description || 'No purpose added yet.' }}</p>
+          <small
+            >{{ agent.projectIds.length }} projects · {{ agent.status | titlecase }} · Agent</small
+          >
+        </div>
+        <span>↗</span>
+      </button>
+    </section>
+    <p *ngIf="!loading && !agents.length">
+      Create your first agent to assign project work and collaborate in Hello.
+    </p></ng-container
+  >
+  <form *ngIf="editing" (ngSubmit)="save()" class="agent-form surface">
+    <div class="form-grid">
+      <label
+        >Name<input
+          type="text"
+          name="name"
+          [(ngModel)]="draft.name"
+          required
+          maxlength="120" /></label
+      ><label
+        >Designation<input
+          type="text"
+          name="designation"
+          [(ngModel)]="draft.designation"
+          placeholder="e.g. Quality analyst"
+          maxlength="120" /></label
+      ><label
+        >Status<select name="status" [(ngModel)]="draft.status">
+          <option>ACTIVE</option>
+          <option>PAUSED</option>
+          <option>ARCHIVED</option>
+        </select></label
+      ><label
+        >Preferred model (metadata)<input
+          name="model"
+          [(ngModel)]="draft.model"
+          maxlength="120"
+          placeholder="Configured by your administrator" /></label
+      ><label class="wide"
+        >Purpose<textarea
+          name="description"
+          [(ngModel)]="draft.description"
+          rows="3"
+          maxlength="4000"
+        ></textarea></label
+      ><label class="wide"
+        >Operating instructions<textarea
+          name="instructions"
+          [(ngModel)]="draft.instructions"
+          rows="6"
+          maxlength="20000"
+          placeholder="Describe responsibilities, boundaries, and when the agent should ask a person."
+        ></textarea>
+      </label>
+    </div>
+    <h2>Project membership</h2>
+    <p>Agents appear in these projects’ assignee and reporter lists.</p>
+    <div class="project-choices">
+      <label *ngFor="let project of projects.projects()"
+        ><input
+          type="checkbox"
+          [checked]="draft.projectIds.includes(project.id)"
+          (change)="toggleProject(project.id, $any($event.target).checked)"
+        />{{ project.name }}</label
+      >
+    </div>
+    <footer>
+      <button type="button" class="gp-button gp-cancel" (click)="cancel()" [disabled]="saving">
+        Cancel</button
+      ><button type="submit" class="gp-button gp-action" [disabled]="saving || !draft.name.trim()">
+        {{ saving ? 'Saving…' : 'Save agent' }}
+      </button>
+    </footer>
+  </form>
+  <ng-container *ngIf="selected && !editing"
+    ><header class="agent-identity surface">
+      <app-actor-icon actorType="AGENT"></app-actor-icon><span class="avatar large" [attr.data-tone]="selected.id % 5">{{
+        initials(selected.name)
+      }}</span>
+      <div>
+        <h2>{{ selected.name }}</h2>
+        <p>{{ selected.designation || 'Workspace agent' }} · {{ selected.status | titlecase }}</p>
+        <small>Agent identity · {{runtime?.available?'Local coding worker available · '+runtime.model:'Local coding worker unavailable'}}</small>
+      </div>
+      <button class="gp-button gp-cancel" type="button" (click)="configureRuntime()">Local runtime &amp; skills</button>
+      <button class="gp-button gp-cancel" type="button" (click)="chat()">Chat with agent ↗</button
+      ><button
+        class="gp-button gp-action"
+        type="button"
+        *ngIf="selected.canManage"
+        (click)="edit()"
+      >
+        Edit setup
+      </button>
+    </header>
+      <app-agent-runtime-config *ngIf="showRuntime" [agentId]="selected.id"></app-agent-runtime-config>
+    <nav class="agent-tabs">
+      <button
+        type="button"
+        *ngFor="let value of ['overview', 'work', 'permissions']"
+        [class.active]="tab === value"
+        (click)="selectTab(value)"
+      >
+        {{ value | titlecase }}
+      </button>
+    </nav>
+    <section class="surface" *ngIf="tab === 'overview'">
+      <h2>Purpose</h2>
+      <p>{{ selected.description || 'No purpose added.' }}</p>
+      <h2>Instructions</h2>
+      <p class="instructions">{{ selected.instructions || 'No instructions added.' }}</p>
+      <h2>Projects</h2>
+      <div class="project-choices">
+        <ng-container *ngFor="let project of projects.projects()"
+          ><span class="project-chip" *ngIf="selected.projectIds.includes(project.id)">{{
+            project.name
+          }}</span></ng-container
+        >
+      </div>
+    </section>
+    <section class="surface" *ngIf="tab === 'work'">
+      <h2>Assigned project work</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Participation</th>
+            <th>Project</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of work">
+            <td>
+              <strong>{{ row.title }}</strong
+              ><small style="display: block"
+                >{{ row.kind }}-{{ row.id }} · {{ row.status | titlecase }}</small
+              >
+            </td>
+            <td>{{ row.role | titlecase }}</td>
+            <td>{{ row.projectId }}</td>
+            <td>
+              <button class="gp-button gp-cancel" type="button" (click)="openItem(row)">
+                Open item
+              </button><button *ngIf="row.role==='ASSIGNEE'" class="gp-button gp-cancel" type="button" (click)="openWorkLogs(row)">Work &amp; logs</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p *ngIf="!work.length">Assign this agent from a ticket's assignee or reporter field.</p>
+    </section>
+    <app-user-access-panel
+      *ngIf="tab === 'permissions'"
+      [agentId]="selected.id"
+    ></app-user-access-panel
+  ></ng-container>
+</section>

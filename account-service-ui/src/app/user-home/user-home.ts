@@ -1,5 +1,7 @@
+import {Retrospectives} from '../retrospectives/retrospectives';
+import {Agents} from '../agents/agents';
+import {Roadmap} from '../roadmap/roadmap';
 import {WorkspaceSettingsService} from '../shared/workspace-settings.service';
-import { SuiteAppMenu } from '../shared/suite-app-menu';
 import { SuiteAppFrame } from '../shared/suite-app-frame';
 import { SuiteSessionService } from '../shared/suite-session.service';
 import { ChatlyLauncher } from '../shared/chatly-launcher.service';
@@ -9,6 +11,7 @@ import { ProjectWorkService } from '../shared/project-work.service';
 import { RecentWorkService, RecentWork } from '../shared/recent-work.service';
 import { FullscreenDialogHost } from '../shared/fullscreen-dialog-host';
 import {
+  CUSTOM_ELEMENTS_SCHEMA,
   Component,
   OnInit,
   Inject,
@@ -65,9 +68,9 @@ import { SprintPlanning } from '../sprint-planning/sprint-planning';
 @Component({
   selector: 'app-user-home',
   standalone: true,
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 
-  imports: [
-    SuiteAppMenu, SuiteAppFrame,
+  imports: [SuiteAppFrame,
     FullscreenDialogHost,
     NotificationCenter,
     CommonModule,
@@ -82,7 +85,7 @@ import { SprintPlanning } from '../sprint-planning/sprint-planning';
     WorkItems,
     Boards,
     KanbanBoard,
-    SprintPlanning,
+    SprintPlanning, Roadmap, Agents, Retrospectives,
     Issues,
     Testcases,
     Releases
@@ -96,6 +99,10 @@ export class UserHome implements OnInit {
   readonly chatly=inject(ChatlyLauncher);
   readonly suite=inject(SuiteSessionService);
 
+  get sharedToken(): string {
+    return isPlatformBrowser(this.platformId) ? localStorage.getItem('token') || '' : '';
+  }
+
   readonly itemDialog = inject(WorkItemDialogService);
   readonly recentWork = inject(RecentWorkService);
   private readonly workData = inject(ProjectWorkService);
@@ -108,7 +115,7 @@ export class UserHome implements OnInit {
   projectInitials(name: string): string { return name.split(/\s+/).filter(Boolean).slice(0,2).map(word=>word[0]).join('').toUpperCase(); }
   get searchRecent(): RecentWork[] { const query=this.globalWorkSearch.trim().toLocaleLowerCase();return this.recentWork.items().filter(item=>!query || `${item.title} ${item.key}`.toLocaleLowerCase().includes(query)).slice(0,8); }
   get filteredGlobalPeople():any[]{const q=this.globalWorkSearch.trim().toLowerCase();return q.length<2?[]:this.globalPeople.filter(u=>(u.name+' '+u.email).toLowerCase().includes(q)).slice(0,5);}
-  openSearchPerson(person:any):void {this.globalWorkSearchOpen=false;this.currentUserProfileId=person.id;this.profileOpenRequest++;this.setActive('users');}
+  openSearchPerson(person:any):void {this.globalWorkSearchOpen=false;void this.router.navigateByUrl(`/people?userId=${encodeURIComponent(String(person.id))}`);}
 
   private readonly baseUrl = String(environment.apiBaseUrlM || '').replace(/\/$/, '');
 
@@ -124,16 +131,6 @@ export class UserHome implements OnInit {
   currentYear =
     new Date().getFullYear();
 
-  isCollapsed = false;
-  sidebarWidth=240;
-  private resizingSidebar=false;
-  beginSidebarResize(event:PointerEvent):void{event.preventDefault();this.resizingSidebar=true;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);}
-  resizeSidebar(delta:number):void{this.sidebarWidth=Math.max(180,Math.min(380,this.sidebarWidth+delta));if(isPlatformBrowser(this.platformId))localStorage.setItem('gp-sidebar-width',String(this.sidebarWidth));}
-  @HostListener('document:pointermove',['$event']) onSidebarMove(event:PointerEvent):void{if(this.resizingSidebar)this.resizeSidebar(event.clientX-this.sidebarWidth);}
-  @HostListener('document:pointercancel') cancelSidebarResize():void{this.resizingSidebar=false;}
-  @HostListener('document:pointerup') finishSidebarResize():void{this.resizingSidebar=false;}
-
-
   searchQuery = '';
 
   createMenuOpen = false;
@@ -141,8 +138,6 @@ export class UserHome implements OnInit {
   profileMenuOpen = false;
   currentUserProfileId: number | null = null;
   profileOpenRequest = 0;
-  globalProjectMenuOpen = false;
-  globalProjectSearch = '';
   globalWorkSearch = '';
   globalWorkSearchOpen = false;
   globalWorkSearchLoading = false;
@@ -155,6 +150,7 @@ export class UserHome implements OnInit {
   // =========================================================
 
   user = {
+    id: null as number | null,
     name: 'Your account',
     email: '',
     phone: '',
@@ -176,6 +172,8 @@ export class UserHome implements OnInit {
     { id: 'boards', label: 'Boards', icon: 'boards' },
     { id: 'kanban-board', label: 'Kanban Board', icon: 'kanban' },
     { id: 'sprint-planning', label: 'Sprint Planning', icon: 'sprint' },
+    { id: 'roadmap', label: 'Roadmap', icon: 'roadmap' },
+    { id: 'retrospectives', label: 'Retrospectives', icon: 'retro' },
     { id: 'work-items', label: 'Work Items', icon: 'work-items' }
   ];
 
@@ -187,26 +185,31 @@ export class UserHome implements OnInit {
     { id: 'releases', label: 'Releases', icon: 'releases' }
   ];
 
-  readonly knowledgeNavigation = [
-    { id: 'docs', label: 'Docsy', icon: 'docs' },
-    { id: 'chatly', label: 'Chatly', icon: 'chat' },
-    { id: 'calendar', label: 'Timely', icon: 'calendar' }
-  ];
+  // App destinations remain valid for existing links, but live in the Apps
+  // launcher rather than a Knowledge section in the Professy sidebar.
+  private readonly appMenuIds = ['docs', 'chatly', 'calendar', 'sheets', 'slides', 'meetings'];
 
   readonly peopleNavigation = [
     { id: 'teams', label: 'Teams', icon: 'teams' },
     { id: 'users', label: 'Users', icon: 'users' },
-    { id: 'roles', label: 'Roles & Permissions', icon: 'roles' }
+    { id: 'agents', label: 'Agents', icon: 'agents' },
+    { id: 'workflows', label: 'Workflows', icon: 'roles' },
+    { id: 'structure', label: 'Organization', icon: 'teams' },
+    { id: 'roles', label: 'Roles', icon: 'roles' },
+    { id: 'permissions', label: 'Permissions', icon: 'roles' },
+    { id: 'designations', label: 'Designations', icon: 'roles' }
   ];
 
-  private get allNavigationItems() {
+  private get validMenuIds(): string[] {
     return [
-      ...this.primaryNavigation,
-      ...this.planningNavigation,
-      ...this.qualityNavigation,
-      ...this.deliveryNavigation,
-      ...this.knowledgeNavigation,
-      ...this.peopleNavigation
+      ...[
+        ...this.primaryNavigation,
+        ...this.planningNavigation,
+        ...this.qualityNavigation,
+        ...this.deliveryNavigation,
+        ...this.peopleNavigation
+      ].map(item => item.id),
+      ...this.appMenuIds
     ];
   }
 
@@ -271,7 +274,6 @@ export class UserHome implements OnInit {
 
   ngOnInit(): void {
     this.workspaceSettings.start();
-    if(isPlatformBrowser(this.platformId))this.sidebarWidth=Math.max(180,Math.min(380,Number(localStorage.getItem('gp-sidebar-width'))||240));
     void this.suite.register().catch(()=>null);
     this.recentWork.refreshForCurrentUser();
     this.http.get<any>(this.baseUrl+'/session/access',{headers:this.auth.getAuthHeaders()}).subscribe({next:session=>{this.auth.updateCurrentUser(session.user);this.cdr.markForCheck();},error:()=>{}});
@@ -293,7 +295,7 @@ export class UserHome implements OnInit {
 
       const requestedMenu = menu === 'epics' ? 'work-items' : menu;
 
-      const valid = this.allNavigationItems.map(item => item.id);
+      const valid = this.validMenuIds;
 
       if (valid.includes(requestedMenu)) {
         this.setActive(requestedMenu);
@@ -307,40 +309,18 @@ export class UserHome implements OnInit {
   }
 
   // =========================================================
-  // SIDEBAR
-  // =========================================================
-
-  toggleSidebar(): void {
-
-    this.isCollapsed =
-      !this.isCollapsed;
-
-    /*
-     * Close popovers when navigation changes.
-     */
-    this.createMenuOpen = false;
-    this.profileMenuOpen = false;
-  }
-
-  expandSidebar(): void {
-
-    if (this.isCollapsed) {
-      this.isCollapsed = false;
-    }
-  }
-
-  collapseSidebar(): void {
-
-    if (!this.isCollapsed) {
-      this.isCollapsed = true;
-    }
-  }
-
-  // =========================================================
   // NAVIGATION
   // =========================================================
 
   setActive(menu: string, persist = true): void {
+
+    if (['users', 'teams', 'agents', 'workflows', 'structure', 'roles', 'permissions', 'designations'].includes(menu)) {
+      this.createMenuOpen = false;
+      this.profileMenuOpen = false;
+      this.globalWorkSearchOpen = false;
+      void this.router.navigate(['/people'], { queryParams: { view: menu } });
+      return;
+    }
 
     this.activeMenu = menu;
 
@@ -358,6 +338,7 @@ export class UserHome implements OnInit {
 
     this.createMenuOpen = false;
     this.profileMenuOpen = false;
+    this.globalWorkSearchOpen = false;
   }
 
   private restoreActiveMenu(): void {
@@ -375,7 +356,7 @@ export class UserHome implements OnInit {
       return;
     }
 
-    const valid = this.allNavigationItems.map(item => item.id);
+    const valid = this.validMenuIds;
 
     const restoredMenu = storedMenu === 'epics' ? 'work-items' : storedMenu;
     if (valid.includes(restoredMenu)) {
@@ -413,6 +394,18 @@ export class UserHome implements OnInit {
 
     this.createMenuOpen =
       !this.createMenuOpen;
+  }
+
+  openCreateMenu(): void {
+    this.profileMenuOpen = false;
+    this.globalWorkSearchOpen = false;
+    this.recentMenuOpen = false;
+    this.createMenuOpen = true;
+  }
+
+  onSharedSearchInput(value: string): void {
+    this.globalWorkSearch = value || '';
+    this.globalWorkSearchOpen = this.globalWorkSearch.trim().length > 0;
   }
 
   closeCreateMenu(): void {
@@ -495,7 +488,8 @@ export class UserHome implements OnInit {
 
     event?.stopPropagation();
 
-    const element = document.querySelector('.global-work-search-input') as HTMLInputElement | null;
+    const shell = document.querySelector('gp-workspace-shell') as (HTMLElement & { shadowRoot: ShadowRoot | null }) | null;
+    const element = shell?.shadowRoot?.querySelector('.header-search input') as HTMLInputElement | null;
 
     element?.focus();
   }
@@ -548,7 +542,6 @@ export class UserHome implements OnInit {
 
       this.createMenuOpen = false;
       this.profileMenuOpen = false;
-      this.globalProjectMenuOpen = false;
       this.globalWorkSearchOpen = false;
     }
   }
@@ -565,51 +558,18 @@ export class UserHome implements OnInit {
     event: Event
   ): void {
 
-    const target =
-      event.target as HTMLElement;
-
-    if (
-      !target.closest(
-        '.gmail-create-wrapper'
-      )
-    ) {
-
-      this.createMenuOpen = false;
-    }
-
-    if (
-      !target.closest(
-        '.gmail-profile-wrapper'
-      )
-    ) {
-
-      this.profileMenuOpen = false;
-    }
-
-    if (!target.closest('.global-project-picker')) {
-      this.globalProjectMenuOpen = false;
-    }
-    if (!target.closest('.global-work-search')) {
-      this.globalWorkSearchOpen = false;
-    }
-    if (!target.closest('.header-recent')) this.recentMenuOpen = false;
-  }
-
-  get filteredGlobalProjects() {
-    const query = this.globalProjectSearch.trim().toLowerCase();
-    return this.projectContext.projects().filter(project => !query || project.name.toLowerCase().includes(query));
-  }
-
-  get globalProjectName(): string {
-    return this.projectContext.selectedProject()?.name ?? 'Select project';
+    const path = event.composedPath();
+    const hasClass = (name: string) => path.some(node => node instanceof HTMLElement && node.classList.contains(name));
+    if (!hasClass('create') && !hasClass('create-popover')) this.createMenuOpen = false;
+    if (!hasClass('header-search') && !hasClass('global-work-search-popover')) this.globalWorkSearchOpen = false;
+    if (!hasClass('header-recent')) this.recentMenuOpen = false;
+    this.profileMenuOpen = false;
   }
 
   selectGlobalProject(projectId: number): void {
     this.projectContext.setSelectedProject(projectId);
     this.globalWorkItems = [];
     this.loadedWorkSearchProjectId = null;
-    this.globalProjectMenuOpen = false;
-    this.globalProjectSearch = '';
   }
 
   get filteredGlobalWorkItems(): GlobalWorkItemSuggestion[] {
@@ -648,7 +608,7 @@ export class UserHome implements OnInit {
     this.workSearchRequestProjectId=projectId;this.globalWorkSearchLoading=true;
     this.workData.load(projectId).subscribe(snapshot=>{
       if(this.projectContext.selectedProjectId()!==projectId)return;
-      this.globalWorkItems=snapshot.items.map(item=>({id:item.id,type:item.kind,typeLabel:item.kind[0]+item.kind.slice(1).toLowerCase(),key:item.key,title:item.title,searchText:[item.raw.title,item.raw.name,item.raw.summary,item.raw.epic_name,item.raw.story_title,item.raw.task_title,item.raw.issue_title].filter(Boolean).join(' '),projectId,projectName:this.globalProjectName}));
+      this.globalWorkItems=snapshot.items.map(item=>({id:item.id,type:item.kind,typeLabel:item.kind[0]+item.kind.slice(1).toLowerCase(),key:item.key,title:item.title,searchText:[item.raw.title,item.raw.name,item.raw.summary,item.raw.epic_name,item.raw.story_title,item.raw.task_title,item.raw.issue_title].filter(Boolean).join(' '),projectId,projectName:this.projectContext.selectedProject()?.name ?? ''}));
       this.globalPeople=snapshot.users.map(u=>({id:Number(u.user_account_id??u.user_id??u.id),name:u.full_name??u.fullName??u.name??[u.first_name??u.firstName,u.last_name??u.lastName].filter(Boolean).join(' '),email:u.email??'',designation:u.designation??u.role_name??u.role?.name??''}));
       this.loadedWorkSearchProjectId=projectId;this.workSearchRequestProjectId=null;this.globalWorkSearchLoading=false;this.cdr.markForCheck();
     });
@@ -656,7 +616,7 @@ export class UserHome implements OnInit {
   private loadCurrentAccount():void {
     const apply=(response:any)=>{const u=response?.data?.user??response?.data??response?.user??response;if(!u||typeof u!=='object')return;
       const name=u.fullName??u.full_name??u.name??[u.firstName??u.first_name,u.lastName??u.last_name].filter(Boolean).join(' ');
-      this.user={name:name||u.username||u.email||'Your account',email:u.email??u.email_address??'',phone:u.phone??'',image:u.profile_picture_url??u.profilePictureUrl??u.avatarUrl??null};this.cdr.markForCheck();};
+      this.user={id:Number(u.id??u.userId??u.user_id)||null,name:name||u.username||u.email||'Your account',email:u.email??u.email_address??'',phone:u.phone??'',image:u.profile_picture_url??u.profilePictureUrl??u.avatarUrl??null};this.cdr.markForCheck();};
     apply(this.auth.getCurrentUser());const id=this.auth.getCurrentUserId();if(!id)return;
     this.http.get<any>(this.baseUrl+'/users/'+id,{headers:this.auth.getAuthHeaders()}).pipe(catchError(()=>this.http.get<any>(this.baseUrl+'/users',{headers:this.auth.getAuthHeaders()})),catchError(()=>of(null))).subscribe(response=>{
       const rows=Array.isArray(response)?response:Array.isArray(response?.data)?response.data:response?.content;

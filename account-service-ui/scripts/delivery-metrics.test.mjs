@@ -1,0 +1,13 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import ts from 'typescript';
+const {outputText}=ts.transpileModule(readFileSync(new URL('../src/app/dashboard/delivery-metrics.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}});
+const {deliveryIndicators}=await import('data:text/javascript;base64,'+Buffer.from(outputText).toString('base64'));
+const item=(id,extra={})=>({id,kind:'TASK',status:'OPEN',assigneeId:null,sprintId:null,points:0,due:'',raw:{},...extra});
+const done=status=>status==='DONE';
+test('empty work does not imply perfect ownership or estimates',()=>{const r=deliveryIndicators([],done);assert.equal(r.estimateCoverage,null);assert.equal(r.assignmentCoverage,null);assert.equal(r.medianOpenAge,null);});
+test('estimate metrics do not double count a story and its child tasks',()=>{const r=deliveryIndicators([item(1,{kind:'STORY',points:8}),item(2,{points:3,raw:{story_id:1}}),item(3,{raw:{story_id:1}}),item(4,{kind:'EPIC',points:100})],done);assert.equal(r.openPoints,3);assert.equal(r.estimateCoverage,50);});
+test('done work and missing timestamps never count as overdue or stale',()=>{const r=deliveryIndicators([item(1,{status:'DONE',due:'2020-01-01',raw:{updated_at:'2020-01-01'}}),item(2)],done,Date.parse('2026-11-04T12:00:00Z'));assert.equal(r.overdue,0);assert.equal(r.stale,0);assert.equal(r.medianOpenAge,null);});
+test('ownership distinguishes unassigned, humans and agents',()=>{const r=deliveryIndicators([item(1,{assigneeId:7}),item(2,{assigneeId:-3}),item(3)],done);assert.equal(r.humanOwned,1);assert.equal(r.agentOwned,1);assert.equal(r.unassigned,1);assert.equal(r.assignmentCoverage,67);});
+test('a date-only deadline remains open until the end of that local day',()=>{const now=new Date(2026,10,4,12).getTime();const r=deliveryIndicators([item(1,{due:'2026-11-04'}),item(2,{due:'2026-11-03'})],done,now);assert.equal(r.overdue,1);});

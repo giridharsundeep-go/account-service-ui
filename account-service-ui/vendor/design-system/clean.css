@@ -1,0 +1,396 @@
+@import './borders.css';
+@import './fonts.css';
+@import './auth.css';
+/*
+ * Clean workspace layout. Opt in per app, never through a shared default.
+ * This stylesheet must be the FIRST Angular styles entry: important rules in
+ * this layer precede the legacy gp-post/gp-clarity layers and component styles.
+ * Post intentionally has neither this entry nor the data-gp-layout attribute.
+ */
+@layer gp-clean {
+  :root[data-gp-layout="clean"] {
+    --gp-font:"GP Instagram Letter","greatley-poshley-sans","Google Sans","Avenir Next",Arial,"Segoe UI",sans-serif!important;
+    --gp-page:#fff!important;
+    --gp-surface:#fff!important;
+    --gp-surface-muted:#f5f7f9!important;
+    --gp-navigation:#f8f9fa;
+    --gp-text:#202124!important;
+    --gp-muted:#60646c!important;
+    --gp-border:var(--gp-border-color, #a0a6b1)!important;
+    --gp-separator:var(--gp-border-color, #a0a6b1)!important;
+    --gp-accent:#1558d6!important;
+    --gp-selection:#eaf1fe!important;
+    --gp-on-accent:#fff!important;
+    --gp-radius:16px!important;
+    --gp-field-radius:10px!important;
+    --gp-control-radius:24px!important;
+    --gp-field-height:50px!important;
+    --gp-field-border:var(--gp-border-color, #a0a6b1)!important;
+    --gp-field-border-hover:var(--gp-border-color, #a0a6b1)!important;
+    --gp-field-border-focus:var(--gp-border-color, #a0a6b1)!important;
+    --gp-shadow:none!important;
+    --gp-card-shadow:none!important;
+    --gp-float-shadow:0 6px 24px rgb(32 33 36 / 10%)!important;
+    --gp-space-page:28px clamp(20px,3vw,44px)!important;
+    --gp-title-size:32px!important;
+    --gp-brand-weight:600;
+    --gp-brand-size:23px;
+    --gp-brand-tracking:-.4px;
+    color-scheme:light;
+  }
+  :root[data-gp-layout="clean"][data-theme="dark"] {
+    --gp-page:#151619!important;--gp-surface:#1c1e22!important;
+    --gp-surface-muted:#26292e!important;--gp-navigation:#1a1c20;
+    --gp-text:#e8eaed!important;--gp-muted:#aeb3bc!important;
+    --gp-border:var(--gp-border-color, #a0a6b1)!important;--gp-separator:var(--gp-border-color, #a0a6b1)!important;
+    --gp-accent:#a8c7fa!important;--gp-selection:#263b5b!important;
+    --gp-on-accent:#16325c!important;
+    --gp-field-border:var(--gp-border-color, #a0a6b1)!important;--gp-field-border-hover:var(--gp-border-color, #a0a6b1)!important;
+    --gp-field-border-focus:var(--gp-border-color, #a0a6b1)!important;
+    --gp-float-shadow:0 8px 28px rgb(0 0 0 / 28%)!important;
+    color-scheme:dark;
+  }
+
+
+  /* Retire hard-coded legacy UI font families without touching authored fonts
+     or glyph/icon fonts. The first important layer also beats component CSS. */
+  :root[data-gp-layout="clean"] :where(body,body *):not(:where(.material-icons,.material-icons-outlined,.material-symbols-outlined,.material-symbols-rounded,.material-symbols-sharp,.mat-icon,[class^="fa-"],.fa,.fas,.far,.fab,svg,math,code,pre,kbd,.document-paper,.sheet-grid,.slide-page,.present-slide,.thumb-preview,[data-gp-preserve-font],[style*="font-family" i])):not(:where(svg,math,code,pre,kbd,.document-paper,.sheet-grid,.slide-page,.present-slide,.thumb-preview,[data-gp-preserve-font],[style*="font-family" i]) *) {
+    font-family:var(--gp-font)!important;
+  }
+
+  /* Typography belongs to UI chrome. Authored documents, grids, slides and
+     video stages keep their own sizes, colors, fonts and positioning. */
+  :root[data-gp-layout="clean"] body {font-family:var(--gp-font)!important;font-size:16px;line-height:1.6;color:var(--gp-text)!important}
+  :root[data-gp-layout="clean"] :is(.workspace-heading,.workspace-title,.page-heading,.gp-workspace-hero,.agile-heading,.roadmap-heading,.retro-heading,.team-profile-hero,.project-profile-header,.release-profile-header,.atlassian-profile-identity) :is(h1,h2),
+  :root[data-gp-layout="clean"] :is(.projects-title,.users-title,.teams-title,.roles-title,.releases-title,.planning-title,.work-items-title) {
+    font:600 32px/1.25 var(--gp-font)!important;letter-spacing:-.65px!important;color:var(--gp-text)!important;
+  }
+  :root[data-gp-layout="clean"] :is(.section-heading,.directory-heading,.tc-page-heading,.roles-workspace-header,.team-profile-section-header,.kb-activity-heading,.settings-card,.account-card) :is(h2,h3) {
+    font:600 22px/1.4 var(--gp-font)!important;letter-spacing:-.3px!important;color:var(--gp-text)!important;
+  }
+  :root[data-gp-layout="clean"] :is(.gp-workspace-hero,.workspace-heading,.workspace-title,.page-heading,.agile-heading,.roadmap-heading,.retro-heading,.section-heading) p {
+    font:400 16px/1.65 var(--gp-font)!important;color:var(--gp-muted)!important;margin-top:10px!important;
+  }
+  :root[data-gp-layout="clean"] :is(.gp-workspace-hero,.workspace-hero,.suite-hero) {
+    border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;
+    padding:0 0 24px!important;margin:0 0 28px!important;min-height:0!important;
+  }
+  :root[data-gp-layout="clean"] :is(.gp-workspace-hero__eyebrow,.eyebrow,.workspace-eyebrow) {font-weight:500!important;letter-spacing:.06em!important;color:var(--gp-muted)!important}
+  :root[data-gp-layout="clean"] :is(.gp-workspace-hero__heading,.page-heading,.workspace-heading,.workspace-title,.agile-heading) {align-items:flex-start!important;gap:20px!important}
+  :root[data-gp-layout="clean"] :is(.gp-workspace-hero__actions,.heading-actions,.page-actions) {justify-content:flex-end!important;gap:10px!important}
+
+  /* Open workspaces, clear sections, quiet floating panels. */
+  :root[data-gp-layout="clean"] :is(.surface,.profile-section-card,.account-card,.chart-card,.metric-card,.team-card,.project-card,.board-card,.release-card,.agent-card,.document-card,.meeting-card,.file-card,.mat-mdc-card,.kb-detail-section-card,.work-item-section-card) {
+    background:var(--gp-surface)!important;color:var(--gp-text)!important;
+    border:1px solid var(--gp-border-color, #a0a6b1)!important;border-radius:16px!important;box-shadow:none!important;
+  }
+  :root[data-gp-layout="clean"] :is(.surface,.profile-section-card,.account-card,.kb-detail-section-card,.work-item-section-card) {padding:24px!important}
+  :root[data-gp-layout="clean"] :is(.stats-card,.stat-card,.overview-metric,.agile-metrics>article,.delivery-indicators>article,.tc-stats>article,.roadmap-stats>article,.metrics-strip>article,.summary-grid>article) {
+    background:transparent!important;border:0!important;border-bottom:1px solid var(--gp-border-color, #a0a6b1)!important;
+    border-radius:0!important;box-shadow:none!important;padding:18px 12px!important;
+  }
+  :root[data-gp-layout="clean"] :is(.stats-card,.stat-card,.overview-metric,.agile-metrics>article,.tc-stats>article,.roadmap-stats>article,.metrics-strip>article) strong {font-family:var(--gp-font)!important;font-weight:500!important;letter-spacing:-.5px!important}
+  :root[data-gp-layout="clean"] :is(.workspace-dialog,.suite-dialog,.instru-dialog,.forge-dialog,.tc-dialog,.new-dialog,.event-dialog,.work-item-dialog,.document-share-dialog,.mat-mdc-dialog-surface,.kb-work-item-dialog) {
+    border-radius:20px!important;border-color:var(--gp-border-color, #a0a6b1)!important;box-shadow:var(--gp-float-shadow)!important;
+    background:var(--gp-surface)!important;color:var(--gp-text)!important;
+  }
+  :root[data-gp-layout="clean"] .kb-work-item-dialog.kb-ticket-fullscreen {border-radius:0!important}
+  :root[data-gp-layout="clean"] :is(.filter-popover,.workspace-filter-panel,.apps-panel,.gp-person-preview,.mat-mdc-select-panel,.mat-mdc-autocomplete-panel,.mat-mdc-menu-panel) {
+    border:1px solid var(--gp-border-color, #a0a6b1)!important;border-radius:16px!important;box-shadow:var(--gp-float-shadow)!important;background:var(--gp-surface)!important;color:var(--gp-text)!important;
+  }
+  :root[data-gp-layout="clean"] :is(.suite-form-grid,.form-grid,.fields-grid,.profile-form-grid,.account-form) {gap:20px!important}
+
+  /* Tables follow the reference: a white header and horizontal separators.
+     Deliberately no generic table/td rules: editor-owned cell formatting is data. */
+  :root[data-gp-layout="clean"] :is(.mat-mdc-table,.users-table,.work-items-table,.projects-mat-table,.items-table,.google-table,.compact-work-table,.tc-table,.planning-table,.table-scroll>table,.table-wrap>table) {
+    border:0!important;border-collapse:collapse!important;background:var(--gp-surface)!important;color:var(--gp-text)!important;
+  }
+  :root[data-gp-layout="clean"] :is(.mat-mdc-table,.users-table,.work-items-table,.projects-mat-table,.items-table,.google-table,.compact-work-table,.tc-table,.planning-table,.table-scroll>table,.table-wrap>table) :is(th,td) {
+    border:0!important;border-bottom:1px solid var(--gp-border-color, #a0a6b1)!important;padding:18px 16px!important;
+    background:transparent!important;font-family:var(--gp-font)!important;vertical-align:middle!important;
+  }
+  :root[data-gp-layout="clean"] :is(.mat-mdc-table,.users-table,.work-items-table,.projects-mat-table,.items-table,.google-table,.compact-work-table,.tc-table,.planning-table,.table-scroll>table,.table-wrap>table) th {
+    background:var(--gp-surface)!important;color:var(--gp-text)!important;font-size:15px!important;font-weight:600!important;letter-spacing:0!important;text-transform:none!important;
+  }
+  :root[data-gp-layout="clean"] :is(.mat-mdc-table,.users-table,.work-items-table,.projects-mat-table,.items-table,.google-table,.compact-work-table,.tc-table,.planning-table,.table-scroll>table,.table-wrap>table) td {
+    font-size:16px!important;line-height:1.6!important;font-weight:400!important;
+  }
+  :root[data-gp-layout="clean"] :is(.mat-mdc-table,.users-table,.work-items-table,.projects-mat-table,.items-table,.google-table,.compact-work-table,.tc-table,.planning-table,.table-scroll>table,.table-wrap>table) td strong {font-size:16px!important;font-weight:600!important}
+  :root[data-gp-layout="clean"] :is(.work-items-table-card,.project-table-shell,.tc-table-card,.matrix-table-workspace,.directory-card,.table-card,.matrix-data-frame) {
+    border:0!important;border-radius:0!important;box-shadow:none!important;background:var(--gp-surface)!important;
+  }
+  :root[data-gp-layout="clean"] :is(.matrix-header-row .cell,.matrix-row.header-row .cell) {
+    background:var(--gp-surface)!important;color:var(--gp-text)!important;font:600 15px/1.5 var(--gp-font)!important;letter-spacing:0!important;text-transform:none!important;
+  }
+  :root[data-gp-layout="clean"] .matrix-row.data-row .cell {font-size:16px!important;border-color:var(--gp-border-color, #a0a6b1)!important}
+  :root[data-gp-layout="clean"] :is(.mat-mdc-table,.users-table,.work-items-table,.tc-table,.planning-table,.matrix-row) :is(.is-selected,.selected,.row-selected),
+  :root[data-gp-layout="clean"] :is(.mat-mdc-row,.matrix-row.data-row).is-selected {background:var(--gp-selection)!important}
+  :root[data-gp-layout="clean"] :is(.repo-row,.service-row,.source-row,.agenda-event,.deployment-row,.trace-row,.timeline-row) {
+    border:0!important;border-bottom:1px solid var(--gp-border-color, #a0a6b1)!important;border-radius:0!important;box-shadow:none!important;padding-block:20px!important;background:var(--gp-surface)!important;
+  }
+  :root[data-gp-layout="clean"] :is(.repo-row,.service-row,.meeting-card,.file-card,.document-card,.release-list-card,.release-card) :is(h2,h3,strong) {font-family:var(--gp-font)!important;font-weight:600!important;line-height:1.5!important}
+
+  /* Buttons are secondary to the work; a primary action remains unmistakable. */
+  :root[data-gp-layout="clean"] :is(.button,.gp-button,.btn-primary,.btn-secondary,.kb-button,.teams-create-button,.users-create-button,.roles-create-button,.projects-create-button,.kb-create-submit,.gp-workspace-hero__actions>button,.workspace-filter-trigger,.filter-trigger) {
+    min-height:46px!important;height:46px!important;border-radius:23px!important;padding-inline:20px!important;
+    font:500 15px/1.25 var(--gp-font)!important;letter-spacing:0!important;box-shadow:none!important;
+  }
+  :root[data-gp-layout="clean"] :is(.button.outline,.gp-outline,.gp-cancel,.btn-secondary,.kb-button-outline,.workspace-filter-trigger,.filter-trigger) {
+    border:1px solid var(--gp-border-color, #a0a6b1)!important;background:var(--gp-surface)!important;color:var(--gp-text)!important;
+  }
+  :root[data-gp-layout="clean"] :is(.button.primary,.gp-primary,.gp-action,.btn-primary,.teams-create-button,.users-create-button,.projects-create-button,.kb-create-submit,.tc-primary) {
+    border-color:transparent!important;background:var(--gp-accent)!important;color:var(--gp-on-accent)!important;
+  }
+  :root[data-gp-layout="clean"] :is(.icon-button,.gp-person-details,.gp-person-preview-close,.work-items-refresh,.release-filter-button) {
+    background:transparent!important;border-color:transparent!important;border-radius:50%!important;box-shadow:none!important;color:var(--gp-muted)!important;
+  }
+  :root[data-gp-layout="clean"] :is(.icon-button,.gp-person-details,.work-items-refresh):hover {background:var(--gp-surface-muted)!important;color:var(--gp-text)!important}
+
+  /* A single quiet outline for search and form controls. */
+  :root[data-gp-layout="clean"] :is(.search-shell,.search-field,.search-box,.global-search,.global-project-search,.global-work-search-field,.work-items-search,.kb-board-search,.team-search,.docs-search,.work-filter-search,.matrix-search-input-frame,.gp-people-search,.roles-search,.products-search,.users-search,.inline-search) {
+    border-color:var(--gp-border-color, #a0a6b1)!important;border-radius:26px!important;box-shadow:none!important;background:var(--gp-surface)!important;color:var(--gp-text)!important;
+  }
+  :root[data-gp-layout="clean"] :is(.global-project-trigger,.global-work-search-field) {height:50px!important;min-height:50px!important}
+  :root[data-gp-layout="clean"] :is(.search-shell,.search-field,.search-box,.global-search,.global-project-search,.global-work-search-field,.work-items-search,.kb-board-search,.team-search,.docs-search,.work-filter-search,.matrix-search-input-frame,.gp-people-search,.roles-search,.products-search,.users-search,.inline-search) input {
+    border:0!important;outline:0!important;box-shadow:none!important;background:transparent!important;color:var(--gp-text)!important;font:400 16px/1.5 var(--gp-font)!important;
+  }
+  :root[data-gp-layout="clean"] :is(.mat-mdc-form-field .mat-mdc-input-element,.mat-mdc-select-value,.mat-mdc-option) {font-family:var(--gp-font)!important;font-size:16px!important;font-weight:400!important}
+  :root[data-gp-layout="clean"] :is(input,textarea,select)[aria-invalid="true"] {border-color:var(--gp-border-color, #a0a6b1)!important}
+  :root[data-gp-layout="clean"] .mat-form-field-invalid .mdc-text-field--outlined {border-color:var(--gp-border-color, #a0a6b1)!important}
+
+  /* The same clean people card in directories, pickers and profile previews. */
+  :root[data-gp-layout="clean"] .gp-person-surface {border:1px solid var(--gp-border-color, #a0a6b1)!important;border-radius:16px!important;padding:20px!important;box-shadow:none!important;gap:14px!important;min-height:118px!important}
+  :root[data-gp-layout="clean"] :is(.gp-person-copy strong,.gp-people-copy strong,.member-option-copy strong,.identity-top-row h4,.kb-assignee-name) {font-family:var(--gp-font)!important;font-weight:600!important}
+  :root[data-gp-layout="clean"] :is(.gp-person-avatar,.gp-people-avatar,.user-avatar,.work-items-avatar,.assignee-avatar,.reporter-avatar,.planning-assignee-avatar) {border-radius:50%!important}
+  :root[data-gp-layout="clean"] :is(.gp-person-copy a,.gp-person-designation,.gp-person-copy small,.member-option-copy small) {color:var(--gp-muted)!important;line-height:1.6!important}
+
+  /* Astra's native shell mirrors the standalone suite shell. */
+  :root[data-gp-layout="clean"] app-user-home .app-header {min-height:76px!important;padding:12px 24px!important;border-bottom:1px solid var(--gp-border-color, #a0a6b1)!important;box-shadow:none!important;gap:20px!important}
+  :root[data-gp-layout="clean"] :is(app-user-home,app-viewer) .sidebar {background:var(--gp-navigation)!important;border-right:0!important}
+  :root[data-gp-layout="clean"] :is(app-user-home,app-viewer) :is(.nav-item,.menu-item,.nav-link) {border-radius:24px!important;min-height:44px!important;font:500 15px/1.4 var(--gp-font)!important;color:var(--gp-text)!important}
+  :root[data-gp-layout="clean"] :is(app-user-home,app-viewer) :is(.nav-item.active,.nav-item.selected,.nav-item.current,.menu-item.active,.nav-link.active) {background:var(--gp-selection)!important;color:var(--gp-accent)!important}
+  :root[data-gp-layout="clean"] :is(.sidebar .nav-group-title,.sidebar .menu-group-label,.sidebar .group-title) {font-size:11px!important;font-weight:500!important;letter-spacing:.06em!important;color:var(--gp-muted)!important}
+  :root[data-gp-layout="clean"] :is(.app-footer,.workspace-footer,.footer) {border-color:var(--gp-border-color, #a0a6b1)!important;color:var(--gp-muted)!important;font-size:12px!important;background:var(--gp-page)!important}
+
+  /* Focus is visible without a second nested field outline. */
+  :root[data-gp-layout="clean"] :is(button,a,summary,[tabindex]):focus-visible {outline:2px solid var(--gp-accent)!important;outline-offset:3px!important}
+  :root[data-gp-layout="clean"] :is(.surface,.team-card,.project-card,.board-card,.agent-card,.file-card,.document-card,.meeting-card,.gp-person-surface):hover {box-shadow:none!important;translate:none!important}
+  @media(max-width:700px) {
+    :root[data-gp-layout="clean"] {--gp-space-page:24px 16px!important}
+    :root[data-gp-layout="clean"] :is(.gp-workspace-hero,.workspace-heading,.workspace-title,.page-heading) h1 {font-size:28px!important}
+    :root[data-gp-layout="clean"] app-user-home .app-header {padding-inline:16px!important;gap:12px!important}
+    :root[data-gp-layout="clean"] :is(.mat-mdc-table,.work-items-table,.tc-table,.planning-table) :is(td,th) {padding-inline:12px!important}
+  }
+  :root[data-gp-layout="clean"] :is(.document-titlebar,.file-titlebar) {background:var(--gp-surface)!important;border-bottom:1px solid var(--gp-border-color, #a0a6b1)!important;padding:16px 24px!important;gap:16px!important}
+  :root[data-gp-layout="clean"] :is(.document-titlebar,.file-titlebar)>gp-brand {flex:0 0 auto;min-width:0}
+  :root[data-gp-layout="clean"] :is(.document-menubar,.file-menubar) {background:var(--gp-surface)!important;border-color:var(--gp-border-color, #a0a6b1)!important;font:400 14px/1.5 var(--gp-font)!important}
+  :root[data-gp-layout="clean"] :is(.document-toolbar,.toolbar) {border-color:var(--gp-border-color, #a0a6b1)!important;background:var(--gp-surface-muted)!important;box-shadow:none!important}
+  :root[data-gp-layout="clean"] :is(.account-card,.account-workspace) h1 {font:600 32px/1.25 var(--gp-font)!important;letter-spacing:-.65px!important}
+  @media(max-width:700px) { :root[data-gp-layout="clean"] :is(.document-titlebar,.file-titlebar) {padding:12px 16px!important;gap:10px!important;flex-wrap:wrap!important} }
+
+
+  /* Compact identities: details and management actions open from the information button. */
+  :root[data-gp-layout="clean"] .gp-person-surface{display:grid!important;grid-template-columns:44px minmax(0,1fr) 32px!important;align-items:center!important;gap:12px!important;padding:12px!important;min-height:80px!important;height:auto!important;text-align:left!important;border-radius:10px!important}
+  :root[data-gp-layout="clean"] .gp-person-surface>.gp-person-cover{display:none!important}
+  :root[data-gp-layout="clean"] .gp-person-surface>.gp-person-avatar{width:44px!important;height:44px!important;margin:0!important;border:0!important;border-radius:50%!important;font-size:16px!important}
+  :root[data-gp-layout="clean"] .gp-person-surface>.gp-person-copy{width:auto!important;min-width:0!important;gap:4px!important;padding:0!important}
+  :root[data-gp-layout="clean"] .gp-person-copy strong{font-size:15px!important;line-height:1.35!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+  :root[data-gp-layout="clean"] .gp-person-designation{font-size:13px!important;line-height:1.35!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+  :root[data-gp-layout="clean"] .gp-person-surface>.gp-person-details{position:static!important;grid-column:3!important;width:32px!important;height:32px!important;min-height:32px!important;padding:0!important;align-self:center!important;justify-self:end!important}
+  :root[data-gp-layout="clean"] :is(.gp-people-grid,.people-card-grid){grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr))!important;gap:12px!important;align-items:start!important}
+  :root[data-gp-layout="clean"] .gp-person-preview .gp-person-preview-cover{display:none!important}
+  :root[data-gp-layout="clean"] .gp-person-preview{padding:20px!important;background:var(--gp-surface-muted)!important;gap:10px!important;text-align:left!important;align-items:flex-start!important}
+  :root[data-gp-layout="clean"] .gp-person-preview>.gp-person-avatar{margin:0!important;width:48px!important;height:48px!important;font-size:18px!important}
+  :root[data-gp-layout="clean"] .gp-person-preview-actions{display:flex!important;gap:8px!important;flex-wrap:wrap!important;width:100%!important;margin-top:8px!important}
+  :root[data-gp-layout="clean"] .kb-cycle-panel{display:grid!important;grid-template-columns:minmax(0,1fr)!important;align-items:start!important;gap:12px!important;padding:0!important;margin:12px 0!important;min-height:0!important}
+  :root[data-gp-layout="clean"] .kb-cycle-panel :is(.kb-cycle-copy,.kb-sprint-field,.kb-team-block){width:100%!important;max-width:none!important;min-width:0!important;margin:0!important}
+  :root[data-gp-layout="clean"] .kb-sprint-field>span{position:static!important;display:block!important;transform:none!important;padding:0!important;margin-bottom:4px!important;font-size:12px!important;line-height:1.4!important}
+  :root[data-gp-layout="clean"] .kb-sprint-field .kb-sprint-select{width:100%!important;max-width:none!important;margin:0!important;padding-inline:0 30px!important;font-size:16px!important;box-sizing:border-box!important}
+  :root[data-gp-layout="clean"] .kb-person-chip{height:40px!important;min-height:40px!important;padding:4px 10px 4px 5px!important;font-size:13px!important}
+  :root[data-gp-layout="clean"] .kb-person-chip .kb-avatar{width:30px!important;height:30px!important;min-width:30px!important;font-size:11px!important}
+}
+
+
+/* Open canvas, borderless cards and soft floating windows. */
+@layer gp-clean {
+  :root[data-gp-layout="clean"] {
+    --gp-selection:#e5e7eb!important;
+    --gp-surface-muted:#f3f4f6!important;
+  }
+  :root[data-gp-layout="clean"] :is(.surface,.profile-section-card,.account-card,.chart-card,.metric-card,.team-card,.project-card,.board-card,.release-card,.agent-card,.document-card,.meeting-card,.file-card,.mat-mdc-card,.kb-detail-section-card,.work-item-section-card,.gp-person-surface) {
+    border:0!important;
+    border-radius:0!important;
+    background:transparent!important;
+    box-shadow:none!important;
+  }
+  :root[data-gp-layout="clean"] :is(.stats-card,.stat-card,.overview-metric,.agile-metrics>article,.delivery-indicators>article,.tc-stats>article,.roadmap-stats>article,.metrics-strip>article,.summary-grid>article) {
+    border:0!important;
+    background:transparent!important;
+    box-shadow:none!important;
+  }
+  :root[data-gp-layout="clean"] :is(.workspace-dialog,.suite-dialog,.instru-dialog,.forge-dialog,.tc-dialog,.new-dialog,.event-dialog,.work-item-dialog,.document-share-dialog,.mat-mdc-dialog-surface,.kb-work-item-dialog,[role="dialog"],dialog) {
+    border:0!important;
+    border-radius:24px!important;
+    box-shadow:0 14px 48px rgb(32 33 36 / 16%)!important;
+    background:var(--gp-surface,#fff)!important;
+    color:var(--gp-text)!important;
+  }
+  :root[data-gp-layout="clean"] .kb-work-item-dialog.kb-ticket-fullscreen {border-radius:0!important}
+  :root[data-gp-layout="clean"] :is(.filter-popover,.workspace-filter-panel,.apps-panel,.gp-person-preview,.mat-mdc-select-panel,.mat-mdc-autocomplete-panel,.mat-mdc-menu-panel) {
+    border:0!important;
+    border-radius:20px!important;
+    box-shadow:0 14px 48px rgb(32 33 36 / 14%)!important;
+    background:var(--gp-surface-muted,#f3f4f6)!important;
+    color:var(--gp-text)!important;
+  }
+  :root[data-gp-layout="clean"] :is(.app-header,.workspace-header,.app-topbar,.document-titlebar,.file-titlebar,.room-header) {
+    border:0!important;
+    box-shadow:none!important;
+    background:var(--gp-surface,#fff)!important;
+  }
+  :root[data-gp-layout="clean"] :is(.sidebar,.app-sidebar) {
+    border:0!important;
+    background:var(--gp-navigation,#f8f9fa)!important;
+  }
+  :root[data-gp-layout="clean"] :is(.nav-item.current,.nav-item.active,.nav-item.selected,.menu-item.active,.nav-link.active) {
+    border:0!important;
+    background:var(--gp-selection,#e5e7eb)!important;
+    color:var(--gp-text,#202124)!important;
+  }
+  :root[data-gp-layout="clean"] :is(.search-shell,.search-field,.search-box,.global-search,.global-project-search,.global-work-search-field,.work-items-search,.kb-board-search,.team-search,.docs-search,.work-filter-search,.matrix-search-input-frame,.gp-people-search,.roles-search,.products-search,.users-search,.inline-search) {
+    border:0!important;
+    border-radius:18px!important;
+    box-shadow:none!important;
+    background:var(--gp-surface-muted,#f3f4f6)!important;
+  }
+  :root[data-gp-layout="clean"] :is(.button.outline,.gp-outline,.gp-cancel,.btn-secondary,.kb-button-outline,.workspace-filter-trigger,.filter-trigger) {
+    border:0!important;
+    background:var(--gp-surface-muted,#f3f4f6)!important;
+    color:var(--gp-text)!important;
+  }
+}
+
+/* Shared Professy workspace integration and open-canvas overlays. */
+@layer gp-clean {
+  :root[data-gp-layout="clean"] #gp-app app-user-home .app-shell {
+    display:flex!important;
+    width:100%!important;
+    height:100%!important;
+    min-height:0!important;
+    background:var(--gp-surface,#fff)!important;
+    color:var(--gp-text,#202124)!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app app-user-home :is(.main,.content) {
+    min-height:0!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app :is(.app-shell,.viewer-app-shell) {
+    background:var(--gp-surface,#fff)!important;
+    color:var(--gp-text,#202124)!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app :is(.app-header,.google-header,.docs-editor-header,.docs-library-header) {
+    border:0!important;
+    box-shadow:none!important;
+    background:var(--gp-surface,#fff)!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app :is(app-user-home,app-viewer) .sidebar {
+    border:0!important;
+    background:var(--gp-navigation,#f8f9fa)!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app :is(app-user-home,app-viewer) :is(.nav-item,.sidebar-create-button) {
+    border:0!important;
+    border-radius:24px!important;
+    box-shadow:none!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app :is(app-user-home,app-viewer) .nav-item:is(.active,.current,.selected) {
+    background:var(--gp-selection,#e5e7eb)!important;
+    color:var(--gp-text,#202124)!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app :is(app-user-home,app-viewer) .navigation-divider {display:none!important}
+  :root[data-gp-layout="clean"] #gp-app :is(.global-project-trigger,.global-work-search-field,.global-project-search) {
+    border:0!important;
+    border-radius:22px!important;
+    background:var(--gp-surface-muted,#f3f4f6)!important;
+    box-shadow:none!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app :is(.global-project-search,.global-work-search-field) input {
+    border:0!important;
+    outline:0!important;
+    background:transparent!important;
+    box-shadow:none!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app :is(.global-project-popover,.global-work-search-popover,.header-recent-popover,.popover,.kb-filter-panel,.filter-panel,.mat-mdc-select-panel,.mat-mdc-autocomplete-panel) {
+    border:0!important;
+    border-radius:22px!important;
+    background:var(--gp-surface,#fff)!important;
+    box-shadow:0 14px 48px rgb(32 33 36 / 14%)!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app :is(.popover-divider,.header-recent-popover header,.global-project-popover header) {
+    border:0!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app :is(.global-work-search-result,.header-recent-list>button,.popover-item):hover {
+    background:var(--gp-surface-muted,#f3f4f6)!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app :is(mat-card,.dashboard-welcome-panel,.surface,.product-card,.profile-section-card,.form-section-card,.pulse-tile,.overview-metric,.agile-panel,.kb-work-card,.kb-column,.agile-metrics>article,.agile-freshness>article,.team-profile-stat-card,.release-profile-stat-card,.release-profile-card,.release-directory-card,.project-allocated-team,.docs-document-card,.docs-template-paper,.directory-panel,.project-table-shell,.work-items-table-card,.team-summary-card,.profile-person-card,.person-card,.people-stat-grid>article,.roadmap-surface,.tc-table-card,.project-overview-info-card) {
+    border:0!important;
+    border-radius:0!important;
+    background:transparent!important;
+    box-shadow:none!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app :is(.mat-mdc-dialog-surface,.roadmap-dialog,.strategy-dialog,.tc-dialog,.tc-work-item-dialog,.kb-item-page,.work-item-dialog,.product-modal,.dialog-card,.workspace-dialog) {
+    border:0!important;
+    border-radius:24px!important;
+    box-shadow:0 14px 48px rgb(32 33 36 / 16%)!important;
+    background:var(--gp-surface,#fff)!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app :is(.roadmap-dialog>header,.roadmap-dialog>footer,.tc-dialog>header,.tc-dialog>footer,.kb-item-page>header,.product-modal>header,.product-modal>footer,.dialog-card>header,.dialog-card>footer) {
+    border:0!important;
+  }
+  :root[data-gp-layout="clean"] body .cdk-overlay-container :is(.mat-mdc-dialog-surface,.mat-mdc-select-panel,.mat-mdc-autocomplete-panel,.mat-mdc-menu-panel) {
+    border:0!important;
+    border-radius:22px!important;
+    box-shadow:0 14px 48px rgb(32 33 36 / 16%)!important;
+  }
+  :root[data-gp-layout="clean"] body .cdk-overlay-container app-user-select-dialog .user-row.people-card {
+    border:0!important;
+    box-shadow:none!important;
+  }
+}
+
+  :root[data-gp-layout="clean"] #gp-app app-user-home .global-work-search-popover {
+    border:0!important;
+    border-radius:20px!important;
+    background:var(--gp-surface,#fff)!important;
+    box-shadow:0 14px 48px rgb(32 33 36 / 14%)!important;
+    color:var(--gp-text,#202124)!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app app-user-home .global-work-search-heading {
+    border:0!important;
+    color:var(--gp-muted,#60646c)!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app app-user-home .global-work-search-result {
+    border:0!important;
+    border-radius:12px!important;
+    color:var(--gp-text,#202124)!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app app-user-home .global-work-search-result:hover {
+    background:var(--gp-surface-muted,#f3f4f6)!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app app-notification-center .nc-panel {
+    border:0!important;
+    border-radius:24px!important;
+    background:var(--gp-surface,#fff)!important;
+    box-shadow:0 14px 48px rgb(32 33 36 / 16%)!important;
+    color:var(--gp-text,#202124)!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app app-notification-center .nc-panel :is(header,nav,.nc-row) {
+    border:0!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app app-notification-center .nc-row.unread {
+    background:var(--gp-surface-muted,#f3f4f6)!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app app-notification-center .nc-panel :is(.nc-row strong,.nc-row span span) {
+    color:var(--gp-text,#202124)!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app app-notification-center .nc-panel :is(.nc-row time,.nc-row small) {
+    color:var(--gp-muted,#60646c)!important;
+  }

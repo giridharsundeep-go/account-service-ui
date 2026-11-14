@@ -10,8 +10,8 @@
   --gp-blue-soft: rgba(7, 136, 204, 0.08);
   --gp-text: #000000;
   --gp-muted: #50545a;
-  --gp-border: #d6d9de;
-  --gp-border-soft: #e8eaed;
+  --gp-border: var(--gp-border-color, #a0a6b1);
+  --gp-border-soft: var(--gp-border-color, #a0a6b1);
   --gp-danger: #dc2626;
   --gp-success: #166534;
 }
@@ -78,7 +78,7 @@
 .drawer-card {
   box-sizing: border-box;
   padding: 26px 28px 22px;
-  border: 1px solid #bdbdbd;
+  border: 1px solid var(--gp-border-color, #a0a6b1);
   border-radius: 22px;
   background: #ffffff;
   box-shadow: none;
@@ -148,7 +148,7 @@
 ::ng-deep .saas-form-field.mat-focused .mdc-notched-outline__leading,
 ::ng-deep .saas-form-field.mat-focused .mdc-notched-outline__notch,
 ::ng-deep .saas-form-field.mat-focused .mdc-notched-outline__trailing {
-  border-color: var(--gp-blue) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
 }
 
 .drawer-footer {
@@ -158,7 +158,7 @@
   gap: 10px;
   padding-top: 20px;
   margin-top: 16px;
-  border-top: 1px solid var(--gp-border-soft);
+  border-top: 1px solid var(--gp-border-color, #a0a6b1);
 }
 
 .role-feedback {
@@ -172,20 +172,20 @@
 .role-feedback-error {
   color: #b42318;
   background: #fef3f2;
-  border: 1px solid #fecdca;
+  border: 1px solid var(--gp-border-color, #a0a6b1);
 }
 
 .role-feedback-success {
   color: #166534;
   background: #f0fdf4;
-  border: 1px solid #bbf7d0;
+  border: 1px solid var(--gp-border-color, #a0a6b1);
 }
 
 .roles-table-workspace {
   width: 100%;
   margin: 0 auto;
   overflow: hidden;
-  border: 1px solid var(--gp-border);
+  border: 1px solid var(--gp-border-color, #a0a6b1);
   border-radius: 22px;
   background: #ffffff;
   box-shadow: none;
@@ -227,7 +227,7 @@
   height: 48px;
   box-sizing: border-box;
   padding: 10px 44px 10px 42px;
-  border: 1px solid #c2c2c2;
+  border: 1px solid var(--gp-border-color, #a0a6b1);
   border-radius: 25px;
   outline: none;
   background: #ffffff;
@@ -238,7 +238,7 @@
 }
 
 .matrix-search-input-frame input:focus {
-  border-color: var(--gp-blue);
+  border-color: var(--gp-border-color, #a0a6b1);
   box-shadow: 0 0 0 3px rgba(7, 136, 204, .10);
 }
 
@@ -289,7 +289,7 @@
 
 .matrix-header-row {
   min-height: 46px;
-  border-bottom: 1px solid var(--gp-border-soft);
+  border-bottom: 1px solid var(--gp-border-color, #a0a6b1);
   background: #f7f8fa;
 }
 
@@ -312,7 +312,7 @@
 
 .roles-matrix-row.data-row {
   min-height: 76px;
-  border-bottom: 1px solid var(--gp-border-soft);
+  border-bottom: 1px solid var(--gp-border-color, #a0a6b1);
   background: #ffffff;
   color: #000000;
   transition: background-color .15s ease;
@@ -360,7 +360,7 @@
   box-sizing: border-box;
   padding: 6px 13px;
   overflow-wrap: anywhere;
-  border: 1px solid #d6d9de;
+  border: 1px solid var(--gp-border-color, #a0a6b1);
   border-radius: 18px;
   background: #f8fafc;
   color: #20242a;
@@ -458,7 +458,7 @@
   .action-runtime-cell {
     justify-content: flex-start;
     padding-top: 10px;
-    border-top: 1px solid var(--gp-border-soft);
+    border-top: 1px solid var(--gp-border-color, #a0a6b1);
   }
 }
 
@@ -731,7 +731,7 @@
   min-height: var(--gp-field-height) !important;
   margin: 0 !important;
   padding: 0 16px !important;
-  border: 1px solid var(--gp-field-border) !important;
+  border: 1px solid var(--gp-border-color, #a0a6b1) !important;
   border-radius: var(--gp-field-radius) !important;
   background: #fff !important;
   box-sizing: border-box !important;
@@ -740,7 +740,7 @@
 
 #gp-app .roles-page .matrix-search-input-frame:focus-within {
   border-width: 1px !important;
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   box-shadow: none !important;
 }
 

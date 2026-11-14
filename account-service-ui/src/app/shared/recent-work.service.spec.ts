@@ -5,11 +5,7 @@ import { RecentWorkService } from './recent-work.service';
 describe('RecentWorkService', () => {
   it('keeps recently opened items separate when the signed-in account changes', () => {
     let userId = 901;
-    const storage = new Map<string, string>();
-    vi.stubGlobal('localStorage', {
-      getItem: (key: string) => storage.get(key) ?? null,
-      setItem: (key: string, value: string) => storage.set(key, value),
-    });
+    localStorage.clear();
     TestBed.configureTestingModule({
       providers: [{ provide: AuthService, useValue: { getCurrentUserId: () => userId } }],
     });
@@ -31,8 +27,6 @@ describe('RecentWorkService', () => {
       userId = 901;
       service.refreshForCurrentUser();
       expect(service.items().map((row) => row.id)).toEqual([1]);
-    } finally {
-      vi.unstubAllGlobals();
-    }
+    } finally { localStorage.clear(); TestBed.resetTestingModule(); }
   });
 });

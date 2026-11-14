@@ -1,0 +1,265 @@
+{
+  "date": "2026-11-04",
+  "frontendBuilds": [
+    {
+      "app": "account-service-ui",
+      "exit": 0
+    },
+    {
+      "app": "chatly-ui",
+      "exit": 0
+    },
+    {
+      "app": "greatley-poshley-auth-ui",
+      "exit": 0
+    },
+    {
+      "app": "greatley-poshley-calendar-ui",
+      "exit": 0
+    },
+    {
+      "app": "greatley-poshley-docs-ui",
+      "exit": 0
+    },
+    {
+      "app": "greatley-poshley-forge-ui",
+      "exit": 0
+    },
+    {
+      "app": "greatley-poshley-instru-ui",
+      "exit": 0
+    },
+    {
+      "app": "greatley-poshley-mail-ui",
+      "exit": 0
+    },
+    {
+      "app": "greatley-poshley-meetings-ui",
+      "exit": 0
+    },
+    {
+      "app": "greatley-poshley-sheets-ui",
+      "exit": 0
+    },
+    {
+      "app": "greatley-poshley-slides-ui",
+      "exit": 0
+    }
+  ],
+  "javaCompiles": [
+    {
+      "service": "greatley-poshley-slides-service",
+      "exit": 0
+    },
+    {
+      "service": "professy-notification-service",
+      "exit": 0
+    },
+    {
+      "service": "chatly-service",
+      "exit": 0
+    },
+    {
+      "service": "chatly-realtime-service",
+      "exit": 0
+    },
+    {
+      "service": "greatley-poshley-instru-service",
+      "exit": 0
+    },
+    {
+      "service": "greatley-poshley-auth-service",
+      "exit": 0
+    },
+    {
+      "service": "greatley-poshley-sheets-service",
+      "exit": 0
+    },
+    {
+      "service": "greatley-poshley-mail-service",
+      "exit": 0
+    },
+    {
+      "service": "greatley-poshley-meetings-service",
+      "exit": 0
+    },
+    {
+      "service": "greatley-poshley-docs-service",
+      "exit": 0
+    },
+    {
+      "service": "professy-email-service",
+      "exit": 0
+    },
+    {
+      "service": "greatley-poshley-calendar-service",
+      "exit": 0
+    },
+    {
+      "service": "professy",
+      "exit": 0
+    }
+  ],
+  "runtimeDependencyAudits": [
+    {
+      "app": "account-service-ui",
+      "exit": 0,
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "error": null
+    },
+    {
+      "app": "chatly-ui",
+      "exit": 0,
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "error": null
+    },
+    {
+      "app": "greatley-poshley-auth-ui",
+      "exit": 0,
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "error": null
+    },
+    {
+      "app": "greatley-poshley-calendar-ui",
+      "exit": 0,
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "error": null
+    },
+    {
+      "app": "greatley-poshley-docs-ui",
+      "exit": 0,
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "error": null
+    },
+    {
+      "app": "greatley-poshley-forge-ui",
+      "exit": 0,
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "error": null
+    },
+    {
+      "app": "greatley-poshley-instru-ui",
+      "exit": 0,
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "error": null
+    },
+    {
+      "app": "greatley-poshley-mail-ui",
+      "exit": 0,
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "error": null
+    },
+    {
+      "app": "greatley-poshley-meetings-ui",
+      "exit": 0,
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "error": null
+    },
+    {
+      "app": "greatley-poshley-sheets-ui",
+      "exit": 0,
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "error": null
+    },
+    {
+      "app": "greatley-poshley-slides-ui",
+      "exit": 0,
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "error": null
+    }
+  ],
+  "testRuns": {
+    "workspaceAndProfile": 18,
+    "agileAndDocuments": 11,
+    "sharedCardsMetricsAndOfficeEditors": 21,
+    "coreSecurityAndOwnership": 13,
+    "mail": 6,
+    "forge": 17
+  },
+  "scope": {
+    "applicationsStarted": false,
+    "testMessagesSent": false,
+    "browserVisualReview": false,
+    "liveS3Delivery": false,
+    "externalSmtpDelivery": false,
+    "independentPenetrationTest": false,
+    "developmentAdvisoriesRemain": true
+  }
+}

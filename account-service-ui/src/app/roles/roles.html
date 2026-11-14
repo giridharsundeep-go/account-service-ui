@@ -1,19 +1,26 @@
 
 <div class="saas-container roles-page">
-  <app-workspace-hero eyebrow="PEOPLE · ACCESS · SECURITY" title="Roles &amp; Permissions" subtitle="Define clear responsibilities and keep access consistent across your organization." image="assets/covers/roles.png" imageAlt="A team aligning access and responsibilities"></app-workspace-hero>
+  <app-workspace-hero [eyebrow]="section === 'designations' ? 'PEOPLE · DIRECTORY' : 'PEOPLE · ACCESS · SECURITY'" [title]="section === 'designations' ? 'Designations' : 'Roles'" [subtitle]="section === 'designations' ? 'Manage job titles used on people profiles.' : 'Create workspace roles and assign the right access to each person.'" image="assets/covers/roles.png" imageAlt="A team aligning access and responsibilities"><button workspace-actions
+        type="button"
+        class="gp-button gp-primary roles-add-button" *ngIf="section === 'designations' && workspace.can('DESIGNATIONS.CREATE')"
+        (click)="resetForm(); editingRoleId = 0"
+      >
+        <span class="btn-indicator-pulse"></span>
+        Add designation
+      </button></app-workspace-hero>
 
-  <div class="role-feedback role-feedback-error" *ngIf="errorMessage" role="alert">
+  <div class="role-feedback role-feedback-error" *ngIf="section === 'designations' && errorMessage" role="alert">
     {{ errorMessage }}
   </div>
-  <div class="role-feedback role-feedback-success" *ngIf="successMessage" role="status">
+  <div class="role-feedback role-feedback-success" *ngIf="section === 'designations' && successMessage" role="status">
     {{ successMessage }}
   </div>
 
-  <section class="form-drawer-wrapper" [class.open]="editingRoleId !== null">
+  <section class="form-drawer-wrapper" *ngIf="section === 'designations'" [class.open]="editingRoleId !== null">
     <div class="drawer-card">
       <div class="drawer-header">
-        <h3>{{ editingRoleId !== null && editingRoleId > 0 ? 'Edit role' : 'Create role' }}</h3>
-        <p>Set a clear role name and describe its intended responsibilities.</p>
+        <h3>{{ editingRoleId !== null && editingRoleId > 0 ? 'Edit designation' : 'Create designation' }}</h3>
+        <p>Add a job title that can be selected on a person’s profile.</p>
       </div>
 
       <div class="drawer-body">
@@ -24,7 +31,7 @@
               matInput
               [(ngModel)]="roleName"
               name="roleName"
-              placeholder="e.g. Product Owner"
+              placeholder="e.g. Product Designer"
               maxlength="100"
               required
             />
@@ -59,28 +66,21 @@
           (click)="saveRole()"
           [disabled]="loading || !roleName.trim()"
         >
-          {{ loading ? 'Saving…' : (editingRoleId !== null && editingRoleId > 0 ? 'Save changes' : 'Create role') }}
+          {{ loading ? 'Saving…' : (editingRoleId !== null && editingRoleId > 0 ? 'Save changes' : 'Create designation') }}
         </button>
       </div>
     </div>
   </section>
 
-  <app-workspace-settings></app-workspace-settings>
-  <main class="matrix-table-workspace roles-table-workspace">
+  <app-workspace-settings *ngIf="section === 'roles'" section="roles"></app-workspace-settings>
+  <main class="matrix-table-workspace roles-table-workspace" *ngIf="section === 'designations'">
     <div class="roles-workspace-header">
       <div>
         <h3>Designation directory</h3>
-        <p>Job titles such as CEO or Software Engineer are independent of access roles.</p>
+        <p>Job titles such as Product Designer or Software Engineer appear on people profiles.</p>
       </div>
 
-      <button
-        type="button"
-        class="gp-button gp-primary roles-add-button" *ngIf="workspace.can('DESIGNATIONS.CREATE')"
-        (click)="resetForm(); editingRoleId = 0"
-      >
-        <span class="btn-indicator-pulse"></span>
-        Add new role
-      </button>
+
     </div>
 
     <div class="matrix-search-input-frame">
@@ -104,9 +104,9 @@
       <input
         type="text"
         [(ngModel)]="searchTerm"
-        placeholder="Search roles..."
+        placeholder="Search designations..."
         autocomplete="off"
-        aria-label="Search roles"
+        aria-label="Search designations"
       />
 
       <button
@@ -122,7 +122,7 @@
 
     <div class="matrix-data-frame" *ngIf="roles$ | async as roles">
       <div class="matrix-row roles-matrix-row matrix-header-row">
-        <div class="cell">Role</div>
+          <div class="cell">Designation</div>
         <div class="cell">Description</div>
         <div class="cell text-right">Actions</div>
       </div>
@@ -177,8 +177,8 @@
       <ng-template #noDataFallback>
         <div class="matrix-empty-viewport">
           <div class="empty-icon-radar" aria-hidden="true">🔑</div>
-          <h4>No roles found</h4>
-          <p>Try another search or create a new role.</p>
+          <h4>No designations found</h4>
+          <p>Try another search or create a designation.</p>
         </div>
       </ng-template>
     </div>

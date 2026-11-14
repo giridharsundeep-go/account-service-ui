@@ -2,7 +2,7 @@ import {WorkspaceSettingsService} from '../shared/workspace-settings.service';
 import {WorkspaceSettingsComponent} from '../shared/workspace-settings';
 
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, Input, inject } from '@angular/core';
 import { environment } from '../../environment';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -29,6 +29,7 @@ import { MatInputModule } from '@angular/material/input';
   styleUrls: ['./roles.css', '../shared/field-controls.css']
 })
 export class Roles implements OnInit {
+  @Input() section: 'roles' | 'designations' = 'roles';
   readonly workspace=inject(WorkspaceSettingsService);
   baseUrl = environment.apiBaseUrlM;
 
@@ -49,7 +50,7 @@ export class Roles implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadRoles();
+    if (this.section === 'designations') this.loadRoles();
   }
 
   loadRoles(): void {
@@ -69,7 +70,7 @@ export class Roles implements OnInit {
       catchError(error => {
         this.errorMessage = this.getErrorMessage(
           error,
-          'Unable to load roles.'
+          'Unable to load designations.'
         );
         return of([] as any[]);
       })
@@ -114,8 +115,8 @@ export class Roles implements OnInit {
       next: res => {
         this.successMessage = res?.message || (
           isEditingExistingRole
-            ? 'Role updated successfully.'
-            : 'Role created successfully.'
+            ? 'Designation updated successfully.'
+            : 'Designation created successfully.'
         );
 
         this.resetForm();
@@ -125,7 +126,7 @@ export class Roles implements OnInit {
       error: error => {
         this.errorMessage = this.getErrorMessage(
           error,
-          'Unable to save role.'
+          'Unable to save designation.'
         );
         this.loading = false;
       }

@@ -2,5 +2,6 @@ export const environment = {
   production: false,
   apiBaseUrl: 'http://127.0.0.1:5000/api',
   apiBaseUrlM: 'http://127.0.0.1:8080/api',
-  apiBaseUrl2: 'http://127.0.0.1:8080/api'
+  apiBaseUrl2: 'http://127.0.0.1:8080/api',
+  apiBaseUrlPost: 'http://127.0.0.1:8095/api/mail'
 };

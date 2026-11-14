@@ -1,34 +1,20 @@
-<main class="registration-page">
-  <header class="site-header">
-    <a class="site-brand" routerLink="/login" aria-label="Greatley Poshley home">Greatley Poshley</a>
-    <div class="header-actions">
-      <span>Already have an account?</span>
-      <a routerLink="/login">Sign in</a>
-    </div>
+<div class="gp-auth-page registration-page">
+  <header class="gp-auth-header">
+    <a class="site-brand" routerLink="/login" aria-label="Greatley Poshley sign in"><app-workspace-brand [app]="''" [name]="'Greatley Poshley'" [iconOnly]="false"></app-workspace-brand></a>
   </header>
-
-  <section class="hero-section" aria-labelledby="hero-title">
-    <div class="hero-art" aria-hidden="true">
-      <div class="art-orbit orbit-one"></div>
-      <div class="art-orbit orbit-two"></div>
-      <img class="registration-illustration" src="assets/registration-illustration.png" alt="">
-    </div>
-    <div class="hero-copy">
-      <h1 id="hero-title">Build work<br><span>better.</span></h1>
-      <p class="hero-support">One place to plan, build and deliver great work.</p>
-
-    </div>
-    <a class="scroll-cue" href="#registration-flow" aria-label="Scroll to registration">
-      <span>Get started</span><mat-icon>keyboard_arrow_down</mat-icon>
-    </a>
-  </section>
-
-  <section class="registration-section" id="registration-flow" aria-labelledby="registration-title">
-     
-    <div class="registration-shell">
-      <div class="form-intro">
-      </div>
-
+  <main class="gp-auth-split">
+    <app-auth-app-gallery></app-auth-app-gallery>
+    <section class="gp-auth-form-pane" aria-labelledby="registration-title">
+      <div class="gp-auth-form-content registration-shell">
+        <header class="gp-auth-form-heading">
+          <h2 id="registration-title">Create your account</h2>
+          <p class="gp-auth-subtitle">Your workspace starts here.</p>
+        </header>
+        <ol class="registration-progress" aria-label="Registration progress">
+          <li [class.active]="currentStep===0" [class.complete]="currentStep>0" [attr.aria-current]="currentStep===0?'step':null"><span>1</span>Organisation</li>
+          <li [class.active]="currentStep===1" [class.complete]="currentStep>1" [attr.aria-current]="currentStep===1?'step':null"><span>2</span>Your account</li>
+          <li [class.active]="currentStep===2" [attr.aria-current]="currentStep===2?'step':null"><span>3</span>Plan</li>
+        </ol>
       <form [formGroup]="registrationForm" (ngSubmit)="submitRegistration()" novalidate>
         <!-- STEP 1: ORGANISATION -->
         <section class="step-panel organisation-panel" *ngIf="currentStep === 0" formGroupName="organisation">
@@ -125,9 +111,9 @@
             <button mat-icon-button matSuffix type="button" [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'" (click)="showPassword = !showPassword">
               <mat-icon>{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
             </button>
-            <mat-hint>At least 8 characters.</mat-hint>
+            <mat-hint>At least 12 characters.</mat-hint>
             <mat-error *ngIf="fieldInvalid('masterUser.password','required')">Create a password.</mat-error>
-            <mat-error *ngIf="fieldInvalid('masterUser.password','minlength')">Use at least 8 characters.</mat-error>
+            <mat-error *ngIf="fieldInvalid('masterUser.password','minlength')">Use at least 12 characters.</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
@@ -141,7 +127,7 @@
           </mat-form-field>
         </div>
 
-        <p class="security-note"><mat-icon>lock</mat-icon>Your password should be securely hashed by the server.</p>
+
         <div class="inline-message error-message" role="alert" aria-live="assertive" *ngIf="submitError">
           <mat-icon aria-hidden="true">error_outline</mat-icon><span>{{ submitError }}</span>
         </div>
@@ -206,11 +192,9 @@
         </div>
       </section>
     </form>
-
-      <footer class="registration-footer">
-        <span>© 2026 Greatley Poshley</span>
-        <a routerLink="/login">Sign in</a>
-      </footer>
-    </div>
-  </section>
-</main>
+        <p class="gp-auth-switch">Already have an account? <a routerLink="/login">Sign in</a></p>
+      </div>
+    </section>
+  </main>
+  <footer class="gp-auth-footer">© {{currentYear}} Greatley Poshley Ltd. All rights reserved.</footer>
+</div>

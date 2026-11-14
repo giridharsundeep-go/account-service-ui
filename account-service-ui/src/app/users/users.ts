@@ -1,12 +1,16 @@
+import {OrganizationUnitDialog,OrganizationStructureDialog,OrganizationUnitType} from '../shared/organization-unit-dialog';
+import {MatDialog,MatDialogModule} from '@angular/material/dialog';
+import { ActorIconComponent } from '../shared/actor-icon';
 import {UserAccessPanel} from '../shared/user-access-panel';
 import {WorkspaceSettingsService} from '../shared/workspace-settings.service';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, effect, inject, untracked } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, effect, inject, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { BehaviorSubject, Observable, map, of, catchError, tap, shareReplay } from 'rxjs';
+import { BehaviorSubject, Observable, map, of, catchError, tap, shareReplay, firstValueFrom } from 'rxjs';
 import { environment } from '../../environment';
 import { AuthService } from '../auth.service';
+import { ChatlyLauncher } from '../shared/chatly-launcher.service';
 import { WorkspaceHeroComponent } from '../shared/workspace-hero';
 import { peopleRows, personDesignation, personRegions, personRoleLabels } from '../shared/people-directory';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
@@ -34,6 +38,7 @@ interface DirectoryUser {
   employee_id_prefix: string;
   employee_id_number: string;
   profile_picture_url: string;
+  emailVerified: boolean;
   locationCountry: string;
   locationState: string;
   locationCity: string;
@@ -45,8 +50,8 @@ interface DirectoryUser {
 @Component({
   selector: 'app-users',
   standalone: true,
-  imports: [
-    CommonModule, UserAccessPanel,
+  imports: [ActorIconComponent,
+    CommonModule, UserAccessPanel, MatDialogModule,
     FormsModule,
     WorkspaceHeroComponent,
     MatButtonModule,
@@ -60,11 +65,13 @@ interface DirectoryUser {
   styleUrls: ['./users.css', '../shared/field-controls.css']
 })
 export class Users implements OnInit, OnChanges, OnDestroy {
+  readonly chatly = inject(ChatlyLauncher);
   readonly settings = inject(WorkspaceSettingsService);
+  private readonly organizationDialog=inject(MatDialog);
   private readonly liveDirectory = effect(() => {
     const event = this.settings.lastEvent();
-    if (event && ['USER_UPDATED', 'USER_ACCESS_UPDATED', 'ROLE_UPDATED'].includes(event.type || '')) {
-      untracked(() => { if (!this.profileEditMode && !this.profileCreating) this.loadUsers(); });
+    if (event && ['USER_UPDATED', 'USER_ACCESS_UPDATED', 'ROLE_UPDATED', 'ORGANIZATION_UPDATED'].includes(event.type || '')) {
+      untracked(() => { if(event.type==='ORGANIZATION_UPDATED')this.loadOrganizationUnits(); if (!this.profileEditMode && !this.profileCreating) this.loadUsers(); });
     }
   });
   readonly baseUrl = environment.apiBaseUrlM.replace(/\/$/, '');
@@ -93,6 +100,8 @@ export class Users implements OnInit, OnChanges, OnDestroy {
   localPreviewUrl = '';
   selectedFile: File | null = null;
 
+  departmentId:number|null=null;functionId:number|null=null;divisionId:number|null=null;organizationUnits:any[]=[];
+  units(type:string){return this.organizationUnits.filter(unit=>unit.type===type&&(unit.active||Number(unit.id)===Number(type==='DEPARTMENT'?this.departmentId:type==='FUNCTION'?this.functionId:this.divisionId)));}
   roleId: number | null = null;
   orgRole = '';
   managerId: number | null = null;
@@ -107,13 +116,17 @@ export class Users implements OnInit, OnChanges, OnDestroy {
 
   editingUserId: number | null = null;
   selectedProfileUser: DirectoryUser | null = null;
+  activeProfileSection: 'profile' | 'reporting' = 'profile';
+  reportingSearchText = '';
+  reportingShowAll = false;
   @Input() currentUserProfileId: number | null = null;
   @Input() profileOpenRequest = 0;
+  @Output() profileClosed = new EventEmitter<void>();
   private pendingProfileUserId: number | null = null;
   private handledProfileOpenRequest = 0;
   profileEditMode = false;
   profileCreating = false;
-  profileTab: 'overview' | 'work' | 'reporting' | 'access' = 'overview';
+  sendingEmailVerificationFor: number | null = null;
   isDrawerOpen = false;
   searchTerm = '';
   loading = false;
@@ -136,6 +149,7 @@ export class Users implements OnInit, OnChanges, OnDestroy {
   ngOnInit(): void {
     this.loadUsers();
     this.loadRoles();
+    this.loadOrganizationUnits();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -173,6 +187,24 @@ export class Users implements OnInit, OnChanges, OnDestroy {
     return peopleRows(response);
   }
 
+  addOrganizationUnit(type:OrganizationUnitType):void {
+    if(!this.canManageUsers)return;
+    this.organizationDialog.open(OrganizationUnitDialog,{width:'520px',maxWidth:'calc(100vw - 32px)',restoreFocus:true,data:{type,units:this.organizationUnits}}).afterClosed().subscribe(result=>{
+      if(!result)return;
+      this.organizationUnits=result.units;
+      if(result.unit&&this.profileEditMode){
+        if(result.unit.type==='DEPARTMENT')this.departmentId=Number(result.unit.id);
+        if(result.unit.type==='FUNCTION')this.functionId=Number(result.unit.id);
+        if(result.unit.type==='DIVISION')this.divisionId=Number(result.unit.id);
+      }
+      this.cdr.markForCheck();
+    });
+  }
+  manageOrganizationStructure():void {
+    if(!this.canManageUsers)return;
+    this.organizationDialog.open(OrganizationStructureDialog,{width:'900px',maxWidth:'calc(100vw - 32px)',restoreFocus:true}).afterClosed().subscribe(()=>this.loadOrganizationUnits());
+  }
+  loadOrganizationUnits(){this.http.get<any[]>(this.baseUrl+'/workspace/organization/units',{headers:this.headers()}).subscribe({next:units=>{this.organizationUnits=units;this.cdr.markForCheck();},error:()=>this.triggerToastAlert('Organization units could not be loaded.',true)});}
   loadUsers(): void {
     this.directoryLoading = true;
     this.http.get<any>(`${this.baseUrl}/users`, {
@@ -319,6 +351,7 @@ export class Users implements OnInit, OnChanges, OnDestroy {
       profile_picture_url: user?.profilePictureUrl
         ?? user?.profile_picture_url
         ?? '',
+      emailVerified: this.toBoolean(user?.emailVerified ?? user?.email_verified, false),
       locationCountry: user?.locationCountry
         ?? user?.location_country
         ?? '',
@@ -360,15 +393,49 @@ export class Users implements OnInit, OnChanges, OnDestroy {
   get canDeactivateUsers():boolean{return this.settings.can('USERS.DELETE');}
   get canCreateSetupLink():boolean{return this.settings.superUser;}
   canEditPerson(user:any):boolean{return this.canManageUsers||Number(user.id)===this.auth.getCurrentUserId();}
+  canVerifyEmail(user:any):boolean{return this.canEditPerson(user) && Number(user.id)>0;}
   invitationUrl='';
   invitationForUserId=0;
   createSetupLink(user:any):void{if(!this.canCreateSetupLink)return;this.http.post<any>(`${this.baseUrl}/users/${user.id}/invitation-link`,{},{headers:this.headers()}).subscribe({next:result=>{this.invitationUrl=result.url;this.invitationForUserId=Number(user.id);this.cdr.markForCheck();},error:()=>this.triggerToastAlert('Unable to create a password setup link.',true)});}
+  sendEmailVerification(user:any):void{
+    if(!this.canVerifyEmail(user)||this.sendingEmailVerificationFor!==null)return;
+    this.sendingEmailVerificationFor=Number(user.id);
+    this.http.post<any>(`${this.baseUrl}/users/${user.id}/verification-email`,{},{headers:this.headers()}).subscribe({
+      next:result=>{
+        if(!result?.verificationUrl){this.sendingEmailVerificationFor=null;this.triggerToastAlert(result?.message || 'This email address is already verified.');this.cdr.markForCheck();return;}
+        void this.postVerificationEmail(user,result.verificationUrl);
+      },
+      error:error=>{this.sendingEmailVerificationFor=null;this.triggerToastAlert(this.errorMessage(error,'Unable to queue an email verification link.'),true);this.cdr.markForCheck();}
+    });
+  }
+
+  private async postVerificationEmail(user:any,verificationUrl:string):Promise<void>{
+    const postApi=environment.apiBaseUrlPost.replace(/\/$/,'');
+    const headers=this.headers();
+    const safe=(value:unknown)=>String(value??'').replace(/[&<>"']/g,character=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]!));
+    const link=safe(verificationUrl);
+    const recipientName=safe(user.fullName||user.name||user.email||'there');
+    const body='<div data-post-body="rich"><div><p><strong>GREATLEY POSHLEY</strong> · ACCOUNT SECURITY</p><h2>Verify your email address</h2><p>Hello '+recipientName+',</p><p>Confirm this address to keep account updates and recovery links reliable.</p><p><a href="'+link+'">Verify email address</a></p><p>If the button is unavailable, copy this link into your browser:</p><p><a href="'+link+'">'+link+'</a></p><p>This link can be used once and expires in 24 hours. If you did not request it, you can ignore this message.</p></div></div>';
+    let draftId:number|null=null;
+    try{
+      const draft=await firstValueFrom(this.http.post<any>(`${postApi}/drafts`,{},{headers}));
+      draftId=Number(draft?.id);
+      if(!Number.isSafeInteger(draftId)||draftId<=0)throw new Error('Post did not create a mail draft.');
+      const message={recipientIds:[Number(user.id)],ccRecipientIds:[],bccRecipientIds:[],subject:'Verify your Greatley Poshley email address',body};
+      await firstValueFrom(this.http.put(`${postApi}/drafts/${draftId}`,message,{headers}));
+      await firstValueFrom(this.http.post(`${postApi}/drafts/${draftId}/send`,message,{headers}));
+      this.triggerToastAlert(`Verification email sent to ${user.email} in Post.`);
+    }catch(error:any){
+      if(draftId)try{await firstValueFrom(this.http.delete(`${postApi}/drafts/${draftId}`,{headers}));}catch{}
+      this.triggerToastAlert(this.errorMessage(error,'The verification link was created, but Post could not send the email.'),true);
+    }finally{this.sendingEmailVerificationFor=null;this.cdr.markForCheck();}
+  }
 
   openCreateForm(): void {
     if(!this.canCreateUsers)return;
     this.resetForm(); this.editingUserId=null; this.profileCreating=true;
     this.selectedProfileUser=this.normalizeUser({id:0,fullName:'New user',firstName:'',lastName:'',email:'',is_active:true});
-    this.profileEditMode=true; this.isDrawerOpen=false; this.filterManagerAutocomplete();
+    this.profileEditMode=true; this.activeProfileSection='profile'; this.isDrawerOpen=false; this.filterManagerAutocomplete();
     document.querySelector('.content')?.scrollTo({top:0});
   }
 
@@ -422,6 +489,7 @@ export class Users implements OnInit, OnChanges, OnDestroy {
         : Number(this.managerId);
 
     return {
+      ...((this.canManageUsers || (this.profileCreating && this.canCreateUsers)) ? {departmentId:this.departmentId,functionId:this.functionId,divisionId:this.divisionId}:{}),
       firstName: this.firstName.trim(),
       lastName: this.lastName.trim(),
       email: this.email.trim().toLowerCase(),
@@ -753,8 +821,10 @@ export class Users implements OnInit, OnChanges, OnDestroy {
   viewUser(user: DirectoryUser): void {
     if (!user) return;
     this.profileEditMode = false;
+    this.activeProfileSection = 'profile';
+    this.reportingSearchText = '';
+    this.reportingShowAll = false;
     this.selectedProfileUser = user;
-    this.profileTab = 'overview';
     this.isDrawerOpen = false;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -780,17 +850,35 @@ export class Users implements OnInit, OnChanges, OnDestroy {
     this.profileCreating=false;
     this.profileEditMode = false;
     this.selectedProfileUser = null;
-    this.profileTab = 'overview';
+    this.activeProfileSection = 'profile';
+    this.reportingSearchText = '';
+    this.reportingShowAll = false;
     this.editingUserId = null;
     this.resetForm();
+    this.profileClosed.emit();
+  }
+
+  messageInHello(user: DirectoryUser): void {
+    const id = Number(user?.id);
+    if (Number.isSafeInteger(id) && id > 0) this.chatly.person(id);
   }
 
   editProfileUser(user: DirectoryUser): void {
     // Edit directly inside the profile's existing two-column layout.
     this.selectedProfileUser = user;
+    this.activeProfileSection = 'profile';
     this.editUser(user);
     this.isDrawerOpen = false;
     this.profileEditMode = true;
+    this.filterManagerAutocomplete();
+  }
+
+  editReportingLine(user: DirectoryUser): void {
+    this.selectedProfileUser = user;
+    this.editUser(user);
+    this.isDrawerOpen = false;
+    this.profileEditMode = true;
+    this.activeProfileSection = 'reporting';
     this.filterManagerAutocomplete();
   }
 
@@ -812,6 +900,7 @@ export class Users implements OnInit, OnChanges, OnDestroy {
     this.email = user.email ?? '';
     this.phone = user.phone ?? '';
     this.gender = user.gender ?? '';
+    this.departmentId=user["departmentId"]??null;this.functionId=user["functionId"]??null;this.divisionId=user["divisionId"]??null;
     this.profilePictureUrl = user.profile_picture_url ?? '';
     this.localPreviewUrl = this.profilePictureUrl
       ? this.getAvatarDisplaySrc(this.profilePictureUrl)
@@ -879,6 +968,28 @@ export class Users implements OnInit, OnChanges, OnDestroy {
 
   getDirectReports(user: DirectoryUser): DirectoryUser[] {
     return this.cachedUsersArray.filter(candidate => Number(candidate.manager_id) === Number(user.id));
+  }
+
+  getFilteredDirectReports(user: DirectoryUser): DirectoryUser[] {
+    const people = this.getDirectReports(user);
+    const query = this.reportingSearchText.trim().toLocaleLowerCase();
+    if (!query) return people;
+    return people.filter(person => `${person.fullName} ${person.email}`.toLocaleLowerCase().includes(query));
+  }
+
+  getVisibleDirectReports(user: DirectoryUser): DirectoryUser[] {
+    const people = this.getFilteredDirectReports(user);
+    return this.reportingShowAll || this.reportingSearchText.trim() ? people : people.slice(0, 12);
+  }
+
+  getReportingManager(user: DirectoryUser): DirectoryUser | null {
+    if (user?.manager_id === null || user?.manager_id === undefined) return null;
+    return this.cachedUsersArray.find(candidate => Number(candidate.id) === Number(user.manager_id)) ?? null;
+  }
+
+  getReportingManagerDesignation(user: DirectoryUser): string {
+    const manager = this.getReportingManager(user);
+    return manager ? this.getDesignation(manager) || 'Manager' : 'Manager';
   }
 
   getManagerName(user: DirectoryUser): string {
@@ -1057,6 +1168,7 @@ export class Users implements OnInit, OnChanges, OnDestroy {
   }
 
   resetForm(): void {
+    this.departmentId=null;this.functionId=null;this.divisionId=null;
     this.revokeLocalPreview();
     this.firstName = '';
     this.lastName = '';

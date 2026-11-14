@@ -5,14 +5,8 @@
     subtitle="Understand the work, support your team, and deliver with confidence."
     image="assets/covers/dashboard.png"
     imageAlt="A team reviewing project progress"
-  ></app-workspace-hero>
-  <header class="agile-heading">
-    <div>
-      <span>PROJECT / SPACE</span>
-      <h1>{{ context.selectedProject()?.name || 'Choose a project from the header' }}</h1>
-      <p *ngIf="updated">Updated {{ updated | date: 'shortTime' }} · Current project scope</p>
-    </div>
-    <div class="agile-controls">
+  >    <div workspace-actions class="agile-controls">
+      <label class="dashboard-live"><input type="checkbox" [(ngModel)]="autoRefresh"> Live updates</label>
       <select [(ngModel)]="team" aria-label="Filter dashboard by team">
         <option value="ALL">All project teams</option>
         <option *ngFor="let t of teams" [value]="t.id">{{ t.name }}</option></select
@@ -24,7 +18,14 @@
       >
         {{ loading ? 'Refreshing…' : 'Refresh' }}
       </button>
+    </div></app-workspace-hero>
+  <header class="agile-heading">
+    <div>
+      <span>PROJECT / SPACE</span>
+      <h1>{{ context.selectedProject()?.name || 'Choose a project from the header' }}</h1>
+      <p *ngIf="updated">Updated {{ updated | date: 'shortTime' }} · Current project scope · {{autoRefresh ? 'Live · refreshes every 30 seconds' : 'Live refresh paused'}}</p>
     </div>
+
   </header>
   <p class="agile-notice" *ngIf="snapshot.unavailable.length" role="status">
     Some data is unavailable: {{ snapshot.unavailable.join(', ') }}. Metrics reflect the sources
@@ -32,6 +33,15 @@
   </p>
   <ng-container *ngIf="context.selectedProjectId()">
     <p *ngIf="loading" role="status">Loading project delivery data…</p>
+    <section class="delivery-indicators" aria-label="Delivery health indicators">
+      <article><small>Overdue open work</small><strong>{{indicators.overdue}}</strong><span>Open items past their due date</span></article>
+      <article><small>Stale work</small><strong>{{indicators.stale}}</strong><span>No recorded update in 14 days</span></article>
+      <article><small>Median open age</small><strong>{{indicators.medianOpenAge === null ? '—' : indicators.medianOpenAge + ' days'}}</strong><span>{{indicators.datedOpen}} items with a creation date</span></article>
+      <article><small>Estimate coverage</small><strong>{{indicators.estimateCoverage === null ? '—' : indicators.estimateCoverage + '%'}}</strong><span>{{indicators.openPoints}} points on {{indicators.estimated}} estimated tasks / leaf stories</span></article>
+      <article><small>Ownership coverage</small><strong>{{indicators.assignmentCoverage === null ? '—' : indicators.assignmentCoverage + '%'}}</strong><span>{{indicators.humanOwned}} human · {{indicators.agentOwned}} agent · {{indicators.unassigned}} unassigned</span></article>
+      <article><small>Open high priority</small><strong>{{indicators.highPriority}}</strong><span>High, highest and critical priorities</span></article>
+    </section>
+    <p class="metric-explanation">Snapshot indicators use current work records. Missing estimates and dates stay unknown; historical velocity and cycle time require recorded transitions.</p>
     <section class="agile-metrics">
       <article>
         <small>Work items</small><strong>{{ items.length }}</strong
@@ -213,7 +223,7 @@
             <span class="agile-person-mark" [style.background]="person.color">{{
               person.name.slice(0, 1)
             }}</span
-            ><strong>{{ person.name }}</strong
+            ><strong><app-actor-icon [actorId]="person.id"></app-actor-icon> {{ person.name }}</strong
             ><span>{{ person.open }} open</span><b>{{ person.done }} completed</b>
           </article>
         </div>
@@ -242,7 +252,7 @@
         <button class="agile-risk" type="button" *ngFor="let item of risks" (click)="open(item)">
           <strong>{{ item.key }}</strong
           ><span>{{ item.title }}</span
-          ><span>{{ item.assignee }}</span
+          ><span><app-actor-icon [actorId]="item.assigneeId"></app-actor-icon> {{ item.assignee }}</span
           ><b>{{ item.status.replaceAll('_', ' ') }}</b>
         </button>
         <p *ngIf="!risks.length">

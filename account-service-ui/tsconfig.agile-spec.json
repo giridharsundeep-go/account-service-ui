@@ -4,7 +4,8 @@
     "src/app/shared/project-work.service.spec.ts",
     "src/app/shared/work-item-dialog.service.spec.ts",
     "src/app/shared/recent-work.service.spec.ts",
-    "src/app/docs/docs-cloud.spec.ts"
+    "src/app/docs/docs-cloud.spec.ts",
+    "src/test-setup.ts"
   ],
   "exclude": []
 }

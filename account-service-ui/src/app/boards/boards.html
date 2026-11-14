@@ -1,7 +1,7 @@
 <section class="boards-page gp-workspace-canvas">
   <app-workspace-hero *ngIf="boardHome()" eyebrow="PLAN · ALIGN · DELIVER" title="Boards" subtitle="Give every team a shared view of the work that matters." image="assets/covers/boards.png" imageAlt="Teammates planning work on a shared board">
-    <button workspace-actions mat-flat-button class="primary-action" type="button" (click)="openCreateBoard()"><mat-icon>add</mat-icon><span>Create Board</span></button>
-  </app-workspace-hero>
+
+  <button workspace-actions *ngIf="boardHome()" mat-flat-button class="primary-action boards-create-action" type="button" (click)="openCreateBoard()"><mat-icon>add</mat-icon><span>Create board</span></button></app-workspace-hero>
 
   <!-- PRODUCTS-STYLE HEADER -->
   <header class="google-header boards-google-header google-one-topbar">
@@ -16,6 +16,7 @@
         </button>
       </div>
     </div>
+
 
   </header>
 
@@ -103,26 +104,7 @@
         <mat-button-toggle value="BOARD"><mat-icon>view_kanban</mat-icon> Board</mat-button-toggle>
         <mat-button-toggle value="ALL_ITEMS"><mat-icon>list</mat-icon> All items</mat-button-toggle>
       </mat-button-toggle-group>
-      <button mat-stroked-button color="primary" (click)="toggleFilterPanel()"><mat-icon>tune</mat-icon>
-        Filters</button>
-      <button mat-stroked-button (click)="openEditBoard()"><mat-icon>edit</mat-icon> Edit</button>
-      <button mat-flat-button color="primary" (click)="startScrumBoardView()"><mat-icon>groups</mat-icon>
-        Scrum</button>
-    </div>
-
-    <!-- FILTER WORKSPACE -->
-    <mat-card class="filters-card" appearance="outlined" *ngIf="filterPanelOpen()">
-      <mat-card-header>
-        <mat-card-title>Refine your board</mat-card-title>
-        <mat-card-subtitle>Filters are applied instantly to the current view.</mat-card-subtitle>
-        <span class="toolbar-spacer"></span>
-        <button mat-button (click)="clearViewFilters()">Clear all</button>
-        <button mat-icon-button matTooltip="Close filters" (click)="toggleFilterPanel()">
-          <mat-icon>close</mat-icon>
-        </button>
-      </mat-card-header>
-
-      <mat-card-content class="filter-grid">
+      <app-filter-menu title="Board filters" (clear)="clearViewFilters()">
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>Sprint</mat-label>
           <mat-select [ngModel]="selectedSprintId()" (ngModelChange)="onSprintChange($event)"
@@ -176,9 +158,14 @@
 
         <div class="filter-wide"><span>Assignee</span><app-person-picker [people]="boardPeopleOptions()" [value]="selectedAssigneeFilter() === 'ALL' ? null : +selectedAssigneeFilter()" label="Assignee" emptyLabel="All assignees" (selected)="selectBoardPersonFilter('assignee', $event)"></app-person-picker></div>
         <div class="filter-wide"><span>Reporter</span><app-person-picker [people]="boardPeopleOptions()" [value]="selectedReporterFilter() === 'ALL' ? null : +selectedReporterFilter()" label="Reporter" emptyLabel="All reporters" (selected)="selectBoardPersonFilter('reporter', $event)"></app-person-picker></div>
-      </mat-card-content>
+      </app-filter-menu>
+      <button mat-stroked-button (click)="openEditBoard()"><mat-icon>edit</mat-icon> Edit</button>
+      <button mat-flat-button color="primary" (click)="startScrumBoardView()"><mat-icon>groups</mat-icon>
+        Scrum</button>
+    </div>
 
-    </mat-card>
+    <!-- FILTER WORKSPACE -->
+
 
     <!-- ACTIVE FILTER CHIPS -->
     <div class="active-filters"
@@ -237,7 +224,7 @@
         </mat-chip>
         <mat-chip *ngFor="let user of boardAssignedMembers()" [highlighted]="selectedTeamMemberId() === user.id"
           (click)="selectTeamMember(user.id)">
-          <span class="mini-avatar">{{ initials(user.id) }}</span>
+          <app-actor-icon [actorId]="user.id"></app-actor-icon><span class="mini-avatar">{{ initials(user.id) }}</span>
           {{ user.name }}
           <b>{{ boardItemsForUser(user.id).length }}</b>
         </mat-chip>
@@ -328,7 +315,7 @@
                     [attr.aria-label]="'Assignee: ' + userName(card.assigneeId)">
                     <span class="assignee-avatar" [class.unassigned-avatar]="!card.assigneeId">{{
                       initials(card.assigneeId) }}</span>
-                    <span class="assignee-avatar-name">{{ userName(card.assigneeId) }}</span>
+                    <app-actor-icon [actorId]="card.assigneeId"></app-actor-icon><span class="assignee-avatar-name">{{ userName(card.assigneeId) }}</span>
                   </button>
                 </mat-card-actions>
               </mat-card>
@@ -426,7 +413,7 @@
             <ng-container matColumnDef="assignee">
               <th mat-header-cell *matHeaderCellDef>Assignee</th>
               <td mat-cell *matCellDef="let card">
-                <span class="person-cell"><span class="mini-avatar">{{ initials(card.assigneeId) }}</span>{{
+                <span class="person-cell"><app-actor-icon [actorId]="card.assigneeId"></app-actor-icon><span class="mini-avatar">{{ initials(card.assigneeId) }}</span>{{
                   userName(card.assigneeId) }}</span>
               </td>
             </ng-container>
@@ -466,8 +453,7 @@
   <!-- ================================================================
        BOARD DIALOG
        ================================================================ -->
-  <div class="material-overlay board-modal-backdrop" *ngIf="showCreateBoard() || showEditBoard()"
-    (click)="closeBoardDialog()">
+  <ng-template #boardForm>
     <section class="product-modal board-product-modal" role="dialog" aria-modal="true"
       (click)="$event.stopPropagation()">
       <header class="modal-header">
@@ -482,6 +468,7 @@
       </header>
 
       <div class="modal-body">
+        <p *ngIf="errorMessage()" role="alert" class="error-message">{{errorMessage()}}</p>
         <div class="board-dialog-columns">
           <section class="board-dialog-panel board-details-panel">
             <div class="form-section">
@@ -595,7 +582,7 @@
         </button>
       </footer>
     </section>
-  </div>
+  </ng-template>
 
   <!-- ================================================================
        DAILY SCRUM
@@ -620,7 +607,7 @@
           </mat-chip>
           <mat-chip *ngFor="let user of scrumParticipants()" [highlighted]="scrumSelectedUserId() === user.id"
             (click)="selectScrumUser(user.id)">
-            <span class="mini-avatar">{{ initials(user.id) }}</span>{{ user.name }}
+            <app-actor-icon [actorId]="user.id"></app-actor-icon><span class="mini-avatar">{{ initials(user.id) }}</span>{{ user.name }}
           </mat-chip>
         </mat-chip-set>
 
@@ -634,7 +621,7 @@
               <mat-card-subtitle>{{ card.type }} · {{ card.code }}</mat-card-subtitle>
             </mat-card-header>
             <mat-card-content>
-              <span class="person-cell"><span class="mini-avatar">{{ initials(card.assigneeId) }}</span>{{
+              <span class="person-cell"><app-actor-icon [actorId]="card.assigneeId"></app-actor-icon><span class="mini-avatar">{{ initials(card.assigneeId) }}</span>{{
                 userName(card.assigneeId) }}</span>
               <span class="table-status" [ngClass]="normalizeStatus(card.status).toLowerCase()">{{
                 normalizeStatus(card.status).replace('_',' ') }}</span>
@@ -743,44 +730,8 @@
                   </mat-form-field>
                 </div>
 
-                <div class="work-item-field work-item-user-autocomplete">
-                  <label class="work-item-explicit-label">Assignee</label>
-                  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="work-item-full-field">
-                    <input matInput [ngModel]="workItemAssigneeQuery()" (ngModelChange)="onWorkItemAssigneeInput($event)"
-                      placeholder="Type a name to search users">
-                    <button mat-icon-button matSuffix type="button" *ngIf="workItemDraft().assigneeId"
-                      (click)="clearWorkItemAssignee(); autoSaveWorkItemField()" aria-label="Clear assignee">
-                      <mat-icon>close</mat-icon>
-                    </button>
-                  </mat-form-field>
-                  <div class="work-item-user-options" *ngIf="workItemAssigneeAutocompleteOpen()">
-                    <button type="button" *ngFor="let user of filteredWorkItemAssignees()" (click)="selectWorkItemAssignee(user)">
-                      <span class="mini-avatar" [ngClass]="personToneClass(user.id)">{{ initials(user.id) }}</span>
-                      <span class="work-item-user-name"><strong>{{ workItemUserName(user) }}</strong><small>{{ workItemUserDesignation(user) }}</small></span>
-                    </button>
-                    <div class="autocomplete-empty" *ngIf="!filteredWorkItemAssignees().length">No users match your search.</div>
-                  </div>
-                </div>
-
-                <div class="work-item-field work-item-user-autocomplete">
-                  <label class="work-item-explicit-label">Reporter</label>
-                  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="work-item-full-field">
-                    <input matInput [ngModel]="workItemReporterQuery()" (ngModelChange)="onWorkItemReporterInput($event)"
-                      placeholder="Type a name to search users">
-                    <button mat-icon-button matSuffix type="button" *ngIf="workItemDraft().reporterId"
-                      (click)="clearWorkItemReporter(); autoSaveWorkItemField()" aria-label="Clear reporter">
-                      <mat-icon>close</mat-icon>
-                    </button>
-                  </mat-form-field>
-                  <div class="work-item-user-options" *ngIf="workItemReporterAutocompleteOpen()">
-                    <button type="button" *ngFor="let user of filteredWorkItemReporters()" (click)="selectWorkItemReporter(user)">
-                      <span class="mini-avatar" [ngClass]="personToneClass(user.id)">{{ initials(user.id) }}</span>
-                      <span class="work-item-user-name"><strong>{{ workItemUserName(user) }}</strong><small>{{ workItemUserDesignation(user) }}</small></span>
-                    </button>
-                    <div class="autocomplete-empty" *ngIf="!filteredWorkItemReporters().length">No users match your search.</div>
-                  </div>
-                </div>
-
+                <div class="work-item-field"><label class="work-item-explicit-label">Assignee</label><app-person-picker [people]="boardPeopleOptions()" [value]="workItemDraft().assigneeId" label="Assignee" emptyLabel="Unassigned" (selected)="updateWorkItemDraft('assigneeId', $event); autoSaveWorkItemField()"></app-person-picker></div>
+                <div class="work-item-field"><label class="work-item-explicit-label">Reporter</label><app-person-picker [people]="boardPeopleOptions()" [value]="workItemDraft().reporterId" label="Reporter" emptyLabel="No reporter" (selected)="updateWorkItemDraft('reporterId', $event); autoSaveWorkItemField()"></app-person-picker></div>
                 <div class="metadata-readonly-row"><span>Created</span><strong>{{ workItemDate(card, 'created') ? (workItemDate(card, 'created') | date:'medium') : '—' }}</strong></div>
                 <div class="metadata-readonly-row"><span>Updated</span><strong>{{ workItemDate(card, 'updated') ? (workItemDate(card, 'updated') | date:'medium') : '—' }}</strong></div>
               </div>
@@ -938,7 +889,7 @@
                 <article class="work-item-comment" *ngFor="let comment of workItemComments(card)"><span
                     class="mini-avatar">{{ comment.authorId ? initials(comment.authorId) : 'C' }}</span>
                   <div>
-                    <div class="work-item-comment-meta"><strong>{{ comment.authorName || comment.author_name ||
+                    <div class="work-item-comment-meta"><app-actor-icon [actorId]="comment.authorId" [actorType]="comment.actorType"></app-actor-icon><strong>{{ comment.authorName || comment.author_name ||
                         comment.userName || comment.user_name || (comment.authorId ? userName(comment.authorId) :
                         'Comment') }}</strong><time> {{ comment.createdAt || comment.created_at ? ((comment.createdAt ||
                         comment.created_at) | date:'medium') : '' }}</time></div>
@@ -1079,7 +1030,7 @@
           </mat-chip>
           <mat-chip class="focus-person-chip" *ngFor="let user of boardAssignedMembers()"
             [highlighted]="selectedTeamMemberId() === user.id" (click)="selectTeamMember(user.id)">
-            <span class="mini-avatar">{{ initials(user.id) }}</span><span>{{ user.name }}</span>
+            <app-actor-icon [actorId]="user.id"></app-actor-icon><span class="mini-avatar">{{ initials(user.id) }}</span><span>{{ user.name }}</span>
             <b>{{ boardItemsForUser(user.id).length }}</b>
           </mat-chip>
         </mat-chip-set>
@@ -1139,7 +1090,7 @@
                   [attr.aria-label]="'Assignee: ' + userName(card.assigneeId)">
                   <span class="assignee-avatar" [class.unassigned-avatar]="!card.assigneeId">{{
                     initials(card.assigneeId) }}</span>
-                  <span class="assignee-avatar-name">{{ userName(card.assigneeId) }}</span>
+                  <app-actor-icon [actorId]="card.assigneeId"></app-actor-icon><span class="assignee-avatar-name">{{ userName(card.assigneeId) }}</span>
                 </button>
               </mat-card-actions>
             </mat-card>

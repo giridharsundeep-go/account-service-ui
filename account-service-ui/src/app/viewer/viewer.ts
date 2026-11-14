@@ -1,3 +1,4 @@
+import {WorkspaceBrand} from '../shared/workspace-brand';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -27,7 +28,7 @@ type ViewerType = 'EPIC' | 'STORY' | 'TASK' | 'ISSUE';
 @Component({
   selector: 'app-viewer',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatDialogModule],
+  imports: [WorkspaceBrand, CommonModule, FormsModule, MatDialogModule],
   templateUrl: './viewer.html',
   styleUrls: ['./viewer.css', '../shared/field-controls.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

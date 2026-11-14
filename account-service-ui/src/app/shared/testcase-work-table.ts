@@ -1,3 +1,4 @@
+import { ActorIconComponent } from './actor-icon';
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
 import { MatTableModule } from '@angular/material/table';
@@ -6,12 +7,12 @@ import { MatPaginatorModule } from '@angular/material/paginator';
 
 @Component({
   selector:'app-testcase-work-table', standalone:true,
-  imports:[CommonModule,MatTableModule,MatCheckboxModule,MatPaginatorModule],
+  imports:[ActorIconComponent,CommonModule,MatTableModule,MatCheckboxModule,MatPaginatorModule],
   template:`<div class="work-items-table-scroll"><table mat-table [dataSource]="pageCases" class="work-items-table">
     <ng-container matColumnDef="select"><th mat-header-cell *matHeaderCellDef><mat-checkbox [checked]="allSelected" [indeterminate]="someSelected && !allSelected" (change)="togglePage($event.checked)" aria-label="Select visible test cases"></mat-checkbox></th><td mat-cell *matCellDef="let row"><mat-checkbox [checked]="selectedIds.has(row.id) || lockedIds.has(row.id)" [disabled]="lockedIds.has(row.id)" (click)="$event.stopPropagation()" (change)="selectionChange.emit({id:row.id,selected:$event.checked})" [attr.aria-label]="'Select ' + row.title"></mat-checkbox></td></ng-container>
     <ng-container matColumnDef="work"><th mat-header-cell *matHeaderCellDef>Work</th><td mat-cell *matCellDef="let row"><button class="case-work-title" type="button" (click)="$event.stopPropagation(); caseOpened.emit(row)"><strong>{{row.title || row.name}}</strong><small>{{row.testCaseCode || row.code || 'TC-' + row.id}}</small></button></td></ng-container>
-    <ng-container matColumnDef="assignee"><th mat-header-cell *matHeaderCellDef>Assignee</th><td mat-cell *matCellDef="let row"><span class="case-person"><i [attr.data-tone]="(row.user?.id || row.assignee?.id || 0) % 5">{{initials(person(row.assignee || row.user))}}</i>{{person(row.assignee || row.user)}}</span></td></ng-container>
-    <ng-container matColumnDef="reporter"><th mat-header-cell *matHeaderCellDef>Reporter</th><td mat-cell *matCellDef="let row"><span class="case-person"><i [attr.data-tone]="(row.reporter?.id || row.creator?.id || 0) % 5">{{initials(person(row.reporter || row.creator))}}</i>{{person(row.reporter || row.creator)}}</span></td></ng-container>
+    <ng-container matColumnDef="assignee"><th mat-header-cell *matHeaderCellDef>Assignee</th><td mat-cell *matCellDef="let row"><span class="case-person"><app-actor-icon [actorId]="row.assignee?.id || row.user?.id" [actorType]="row.assignee?.actorType"></app-actor-icon><i [attr.data-tone]="(row.user?.id || row.assignee?.id || 0) % 5">{{initials(person(row.assignee || row.user))}}</i>{{person(row.assignee || row.user)}}</span></td></ng-container>
+    <ng-container matColumnDef="reporter"><th mat-header-cell *matHeaderCellDef>Reporter</th><td mat-cell *matCellDef="let row"><span class="case-person"><app-actor-icon [actorId]="row.reporter?.id || row.creator?.id" [actorType]="row.reporter?.actorType"></app-actor-icon><i [attr.data-tone]="(row.reporter?.id || row.creator?.id || 0) % 5">{{initials(person(row.reporter || row.creator))}}</i>{{person(row.reporter || row.creator)}}</span></td></ng-container>
     <ng-container matColumnDef="priority"><th mat-header-cell *matHeaderCellDef>Priority</th><td mat-cell *matCellDef="let row">{{label(row.priority || 'MEDIUM')}}</td></ng-container>
     <ng-container matColumnDef="status"><th mat-header-cell *matHeaderCellDef>Status</th><td mat-cell *matCellDef="let row"><span class="case-status" [attr.data-status]="row.status">{{label(row.status || 'DRAFT')}}</span></td></ng-container>
     <ng-container matColumnDef="tags"><th mat-header-cell *matHeaderCellDef>Tags</th><td mat-cell *matCellDef="let row"><button type="button" class="case-tags" (click)="$event.stopPropagation(); caseOpened.emit(row)"><span *ngFor="let tag of row.tags">{{tag}}</span><small *ngIf="!row.tags?.length">Add tags</small></button></td></ng-container>

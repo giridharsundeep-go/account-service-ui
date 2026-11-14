@@ -1,3 +1,6 @@
+import {FilterMenu} from '../shared/filter-menu';
+import {ReleaseIncidentPanel} from '../shared/release-incident-panel';
+import { ActorIconComponent } from '../shared/actor-icon';
 import { untracked } from '@angular/core';
 import { WorkItemDialogService } from '../shared/work-item-dialog.service';
 import { ChangeDetectionStrategy, Component, OnInit, effect, inject, signal, computed } from '@angular/core';
@@ -35,12 +38,12 @@ interface ReleaseItem {
   id?: number; release_id?: number; work_item_id?: number; item_type?: string; status?: string;
   title?: string; key?: string; summary?: string; [key: string]: any;
 }
-interface CandidateWorkItem { id: number; item_type: 'EPIC' | 'STORY' | 'TASK'; title: string; status: string; key?: string; sprint_id?: number | null; project_id?: number; selected?: boolean; }
+interface CandidateWorkItem { id: number; item_type: 'EPIC' | 'STORY' | 'TASK' | 'BUG'; title: string; status: string; key?: string; sprint_id?: number | null; project_id?: number; selected?: boolean; }
 type ReleaseStatus = ReleaseRecord['status'];
 
 @Component({
   selector: 'app-releases', standalone: true,
-  imports: [CommonModule, FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatIconModule, MatTooltipModule, MatProgressBarModule, MatCardModule, MatTableModule, MatCheckboxModule, MatDatepickerModule, MatNativeDateModule, WorkspaceHeroComponent],
+  imports: [FilterMenu,ReleaseIncidentPanel,ActorIconComponent, CommonModule, FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatIconModule, MatTooltipModule, MatProgressBarModule, MatCardModule, MatTableModule, MatCheckboxModule, MatDatepickerModule, MatNativeDateModule, WorkspaceHeroComponent],
   templateUrl: './releases.html', styleUrls: ['./releases.css', '../shared/field-controls.css'], changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Releases implements OnInit {
@@ -86,6 +89,9 @@ export class Releases implements OnInit {
     if (projects.some(project => Number(project.id) === sharedProjectId)) this.onProjectChange(sharedProjectId);
   });
   readonly selectedReleaseId = signal<number | null>(null);
+  readonly releaseServiceLinks = signal<any[]>([]);
+  readonly selectedServiceLinks = computed(() => this.releaseServiceLinks().filter(link => Number(link.id) === this.selectedReleaseId()));
+  private linkedReleaseOpened = false;
   readonly profileMode = signal<'create' | 'view' | 'edit' | null>(null);
   readonly profileTab = signal<'overview' | 'items'>('overview');
   readonly searchTerm = signal('');
@@ -308,16 +314,23 @@ export class Releases implements OnInit {
     this.loading.set(true); this.errorMessage.set('');
     forkJoin({
       releases: this.http.get<any>(this.url(`/releases/project/${projectId}`), this.headers()).pipe(catchError(err => { this.errorMessage.set(err?.error?.message ?? `Releases could not be loaded (HTTP ${err?.status ?? 'unknown'}). Check GET /releases/project/${projectId}.`); return of([]); })),
-      sprints: this.loadSprintsForProject(projectId).pipe(catchError(() => of([])))
-    }).pipe(finalize(() => this.loading.set(false))).subscribe(({ releases, sprints }) => {
+      sprints: this.loadSprintsForProject(projectId).pipe(catchError(() => of([]))),
+      serviceLinks: this.http.get<any[]>(this.url(`/operations/releases?projectId=${projectId}`), this.headers()).pipe(catchError(() => of([])))
+    }).pipe(finalize(() => this.loading.set(false))).subscribe(({ releases, sprints, serviceLinks }) => {
       if (this.selectedProjectId() !== projectId) return;
       let releaseRows = this.extractArray(releases).map(r => this.normalizeRelease(r)).filter(r => Number.isFinite(r.id) && r.id > 0);
       const selectedId = this.selectedReleaseId();
       const locallySavedSelection = selectedId ? this.releases().find(release => release.id === selectedId) : undefined;
       if (locallySavedSelection && !releaseRows.some(release => release.id === selectedId)) releaseRows = [locallySavedSelection, ...releaseRows];
       this.releases.set(releaseRows);
+      this.releaseServiceLinks.set(serviceLinks);
 
       this.sprints.set(this.extractArray(sprints).map(s => ({ ...s, id: Number(s?.id ?? s?.sprint_id ?? s?.sprintId), name: s?.name ?? s?.sprint_name ?? s?.sprintName ?? s?.title ?? `Sprint ${s?.id ?? ''}` })).filter(s => s.id > 0));
+      if (!this.linkedReleaseOpened && typeof window !== 'undefined') {
+        const requestedId = Number(new URLSearchParams(window.location.search).get('releaseId'));
+        const linkedRelease = releaseRows.find(row => row.id === requestedId);
+        if (linkedRelease) { this.linkedReleaseOpened = true; this.openOverview(linkedRelease); }
+      }
       // Keep a just-created or edited release open when refreshing its directory.
       if (selectedId && releaseRows.some(release => release.id === selectedId) && this.profileMode() === 'view') {
         this.loadReleaseItems(selectedId);
@@ -376,8 +389,9 @@ export class Releases implements OnInit {
       epics: this.http.get<any>(this.url(`/projects/${projectId}/epics`), headers).pipe(catchError(() => of([]))),
       stories: this.http.get<any>(this.url(`/projects/${projectId}/stories`), headers).pipe(catchError(() => of([]))),
       tasks: this.http.get<any>(this.url(`/tasks?project_id=${projectId}`), headers).pipe(catchError(() => this.http.get<any>(this.url('/tasks'), headers).pipe(catchError(() => of([]))))),
+      issues: this.http.get<any>(this.url(`/v1/issues?projectId=${projectId}`), headers).pipe(catchError(() => of([]))),
       linked: releaseId ? this.http.get<any>(this.url(`/release-items/release/${releaseId}`), headers).pipe(catchError(() => of([]))) : of([])
-    }).pipe(finalize(() => this.itemsLoading.set(false))).subscribe(({ epics, stories, tasks, linked }) => {
+    }).pipe(finalize(() => this.itemsLoading.set(false))).subscribe(({ epics, stories, tasks, issues, linked }) => {
       if (Number(this.form().sprint_id) !== sprintId || Number(this.form().project_id) !== projectId) return;
       const normalize = (raw: any, type: CandidateWorkItem['item_type']): CandidateWorkItem | null => {
         const id = Number(raw?.id ?? raw?.work_item_id ?? raw?.workItemId);
@@ -389,11 +403,12 @@ export class Releases implements OnInit {
       const candidates = [
         ...this.extractArray(epics).map(x => normalize(x, 'EPIC')),
         ...this.extractArray(stories).map(x => normalize(x, 'STORY')),
-        ...this.extractArray(tasks).map(x => normalize(x, 'TASK'))
+        ...this.extractArray(tasks).map(x => normalize(x, 'TASK')),
+        ...this.extractArray(issues).map(x => normalize(x, 'BUG'))
       ].filter((x): x is CandidateWorkItem => !!x);
       const unique = new Map<string, CandidateWorkItem>();
       candidates.forEach(item => unique.set(`${item.item_type}:${item.id}`, item));
-      const sorted = [...unique.values()].sort((a,b) => ['EPIC','STORY','TASK'].indexOf(a.item_type)-['EPIC','STORY','TASK'].indexOf(b.item_type) || a.title.localeCompare(b.title));
+      const sorted = [...unique.values()].sort((a,b) => ['EPIC','STORY','TASK','BUG'].indexOf(a.item_type)-['EPIC','STORY','TASK','BUG'].indexOf(b.item_type) || a.title.localeCompare(b.title));
       this.candidateItems.set(sorted);
       if (releaseId) {
         const linkedKeys = this.extractArray(linked).map((raw: any) => {
@@ -560,13 +575,15 @@ export class Releases implements OnInit {
         return forkJoin({
           epics: this.getCollection([this.url(`/projects/${projectId}/epics`), this.url(`/epics?project_id=${projectId}`)]),
           stories: this.getCollection([this.url(`/projects/${projectId}/stories`), this.url(`/stories?project_id=${projectId}`)]),
-          tasks: this.getCollection([this.url(`/tasks?project_id=${projectId}`), this.url('/tasks')])
+          tasks: this.getCollection([this.url(`/tasks?project_id=${projectId}`), this.url('/tasks')]),
+          issues: this.getCollection([this.url(`/v1/issues?projectId=${projectId}`)])
         }).pipe(map(collections => ({
           linked,
           workItems: [
             ...this.extractArray(collections.epics).map(item => ({ ...item, __type: 'EPIC' })),
             ...this.extractArray(collections.stories).map(item => ({ ...item, __type: 'STORY' })),
-            ...this.extractArray(collections.tasks).map(item => ({ ...item, __type: 'TASK' }))
+            ...this.extractArray(collections.tasks).map(item => ({ ...item, __type: 'TASK' })),
+            ...this.extractArray(collections.issues).map(item => ({ ...item, __type: 'BUG' }))
           ]
         })));
       }),
@@ -587,7 +604,7 @@ export class Releases implements OnInit {
             ...item,
             work_item_id: item.work_item_id,
             item_type: item.item_type || detail?.__type || 'TASK',
-            key: item.key ?? detail?.key ?? detail?.epic_code ?? detail?.story_code ?? detail?.task_code,
+            key: item.key ?? detail?.key ?? detail?.epic_code ?? detail?.story_code ?? detail?.task_code ?? detail?.issueCode ?? detail?.issue_code,
             title: item.title ?? item.summary ?? detail?.title ?? detail?.name ?? detail?.summary ?? detail?.epic_name ?? `Work item #${item.work_item_id ?? item.id}`,
             status: item.status ?? detail?.status ?? 'UNKNOWN'
           } as ReleaseItem;

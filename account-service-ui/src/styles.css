@@ -1,3 +1,5 @@
+@import '@greatley-poshley/design-system/clean.css';
+@import '@greatley-poshley/design-system/theme.css';
 @import '@greatley-poshley/design-system/tokens.css';
 /* You can add global styles to this file, and also import other style files */
 @import '@angular/material/prebuilt-themes/indigo-pink.css';
@@ -15,15 +17,15 @@
   --gp-brand-surface: #ffffff;
   --gp-brand-ink: #172b4d;
   --gp-brand-muted: #66758a;
-  --gp-brand-border: #dbe3ed;
+  --gp-brand-border: var(--gp-border-color, #a0a6b1);
   --gp-brand-success: #18866b;
   --gp-brand-warning: #b67822;
   --gp-brand-danger: #c45159;
   --gp-field-height: 50px;
   --gp-field-radius: 10px;
-  --gp-field-border: rgba(23, 43, 77, .34);
-  --gp-field-border-hover: rgba(23, 43, 77, .40);
-  --gp-field-border-focus: rgba(23, 43, 77, .46);
+  --gp-field-border: var(--gp-border-color, #a0a6b1);
+  --gp-field-border-hover: var(--gp-border-color, #a0a6b1);
+  --gp-field-border-focus: var(--gp-border-color, #a0a6b1);
   --gp-field-focus-ring: none;
   --gp-field-background: #fff;
   --gp-field-text: #303846;
@@ -32,11 +34,15 @@
   --gp-popover-shadow: 0 14px 34px rgba(25, 39, 61, .16), 0 2px 8px rgba(25, 39, 61, .08);
 }
 
+body {
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
 /* Material overlay panels live outside component hosts, so keep these rules global. */
 app-root .mat-mdc-form-field.mat-mdc-form-field {
-  --mdc-outlined-text-field-outline-color: var(--gp-field-border);
-  --mdc-outlined-text-field-focus-outline-color: var(--gp-field-border-focus);
-  --mdc-outlined-text-field-hover-outline-color: var(--gp-field-border-hover);
+  --mdc-outlined-text-field-outline-color: var(--gp-border-color, #a0a6b1);
+  --mdc-outlined-text-field-focus-outline-color: var(--gp-border-color, #a0a6b1);
+  --mdc-outlined-text-field-hover-outline-color: var(--gp-border-color, #a0a6b1);
   --mdc-outlined-text-field-container-shape: var(--gp-field-radius);
   --mdc-outlined-text-field-input-text-color: var(--gp-field-text);
   --mdc-outlined-text-field-label-text-color: var(--gp-field-muted);
@@ -47,14 +53,14 @@ app-root .mat-mdc-form-field.mat-mdc-form-field {
 .mat-mdc-autocomplete-panel,
 .mat-mdc-menu-panel {
   overflow: hidden !important;
-  border: 1px solid var(--gp-field-border) !important;
-  border-radius: var(--gp-popover-radius) !important;
+  border: 1px solid var(--gp-border-color, #a0a6b1) !important;
+  border-radius: 20px !important;
   background: #fff !important;
   box-shadow: var(--gp-popover-shadow) !important;
 }
 
 .mat-mdc-option {
-  min-height: 44px !important;
+  min-height: 52px !important;
   color: var(--gp-field-text) !important;
   font-family: "Google Sans", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
   font-size: 14px !important;
@@ -69,14 +75,14 @@ app-root .mat-mdc-form-field.mat-mdc-form-field {
 /* The attach-test-cases dialog uses inline component styles rather than a CSS file. */
 app-test-case-attach-dialog .search-wrapper {
   height: var(--gp-field-height) !important;
-  border: 1px solid var(--gp-field-border) !important;
+  border: 1px solid var(--gp-border-color, #a0a6b1) !important;
   border-radius: var(--gp-field-radius) !important;
   background: var(--gp-field-background) !important;
   box-shadow: none !important;
 }
 
 app-test-case-attach-dialog .search-wrapper:focus-within {
-  border-color: var(--gp-field-border) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   box-shadow: none !important;
 }
 
@@ -190,7 +196,7 @@ app-test-case-attach-dialog .search-input {
 
 /* Stroked / Outlined Buttons */
 .mat-mdc-outlined-button.mat-accent {
-  --mdc-outlined-button-outline-color: var(--gp-brand-blue);
+  --mdc-outlined-button-outline-color: var(--gp-border-color, #a0a6b1);
   --mdc-outlined-button-label-text-color: var(--gp-brand-blue);
 
   border-radius: 10px !important;
@@ -245,7 +251,7 @@ button.full-width {
   height: var(--gp-field-height) !important;
   min-height: var(--gp-field-height) !important;
   padding: 0 12px !important;
-  border: 1px solid var(--gp-field-border) !important;
+  border: 1px solid var(--gp-border-color, #a0a6b1) !important;
   border-radius: var(--gp-field-radius) !important;
   background: var(--gp-field-background) !important;
   color: var(--gp-field-text) !important;
@@ -277,7 +283,7 @@ button.full-width {
   [type="range"], [type="color"], .icon-button, .global-work-search-clear
 )):is(:focus, :focus-visible, :focus-within) {
   border-width: 1px !important;
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   outline: 0 !important;
   box-shadow: var(--gp-field-focus-ring) !important;
 }
@@ -302,12 +308,12 @@ button.full-width {
   [type="checkbox"], [type="radio"], [type="file"], [type="hidden"],
   [type="range"], [type="color"], .icon-button, .global-work-search-clear
 )):is(:hover, .is-open, .is-active, .has-selection, .active):not(:focus, :focus-within) {
-  border-color: var(--gp-field-border-hover) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
 }
 
 #gp-app :is(.global-project-trigger, .work-items-filter-trigger, .work-items-status-trigger, .kb-filter-trigger, .epics-board-filter-trigger, .filter-button, .work-items-more-filter):is(.is-open, .is-active, .has-selection, .active) {
   border-width: 1px !important;
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   background: #eef5ff !important;
   color: #175fc2 !important;
 }
@@ -320,9 +326,9 @@ button.full-width {
 
 /* Material inputs and selects follow the same field geometry. */
 #gp-app .mat-mdc-form-field.mat-mdc-form-field {
-  --mdc-outlined-text-field-outline-color: var(--gp-field-border);
-  --mdc-outlined-text-field-focus-outline-color: var(--gp-field-border-focus);
-  --mdc-outlined-text-field-hover-outline-color: var(--gp-field-border-hover);
+  --mdc-outlined-text-field-outline-color: var(--gp-border-color, #a0a6b1);
+  --mdc-outlined-text-field-focus-outline-color: var(--gp-border-color, #a0a6b1);
+  --mdc-outlined-text-field-hover-outline-color: var(--gp-border-color, #a0a6b1);
   --mdc-outlined-text-field-container-shape: var(--gp-field-radius);
   --mdc-outlined-text-field-input-text-color: var(--gp-field-text);
   --mdc-outlined-text-field-label-text-color: var(--gp-field-muted);
@@ -370,7 +376,7 @@ button.full-width {
   box-sizing: border-box !important;
   min-height: 96px !important;
   padding: 11px 12px !important;
-  border: 1px solid var(--gp-field-border) !important;
+  border: 1px solid var(--gp-border-color, #a0a6b1) !important;
   border-radius: var(--gp-field-radius) !important;
   background: var(--gp-field-background) !important;
   color: var(--gp-field-text) !important;
@@ -380,7 +386,7 @@ button.full-width {
 }
 #gp-app textarea:not(.mat-mdc-input-element):not([contenteditable="true"]):is(:focus, :focus-visible) {
   border-width: 1px !important;
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   outline: 0 !important;
   box-shadow: var(--gp-field-focus-ring) !important;
 }
@@ -404,7 +410,7 @@ button.full-width {
   height: var(--gp-field-height) !important;
   min-height: var(--gp-field-height) !important;
   padding-inline: 12px !important;
-  border: 1px solid var(--gp-field-border) !important;
+  border: 1px solid var(--gp-border-color, #a0a6b1) !important;
   border-radius: var(--gp-field-radius) !important;
   background: var(--gp-field-background) !important;
 }
@@ -416,7 +422,7 @@ button.full-width {
   .add-testcases-search, .search-control, .release-search-field
 ):focus-within {
   border-width: 1px !important;
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   box-shadow: var(--gp-field-focus-ring) !important;
 }
 #gp-app :is(
@@ -457,25 +463,25 @@ button.full-width {
 /* Keep the custom continuous outlines on authentication forms in sync too. */
 #gp-app app-login .mat-mdc-text-field-wrapper::after,
 #gp-app app-super-reg .mat-mdc-text-field-wrapper::after {
-  border-color: var(--gp-field-border) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   border-radius: var(--gp-field-radius) !important;
 }
 #gp-app app-login .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper::after,
 #gp-app app-super-reg .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper::after {
-  border: 1px solid var(--gp-field-border-focus) !important;
+  border: 1px solid var(--gp-border-color, #a0a6b1) !important;
   border-radius: var(--gp-field-radius) !important;
   box-shadow: none !important;
 }
 #gp-app app-login .mat-mdc-form-field:hover:not(.mat-focused) .mat-mdc-text-field-wrapper::after,
 #gp-app app-super-reg .mat-mdc-form-field:hover:not(.mat-focused) .mat-mdc-text-field-wrapper::after {
-  border-color: var(--gp-field-border-hover) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
 }
 
 /* Material dialogs render outside app-root, so give them the same field tokens. */
 body .cdk-overlay-container .mat-mdc-form-field.mat-mdc-form-field.mat-mdc-form-field {
-  --mdc-outlined-text-field-outline-color: var(--gp-field-border);
-  --mdc-outlined-text-field-focus-outline-color: var(--gp-field-border-focus);
-  --mdc-outlined-text-field-hover-outline-color: var(--gp-field-border-hover);
+  --mdc-outlined-text-field-outline-color: var(--gp-border-color, #a0a6b1);
+  --mdc-outlined-text-field-focus-outline-color: var(--gp-border-color, #a0a6b1);
+  --mdc-outlined-text-field-hover-outline-color: var(--gp-border-color, #a0a6b1);
   --mdc-outlined-text-field-container-shape: var(--gp-field-radius);
   --mdc-outlined-text-field-input-text-color: var(--gp-field-text);
 }
@@ -535,14 +541,14 @@ body .cdk-overlay-container .mat-mdc-form-field .mat-mdc-select-trigger {
   [type="range"], [type="color"], .icon-button, .global-work-search-clear
 )):is(:focus, :focus-visible, :focus-within) {
   border-width: 1px !important;
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   outline: 0 !important;
   box-shadow: none !important;
 }
 
 #gp-app textarea:not(.mat-mdc-input-element):not([contenteditable="true"]):is(:focus, :focus-visible) {
   border-width: 1px !important;
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   outline: 0 !important;
   box-shadow: none !important;
 }
@@ -555,7 +561,7 @@ body .cdk-overlay-container .mat-mdc-form-field .mat-mdc-select-trigger {
   .add-testcases-search, .search-control, .release-search-field
 ):focus-within {
   border-width: 1px !important;
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   box-shadow: none !important;
 }
 
@@ -571,15 +577,15 @@ body .cdk-overlay-container .mat-mdc-form-field.mat-focused .mat-mdc-text-field-
 body .cdk-overlay-container .mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
 body .cdk-overlay-container .mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
 body .cdk-overlay-container .mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing {
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
 }
 
 /* Shared product polish: quieter field outlines, consistent control rhythm,
    and compact people cards across feature areas. */
 #gp-app {
-  --gp-field-border: rgba(23, 43, 77, .34);
-  --gp-field-border-hover: rgba(23, 43, 77, .40);
-  --gp-field-border-focus: rgba(23, 43, 77, .46);
+  --gp-field-border: var(--gp-border-color, #a0a6b1);
+  --gp-field-border-hover: var(--gp-border-color, #a0a6b1);
+  --gp-field-border-focus: var(--gp-border-color, #a0a6b1);
   --gp-space-card: 16px;
 }
 
@@ -604,7 +610,7 @@ body .cdk-overlay-container .mat-mdc-form-field.mat-focused .mdc-notched-outline
   [type="checkbox"], [type="radio"], [type="file"], [type="hidden"],
   [type="range"], [type="color"], .icon-button, .global-work-search-clear
 )) {
-  border-color: var(--gp-field-border) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   border-radius: 10px !important;
 }
 
@@ -630,17 +636,17 @@ body .cdk-overlay-container .mat-mdc-form-field.mat-focused .mdc-notched-outline
   [type="range"], [type="color"], .icon-button, .global-work-search-clear
 )):is(:focus, :focus-visible, :focus-within) {
   border-width: 1px !important;
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   outline: 0 !important;
   box-shadow: none !important;
 }
 
 #gp-app textarea:not(.mat-mdc-input-element):not([contenteditable="true"]) {
-  border-color: var(--gp-field-border) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   border-radius: 10px !important;
 }
 #gp-app textarea:not(.mat-mdc-input-element):not([contenteditable="true"]):is(:focus, :focus-visible) {
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   outline: 0 !important;
   box-shadow: none !important;
 }
@@ -650,7 +656,7 @@ body .cdk-overlay-container .mat-mdc-form-field.mat-focused .mdc-notched-outline
   .kb-board-search, .work-filter-search, .global-project-search, .global-work-search-field,
   .docs-search, .team-profile-member-search, .team-search, .epics-filter-search,
   .add-testcases-search, .search-control, .release-search-field):focus-within {
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   border-radius: 10px !important;
   box-shadow: none !important;
 }
@@ -684,7 +690,7 @@ body .cdk-overlay-container .mat-mdc-form-field.mat-focused .mdc-notched-outline
 /* Member/profile cards share compact proportions and a restrained surface. */
 #gp-app :is(.profile-person-card, .person-card, .allocation-member.person-card) {
   box-sizing: border-box !important;
-  border: 1px solid rgba(23, 43, 77, .18) !important;
+  border: 1px solid var(--gp-border-color, #a0a6b1) !important;
   border-radius: 12px !important;
   background: #fff !important;
   box-shadow: 0 1px 3px rgba(23, 43, 77, .06) !important;
@@ -886,13 +892,13 @@ body .cdk-overlay-container .mat-mdc-form-field.mat-focused .mdc-notched-outline
 #gp-app .mat-mdc-form-field .mdc-notched-outline__leading {
   width: 12px !important;
   border-radius: 10px 0 0 10px !important;
-  border-color: var(--gp-field-border) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   border-width: 1px !important;
   border-right-width: 0 !important;
 }
 #gp-app .mat-mdc-form-field .mdc-notched-outline__notch {
   border-radius: 0 !important;
-  border-color: var(--gp-field-border) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   border-width: 1px !important;
   border-left-width: 0 !important;
   border-right-width: 0 !important;
@@ -902,19 +908,19 @@ body .cdk-overlay-container .mat-mdc-form-field.mat-focused .mdc-notched-outline
 }
 #gp-app .mat-mdc-form-field .mdc-notched-outline__trailing {
   border-radius: 0 10px 10px 0 !important;
-  border-color: var(--gp-field-border) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   border-width: 1px !important;
   border-left-width: 0 !important;
 }
 #gp-app .mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
 #gp-app .mat-mdc-form-field:hover .mdc-notched-outline__leading {
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   border-width: 1px !important;
   border-right-width: 0 !important;
 }
 #gp-app .mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
 #gp-app .mat-mdc-form-field:hover .mdc-notched-outline__notch {
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   border-width: 1px !important;
   border-left-width: 0 !important;
   border-right-width: 0 !important;
@@ -925,14 +931,14 @@ body .cdk-overlay-container .mat-mdc-form-field.mat-focused .mdc-notched-outline
 }
 #gp-app .mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing,
 #gp-app .mat-mdc-form-field:hover .mdc-notched-outline__trailing {
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   border-width: 1px !important;
   border-left-width: 0 !important;
 }
 #gp-app .mat-mdc-form-field.mat-form-field-invalid .mdc-notched-outline__leading,
 #gp-app .mat-mdc-form-field.mat-form-field-invalid .mdc-notched-outline__notch,
 #gp-app .mat-mdc-form-field.mat-form-field-invalid .mdc-notched-outline__trailing {
-  border-color: rgba(196, 81, 89, .72) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
 }
 
 /* Material overlays use the same segmented outline geometry as page fields. */
@@ -1005,17 +1011,17 @@ body .cdk-overlay-container .person-option-copy span {
 body .cdk-overlay-container .mat-mdc-form-field .mdc-notched-outline__leading,
 body .cdk-overlay-container .mat-mdc-form-field .mdc-notched-outline__notch,
 body .cdk-overlay-container .mat-mdc-form-field .mdc-notched-outline__trailing {
-  border-color: var(--gp-field-border) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
 }
 body .cdk-overlay-container .mat-mdc-form-field.mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
 body .cdk-overlay-container .mat-mdc-form-field.mat-mdc-form-field:hover .mdc-notched-outline__leading {
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   border-width: 1px !important;
   border-right-width: 0 !important;
 }
 body .cdk-overlay-container .mat-mdc-form-field.mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
 body .cdk-overlay-container .mat-mdc-form-field.mat-mdc-form-field:hover .mdc-notched-outline__notch {
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   border-width: 1px !important;
   border-left-width: 0 !important;
   border-right-width: 0 !important;
@@ -1026,7 +1032,7 @@ body .cdk-overlay-container .mat-mdc-form-field.mat-mdc-form-field:hover .mdc-no
 }
 body .cdk-overlay-container .mat-mdc-form-field.mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing,
 body .cdk-overlay-container .mat-mdc-form-field.mat-mdc-form-field:hover .mdc-notched-outline__trailing {
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   border-width: 1px !important;
   border-left-width: 0 !important;
 }
@@ -1045,7 +1051,7 @@ body .cdk-overlay-container :is(
   height: var(--gp-field-height) !important;
   min-height: var(--gp-field-height) !important;
   padding: 0 12px !important;
-  border: 1px solid var(--gp-field-border) !important;
+  border: 1px solid var(--gp-border-color, #a0a6b1) !important;
   border-radius: var(--gp-field-radius) !important;
   background: var(--gp-field-background) !important;
   color: var(--gp-field-text) !important;
@@ -1079,18 +1085,18 @@ body .cdk-overlay-container :is(
   content: "" !important;
   position: absolute !important;
   inset: 0 !important;
-  border: 1px solid var(--gp-field-border) !important;
+  border: 1px solid var(--gp-border-color, #a0a6b1) !important;
   border-radius: var(--gp-field-radius) !important;
   box-shadow: none !important;
   pointer-events: none !important;
 }
 #gp-app app-login .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper::after,
 #gp-app app-super-reg .registration-shell .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper::after {
-  border: 1px solid var(--gp-field-border-focus) !important;
+  border: 1px solid var(--gp-border-color, #a0a6b1) !important;
 }
 #gp-app app-login .mat-mdc-form-field:hover:not(.mat-focused) .mat-mdc-text-field-wrapper::after,
 #gp-app app-super-reg .registration-shell .mat-mdc-form-field:hover:not(.mat-focused) .mat-mdc-text-field-wrapper::after {
-  border-color: var(--gp-field-border-hover) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
 }
 body .cdk-overlay-container :is(
   input[type="text"], input[type="email"], input[type="password"], input[type="number"],
@@ -1101,14 +1107,14 @@ body .cdk-overlay-container :is(
   [type="checkbox"], [type="radio"], [type="file"], [type="hidden"],
   [type="range"], [type="color"], [contenteditable="true"]
 )):is(:focus, :focus-visible, :focus-within) {
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   outline: 0 !important;
   box-shadow: none !important;
 }
 
 /* Tables use the same quiet borders, row rhythm, and header treatment. */
 #gp-app .mat-mdc-table {
-  border-color: rgba(23, 43, 77, .16) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   background: #fff !important;
   color: var(--gp-field-text) !important;
 }
@@ -1118,7 +1124,7 @@ body .cdk-overlay-container :is(
 }
 #gp-app .mat-mdc-table .mat-mdc-header-cell {
   padding: 0 14px !important;
-  border-bottom: 1px solid rgba(23, 43, 77, .18) !important;
+  border-bottom: 1px solid var(--gp-border-color, #a0a6b1) !important;
   color: #626f80 !important;
   font-size: 11px !important;
   font-weight: 650 !important;
@@ -1132,7 +1138,7 @@ body .cdk-overlay-container :is(
 #gp-app .mat-mdc-table .mat-mdc-cell {
   min-height: 58px !important;
   padding: 9px 14px !important;
-  border-bottom: 1px solid rgba(23, 43, 77, .12) !important;
+  border-bottom: 1px solid var(--gp-border-color, #a0a6b1) !important;
   color: #384456 !important;
   font-size: 13px !important;
 }
@@ -1140,26 +1146,26 @@ body .cdk-overlay-container :is(
 #gp-app .mat-mdc-table .mat-mdc-row:last-child .mat-mdc-cell { border-bottom: 0 !important; }
 #gp-app :is(.matrix-table-workspace, .project-table-shell, .project-table-card,
   .work-items-table-card, .epics-table-shell, .release-table-shell) {
-  border-color: rgba(23, 43, 77, .17) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   border-radius: 12px !important;
   background: #fff !important;
   box-shadow: 0 1px 3px rgba(23, 43, 77, .05) !important;
 }
 #gp-app :is(app-teams, app-users, app-roles) {
-  --gp-border: rgba(23, 43, 77, .34);
-  --gp-border-soft: rgba(23, 43, 77, .15);
+  --gp-border: var(--gp-border-color, #a0a6b1);
+  --gp-border-soft: var(--gp-border-color, #a0a6b1);
 }
 #gp-app .matrix-header-row {
   height: 50px !important;
   min-height: 50px !important;
-  border-bottom: 1px solid rgba(23, 43, 77, .18) !important;
+  border-bottom: 1px solid var(--gp-border-color, #a0a6b1) !important;
   background: #f5f7fa !important;
   color: #626f80 !important;
 }
 #gp-app .matrix-row {
   min-height: 58px !important;
   padding-block: 8px !important;
-  border-bottom: 1px solid rgba(23, 43, 77, .12) !important;
+  border-bottom: 1px solid var(--gp-border-color, #a0a6b1) !important;
   background: #fff !important;
   color: #384456 !important;
 }
@@ -1184,7 +1190,7 @@ body .cdk-overlay-container :is(
   box-sizing: border-box !important;
   height: var(--gp-field-height) !important;
   min-height: var(--gp-field-height) !important;
-  border: 1px solid var(--gp-field-border) !important;
+  border: 1px solid var(--gp-border-color, #a0a6b1) !important;
   border-radius: var(--gp-field-radius) !important;
   background: #fff !important;
 }
@@ -1196,7 +1202,7 @@ body .cdk-overlay-container :is(
   .add-testcases-search, .search-control, .release-search-field
 ):focus-within {
   border-width: 1px !important;
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   box-shadow: none !important;
 }
 #gp-app :is(
@@ -1219,7 +1225,7 @@ body .cdk-overlay-container :is(
 
 /* Form sections share an even card inset and control-grid rhythm. */
 #gp-app :is(.profile-section-card, .form-section-card, .drawer-card) {
-  border-color: rgba(23, 43, 77, .17) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   border-radius: 12px !important;
   box-shadow: none !important;
 }
@@ -1251,7 +1257,7 @@ body .cdk-overlay-container :is(
   .google-secondary-button, .secondary-button, .outline-button, .text-button,
   .mini-button, .google-nav-icon, .edit-trigger, .team-neutral-button,
   .upload-action-stack .gp-button, .create-story-button, .create-task-button) {
-  border: 1px solid var(--gp-field-border) !important;
+  border: 1px solid var(--gp-border-color, #a0a6b1) !important;
   background: #fff !important;
   color: #3e4a5d !important;
   box-shadow: none !important;
@@ -1260,7 +1266,7 @@ body .cdk-overlay-container :is(
   .google-primary-button, .primary-button, .primary-action,
   .teams-create-button, .releases-create-button, .release-create-button,
   .work-items-apply-status) {
-  border: 1px solid #175fc2 !important;
+  border: 1px solid var(--gp-border-color, #a0a6b1) !important;
   background: #175fc2 !important;
   color: #fff !important;
 }
@@ -1277,9 +1283,9 @@ app-user-select-dialog .mat-mdc-dialog-surface {
   border-radius: 14px !important;
 }
 app-user-select-dialog .mat-mdc-form-field {
-  --mdc-outlined-text-field-outline-color: var(--gp-field-border);
-  --mdc-outlined-text-field-focus-outline-color: var(--gp-field-border-focus);
-  --mdc-outlined-text-field-hover-outline-color: var(--gp-field-border-hover);
+  --mdc-outlined-text-field-outline-color: var(--gp-border-color, #a0a6b1);
+  --mdc-outlined-text-field-focus-outline-color: var(--gp-border-color, #a0a6b1);
+  --mdc-outlined-text-field-hover-outline-color: var(--gp-border-color, #a0a6b1);
   --mdc-outlined-text-field-container-shape: 10px;
   width: 100% !important;
 }
@@ -1296,23 +1302,23 @@ app-user-select-dialog .mat-mdc-form-field .mdc-notched-outline { border-radius:
 app-user-select-dialog .mat-mdc-form-field .mdc-notched-outline__leading {
   width: 12px !important;
   border-radius: 10px 0 0 10px !important;
-  border-color: var(--gp-field-border) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   border-width: 1px !important;
 }
 app-user-select-dialog .mat-mdc-form-field .mdc-notched-outline__notch {
   border-radius: 0 !important;
-  border-color: var(--gp-field-border) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   border-width: 1px !important;
 }
 app-user-select-dialog .mat-mdc-form-field .mdc-notched-outline__trailing {
   border-radius: 0 10px 10px 0 !important;
-  border-color: var(--gp-field-border) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   border-width: 1px !important;
 }
 app-user-select-dialog .mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
 app-user-select-dialog .mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
 app-user-select-dialog .mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing {
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   border-width: 1px !important;
 }
 app-user-select-dialog .dialog-container { height: min(780px, 82vh) !important; }
@@ -1323,11 +1329,11 @@ app-user-select-dialog .users-list.people-card-grid {
 app-user-select-dialog .user-row.people-card {
   min-height: 220px !important;
   padding: 18px 14px 14px !important;
-  border-color: rgba(23, 43, 77, .18) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   border-radius: 12px !important;
 }
 app-user-select-dialog .user-row.people-card.selected {
-  border: 1px solid #2f6fcb !important;
+  border: 1px solid var(--gp-border-color, #a0a6b1) !important;
   background: #f2f7ff !important;
   box-shadow: 0 0 0 2px rgba(47, 111, 203, .10) !important;
 }
@@ -1349,12 +1355,12 @@ app-user-select-dialog .gp-button {
   border-radius: 10px !important;
 }
 app-user-select-dialog .gp-cancel {
-  border: 1px solid var(--gp-field-border) !important;
+  border: 1px solid var(--gp-border-color, #a0a6b1) !important;
   background: #fff !important;
   color: #39465a !important;
 }
 app-user-select-dialog .gp-primary {
-  border: 1px solid #175fc2 !important;
+  border: 1px solid var(--gp-border-color, #a0a6b1) !important;
   background: #175fc2 !important;
   color: #fff !important;
 }
@@ -1394,7 +1400,7 @@ app-user-select-dialog .person-tone-3 { background: #6557c8 !important; color: #
   width: 64px !important;
   height: 64px !important;
   margin: -32px auto 10px !important;
-  border: 3px solid #fff !important;
+  border: 3px solid var(--gp-border-color, #a0a6b1) !important;
   font-size: 21px !important;
 }
 #gp-app .allocation-members .person-card-details {
@@ -1448,7 +1454,7 @@ body .cdk-overlay-container .mat-mdc-form-field .mat-mdc-text-field-wrapper::aft
   position: absolute !important;
   z-index: 0 !important;
   inset: 0 !important;
-  border: 1px solid var(--gp-field-border) !important;
+  border: 1px solid var(--gp-border-color, #a0a6b1) !important;
   border-radius: var(--gp-field-radius) !important;
   box-shadow: none !important;
   pointer-events: none !important;
@@ -1466,11 +1472,11 @@ body .cdk-overlay-container .mat-mdc-form-field .mdc-floating-label {
 }
 #gp-app .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper::after,
 body .cdk-overlay-container .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper::after {
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
 }
 #gp-app .mat-mdc-form-field:hover:not(.mat-focused) .mat-mdc-text-field-wrapper::after,
 body .cdk-overlay-container .mat-mdc-form-field:hover:not(.mat-focused) .mat-mdc-text-field-wrapper::after {
-  border-color: var(--gp-field-border-hover) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
 }
 #gp-app .mat-mdc-form-field .mat-mdc-input-element,
 body .cdk-overlay-container .mat-mdc-form-field .mat-mdc-input-element {
@@ -1482,13 +1488,13 @@ body .cdk-overlay-container .mat-mdc-form-field .mat-mdc-input-element {
 /* Keep directory, picker, and allocation people cards on one surface system. */
 #gp-app :is(.profile-person-card, .person-card, .people-card, .gp-person-card,
   .user-row.people-card, .team-profile-reference-person-card, .allocation-member.person-card) {
-  border: 1px solid rgba(23, 43, 77, .18) !important;
+  border: 1px solid var(--gp-border-color, #a0a6b1) !important;
   border-radius: 10px !important;
   background: #fff !important;
   box-shadow: 0 1px 3px rgba(23, 43, 77, .06) !important;
 }
 body .cdk-overlay-container :is(.people-card, .user-row.people-card) {
-  border: 1px solid rgba(23, 43, 77, .18) !important;
+  border: 1px solid var(--gp-border-color, #a0a6b1) !important;
   border-radius: 10px !important;
   background: #fff !important;
   box-shadow: 0 1px 3px rgba(23, 43, 77, .06) !important;
@@ -1513,7 +1519,7 @@ body .cdk-overlay-container app-user-select-dialog .user-row.people-card.selecte
   font-weight: 650 !important;
 }
 #gp-app :is(.mat-mdc-table, .drive-table) :is(td, th, .mat-mdc-cell, .mat-mdc-header-cell) {
-  border-color: rgba(23, 43, 77, .12) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
 }
 
 /* Compact planning controls and consistent work-item dialog presentation. */
@@ -1537,10 +1543,10 @@ body .cdk-overlay-container app-user-select-dialog .user-row.people-card.selecte
 #gp-app .user-profile-page { max-width:1200px!important; margin-inline:auto!important; padding:24px!important; }
 #gp-app .users-profile-cover-wall { height:220px!important; min-height:220px!important; border-radius:10px 10px 0 0!important; background-image:radial-gradient(ellipse at 85% 35%,#79c7aa55,transparent 45%),linear-gradient(120deg,#001c51,#007cc1 65%,#34b7c6)!important; }
 #gp-app .users-profile-cover-copy { display:none!important; }
-#gp-app .user-profile-hero { position:relative!important; display:flex!important; flex-wrap:wrap!important; padding:0 28px 28px!important; margin-top:0!important; border:1px solid #dce4ef!important; border-top:0!important; border-radius:0 0 10px 10px!important; background:white!important; }
+#gp-app .user-profile-hero { position:relative!important; display:flex!important; flex-wrap:wrap!important; padding:0 28px 28px!important; margin-top:0!important; border:1px solid var(--gp-border-color, #a0a6b1)!important; border-top:0!important; border-radius:0 0 10px 10px!important; background:white!important; }
 #gp-app .user-profile-identity-wrap { display:flex!important; flex-direction:column!important; align-items:flex-start!important; gap:16px!important; }
 #gp-app .user-profile-avatar-wrap { margin-top:-70px!important; }
-#gp-app .user-profile-avatar { width:140px!important; height:140px!important; border:5px solid white!important; border-radius:50%!important; }
+#gp-app .user-profile-avatar { width:140px!important; height:140px!important; border:5px solid var(--gp-border-color, #a0a6b1)!important; border-radius:50%!important; }
 #gp-app .user-profile-actions { margin-left:auto!important; align-self:flex-end!important; }
 @media(max-width:850px) {
  #gp-app .releases-page .release-directory-card { grid-template-columns:1fr!important; }
@@ -1567,18 +1573,18 @@ app-login .login-card, app-create-account .signup-card, app-organisation :is(.or
 app-super-reg .step-panel { box-shadow:var(--gp-card-shadow)!important; }
 #gp-app app-projects .profile-section-card.profile-step-card { padding:24px!important; margin-top:20px!important; }
 .project-allocated-team-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr)); gap:16px; margin:16px 0 28px; }
-.project-allocated-team { display:flex; align-items:center; gap:14px; padding:20px; border:1px solid #dce3ec; border-radius:10px; background:white; min-width:0; }
+.project-allocated-team { display:flex; align-items:center; gap:14px; padding:20px; border:1px solid var(--gp-border-color, #a0a6b1); border-radius:10px; background:white; min-width:0; }
 .project-allocated-team > div { display:flex; flex-direction:column; gap:6px; flex:1; min-width:0; }
 .project-allocated-team strong { font-size:16px; overflow-wrap:anywhere; }
 .project-allocated-team[role=button] { cursor:pointer; }
-.project-allocated-team[role=button]:hover { border-color:#9bb8dd; }
+.project-allocated-team[role=button]:hover { border-color:var(--gp-border-color, #a0a6b1); }
 .project-allocated-team[role=button]:focus-visible { outline:2px solid #175fc2; outline-offset:3px; }
 .project-allocated-team small { font-size:13px; color:#6c788b; }
 .allocated-team-avatar { display:grid; place-items:center; width:44px; height:44px; flex:none; border-radius:10px; color:#175fc2; background:#e7efff; }
 .project-allocation-actions { display:flex; flex-wrap:wrap; gap:10px; }
 .project-save-error { margin:16px 24px; padding:14px 16px; border-radius:10px; background:#fff0ee; color:#ac3f34; }
 #gp-app .people-stat-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; margin:24px 0; }
-#gp-app .people-stat-grid > article { display:flex; align-items:center; gap:18px; border:1px solid #dce3ec; border-radius:10px; padding:24px; background:#fff; }
+#gp-app .people-stat-grid > article { display:flex; align-items:center; gap:18px; border:1px solid var(--gp-border-color, #a0a6b1); border-radius:10px; padding:24px; background:#fff; }
 #gp-app .people-stat-grid article > div { display:flex; flex-direction:column; gap:6px; min-width:0; }
 #gp-app .people-stat-grid article strong { font-size:32px; line-height:1.2; color:#172b4d; }
 #gp-app .people-stat-grid article span { font-size:14px; color:#65748a; }
@@ -1588,15 +1594,29 @@ app-super-reg .step-panel { box-shadow:var(--gp-card-shadow)!important; }
 #gp-app .people-stat-icon.green { background:#e6f5eb; color:#288858; }
 #gp-app .people-stat-icon.purple { background:#f1eaff; color:#7854bd; }
 #gp-app .people-stat-icon.orange { background:#fff2e2; color:#ba711f; }
-#gp-app .people-directory-filters { display:flex; flex-wrap:wrap; align-items:center; gap:12px; padding:16px 24px; border-top:1px solid #edf0f4; }
+#gp-app .people-directory-filters { display:flex; flex-wrap:wrap; align-items:center; gap:12px; padding:16px 24px; border-top:1px solid var(--gp-border-color, #a0a6b1); }
 #gp-app .people-directory-filters mat-form-field { flex:1 1 190px; min-width:0; }
 #gp-app .people-directory-loading { padding:0 24px; color:#6c788b; }
 /* Material menus must scroll when there are many designations or regions. */
 .mat-mdc-select-panel, .mat-mdc-autocomplete-panel { overflow-y:auto!important; overscroll-behavior:contain; max-height:320px!important; }
+
+/* Keep every native and Material dropdown light, including overlays rendered outside component roots. */
+html, body, select, select option, select optgroup { color-scheme: light !important; }
+select, select:not([multiple]), select[multiple], datalist { background:#fff !important; color:#202124 !important; }
+select option, select optgroup, datalist option { background:#fff !important; color:#202124 !important; }
+select option:checked, select option:hover, select option:focus { background:#e8f0fe !important; color:#174ea6 !important; }
+body .cdk-overlay-container .mat-mdc-select-panel,
+body .cdk-overlay-container .mat-mdc-autocomplete-panel,
+body .cdk-overlay-container .mat-mdc-menu-panel,
+body .cdk-overlay-container .mat-mdc-dialog-container,
+body .cdk-overlay-container .mat-mdc-option { color-scheme:light !important; background-color:#fff !important; color:#202124 !important; }
+body .cdk-overlay-container .mat-mdc-option:hover:not(.mdc-list-item--disabled),
+body .cdk-overlay-container .mat-mdc-option.mat-mdc-option-active,
+body .cdk-overlay-container .mat-mdc-option.mdc-list-item--selected { background-color:#e8f0fe !important; color:#174ea6 !important; }
 .gp-people-autocomplete.mat-mdc-autocomplete-panel { max-height: min(440px, 65vh) !important; padding: 0 !important; background: #fff !important; }
-.gp-people-search { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 10px; padding: 12px; border-bottom: 1px solid #e4e7ec; background: #fff; }
+.gp-people-search { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 10px; padding: 12px; border-bottom: 1px solid var(--gp-border-color, #a0a6b1); background: #fff; }
 .gp-people-search > span { color: #64748b; font-size: 24px; }
-.gp-people-search > input { width: 100%; min-width: 0; height: 44px !important; border: 1px solid #b7c0cc !important; border-radius: 10px !important; padding: 0 12px !important; box-shadow: none !important; font-size: 14px !important; color: #243247 !important; }
+.gp-people-search > input { width: 100%; min-width: 0; height: 44px !important; border: 1px solid var(--gp-border-color, #a0a6b1) !important; border-radius: 10px !important; padding: 0 12px !important; box-shadow: none !important; font-size: 14px !important; color: #243247 !important; }
 .gp-people-autocomplete .mat-mdc-option { min-height: 68px; padding: 10px 16px !important; color: #243247 !important; }
 .gp-people-option { display: flex; align-items: center; gap: 12px; width: 100%; }
 .gp-people-avatar { display: grid; place-items: center; width: 40px; height: 40px; flex: 0 0 40px; overflow: hidden; border-radius: 50%; color: #fff; font-size: 13px; font-weight: 700; }
@@ -1604,8 +1624,205 @@ app-super-reg .step-panel { box-shadow:var(--gp-card-shadow)!important; }
 .gp-people-tone-0 { background: #d66b29; } .gp-people-tone-1 { background: #cf4757; } .gp-people-tone-2 { background: #349568; } .gp-people-tone-3 { background: #2765c5; } .gp-people-tone-4 { background: #7253c7; }
 .gp-people-copy { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
 .gp-people-copy strong { color: #243247; font-size: 15px; font-weight: 650; }
+.gp-people-copy strong { display:flex; align-items:center; gap:6px; }
+.gp-people-kinds { display:flex; gap:6px; padding:10px 12px 0; background:white; }
+.gp-people-kinds button { display:flex; align-items:center; justify-content:center; gap:6px; flex:1; min-height:40px; padding:8px; border:1px solid var(--gp-border-color, #a0a6b1); border-radius:10px; background:white; color:#4b596e; font:inherit; font-size:13px; cursor:pointer; }
+.gp-people-kinds button.active { background:#edf4ff; border-color:var(--gp-border-color, #a0a6b1); color:#175fc2; }
+.gp-people-kinds button:focus-visible { outline:2px solid #175fc2; outline-offset:2px; }
+.gp-people-kinds small { font-variant-numeric:tabular-nums; }
 .gp-people-copy small { color: #667085; font-size: 12px; overflow-wrap: anywhere; }
-.gp-people-more { position: sticky; bottom: 0; z-index: 2; padding: 10px 12px; border-top: 1px solid #e4e7ec; background: #fff; }
+.gp-people-more { position: sticky; bottom: 0; z-index: 2; padding: 10px 12px; border-top: 1px solid var(--gp-border-color, #a0a6b1); background: #fff; }
 .gp-people-more button { width: 100%; padding: 10px; border: 0; border-radius: 8px; color: #1456b8; background: #edf4ff; font: inherit; font-size: 14px; cursor: pointer; }
 @media(max-width:1100px) { #gp-app .people-stat-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:600px) { #gp-app .people-stat-grid { grid-template-columns:1fr; } #gp-app .people-directory-filters { padding:16px; } #gp-app app-projects .profile-section-card.profile-step-card { padding:16px!important; } }
+
+/* Shared compact page frame. Menus/header stay edge-to-edge; workspaces opt into full screen. */
+main.content > :is(app-dashboard,app-products,app-projects,app-boards,app-kanban-board,app-sprint-planning,app-work-items,app-testcases,app-releases,app-teams,app-users,app-roles,app-agents,app-roadmap,app-retrospectives){display:block;width:100%;min-width:0;margin-inline:auto;box-sizing:border-box}
+main.content:has(.kb-fullscreen,.fullscreen-fallback,:fullscreen)>:is(app-kanban-board,app-sprint-planning){width:100%}
+@media(max-width:800px){main.content > :is(app-dashboard,app-products,app-projects,app-boards,app-kanban-board,app-sprint-planning,app-work-items,app-testcases,app-releases,app-teams,app-users,app-roles,app-agents,app-roadmap,app-retrospectives){width:100%}}
+
+/* Shared light native and Material dropdown menus */
+select, select option, select optgroup { color-scheme: light !important; }
+select:not([multiple]) { color-scheme: light !important; background-color: #fff !important; color: #202124 !important; }
+select option, select optgroup { background-color: #fff !important; color: #202124 !important; }
+select option:checked { background-color: #eaf1ff !important; color: #175fc2 !important; }
+.mat-mdc-select-panel, .mat-mdc-autocomplete-panel, .mat-mdc-menu-panel { color-scheme: light !important; background-color: #fff !important; }
+.mat-mdc-option { background-color: #fff !important; color: #202124 !important; }
+.mat-mdc-option:hover:not(.mdc-list-item--disabled), .mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) { background-color: #eef4ff !important; color: #175fc2 !important; }
+
+
+/* Profile page: LinkedIn-inspired cover and two-column profile, with no inner tabs. */
+#gp-app .people-access-view:has(app-users .people-profile-page) > .people-access-heading { display:none!important; }
+#gp-app .user-profile-page.people-profile-page { width:100%!important; max-width:1440px!important; min-width:0!important; margin:0 auto 28px!important; padding:0 16px 32px!important; box-sizing:border-box!important; overflow:visible!important; background:#fff!important; color:#191919!important; }
+.people-profile-shell { display:grid!important; gap:16px!important; width:100%!important; min-width:0!important; }
+.people-profile-header,.people-profile-card,.people-profile-access { min-width:0!important; box-sizing:border-box!important; border:1px solid #d8d8d8!important; border-radius:12px!important; background:#fff!important; box-shadow:none!important; }
+.people-profile-header { display:flex!important; flex-direction:column!important; height:auto!important; min-height:0!important; overflow:hidden!important; }
+.people-profile-cover { position:relative!important; height:clamp(150px,19vw,230px)!important; overflow:hidden!important; background:#c5d8da!important; }
+.people-profile-cover::before { content:""; position:absolute; left:-10%; top:-78%; width:70%; height:205%; border-radius:0 50% 50% 0; background:#a2b8bb; }
+.people-profile-cover::after { content:""; position:absolute; left:61%; top:0; bottom:0; width:8%; background:rgba(255,255,255,.35); }
+.people-profile-hero { position:relative!important; display:flex!important; align-items:flex-start!important; gap:22px!important; min-height:180px!important; padding:0 28px 20px!important; box-sizing:border-box!important; background:#fff!important; }
+.people-profile-avatar-wrap { position:relative!important; z-index:2!important; flex:0 0 156px!important; width:156px!important; height:156px!important; margin-top:-88px!important; }
+.people-profile-avatar { display:grid!important; place-items:center!important; width:156px!important; height:156px!important; overflow:hidden!important; border:6px solid #fff!important; border-radius:50%!important; box-sizing:border-box!important; background:#e8edf4!important; color:#38465a!important; box-shadow:none!important; font-size:42px!important; font-weight:650!important; }
+.people-profile-avatar img { display:block!important; width:100%!important; height:100%!important; object-fit:cover!important; }
+.people-profile-avatar-camera { position:absolute!important; right:2px!important; bottom:8px!important; display:grid!important; place-items:center!important; width:38px!important; height:38px!important; border:0!important; border-radius:50%!important; background:#fff!important; box-shadow:0 1px 5px #0002!important; cursor:pointer!important; }
+.people-profile-identity { min-width:0!important; flex:1 1 auto!important; padding:18px 240px 0 0!important; }
+.people-profile-identity h1 { margin:0!important; color:#191919!important; font-size:clamp(26px,2.5vw,34px)!important; line-height:1.18!important; font-weight:700!important; letter-spacing:-.025em!important; overflow-wrap:anywhere!important; }
+.people-profile-role { margin:8px 0 6px!important; color:#383838!important; font-size:16px!important; line-height:1.4!important; }
+.people-profile-location { display:flex!important; flex-wrap:wrap!important; gap:5px!important; margin:0!important; color:#666!important; font-size:14px!important; }
+.people-profile-email { display:inline-block!important; margin-top:8px!important; color:#0a66c2!important; font-size:14px!important; text-decoration:none!important; overflow-wrap:anywhere!important; }
+.people-profile-email:hover { text-decoration:underline!important; }
+.people-profile-actions { position:absolute!important; top:18px!important; right:18px!important; display:flex!important; align-items:center!important; justify-content:flex-end!important; gap:8px!important; max-width:230px!important; flex-wrap:wrap!important; }
+.people-profile-icon-action { display:grid!important; place-items:center!important; flex:0 0 40px!important; width:40px!important; height:40px!important; border:1px solid #e2e6ed!important; border-radius:13px!important; background:#fff!important; color:#4b5563!important; font-size:18px!important; text-decoration:none!important; cursor:pointer!important; transition:background .16s ease,border-color .16s ease,color .16s ease,transform .16s ease!important; }
+.people-profile-icon-action svg,.people-profile-avatar-camera svg { width:19px!important; height:19px!important; fill:none!important; stroke:currentColor!important; stroke-width:1.8!important; stroke-linecap:round!important; stroke-linejoin:round!important; }
+.people-profile-icon-action:hover { border-color:#a9c6ff!important; background:#f3f7ff!important; color:#175fc2!important; transform:translateY(-1px)!important; }
+.people-profile-icon-action:focus-visible,.people-profile-avatar-camera:focus-visible,.people-reporting-edit-button:focus-visible,.people-reporting-person-button:focus-visible { outline:3px solid #b9d2ff!important; outline-offset:2px!important; }
+.people-profile-close { color:#6b7280!important; }
+.people-profile-close:hover { background:#fff1f1!important; border-color:#f4b5b5!important; color:#bd3535!important; }
+.people-profile-actions .user-deactivate-button { min-height:38px!important; padding:0 14px!important; border:1px solid #f0c5c5!important; border-radius:12px!important; background:#fff!important; color:#a52b2b!important; font-size:13px!important; font-weight:600!important; transition:background .16s ease,border-color .16s ease!important; }
+.people-profile-actions .user-deactivate-button:hover { border-color:#e99b9b!important; background:#fff5f5!important; }
+.people-profile-form-button { min-height:40px!important; padding:0 16px!important; border-radius:12px!important; font-size:13px!important; font-weight:650!important; letter-spacing:0!important; box-shadow:none!important; }
+.people-profile-cancel-button { border:1px solid #dce2ea!important; background:#fff!important; color:#4b5563!important; }
+.people-profile-cancel-button:hover:not(:disabled) { background:#f7f9fc!important; border-color:#bcc8d8!important; }
+.people-profile-save-button { background:#2563d9!important; color:#fff!important; }
+.people-profile-save-button:hover:not(:disabled) { background:#174fb8!important; }
+.people-profile-form-button:disabled { opacity:.55!important; cursor:not-allowed!important; }
+.people-profile-main-layout { display:grid!important; grid-template-columns:minmax(0,1fr) minmax(250px,310px)!important; align-items:start!important; gap:16px!important; min-width:0!important; }
+.people-profile-primary,.people-profile-sidebar { display:grid!important; align-content:start!important; gap:16px!important; min-width:0!important; }
+.people-profile-card,.people-profile-access { padding:22px!important; }
+.people-profile-card h2,.people-profile-access>h2 { margin:0 0 18px!important; color:#191919!important; font-size:20px!important; line-height:1.3!important; font-weight:650!important; }
+.people-profile-verification { padding:0 18px!important; }
+.people-profile-verification-main { display:flex!important; align-items:center!important; gap:14px!important; min-height:82px!important; }
+.people-profile-verification-icon { display:grid!important; place-items:center!important; flex:0 0 30px!important; width:30px!important; height:30px!important; border-radius:50%!important; background:#fef7e0!important; color:#b06000!important; font-weight:750!important; }
+.people-profile-verification-icon.verified { background:#1e9e24!important; color:#fff!important; }
+.people-profile-verification-main>div { flex:1 1 auto!important; min-width:0!important; }
+.people-profile-verification-main strong { display:block!important; color:#292a2c!important; font-size:15px!important; }
+.people-profile-verification-main p { margin:4px 0 0!important; color:#666!important; font-size:13px!important; line-height:1.45!important; }
+.people-profile-verification-main>button { flex:0 0 auto!important; padding:9px 14px!important; border:0!important; border-radius:22px!important; background:#e8f0fe!important; color:#174ea6!important; font-size:12px!important; font-weight:650!important; cursor:pointer!important; }
+.people-profile-facts { display:grid!important; grid-template-columns:repeat(2,minmax(0,1fr))!important; gap:20px 26px!important; }
+.people-profile-facts>div { display:grid!important; gap:4px!important; min-width:0!important; }
+.people-profile-facts label { color:#666!important; font-size:13px!important; }
+.people-profile-facts span,.people-profile-facts a { color:#353535!important; font-size:15px!important; overflow-wrap:anywhere!important; text-decoration:none!important; }
+.people-profile-facts a { color:#0a66c2!important; }
+.people-profile-facts-compact { margin-top:18px!important; }
+.people-profile-about-copy { margin:0!important; color:#494949!important; font-size:15px!important; line-height:1.55!important; }
+.people-profile-sidebar-row { display:grid!important; gap:4px!important; padding:12px 0!important; border-top:1px solid #e4e4e4!important; }
+.people-profile-sidebar-row span { color:#666!important; font-size:13px!important; }
+.people-profile-sidebar-row strong { color:#333!important; font-size:14px!important; font-weight:550!important; overflow-wrap:anywhere!important; }
+.people-profile-sidebar .reporting-line-visual { display:grid!important; justify-items:start!important; gap:0!important; }
+.people-profile-sidebar .reporting-person { display:flex!important; align-items:center!important; gap:10px!important; }
+.people-profile-sidebar .reporting-avatar { display:grid!important; place-items:center!important; width:38px!important; height:38px!important; border-radius:50%!important; background:#dfe8f6!important; color:#25406a!important; font-size:12px!important; font-weight:650!important; }
+.people-profile-sidebar .reporting-person strong { display:block!important; color:#292a2c!important; font-size:14px!important; }
+.people-profile-sidebar .reporting-person small { color:#666!important; font-size:12px!important; }
+.people-profile-sidebar .reporting-connector { width:1px!important; height:18px!important; margin-left:19px!important; border:0!important; background:#d5d9df!important; }
+.people-profile-sidebar .reporting-directs-list { display:grid!important; gap:12px!important; padding-left:18px!important; }
+.people-profile-sidebar .reporting-empty { padding:8px 0!important; }
+.people-profile-sidebar .reporting-empty strong { color:#333!important; font-size:14px!important; }
+.people-profile-sidebar .reporting-empty p { color:#666!important; font-size:13px!important; line-height:1.5!important; }
+.people-profile-access { margin-top:0!important; }
+.people-profile-edit-section .profile-edit-grid { display:grid!important; grid-template-columns:repeat(2,minmax(0,1fr))!important; gap:8px 16px!important; }
+.people-profile-subheading { margin:20px 0 12px!important; color:#292a2c!important; font-size:16px!important; }
+.people-profile-page .profile-photo-edit-row { margin-top:16px!important; }
+.people-profile-link-banner { display:grid!important; grid-template-columns:38px minmax(220px,.8fr) minmax(0,1.2fr)!important; align-items:center!important; gap:12px!important; min-width:0!important; padding:12px 24px!important; border-top:1px solid #edf0f3!important; background:#f8faff!important; }
+.people-profile-link-icon { display:grid!important; place-items:center!important; width:36px!important; height:36px!important; border-radius:11px!important; background:#e8f0fe!important; color:#175fc2!important; }
+.people-profile-link-icon svg { width:18px!important; height:18px!important; fill:none!important; stroke:currentColor!important; stroke-width:1.8!important; stroke-linecap:round!important; stroke-linejoin:round!important; }
+.people-profile-link-copy { display:grid!important; gap:3px!important; min-width:0!important; }
+.people-profile-link-copy strong { color:#263449!important; font-size:13px!important; font-weight:650!important; }
+.people-profile-link-copy span { color:#697586!important; font-size:12px!important; line-height:1.4!important; }
+.people-profile-link-input { width:100%!important; min-width:0!important; height:38px!important; padding:0 11px!important; border:1px solid #d7dfeb!important; border-radius:10px!important; outline:0!important; background:#fff!important; color:#344054!important; font:inherit!important; font-size:12px!important; }
+.people-profile-link-input:focus { border-color:#8fb3f4!important; box-shadow:0 0 0 3px #edf3ff!important; }
+.people-profile-tabs { display:flex!important; flex:0 0 58px!important; align-items:stretch!important; gap:8px!important; width:100%!important; height:58px!important; min-height:58px!important; max-height:58px!important; margin:0!important; padding:0 24px!important; border-bottom:1px solid #edf0f3!important; background:#fff!important; }
+.people-profile-tabs button { position:relative!important; display:inline-flex!important; align-items:center!important; gap:9px!important; min-width:100px!important; padding:0 12px!important; border:0!important; border-radius:0!important; background:transparent!important; color:#606b7a!important; font-family:inherit!important; font-size:14px!important; font-weight:600!important; line-height:1!important; cursor:pointer!important; }
+.people-profile-tabs button::after { position:absolute!important; right:10px!important; bottom:0!important; left:10px!important; height:3px!important; border-radius:3px 3px 0 0!important; background:transparent!important; content:""!important; }
+.people-profile-tabs button:hover { color:#175fc2!important; background:#f8faff!important; }
+.people-profile-tabs button.active { color:#175fc2!important; }
+.people-profile-tabs button.active::after { background:#175fc2!important; }
+.people-profile-tabs button svg { width:18px!important; height:18px!important; fill:none!important; stroke:currentColor!important; stroke-width:1.8!important; stroke-linecap:round!important; stroke-linejoin:round!important; }
+.people-profile-tab-count { display:grid!important; place-items:center!important; min-width:20px!important; height:20px!important; padding:0 6px!important; border-radius:10px!important; background:#edf3ff!important; color:#315daf!important; font-size:11px!important; font-weight:700!important; }
+.people-profile-reporting-page { display:grid!important; gap:18px!important; min-width:0!important; padding:26px 24px 28px!important; background:#fff!important; }
+.people-reporting-heading { display:flex!important; align-items:center!important; justify-content:space-between!important; gap:20px!important; }
+.people-reporting-heading>div:first-child>span { color:#66758a!important; font-size:11px!important; font-weight:700!important; letter-spacing:.11em!important; }
+.people-reporting-heading h2 { margin:5px 0 4px!important; color:#191919!important; font-size:25px!important; line-height:1.25!important; font-weight:680!important; }
+.people-reporting-heading p { margin:0!important; color:#687385!important; font-size:14px!important; line-height:1.5!important; }
+.people-reporting-heading-actions { display:flex!important; align-items:center!important; gap:12px!important; }
+.people-reporting-total { display:grid!important; justify-items:center!important; gap:2px!important; min-width:92px!important; padding:10px 16px!important; border-radius:14px!important; background:#f5f8ff!important; color:#315daf!important; }
+.people-reporting-total strong { font-size:22px!important; line-height:1.1!important; }
+.people-reporting-total span { font-size:11px!important; font-weight:600!important; }
+.people-reporting-edit { display:grid!important; grid-template-columns:minmax(180px,1fr) minmax(260px,420px)!important; align-items:center!important; gap:16px!important; padding:14px 16px!important; border-radius:14px!important; background:#f7f9fc!important; }
+.people-reporting-edit strong { color:#242b36!important; font-size:14px!important; }
+.people-reporting-edit p { margin:4px 0 0!important; color:#697586!important; font-size:12px!important; }
+.people-reporting-edit .mat-mdc-form-field { margin:0!important; }
+.people-reporting-chart { display:flex!important; flex-direction:column!important; align-items:center!important; gap:0!important; width:100%!important; padding:18px 10px 8px!important; }
+.people-reporting-manager-node,.people-reporting-current-node { display:grid!important; justify-items:center!important; gap:8px!important; width:min(100%,460px)!important; }
+.people-reporting-level { color:#788497!important; font-size:10px!important; font-weight:750!important; letter-spacing:.12em!important; }
+.people-reporting-person-card { display:flex!important; align-items:center!important; gap:13px!important; width:min(100%,420px)!important; min-height:74px!important; padding:12px 15px!important; border:1px solid #e5e9ef!important; border-radius:16px!important; background:#fff!important; color:#202124!important; text-align:left!important; box-sizing:border-box!important; }
+.people-reporting-person-card.is-current { border-color:#b9cef8!important; background:#f6f9ff!important; box-shadow:0 0 0 3px #edf3ff!important; }
+.people-reporting-avatar { display:grid!important; place-items:center!important; flex:0 0 44px!important; width:44px!important; height:44px!important; overflow:hidden!important; border-radius:50%!important; background:#e7edfa!important; color:#315daf!important; font-size:14px!important; font-weight:700!important; }
+.people-reporting-avatar img { width:100%!important; height:100%!important; object-fit:cover!important; }
+.people-reporting-person-copy { display:grid!important; gap:4px!important; flex:1 1 auto!important; min-width:0!important; }
+.people-reporting-person-copy strong { overflow:hidden!important; color:#202124!important; font-size:14px!important; font-weight:650!important; text-overflow:ellipsis!important; white-space:nowrap!important; }
+.people-reporting-person-copy small { overflow:hidden!important; color:#697586!important; font-size:12px!important; text-overflow:ellipsis!important; white-space:nowrap!important; }
+.people-reporting-node-badge { display:grid!important; place-items:center!important; flex:0 0 28px!important; width:28px!important; height:28px!important; border-radius:50%!important; background:#eef4ff!important; color:#315daf!important; font-size:14px!important; font-weight:700!important; }
+.people-reporting-connector { width:2px!important; height:28px!important; flex:0 0 28px!important; background:#dce4f0!important; }
+.people-reporting-unassigned,.people-reporting-no-reports { display:flex!important; align-items:center!important; gap:12px!important; width:min(100%,460px)!important; padding:14px 16px!important; border-radius:14px!important; background:#f8f9fb!important; box-sizing:border-box!important; }
+.people-reporting-unassigned-icon,.people-reporting-no-reports-icon { display:grid!important; place-items:center!important; flex:0 0 38px!important; width:38px!important; height:38px!important; border-radius:12px!important; background:#edf3ff!important; color:#315daf!important; }
+.people-reporting-unassigned-icon svg,.people-reporting-no-reports-icon svg { width:19px!important; height:19px!important; fill:none!important; stroke:currentColor!important; stroke-width:1.8!important; stroke-linecap:round!important; stroke-linejoin:round!important; }
+.people-reporting-unassigned>span:nth-child(2),.people-reporting-no-reports>span:last-child { display:grid!important; gap:4px!important; }
+.people-reporting-unassigned>span:nth-child(2) { flex:1 1 auto!important; min-width:0!important; }
+.people-reporting-unassigned>button { flex:0 0 auto!important; min-height:34px!important; padding:0 12px!important; border:1px solid #c8d6ea!important; border-radius:10px!important; background:#fff!important; color:#175fc2!important; font-size:12px!important; font-weight:650!important; cursor:pointer!important; }
+.people-reporting-unassigned>button:hover { background:#f1f6ff!important; border-color:#a9c6ff!important; }
+.people-reporting-unassigned strong,.people-reporting-no-reports strong { color:#343b47!important; font-size:13px!important; }
+.people-reporting-unassigned small,.people-reporting-no-reports small { color:#6d7786!important; font-size:12px!important; line-height:1.45!important; }
+.people-reporting-reports { display:grid!important; justify-items:center!important; gap:14px!important; width:100%!important; }
+.people-reporting-reports-heading { display:flex!important; align-items:center!important; justify-content:space-between!important; width:min(100%,980px)!important; padding:4px 2px 0!important; }
+.people-reporting-reports-heading>div { display:grid!important; gap:4px!important; }
+.people-reporting-reports-heading strong { color:#202124!important; font-size:15px!important; }
+.people-reporting-reports-heading span { color:#707b8c!important; font-size:12px!important; }
+.people-reporting-count { display:grid!important; place-items:center!important; min-width:28px!important; height:28px!important; padding:0 8px!important; border-radius:14px!important; background:#f0f3f8!important; color:#4c596c!important; font-size:12px!important; font-weight:700!important; }
+.people-reporting-directory-tools { display:flex!important; align-items:center!important; justify-content:space-between!important; gap:12px!important; width:min(100%,980px)!important; }
+.people-reporting-search { display:flex!important; align-items:center!important; gap:9px!important; width:min(100%,360px)!important; min-height:40px!important; padding:0 12px!important; border:1px solid #e3e8ef!important; border-radius:12px!important; background:#fff!important; box-sizing:border-box!important; }
+.people-reporting-search:focus-within { border-color:#8fb3f4!important; box-shadow:0 0 0 3px #edf3ff!important; }
+.people-reporting-search svg { flex:0 0 17px!important; width:17px!important; height:17px!important; fill:none!important; stroke:#778396!important; stroke-width:1.8!important; stroke-linecap:round!important; stroke-linejoin:round!important; }
+.people-reporting-search input { width:100%!important; min-width:0!important; height:38px!important; border:0!important; outline:0!important; background:transparent!important; color:#202124!important; font:inherit!important; font-size:13px!important; }
+.people-reporting-search input::placeholder { color:#8993a2!important; }
+.people-reporting-no-match { display:flex!important; align-items:center!important; justify-content:space-between!important; gap:12px!important; width:min(100%,980px)!important; padding:12px 14px!important; border-radius:12px!important; background:#f8f9fb!important; }
+.people-reporting-no-match strong { color:#505b6c!important; font-size:13px!important; font-weight:550!important; }
+.people-reporting-no-match button,.people-reporting-show-more { border:0!important; background:transparent!important; color:#175fc2!important; font-size:13px!important; font-weight:650!important; cursor:pointer!important; }
+.people-reporting-no-match button:hover,.people-reporting-show-more:hover { text-decoration:underline!important; }
+.people-reporting-show-more { min-height:38px!important; padding:0 12px!important; border-radius:10px!important; }
+.people-reporting-show-more:hover { background:#f2f6ff!important; text-decoration:none!important; }
+.people-reporting-people-grid { display:grid!important; grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr))!important; gap:12px!important; width:min(100%,980px)!important; }
+.people-reporting-person-button { position:relative!important; width:100%!important; cursor:pointer!important; transition:border-color .16s ease,background .16s ease,transform .16s ease!important; }
+.people-reporting-person-button:hover { transform:translateY(-2px)!important; border-color:#b9cef8!important; background:#fbfcff!important; }
+.people-reporting-open-icon { flex:0 0 18px!important; width:18px!important; height:18px!important; fill:none!important; stroke:#7a8798!important; stroke-width:1.8!important; stroke-linecap:round!important; stroke-linejoin:round!important; }
+.people-reporting-edit-button { justify-self:start!important; display:inline-flex!important; align-items:center!important; gap:8px!important; min-height:40px!important; padding:0 15px!important; border:1px solid #b8c7dc!important; border-radius:12px!important; background:#fff!important; color:#175fc2!important; font-family:inherit!important; font-size:13px!important; font-weight:600!important; line-height:1!important; cursor:pointer!important; transition:background .16s ease,border-color .16s ease!important; }
+.people-reporting-edit-button:hover { border-color:#8baeea!important; background:#f4f8ff!important; }
+.people-reporting-edit-button svg { width:17px!important; height:17px!important; fill:none!important; stroke:currentColor!important; stroke-width:1.8!important; stroke-linecap:round!important; stroke-linejoin:round!important; }
+@media(max-width:900px){
+  .people-profile-main-layout { grid-template-columns:minmax(0,1fr)!important; }
+  .people-profile-sidebar { grid-template-columns:repeat(2,minmax(0,1fr))!important; }
+}
+@media(max-width:680px){
+  #gp-app .user-profile-page.people-profile-page { padding:0 10px 22px!important; }
+  .people-profile-cover { height:150px!important; }
+  .people-profile-hero { flex-wrap:wrap!important; gap:12px!important; min-height:0!important; padding:0 16px 18px!important; }
+  .people-profile-avatar-wrap { flex-basis:104px!important; width:104px!important; height:104px!important; margin-top:-56px!important; }
+  .people-profile-avatar { width:104px!important; height:104px!important; border-width:5px!important; font-size:30px!important; }
+  .people-profile-identity { flex-basis:100%!important; padding:0!important; }
+  .people-profile-identity h1 { font-size:26px!important; }
+  .people-profile-actions { top:12px!important; right:10px!important; max-width:calc(100% - 130px)!important; }
+  .people-profile-icon-action { flex-basis:34px!important; width:34px!important; height:34px!important; }
+  .people-profile-card,.people-profile-access { padding:17px!important; }
+  .people-profile-verification { padding:0 14px!important; }
+  .people-profile-verification-main { flex-wrap:wrap!important; padding:14px 0!important; }
+  .people-profile-verification-main>button { margin-left:44px!important; }
+  .people-profile-facts,.people-profile-edit-section .profile-edit-grid,.people-profile-sidebar { grid-template-columns:minmax(0,1fr)!important; }
+  .people-profile-tabs { padding:0 14px!important; }
+  .people-profile-link-banner { grid-template-columns:34px minmax(0,1fr)!important; gap:9px!important; padding:12px 14px!important; }
+  .people-profile-link-input { grid-column:2!important; }
+  .people-profile-reporting-page { padding:20px 14px!important; }
+  .people-reporting-edit { grid-template-columns:minmax(0,1fr)!important; }
+  .people-reporting-heading { align-items:flex-start!important; flex-direction:column!important; }
+  .people-reporting-heading-actions { justify-content:space-between!important; width:100%!important; }
+  .people-reporting-directory-tools { align-items:stretch!important; flex-direction:column!important; }
+  .people-reporting-search { width:100%!important; }
+}

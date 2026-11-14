@@ -9,14 +9,12 @@
   <mat-dialog-content class="member-picker-content">
     <p *ngIf="loadingUsers" role="status">Loading people…</p><p *ngIf="usersLoadError" role="alert">{{usersLoadError}}</p>
     <div class="member-picker-list" *ngIf="!loadingUsers">
-      <label class="member-option" *ngFor="let user of visibleUsers; trackBy: trackUser" [class.is-selected]="localSelectedIds.includes(user.id)">
-        <input type="checkbox" [checked]="localSelectedIds.includes(user.id)" (change)="toggleUserSelection(user.id)" [attr.aria-label]="'Select ' + user.name" />
-        <span class="member-option-avatar" [ngClass]="'person-tone-' + (user.id % 4)"><img *ngIf="hasAvatar(user); else initials" [src]="getAvatarDisplaySrc(user)" [alt]="user.name" (error)="onAvatarError($event)" /><ng-template #initials>{{getInitials(user.name)}}</ng-template></span>
-        <span class="member-option-copy"><strong>{{user.name}}</strong><span class="member-option-designation">{{user.designation || 'Designation not set'}}</span><small>{{user.email}}</small></span>
-        <span class="member-option-meta"><small>{{user.regions?.join(' · ') || 'Region not set'}}</small><small>{{getUserEmployeeCode(user)}}</small></span>
-      </label>
+      <div class="member-option" *ngFor="let user of visibleUsers; trackBy: trackUser" [class.is-selected]="localSelectedIds.includes(user.id)" (click)="toggleUserSelection(user.id)">
+        <input type="checkbox" [checked]="localSelectedIds.includes(user.id)" (click)="$event.stopPropagation()" (change)="toggleUserSelection(user.id)" [attr.aria-label]="'Select ' + user.name" />
+        <app-person-card [id]="user.id" [name]="user.name" [email]="user.email" [designation]="user.designation || ''" [avatar]="getAvatarDisplaySrc(user)" [profile]="user" [location]="user.regions?.join(' · ') || ''" [employeeCode]="getUserEmployeeCode(user)"></app-person-card>
+      </div>
     </div>
-    <div class="member-picker-empty" *ngIf="!loadingUsers && !usersLoadError && !visibleUsers.length">No people match these filters.</div>
+    <div class="member-picker-empty" *ngIf="!loadingUsers && !usersLoadError && !visibleUsers.length">{{needsSearch ? 'Type at least 2 characters to find people.' : 'No people match these filters.'}}</div>
     <button type="button" mat-stroked-button class="member-picker-more" *ngIf="getFilteredUsers().length > visibleLimit" (click)="visibleLimit = visibleLimit + 50">Load 50 more</button>
   </mat-dialog-content>
   <mat-dialog-actions class="member-picker-actions"><span>{{localSelectedIds.length}} selected across all filters</span><div><button mat-stroked-button type="button" (click)="onCancel()">Cancel</button><button mat-flat-button color="primary" type="button" (click)="onSave()">Apply selection</button></div></mat-dialog-actions>

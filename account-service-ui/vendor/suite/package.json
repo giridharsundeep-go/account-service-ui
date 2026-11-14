@@ -1,0 +1,38 @@
+{
+  "name": "@greatley-poshley/suite",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./workspace": {
+      "types": "./index.d.ts",
+      "default": "./workspace-shell.js"
+    },
+    "./updates": {
+      "types": "./index.d.ts",
+      "default": "./workspace-updates.js"
+    },
+    "./theme": {
+      "types": "./index.d.ts",
+      "default": "./theme.js"
+    }
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "workspace-shell.js",
+    "people-card.js",
+    "workspace-updates.js",
+    "theme.js",
+    "visual-system.js",
+    "brand.js",
+    "assets",
+    "sync-brand.mjs",
+    "clean-visual-system.js",
+    "mail-visual-system.js"
+  ]
+}

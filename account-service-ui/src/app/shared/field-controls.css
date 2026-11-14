@@ -20,7 +20,7 @@
   height: var(--gp-field-height) !important;
   min-height: var(--gp-field-height) !important;
   padding: 0 12px !important;
-  border: 1px solid var(--gp-field-border) !important;
+  border: 1px solid var(--gp-border-color, #a0a6b1) !important;
   border-radius: var(--gp-field-radius) !important;
   background-color: var(--gp-field-background) !important;
   color: var(--gp-field-text) !important;
@@ -34,7 +34,7 @@
   input[type="date"], input[type="datetime-local"], input[type="tel"], select,
   .google-input, .edit-input, .edit-select, .detail-input, .user-autocomplete-input, .drawer-select
 ):not(.mat-mdc-input-element):not(.mat-mdc-native-select):not(.title-input):not(.kb-title-edit-input):not(.work-item-header-title-input):not(.team-inline-title):not(.kb-create-type-select):not([aria-label="Paragraph style"]):not([aria-label="Font size"]):not([type="checkbox"]):not([type="radio"]):not([type="search"]):is(:focus, :focus-visible) {
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   outline: 0 !important;
   box-shadow: var(--gp-field-focus-ring) !important;
 }
@@ -44,7 +44,7 @@
   height: auto !important;
   min-height: 96px !important;
   padding: 11px 13px !important;
-  border: 1px solid var(--gp-field-border) !important;
+  border: 1px solid var(--gp-border-color, #a0a6b1) !important;
   border-radius: var(--gp-field-radius) !important;
   background: var(--gp-field-background) !important;
   color: var(--gp-field-text) !important;
@@ -54,7 +54,7 @@
 }
 
 :host :is(textarea, .google-textarea, .work-item-description-input, .team-inline-description):not(.mat-mdc-input-element):not(.title-input):not(.kb-title-edit-input):not(.work-item-header-title-input):is(:focus, :focus-visible) {
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   outline: 0 !important;
   box-shadow: var(--gp-field-focus-ring) !important;
 }
@@ -68,12 +68,12 @@
 :host ::ng-deep .mat-mdc-form-field.mat-mdc-form-field .mdc-notched-outline__leading {
   width: 10px !important;
   border-radius: var(--gp-field-radius) 0 0 var(--gp-field-radius) !important;
-  border-color: var(--gp-field-border) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
 }
 
 :host ::ng-deep .mat-mdc-form-field.mat-mdc-form-field .mdc-notched-outline__notch,
 :host ::ng-deep .mat-mdc-form-field.mat-mdc-form-field .mdc-notched-outline__trailing {
-  border-color: var(--gp-field-border) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
 }
 
 :host ::ng-deep .mat-mdc-form-field.mat-mdc-form-field .mdc-notched-outline__trailing {
@@ -103,7 +103,7 @@
 :host ::ng-deep .mat-mdc-form-field.mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
 :host ::ng-deep .mat-mdc-form-field.mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
 :host ::ng-deep .mat-mdc-form-field.mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing {
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
 }
 
 /* Filter triggers and native selects use the same compact control treatment. */
@@ -127,7 +127,7 @@
 ) {
   height: var(--gp-field-height) !important;
   min-height: var(--gp-field-height) !important;
-  border: 1px solid var(--gp-field-border) !important;
+  border: 1px solid var(--gp-border-color, #a0a6b1) !important;
   border-radius: var(--gp-field-radius) !important;
   background-color: #fff !important;
   color: var(--gp-field-text) !important;
@@ -137,7 +137,7 @@
 
 :host :is(.work-items-filter-trigger, .kb-filter-trigger, .epics-board-filter-trigger, .work-items-more-filter, .filter-button):is(:hover, .is-open, .is-active, .has-selection, .active),
 :host :is(.work-items-filter-select, .kb-sprint-select, .selector-field select, .filter-field select, .filter-select, .google-select, .native-google-select, .project-selector select, .kb-floating-field select, .material-select):is(:hover, :focus, :focus-visible) {
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   box-shadow: var(--gp-field-focus-ring) !important;
 }
 
@@ -167,7 +167,7 @@
 ) {
   height: var(--gp-field-height) !important;
   min-height: var(--gp-field-height) !important;
-  border: 1px solid var(--gp-field-border) !important;
+  border: 1px solid var(--gp-border-color, #a0a6b1) !important;
   border-radius: var(--gp-field-radius) !important;
   background-color: #fff !important;
 }
@@ -190,7 +190,7 @@
   .epics-filter-search,
   .add-testcases-search
 ):focus-within {
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   box-shadow: var(--gp-field-focus-ring) !important;
 }
 
@@ -226,19 +226,19 @@
   box-sizing: border-box !important;
   height: var(--gp-field-height) !important;
   min-height: var(--gp-field-height) !important;
-  border: 1px solid var(--gp-field-border) !important;
+  border: 1px solid var(--gp-border-color, #a0a6b1) !important;
   border-radius: var(--gp-field-radius) !important;
   background: var(--gp-field-background) !important;
   transition: border-color .16s ease, box-shadow .16s ease, background-color .16s ease !important;
 }
 
 :host :is(.project-switcher, .release-header-picker, .epics-project-picker):focus-within {
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   box-shadow: var(--gp-field-focus-ring) !important;
 }
 
 :host :is(.work-filter-popover, .kb-filter-panel, .filter-suggestions, .global-work-search-popover, .epics-board-sprint-filter-panel) {
-  border: 1px solid var(--gp-field-border) !important;
+  border: 1px solid var(--gp-border-color, #a0a6b1) !important;
   border-radius: var(--gp-popover-radius) !important;
   background: #fff !important;
   box-shadow: var(--gp-popover-shadow) !important;
@@ -258,7 +258,7 @@
   .release-header-picker, .epics-project-picker
 ):is(:focus, :focus-visible, :focus-within) {
   border-width: 1px !important;
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   outline: 0 !important;
   box-shadow: none !important;
 }
@@ -270,7 +270,7 @@
 :host ::ng-deep .mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
 :host ::ng-deep .mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
 :host ::ng-deep .mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing {
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
 }
 
 :host :is(
@@ -281,6 +281,6 @@
   .add-testcases-search
 ):focus-within {
   border-width: 1px !important;
-  border-color: var(--gp-field-border-focus) !important;
+  border-color: var(--gp-border-color, #a0a6b1) !important;
   box-shadow: none !important;
 }

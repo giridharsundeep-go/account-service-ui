@@ -1,8 +1,8 @@
 import { Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { Observable, of, throwError, timer } from 'rxjs';
+import { catchError, map, retry } from 'rxjs/operators';
 
 import { environment } from '../environment';
 import { AuthService } from './auth.service';
@@ -24,6 +24,7 @@ export class ProjectContextService {
   private loading = false;
 
   readonly projects = signal<ProjectContextOption[]>([]);
+  readonly error = signal('');
   readonly selectedProjectId = signal<number | null>(this.readStoredProjectId());
   readonly selectedProject = computed(() =>
     this.projects().find(project => project.id === this.selectedProjectId()) ?? null
@@ -34,15 +35,16 @@ export class ProjectContextService {
     if(this.loadedForUser!==userId){this.loadedForUser=userId;this.loaded=false;this.loading=false;this.projects.set([]);}
     if (this.loaded || this.loading) return;
     this.loading = true;
-    this.projectCollection(['/projects', '/project']).subscribe(projects => {
+    this.error.set('');
+    this.projectCollection(['/projects', '/project']).pipe(retry({count:2,delay:(_error,attempt)=>timer(attempt*300)})).subscribe({next: projects => {
       if(userId!==this.loadedForUser)return;
       this.projects.set(projects);
       this.loaded = true;
       this.loading = false;
-      if (!projects.length) return;
+      if (!projects.length) { this.setSelectedProject(null); return; }
       const current = projects.find(project => project.id === this.selectedProjectId());
       this.setSelectedProject(current?.id ?? projects[0].id);
-    });
+    },error:()=>{if(userId!==this.loadedForUser)return;this.loaded=false;this.loading=false;this.error.set('Unable to load projects. Open the project menu to retry.');}});
   }
 
   setSelectedProject(projectId: number | null): void {
@@ -61,8 +63,7 @@ export class ProjectContextService {
     const base = String(environment.apiBaseUrlM || '').replace(/\/$/, '');
     return this.http.get<any>(`${base}${paths[index]}`, { headers: this.auth.getAuthHeaders() }).pipe(
       map(response => this.extractArray(response).map(row => this.normalizeProject(row)).filter((project): project is ProjectContextOption => Boolean(project))),
-      switchMap(projects => projects.length ? of(projects) : this.projectCollection(paths, index + 1)),
-      catchError(() => this.projectCollection(paths, index + 1))
+      catchError(error => error.status===404 ? this.projectCollection(paths,index+1) : throwError(()=>error))
     );
   }
 

@@ -1,0 +1,39 @@
+{
+  "name": "@greatley-poshley/design-system",
+  "version": "0.1.0",
+  "private": true,
+  "files": [
+    "tokens.css",
+    "controls.css",
+    "workspace.css",
+    "hero.css",
+    "app-layout.css",
+    "theme.css",
+    "clarity.css",
+    "post.css",
+    "clean.css",
+    "fonts.css",
+    "fonts",
+    "auth.css",
+    "borders.css",
+    "borderless.css",
+    "compact.css"
+  ],
+  "exports": {
+    "./tokens.css": "./tokens.css",
+    "./controls.css": "./controls.css",
+    "./workspace.css": "./workspace.css",
+    "./hero.css": "./hero.css",
+    "./app-layout.css": "./app-layout.css",
+    "./theme.css": "./theme.css",
+    "./clarity.css": "./clarity.css",
+    "./post.css": "./post.css",
+    "./clean.css": "./clean.css",
+    "./fonts.css": "./fonts.css",
+    "./fonts/*": "./fonts/*",
+    "./auth.css": "./auth.css",
+    "./borders.css": "./borders.css",
+    "./borderless.css": "./borderless.css",
+    "./compact.css": "./compact.css"
+  }
+}

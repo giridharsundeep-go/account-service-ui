@@ -1,0 +1,358 @@
+<section class="roadmap-page">
+  <app-workspace-hero
+    eyebrow="DIRECTION · OWNERSHIP · DELIVERY"
+    title="Project roadmap"
+    subtitle="Connect long-term outcomes to the work your team delivers."
+    image="assets/covers/projects.png"
+    [compact]="true"
+  >    <div workspace-actions class="actions">
+      <button class="gp-button gp-cancel" type="button" (click)="strategyOpen = true">
+        Three-year product plan</button
+      ><button
+        class="gp-button gp-action"
+        type="button"
+        *ngIf="canManage"
+        [disabled]="!projects.selectedProjectId()"
+        (click)="openDraft()"
+      >
+        ＋ New initiative
+      </button>
+    </div></app-workspace-hero>
+  <header class="roadmap-heading">
+    <div>
+      <small>{{ projects.selectedProject()?.name || 'Choose a project from the header' }}</small>
+      <h1>Plan the next three years</h1>
+      <p>Track initiatives, accountable owners and linked work in one place.</p>
+    </div>
+
+  </header>
+  <p class="error" role="alert" *ngIf="error">
+    {{ error }}
+    <button class="gp-button gp-cancel" type="button" (click)="load(projects.selectedProjectId())">
+      Retry
+    </button>
+  </p>
+  <div class="roadmap-stats">
+    <article>
+      <small>Initiatives</small><strong>{{ initiatives.length }}</strong>
+    </article>
+    <article><small>Planning horizon</small><strong>36 months</strong></article>
+    <article>
+      <small>Delivery connection</small><strong>{{ items.length }} work items</strong>
+    </article>
+  </div>
+  <section class="roadmap-surface">
+    <div class="roadmap-toolbar">
+      <div class="roadmap-tabs">
+        <button type="button" [class.active]="view === 'timeline'" (click)="view = 'timeline'">
+          Timeline</button
+        ><button type="button" [class.active]="view === 'list'" (click)="view = 'list'">
+          List
+        </button>
+      </div>
+      <app-filter-menu title="Roadmap filters" [activeCount]="(query?1:0)+(status?1:0)" (clear)="query='';status=''">
+      <label class="roadmap-search"
+        ><span aria-hidden="true">⌕</span
+        ><input
+          type="search"
+          [(ngModel)]="query"
+          placeholder="Search initiatives or owners"
+          aria-label="Search initiatives" /></label
+      ><mat-form-field appearance="outline" subscriptSizing="dynamic"
+        ><mat-label>Status</mat-label
+        ><mat-select [(ngModel)]="status"
+          ><mat-option value="">All statuses</mat-option
+          ><mat-option *ngFor="let value of statuses" [value]="value">{{
+            value.replace('_', ' ') | titlecase
+          }}</mat-option></mat-select
+        ></mat-form-field
+      ><mat-form-field appearance="outline" subscriptSizing="dynamic"
+        ><mat-label>Horizon starts</mat-label
+        ><mat-select [(ngModel)]="startYear"
+          ><mat-option *ngFor="let value of years" [value]="value">{{
+            value
+          }}</mat-option></mat-select
+        ></mat-form-field
+      >
+      </app-filter-menu>
+    </div>
+    <p *ngIf="loading" class="empty" role="status">Loading project roadmap…</p>
+    <p *ngIf="!loading && !filtered.length" class="empty">
+      {{
+        query || status
+          ? 'No initiatives match these filters.'
+          : 'Add an initiative, or review the product plan to start with a suggested outcome.'
+      }}
+    </p>
+    <div class="roadmap-timeline-scroll" *ngIf="!loading && filtered.length && view === 'timeline'">
+      <div class="roadmap-timeline">
+        <div class="timeline-header">
+          <strong>Initiative and owner</strong>
+          <div class="quarter-grid">
+            <span *ngFor="let quarter of quarters">{{ quarter.label }}</span>
+          </div>
+        </div>
+        <article class="timeline-row" *ngFor="let row of filtered">
+          <div class="initiative-copy">
+            <button
+              type="button"
+              class="initiative-title"
+              (click)="row.expanded = !row.expanded"
+              [attr.aria-expanded]="!!row.expanded"
+            >
+              {{ row.expanded ? '⌄' : '›' }} {{ row.title }}</button
+            ><small
+              >{{ row.owner_name || 'Unassigned owner' }} · {{ linked(row).length }} linked
+              items</small
+            ><span class="initiative-status" [style.color]="color(row.status)">{{
+              row.status.replace('_', ' ') | titlecase
+            }}</span
+            ><button class="edit-link" type="button" *ngIf="canManage" (click)="openDraft(row)">
+              Edit
+            </button>
+          </div>
+          <div class="timeline-track">
+            <i *ngFor="let quarter of quarters"></i
+            ><button
+              class="timeline-bar"
+              type="button"
+              [ngStyle]="bar(row)"
+              [style.background]="color(row.status)"
+              (click)="row.expanded = !row.expanded"
+              [title]="row.title + ' · ' + row.starts_on + ' to ' + row.target_on"
+            >
+              <span>{{ progress(row) }}% complete</span>
+            </button>
+          </div>
+          <div *ngIf="row.expanded" class="initiative-details">
+            <p>{{ row.description || 'No description yet.' }}</p>
+            <small
+              >{{ row.starts_on | date: 'mediumDate' }} →
+              {{ row.target_on | date: 'mediumDate' }}</small
+            >
+            <div class="linked-work">
+              <button type="button" *ngFor="let item of linked(row)" (click)="openItem(item)">
+                <strong>{{ item.key }}</strong
+                ><span>{{ item.title }}</span
+                ><small [style.color]="settings.color(item.status)">{{
+                  settings.label(item.status)
+                }}</small>
+              </button>
+              <p *ngIf="!linked(row).length">No linked work items.</p>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+    <div class="roadmap-table-scroll" *ngIf="view === 'list' && filtered.length">
+      <table>
+        <thead>
+          <tr>
+            <th>Initiative</th>
+            <th>Owner</th>
+            <th>Status</th>
+            <th>Dates</th>
+            <th>Progress</th>
+            <th *ngIf="canManage">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of filtered">
+            <td>
+              <button
+                class="initiative-title"
+                type="button"
+                (click)="openDraft(row)"
+                [disabled]="!canManage"
+              >
+                {{ row.title }}</button
+              ><small>{{ row.description }}</small>
+            </td>
+            <td>{{ row.owner_name || 'Unassigned' }}</td>
+            <td [style.color]="color(row.status)">
+              {{ row.status.replace('_', ' ') | titlecase }}
+            </td>
+            <td>
+              {{ row.starts_on | date: 'mediumDate' }} – {{ row.target_on | date: 'mediumDate' }}
+            </td>
+            <td>{{ progress(row) }}% · {{ linked(row).length }} items</td>
+            <td *ngIf="canManage">
+              <button class="edit-link" type="button" (click)="openDraft(row)">Edit</button
+              ><button class="edit-link" type="button" (click)="remove(row)">Delete</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <div class="roadmap-backdrop" *ngIf="draft">
+    <section
+      class="roadmap-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="initiative-heading"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
+    >
+      <header>
+        <div>
+          <small>{{ projects.selectedProject()?.name }}</small>
+          <h2 id="initiative-heading">{{ draft.id ? 'Edit initiative' : 'New initiative' }}</h2>
+        </div>
+        <button
+          class="close"
+          type="button"
+          aria-label="Cancel initiative"
+          [disabled]="busy"
+          (click)="draft = null"
+        >
+          ×
+        </button>
+      </header>
+      <form (ngSubmit)="save()">
+        <div class="dialog-body">
+          <p class="error" role="alert" *ngIf="error">{{ error }}</p>
+          <mat-form-field appearance="outline"
+            ><mat-label>Initiative title</mat-label
+            ><input
+              matInput
+              [(ngModel)]="draft.title"
+              name="title"
+              required
+              maxlength="255" /></mat-form-field
+          ><label class="description-label"
+            >Outcome and acceptance criteria<textarea
+              [(ngModel)]="draft.description"
+              name="description"
+              rows="5"
+              maxlength="20000"
+            ></textarea>
+          </label>
+          <div class="form-grid">
+            <mat-form-field appearance="outline"
+              ><mat-label>Status</mat-label
+              ><mat-select [(ngModel)]="draft.status" name="status"
+                ><mat-option *ngFor="let value of statuses" [value]="value">{{
+                  value.replace('_', ' ') | titlecase
+                }}</mat-option></mat-select
+              ></mat-form-field
+            >
+            <div>
+              <label class="owner-label">Accountable owner</label
+              ><app-person-picker
+                [people]="people"
+                [value]="draft.ownerId"
+                label="Initiative owner"
+                (selected)="draft.ownerId = $event"
+              ></app-person-picker>
+            </div>
+            <mat-form-field appearance="outline"
+              ><mat-label>Start date</mat-label
+              ><input
+                matInput
+                type="date"
+                [(ngModel)]="draft.startsOn"
+                name="startsOn"
+                required /></mat-form-field
+            ><mat-form-field appearance="outline"
+              ><mat-label>Target date</mat-label
+              ><input matInput type="date" [(ngModel)]="draft.targetOn" name="targetOn" required
+            /></mat-form-field>
+          </div>
+          <h3>Linked work · {{ draft.tickets.length }}</h3>
+          <input
+            class="ticket-search"
+            type="search"
+            [(ngModel)]="ticketQuery"
+            (ngModelChange)="ticketLimit = 50"
+            name="ticketsQuery"
+            placeholder="Search tickets to link"
+            aria-label="Search tickets to link"
+          />
+          <div class="ticket-options">
+            <label *ngFor="let item of matchingTickets | slice: 0 : ticketLimit"
+              ><input
+                type="checkbox"
+                [checked]="hasTicket(item)"
+                (change)="toggleTicket(item)"
+              /><strong>{{ item.key }}</strong
+              ><span>{{ item.title }}</span
+              ><small>{{ settings.label(item.status) }}</small></label
+            ><button
+              class="edit-link"
+              type="button"
+              *ngIf="matchingTickets.length > ticketLimit"
+              (click)="ticketLimit = ticketLimit + 50"
+            >
+              Load more tickets · {{ ticketLimit }} of {{ matchingTickets.length }}
+            </button>
+          </div>
+        </div>
+        <footer>
+          <button
+            class="gp-button gp-cancel"
+            type="button"
+            [disabled]="busy"
+            (click)="draft = null"
+          >
+            Cancel</button
+          ><button
+            class="gp-button gp-action"
+            type="submit"
+            [disabled]="busy || !draft.title.trim()"
+          >
+            {{ busy ? 'Saving…' : 'Save initiative' }}
+          </button>
+        </footer>
+      </form>
+    </section>
+  </div>
+  <div class="roadmap-backdrop" *ngIf="strategyOpen">
+    <section
+      class="roadmap-dialog strategy-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="strategy-heading"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
+    >
+      <header>
+        <div>
+          <small>NOVEMBER 2026 – OCTOBER 2029</small>
+          <h2 id="strategy-heading">Greatley Poshley product plan</h2>
+        </div>
+        <button
+          class="close"
+          type="button"
+          (click)="strategyOpen = false"
+          aria-label="Close product plan"
+        >
+          ×
+        </button>
+      </header>
+      <div class="dialog-body">
+        <p>
+          Suggested outcomes and accountable roles. Review each phase, assign a person and connect
+          actual tickets before committing it to your project.
+        </p>
+        <article class="strategy-phase" *ngFor="let phase of phases; let i = index">
+          <span>{{ phase.quarter }}</span>
+          <div>
+            <h3>{{ phase.title }}</h3>
+            <small>{{ phase.owner }}</small>
+            <p>{{ phase.outcome }}</p>
+            <p><strong>Release gate:</strong> {{ phase.gate }}</p>
+            <button
+              class="edit-link"
+              type="button"
+              *ngIf="canManage && projects.selectedProjectId()"
+              (click)="usePhase(phase)"
+            >
+              Plan this initiative →
+            </button>
+          </div>
+        </article>
+      </div>
+    </section>
+  </div>
+</section>

@@ -1,0 +1,26 @@
+{
+  "upstream": "https://github.com/google/fonts/tree/d4eb04601981780781306966afb88e876652bab4/ofl/googlesans",
+  "commit": "d4eb04601981780781306966afb88e876652bab4",
+  "files": {
+    "GoogleSans[GRAD,opsz,wght].ttf": {
+      "url": "https://raw.githubusercontent.com/google/fonts/d4eb04601981780781306966afb88e876652bab4/ofl/googlesans/GoogleSans%5BGRAD%2Copsz%2Cwght%5D.ttf",
+      "sha256": "d0a87d835a944b8b40d0e82a5651bb59ab97b936a2aeed5946eb57e7b2a3a90a",
+      "bytes": 4974940
+    },
+    "GoogleSans-Italic[GRAD,opsz,wght].ttf": {
+      "url": "https://raw.githubusercontent.com/google/fonts/d4eb04601981780781306966afb88e876652bab4/ofl/googlesans/GoogleSans-Italic%5BGRAD%2Copsz%2Cwght%5D.ttf",
+      "sha256": "b6662abd2131cad1b248750149a7f2b644f871ebcc9af7fe4cd1135cd290b6d1",
+      "bytes": 5079424
+    },
+    "OFL.txt": {
+      "url": "https://raw.githubusercontent.com/google/fonts/d4eb04601981780781306966afb88e876652bab4/ofl/googlesans/OFL.txt",
+      "sha256": "2b75ef20f13d83a7514aee452c4782c20cdc9ff2dee17600f44d37a06d4fb958",
+      "bytes": 4488
+    },
+    "TRADEMARKS.md": {
+      "url": "https://raw.githubusercontent.com/google/fonts/d4eb04601981780781306966afb88e876652bab4/ofl/googlesans/TRADEMARKS.md",
+      "sha256": "215bc8c1ce46d1b81531f33ebb5af201e7a5da76b8f3ae4c705336fd70fc89e1",
+      "bytes": 1470
+    }
+  }
+}

@@ -1,3 +1,4 @@
+import { ActorIconComponent } from './actor-icon';
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { WorkspaceSettingsService } from './workspace-settings.service';
@@ -6,12 +7,12 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 
 @Component({
   selector: 'app-planning-work-table', standalone: true,
-  imports: [CommonModule, MatTableModule, MatCheckboxModule],
+  imports: [ActorIconComponent, CommonModule, MatTableModule, MatCheckboxModule],
   template: `<div class="planning-work-table-scroll"><table mat-table [dataSource]="items" class="planning-work-table">
     <ng-container matColumnDef="select"><th mat-header-cell *matHeaderCellDef></th><td mat-cell *matCellDef="let item"><mat-checkbox [checked]="selectedIds.has(item.id)" [disabled]="disabled" (click)="$event.stopPropagation()" (change)="selectionChange.emit({id:item.id, selected:$event.checked})" [attr.aria-label]="'Select ' + item.key"></mat-checkbox></td></ng-container>
     <ng-container matColumnDef="work"><th mat-header-cell *matHeaderCellDef>Work item</th><td mat-cell *matCellDef="let item"><div class="planning-work-copy"><span class="planning-work-key">{{item.key}}</span><button type="button" (click)="$event.stopPropagation(); itemOpened.emit(item)">{{item.title}}</button><small *ngIf="item.parentName">{{item.parentName}}</small></div></td></ng-container>
     <ng-container matColumnDef="status"><th mat-header-cell *matHeaderCellDef>Status</th><td mat-cell *matCellDef="let item"><span class="planning-work-status" [attr.data-status]="status(item.status)" [style.color]="workflow.color(item.status)" [style.background]="workflow.color(item.status)+'18'">{{workflow.label(item.status)}}</span></td></ng-container>
-    <ng-container matColumnDef="assignee"><th mat-header-cell *matHeaderCellDef>Assignee</th><td mat-cell *matCellDef="let item"><span class="planning-work-person"><i [attr.data-tone]="(item.assigneeId || 0) % 5">{{initials(item.assigneeName || item.assignee)}}</i>{{item.assigneeName || item.assignee || 'Unassigned'}}</span></td></ng-container>
+    <ng-container matColumnDef="assignee"><th mat-header-cell *matHeaderCellDef>Assignee</th><td mat-cell *matCellDef="let item"><span class="planning-work-person"><app-actor-icon [actorId]="item.assigneeId"></app-actor-icon><i [attr.data-tone]="(item.assigneeId || 0) % 5">{{initials(item.assigneeName || item.assignee)}}</i>{{item.assigneeName || item.assignee || 'Unassigned'}}</span></td></ng-container>
     <ng-container matColumnDef="sprint"><th mat-header-cell *matHeaderCellDef>Sprint</th><td mat-cell *matCellDef="let item">{{item.sprintName || sprintLabel || 'Backlog'}}</td></ng-container>
     <ng-container matColumnDef="priority"><th mat-header-cell *matHeaderCellDef>Priority</th><td mat-cell *matCellDef="let item">{{label(item.priority || item.raw?.priority || 'MEDIUM')}}</td></ng-container>
     <ng-container matColumnDef="points"><th mat-header-cell *matHeaderCellDef>Points</th><td mat-cell *matCellDef="let item">{{item.points ?? '—'}}</td></ng-container>

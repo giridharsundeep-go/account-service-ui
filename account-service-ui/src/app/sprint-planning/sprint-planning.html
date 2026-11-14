@@ -1,4 +1,16 @@
 <section class="planning-page" #planningRoot [class.fullscreen-fallback]="fullscreenFallback">
+  <ng-template #planningPageActions><div class="planning-page-header-actions">    <div class="planning-create-actions" *ngIf="selectedProjectId" aria-label="Create work items">
+      <span class="create-label">Create</span>
+      <button type="button" class="kb-button kb-button-outline" (click)="openSprintDialog()"><span aria-hidden="true">＋</span><span>Sprint</span></button>
+      <button type="button" class="kb-button kb-button-outline" (click)="openCreateDialog('EPIC')"><span aria-hidden="true">＋</span><span>Epic</span></button>
+      <button type="button" class="kb-button kb-button-outline" (click)="openCreateDialog('STORY')"><span aria-hidden="true">＋</span><span>Story</span></button>
+      <button type="button" class="kb-button kb-button-outline" (click)="openCreateDialog('TASK')"><span aria-hidden="true">＋</span><span>Task</span></button>
+      <button type="button" class="kb-button kb-button-outline" (click)="openCreateDialog('ISSUE')"><span aria-hidden="true">＋</span><span>Issue</span></button>
+    </div>    <button type="button" class="fullscreen-toggle" (click)="toggleFullscreen()" [attr.aria-pressed]="fullscreenMode" [attr.aria-label]="fullscreenMode ? 'Exit full screen' : 'Enter full screen'" [title]="fullscreenMode ? 'Exit full screen (Esc)' : 'Enter full screen'">
+      <svg *ngIf="!fullscreenMode" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"></path></svg>
+      <svg *ngIf="fullscreenMode" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3v6H3M15 3v6h6M9 21v-6H3m12 6v-6h6"></path></svg>
+      <span>{{ fullscreenMode ? 'Exit full screen' : 'Full screen' }}</span>
+    </button></div></ng-template>
   <div class="team-profile-breadcrumb">
     <span>Plan &amp; Track</span><span class="breadcrumb-separator">/</span><strong>{{ projectScope ? 'Project planning' : 'Sprint planning' }}</strong>
     <ng-container *ngIf="selectedProjectId"><span class="breadcrumb-separator">/</span><span>{{ projectName }}</span></ng-container>
@@ -6,14 +18,10 @@
   </div>
 
   <app-workspace-hero *ngIf="!fullscreenMode" [compact]="true" eyebrow="PLAN · COMMIT · DELIVER" [title]="projectScope ? 'Project planning' : 'Sprint planning'" subtitle="Shape a focused sprint around the people and work that matter." image="assets/covers/sprint-planning.png" imageAlt="A team arranging work for an upcoming sprint">
-    <button workspace-actions type="button" class="fullscreen-toggle" (click)="toggleFullscreen()" [attr.aria-pressed]="fullscreenMode" [attr.aria-label]="fullscreenMode ? 'Exit full screen' : 'Enter full screen'" [title]="fullscreenMode ? 'Exit full screen (Esc)' : 'Enter full screen'">
-      <svg *ngIf="!fullscreenMode" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"></path></svg>
-      <svg *ngIf="fullscreenMode" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3v6H3M15 3v6h6M9 21v-6H3m12 6v-6h6"></path></svg>
-      <span>{{ fullscreenMode ? 'Exit full screen' : 'Full screen' }}</span>
-    </button>
+    <ng-container workspace-actions [ngTemplateOutlet]="planningPageActions"></ng-container>
   </app-workspace-hero>
 
-  <header class="planning-header"><button *ngIf="fullscreenMode || projectScope" type="button" class="fullscreen-toggle" (click)="toggleFullscreen()" [attr.aria-pressed]="fullscreenMode">{{ fullscreenMode ? 'Exit full screen' : 'Full screen' }}</button>
+  <header class="planning-header">
     <div class="planning-selectors">
       <label class="selector-field team-selector">
         <span>Team</span>
@@ -30,6 +38,7 @@
         </select>
       </label>
     </div>
+    <ng-container *ngIf="fullscreenMode" [ngTemplateOutlet]="planningPageActions"></ng-container>
   </header>
 
   <section class="sprint-overview" *ngIf="selectedProjectId && selectedSprint && !loadingItems" aria-label="Selected sprint summary">
@@ -68,27 +77,22 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"></circle><path d="m16 16 4.5 4.5"></path></svg>
       <input type="search" [ngModel]="searchQuery" (ngModelChange)="onSearchChange($event)" placeholder="Search by title, key, or parent" aria-label="Search work items">
     </label>
-    <div class="type-filters" aria-label="Filter by work item type">
+    <app-filter-menu title="Planning filters" [activeCount]="typeFilter==='ALL'?0:1" (clear)="setTypeFilter('ALL')">    <div class="type-filters" aria-label="Filter by work item type">
       <button type="button" [class.active]="typeFilter === 'ALL'" (click)="setTypeFilter('ALL')">All <span>{{ teamItems.length }}</span></button>
       <button type="button" [class.active]="typeFilter === 'EPIC'" (click)="setTypeFilter('EPIC')">Epics <span>{{ epicCount }}</span></button>
       <button type="button" [class.active]="typeFilter === 'STORY'" (click)="setTypeFilter('STORY')">Stories <span>{{ storyCount }}</span></button>
       <button type="button" [class.active]="typeFilter === 'TASK'" (click)="setTypeFilter('TASK')">Tasks <span>{{ taskCount }}</span></button>
       <button type="button" [class.active]="typeFilter === 'ISSUE'" (click)="setTypeFilter('ISSUE')">Issues <span>{{ issueCount }}</span></button>
     </div>
-    <div class="planning-create-actions" *ngIf="selectedProjectId" aria-label="Create work items">
-      <span class="create-label">Create</span>
-      <button type="button" class="kb-button kb-button-outline" (click)="openSprintDialog()"><span aria-hidden="true">＋</span><span>Sprint</span></button>
-      <button type="button" class="kb-button kb-button-outline" (click)="openCreateDialog('EPIC')"><span aria-hidden="true">＋</span><span>Epic</span></button>
-      <button type="button" class="kb-button kb-button-outline" (click)="openCreateDialog('STORY')"><span aria-hidden="true">＋</span><span>Story</span></button>
-      <button type="button" class="kb-button kb-button-outline" (click)="openCreateDialog('TASK')"><span aria-hidden="true">＋</span><span>Task</span></button>
-      <button type="button" class="kb-button kb-button-outline" (click)="openCreateDialog('ISSUE')"><span aria-hidden="true">＋</span><span>Issue</span></button>
-    </div>
+</app-filter-menu>
+
   </div>
 
   <app-sprint-lifecycle *ngIf="selectedSprintId" [sprintId]="selectedSprintId" (changed)="refreshLifecycle()"></app-sprint-lifecycle>
   <div class="planning-people-chips" *ngIf="selectedProjectId && !loadingItems" aria-label="Filter work by assignee">
     <button type="button" [class.is-selected]="selectedPersonId === 'ALL'" (click)="selectPlanningPerson('ALL')" [attr.aria-pressed]="selectedPersonId === 'ALL'">Everyone <b>{{ teamItems.length }}</b></button>
-    <button *ngFor="let person of planningPeople" type="button" [class.is-selected]="selectedPersonId === person.id" (click)="selectPlanningPerson(person.id)" [attr.aria-pressed]="selectedPersonId === person.id"><span class="planning-assignee-avatar" [ngClass]="personToneClass(person.id)">{{person.initials}}</span>{{person.name}} <b>{{personItemCount(person.id)}}</b></button>
+    <button *ngFor="let person of planningPeople" type="button" [class.is-selected]="selectedPersonId === person.id" (click)="selectPlanningPerson(person.id)" [attr.aria-pressed]="selectedPersonId === person.id"
+      [class.is-assignment-target]="assignmentDropTarget === 'chip-' + person.id" (dragover)="onAssigneeDragOver('chip-' + person.id, person.id, $event)" (dragleave)="onAssigneeDragLeave('chip-' + person.id, $event)" (drop)="onAssigneeDrop(person.id, person.name, $event)"><span class="planning-assignee-avatar" [ngClass]="personToneClass(person.id)">{{person.initials}}</span><app-actor-icon [actorId]="person.id"></app-actor-icon>{{person.name}} <b>{{personItemCount(person.id)}}</b></button>
   </div>
   <div class="state-panel loading-panel" *ngIf="loadingProjects || loadingItems">
     <span class="loading-spinner"></span>
@@ -135,39 +139,54 @@
   </section>
 
   <ng-container *ngIf="selectedProjectId && !loadingItems && !loadError">
-    <div class="planning-workspace-heading"><span>Plan the next delivery</span><button type="button" class="gp-button gp-outline" (click)="showBacklog = !showBacklog" [attr.aria-expanded]="showBacklog" aria-controls="planning-backlog"><span aria-hidden="true">☷</span> {{ showBacklog ? 'Hide backlog' : 'Show backlog' }} <b>{{ backlogItems.length }}</b></button></div>
+    @let visibleBacklog = backlogItems;
+    @let sprintGroups = filteredSprintGroups;
+    <div class="planning-workspace-heading"><span>Plan the next delivery</span><button type="button" class="gp-button gp-outline" (click)="showBacklog = !showBacklog" [attr.aria-expanded]="showBacklog" aria-controls="planning-backlog"><span aria-hidden="true">☷</span> {{ showBacklog ? 'Hide backlog' : 'Show backlog' }} <b>{{ visibleBacklog.length }}</b></button></div>
     <div class="planning-split-layout" [class.backlog-open]="showBacklog">
     <aside id="planning-backlog" class="planning-backlog-panel" *ngIf="showBacklog" aria-label="Backlog" [class.is-drop-target]="dropTarget === 'backlog'" (dragover)="onDragOver('backlog', $event)" (dragleave)="onDragLeave('backlog', $event)" (drop)="onDrop('backlog', $event)">
-      <header class="planning-backlog-header"><div><h2>Backlog <span>{{ backlogItems.length }}</span></h2><p>Ready work, without a sprint. Drag into a sprint or select items to move.</p></div><button type="button" class="planning-backlog-close" (click)="showBacklog = false" aria-label="Close backlog">×</button></header>
-      <label class="planning-backlog-search"><span aria-hidden="true">⌕</span><input type="search" [(ngModel)]="backlogSearch" placeholder="Search backlog by title, key or assignee" aria-label="Search backlog only"></label>
-      <div class="planning-backlog-actions"><span>{{ selectedBacklogItems.length }} selected</span><button type="button" class="gp-button gp-primary" [disabled]="saving || !selectedSprintId || !selectedBacklogItems.length" (click)="moveBacklogSelectionToFocus()">Move to focus sprint</button></div>
+      <header class="planning-backlog-header"><div><h2>Backlog <span>{{ visibleBacklog.length }}</span></h2><p>Work without a sprint. Drag into a sprint or select items to move.</p></div><button type="button" class="planning-backlog-close" (click)="showBacklog = false" aria-label="Close backlog">×</button></header>
+      <div class="planning-backlog-toolbar" role="group" aria-label="Backlog controls">
+        <label class="search-shell planning-backlog-search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"></circle><path d="m16 16 4.5 4.5"></path></svg>
+          <input type="search" [(ngModel)]="backlogSearch" placeholder="Search backlog by title, key or assignee" aria-label="Search backlog only">
+        </label>
+        <app-filter-menu title="Backlog filters" [activeCount]="backlogAssigneeFilter === 'ALL' ? 0 : 1" (clear)="setBacklogAssigneeFilter('ALL')">
+          <div class="type-filters" role="group" aria-label="Backlog assignment">
+            <button type="button" [class.active]="backlogAssigneeFilter === 'ALL'" [attr.aria-pressed]="backlogAssigneeFilter === 'ALL'" (click)="setBacklogAssigneeFilter('ALL')">All</button>
+            <button type="button" [class.active]="backlogAssigneeFilter === 'UNASSIGNED'" [attr.aria-pressed]="backlogAssigneeFilter === 'UNASSIGNED'" (click)="setBacklogAssigneeFilter('UNASSIGNED')">Unassigned</button>
+            <button type="button" [class.active]="backlogAssigneeFilter === 'ASSIGNED'" [attr.aria-pressed]="backlogAssigneeFilter === 'ASSIGNED'" (click)="setBacklogAssigneeFilter('ASSIGNED')">Assigned</button>
+          </div>
+        </app-filter-menu>
+      </div>
+      @let backlogSelectionCount = selectedBacklogItems.length;
+      <div class="planning-backlog-actions"><span>{{ backlogSelectionCount }} selected</span><button type="button" class="gp-button gp-primary" [disabled]="saving || !selectedSprintId || !backlogSelectionCount" (click)="moveBacklogSelectionToFocus()">Move to focus sprint</button><button type="button" class="gp-button gp-outline" [disabled]="saving || !nextPlanningSprint || !backlogSelectionCount" (click)="moveBacklogSelectionToNextSprint()">Move to {{ nextPlanningSprint?.name || 'next sprint' }}</button></div>
       <div class="planning-backlog-cards">
-        <article class="planning-backlog-card" *ngFor="let item of backlogItems; trackBy: trackByItem" [class.is-selected]="selectedItemIds.has(item.id)" [draggable]="!saving" (dragstart)="onDragStart(item, $event)" (dragend)="onDragEnd()">
+        <article class="planning-backlog-card" *ngFor="let item of visibleBacklog; trackBy: trackByItem" [class.is-selected]="selectedItemIds.has(item.id)" [draggable]="!saving" (dragstart)="onDragStart(item, $event)" (dragend)="onDragEnd()">
           <div class="planning-backlog-card-top"><mat-checkbox [checked]="selectedItemIds.has(item.id)" [disabled]="saving" (change)="toggleItemSelection(item.id, $event.checked)" [attr.aria-label]="'Select ' + item.key"></mat-checkbox><span class="planning-table-key">{{ item.key }}</span><span class="planning-status-pill" [ngClass]="statusPillClass(item.status)">{{ item.status }}</span></div>
           <button type="button" class="planning-backlog-item-title" (click)="openPlanningItem(item)">{{ item.title }}</button>
           <p *ngIf="item.parentName">{{ item.parentName }}</p>
-          <footer><span class="planning-backlog-assignee"><span class="planning-assignee-avatar" [ngClass]="item.assigneeId === null ? '' : personToneClass(item.assigneeId)">{{ item.assigneeName.slice(0, 2).toUpperCase() }}</span>{{ item.assigneeName }}</span><span>{{ item.points ?? '—' }} pts</span><button type="button" [disabled]="saving || !selectedSprintId" (click)="moveItem(item, selectedSprintId)" aria-label="Move item to focus sprint">Move →</button></footer>
+          <footer><span class="planning-backlog-assignee"><span class="planning-assignee-avatar" [class.is-unassigned]="item.assigneeId === null" [ngClass]="item.assigneeId === null ? '' : personToneClass(item.assigneeId)"><img *ngIf="item.assigneeAvatarUrl; else backlogInitials" [src]="item.assigneeAvatarUrl" alt=""><ng-template #backlogInitials>{{ item.assigneeId === null ? '—' : initials(item.assigneeName) }}</ng-template></span><app-actor-icon [actorId]="item.assigneeId"></app-actor-icon><span>{{ item.assigneeName }}</span></span><span>{{ item.points ?? '—' }} pts</span><button type="button" [disabled]="saving || !selectedSprintId" (click)="moveItem(item, selectedSprintId)" aria-label="Move item to focus sprint">Move →</button></footer>
         </article>
-        <div class="planning-group-empty" *ngIf="!backlogItems.length"><strong>No backlog items</strong><span>Drop work here to remove it from a sprint. Search and type filters also apply here.</span></div>
+        <div class="planning-group-empty" *ngIf="!visibleBacklog.length"><strong>No backlog items match</strong><span>Drop work here to remove it from a sprint.</span></div>
       </div>
     </aside>
     <section class="planning-table-panel" aria-label="Sprint planning work items">
       <div class="planning-table-heading">
         <div><h2>Sprint work</h2><span>Work is grouped by sprint. Expand a sprint to review and select its items.</span></div>
         <div class="planning-group-controls">
-          <span class="planning-table-count">{{ filteredItems.length }} items · {{ filteredSprintGroups.length }} groups</span>
-          <button type="button" (click)="setSprintGroupsExpanded(true)" [disabled]="!filteredSprintGroups.length">Expand all</button>
-          <button type="button" (click)="setSprintGroupsExpanded(false)" [disabled]="!filteredSprintGroups.length">Collapse all</button>
+          <span class="planning-table-count">{{ filteredSprintItems.length }} items · {{ sprintGroups.length }} groups</span>
+          <button type="button" (click)="setSprintGroupsExpanded(true)" [disabled]="!sprintGroups.length">Expand all</button>
+          <button type="button" (click)="setSprintGroupsExpanded(false)" [disabled]="!sprintGroups.length">Collapse all</button>
         </div>
       </div>
       <div class="planning-table-scroll">
-        <ng-container *ngIf="filteredSprintGroups.length; else noSprintGroupResults">
-          <section class="planning-sprint-group" *ngFor="let group of filteredSprintGroups; trackBy: trackBySprintGroup" [class.is-focus]="group.isFocus" [class.is-backlog]="group.isBacklog" [class.is-collapsed]="!isSprintGroupExpanded(group)" [class.is-drop-target]="dropTarget === group.sprintId" (dragover)="onDragOver(group.sprintId!, $event)" (dragleave)="onDragLeave(group.sprintId!, $event)" (drop)="onDrop(group.sprintId!, $event)">
+        <ng-container *ngIf="sprintGroups.length; else noSprintGroupResults">
+          <section class="planning-sprint-group" *ngFor="let group of sprintGroups; trackBy: trackBySprintGroup" [class.is-focus]="group.isFocus" [class.is-collapsed]="!isSprintGroupExpanded(group)" [class.is-drop-target]="dropTarget === group.sprintId" (dragover)="onDragOver(group.sprintId, $event)" (dragleave)="onDragLeave(group.sprintId, $event)" (drop)="onDrop(group.sprintId, $event)">
             <header class="planning-sprint-group-heading">
               <mat-checkbox class="planning-group-select" [checked]="isSprintGroupSelected(group)" [indeterminate]="hasPartiallySelectedSprintGroup(group)" [disabled]="saving || !group.items.length" (change)="toggleSprintGroupSelection(group, $event.checked)" [attr.aria-label]="'Select all ' + group.name + ' work items'"></mat-checkbox>
               <button type="button" class="planning-sprint-group-toggle" (click)="toggleSprintGroup(group)" [attr.aria-expanded]="isSprintGroupExpanded(group)" [attr.aria-label]="(isSprintGroupExpanded(group) ? 'Collapse ' : 'Expand ') + group.name">
                 <svg class="planning-group-chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="m7 4 6 6-6 6"></path></svg>
-                <span class="planning-group-marker" [class.is-backlog]="group.isBacklog" [class.is-active]="group.sprint && isSprintActive(group.sprint)"></span>
+                <span class="planning-group-marker" [class.is-active]="group.sprint && isSprintActive(group.sprint)"></span>
                 <span class="planning-group-title">{{ group.name }}</span>
                 <span class="planning-group-focus" *ngIf="group.isFocus">Focus sprint</span>
                 <span class="planning-group-status" *ngIf="group.sprint?.status">{{ group.sprint?.status }}</span>
@@ -181,8 +200,10 @@
             <div class="planning-group-body" [class.is-collapsed]="!isSprintGroupExpanded(group)" [attr.aria-hidden]="!isSprintGroupExpanded(group)" [attr.inert]="!isSprintGroupExpanded(group) ? '' : null">
               <div class="planning-group-body-inner">
                 <ng-container *ngIf="group.assigneeGroups.length; else emptySprintGroup">
-                  <section class="planning-assignee-group" *ngFor="let personGroup of group.assigneeGroups; trackBy: trackByAssigneeGroup" [class.is-collapsed]="!isAssigneeGroupExpanded(personGroup)">
-                    <header class="planning-assignee-group-heading">
+                  <section class="planning-assignee-group" *ngFor="let personGroup of group.assigneeGroups; trackBy: trackByAssigneeGroup" [class.is-collapsed]="!isAssigneeGroupExpanded(personGroup)"
+                    (dragover)="onAssigneeDragOver(personGroup.key, personGroup.personId, $event)" (dragleave)="onAssigneeDragLeave(personGroup.key, $event)"
+                    (drop)="onAssigneeDrop(personGroup.personId, personGroup.name, $event, group.sprintId)">
+                    <header class="planning-assignee-group-heading" [class.is-assignment-target]="assignmentDropTarget === personGroup.key">
                       <mat-checkbox [checked]="isAssigneeGroupSelected(personGroup)" [indeterminate]="hasPartiallySelectedAssigneeGroup(personGroup)" [disabled]="saving" (change)="toggleAssigneeGroupSelection(personGroup, $event.checked)" [attr.aria-label]="'Select all items for ' + personGroup.name"></mat-checkbox>
                       <button type="button" class="planning-assignee-group-toggle" (click)="toggleAssigneeGroup(personGroup)" [attr.aria-expanded]="isAssigneeGroupExpanded(personGroup)" [attr.aria-label]="(isAssigneeGroupExpanded(personGroup) ? 'Collapse ' : 'Expand ') + personGroup.name + ' items'">
                         <svg class="planning-assignee-chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="m7 4 6 6-6 6"></path></svg>
@@ -190,7 +211,7 @@
                           <img *ngIf="personGroup.avatarUrl" [src]="personGroup.avatarUrl" alt="">
                           <span *ngIf="!personGroup.avatarUrl">{{ personGroup.initials }}</span>
                         </span>
-                        <strong>{{ personGroup.name }}</strong>
+                        <strong><app-actor-icon [actorId]="personGroup.personId"></app-actor-icon> {{ personGroup.name }}</strong>
                         <span class="planning-assignee-count">{{ personGroup.items.length }} {{ personGroup.items.length === 1 ? 'item' : 'items' }}</span>
                       </button>
                       <button type="button" class="gp-button gp-outline planning-review-person" (click)="openUserReview(personGroup)">Review &amp; move</button>
@@ -208,7 +229,7 @@
             </div>
           </section>
         </ng-container>
-        <ng-template #noSprintGroupResults><div class="planning-filter-empty"><strong>No work items match these filters.</strong><span>Change the people, type, or search filter to see more work.</span></div></ng-template>
+        <ng-template #noSprintGroupResults><div class="planning-filter-empty"><strong>No sprint items match these filters.</strong><span>Change the people, type, or search filter to see more work.</span></div></ng-template>
       </div>
     </section>
 
@@ -251,11 +272,11 @@
             <header class="kb-item-title-row">
               <div class="kb-detail-data-cell kb-detail-status-cell">
                 <span class="kb-detail-label">Status</span><mat-form-field appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><mat-select name="createStatus" [(ngModel)]="createStatus" aria-label="Status"><mat-select-trigger><span class="kb-status-option" [ngClass]="'status-' + createStatusClass(createStatus)">{{ createStatus }}</span></mat-select-trigger><mat-option *ngFor="let status of createStatuses" [value]="status"><span class="kb-status-option" [ngClass]="'status-' + createStatusClass(status)">{{ status }}</span></mat-option></mat-select></mat-form-field></div>
-            <div class="kb-detail-data-cell">
+            <div class="kb-detail-data-cell kb-detail-priority-cell">
                 <span class="kb-detail-label">Priority</span><mat-form-field appearance="outline" class="kb-detail-control" subscriptSizing="dynamic"><mat-select name="createPriority" [(ngModel)]="createPriority" aria-label="Priority"><mat-option value="Critical">Critical</mat-option><mat-option value="High">High</mat-option><mat-option value="Medium">Medium</mat-option><mat-option value="Low">Low</mat-option></mat-select></mat-form-field></div>
-<div class="kb-detail-data-cell">
+<div class="kb-detail-data-cell kb-detail-assignee-cell">
                 <span class="kb-detail-label">Assignee</span><app-person-picker [people]="createPeople" [value]="createAssigneeId" label="Assignee" emptyLabel="Unassigned" (selected)="selectCreatePerson('assignee', $event)"></app-person-picker></div>
-<div class="kb-detail-data-cell">
+<div class="kb-detail-data-cell kb-detail-reporter-cell">
                 <span class="kb-detail-label">Reporter</span><app-person-picker [people]="createPeople" [value]="createReporterId" label="Reporter" emptyLabel="No reporter" (selected)="selectCreatePerson('reporter', $event)"></app-person-picker></div>
 <section class="kb-detail-title-section kb-detail-title-full kb-create-title-section">
               <label class="kb-detail-label" for="planning-new-title">Title</label>

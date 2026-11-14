@@ -452,7 +452,7 @@ export interface TestCaseAttachDialogData {
       align-items: center;
       justify-content: space-between;
 
-      border-bottom: 1px solid #eeeeee;
+      border-bottom: 1px solid var(--gp-border-color, #a0a6b1);
 
       background: #ffffff;
     }
@@ -732,7 +732,7 @@ export interface TestCaseAttachDialogData {
 
       cursor: pointer;
 
-      border-bottom: 1px solid #eeeeee;
+      border-bottom: 1px solid var(--gp-border-color, #a0a6b1);
 
       transition:
         background 0.12s ease,
@@ -740,7 +740,7 @@ export interface TestCaseAttachDialogData {
     }
 
     .list-item:first-child {
-      border-top: 1px solid #eeeeee;
+      border-top: 1px solid var(--gp-border-color, #a0a6b1);
       border-radius: 10px 10px 0 0;
     }
 
@@ -934,7 +934,7 @@ export interface TestCaseAttachDialogData {
 
       color: #000000;
 
-      border: 1px solid #eeeeee;
+      border: 1px solid var(--gp-border-color, #a0a6b1);
 
       border-radius: 10px;
 
@@ -993,7 +993,7 @@ export interface TestCaseAttachDialogData {
 
       padding: 10px 18px !important;
 
-      border-top: 1px solid #eeeeee;
+      border-top: 1px solid var(--gp-border-color, #a0a6b1);
 
       background: #ffffff;
     }
@@ -1147,27 +1147,27 @@ export interface TestCaseAttachDialogData {
 
     :host { font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important; color: #111827; }
     .dialog-header, .dialog-content, .dialog-actions { background: #fff !important; }
-    .dialog-header { border-bottom: 1px solid #eef1f4 !important; }
-    .title-icon { width: 42px !important; height: 42px !important; border-radius: 14px !important; background: #eef8fd !important; border: 1px solid #d6eaf5 !important; color: #006fae !important; }
+    .dialog-header { border-bottom: 1px solid var(--gp-border-color, #a0a6b1) !important; }
+    .title-icon { width: 42px !important; height: 42px !important; border-radius: 14px !important; background: #eef8fd !important; border: 1px solid var(--gp-border-color, #a0a6b1) !important; color: #006fae !important; }
     .title-content h2 { font-weight: 700 !important; color: #111827 !important; }
     .subtitle { color: #667085 !important; }
-    .search-wrapper { border: 1px solid #cfd5dc; background: #f8fafc; box-shadow: none !important; }
-    .search-wrapper:focus-within { border-color: #0788CC; box-shadow: 0 0 0 3px rgba(7,136,204,.10) !important; }
-    .selection-toolbar { border: 1px solid #eef1f4; background: #f8fafc; border-radius: 14px !important; }
-    .list-container { border: 1px solid #dfe3e8; border-radius: 14px !important; }
-    .list-item { border-bottom-color: #eef1f4 !important; }
+    .search-wrapper { border: 1px solid var(--gp-border-color, #a0a6b1); background: #f8fafc; box-shadow: none !important; }
+    .search-wrapper:focus-within { border-color: var(--gp-border-color, #a0a6b1); box-shadow: 0 0 0 3px rgba(7,136,204,.10) !important; }
+    .selection-toolbar { border: 1px solid var(--gp-border-color, #a0a6b1); background: #f8fafc; border-radius: 14px !important; }
+    .list-container { border: 1px solid var(--gp-border-color, #a0a6b1); border-radius: 14px !important; }
+    .list-item { border-bottom-color: var(--gp-border-color, #a0a6b1) !important; }
     .list-item:hover { background: #f7fbfe !important; }
     .list-item.selected { background: #eaf5fb !important; }
     .tc-code { color: #006fae !important; }
     .tc-title { color: #111827 !important; }
     .tc-description { color: #667085 !important; }
-    .priority-badge { border: 1px solid #fed7aa; background: #fff7ed; color: #c2410c; }
+    .priority-badge { border: 1px solid var(--gp-border-color, #a0a6b1); background: #fff7ed; color: #c2410c; }
     .selected-icon { color: #0788CC !important; }
     .attach-button { background: rgb(0,124,193) !important; border-radius: 20px !important; }
     .attach-button:hover:not(:disabled) { background: #006fae !important; }
     .toolbar-button { color: #006fae !important; border-radius: 18px !important; }
-    .cancel-button { border: 1px solid #000 !important; border-radius: 20px !important; background: #fff !important; }
-    .cancel-button:hover { background: #eef8fd !important; border-color: #0788CC !important; color: #006fae !important; }
+    .cancel-button { border: 1px solid var(--gp-border-color, #a0a6b1) !important; border-radius: 20px !important; background: #fff !important; }
+    .cancel-button:hover { background: #eef8fd !important; border-color: var(--gp-border-color, #a0a6b1) !important; color: #006fae !important; }
     .title-icon .gp-dialog-icon { color: #006fae; font-size: 20px !important; }
     .close-button .gp-dialog-icon { color: #667085; font-size: 22px !important; }
     .search-icon.gp-dialog-icon { color: #667085; }

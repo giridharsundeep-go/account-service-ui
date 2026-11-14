@@ -24,13 +24,23 @@
                 "glob": "**/*",
                 "input": "public"
               },
-                "src/favicon.ico",
-                "src/assets"
-
+              "src/favicon.ico",
+              "src/assets",
+              {
+                "glob": "OFL.txt",
+                "input": "node_modules/@greatley-poshley/design-system/fonts/poshley-sans",
+                "output": "assets/fonts/poshley-sans"
+              },
+              {
+                "glob": "TRADEMARKS.md",
+                "input": "node_modules/@greatley-poshley/design-system/fonts/poshley-sans",
+                "output": "assets/fonts/poshley-sans"
+              }
             ],
             "styles": [
               "src/material-theme.scss",
-              "src/styles.css"
+              "src/styles.css",
+              "node_modules/@greatley-poshley/design-system/clarity.css"
             ],
             "server": "src/main.server.ts",
             "outputMode": "server",
@@ -67,6 +77,18 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "allowedHosts": [
+              "localhost",
+              "127.0.0.1",
+              "[::1]"
+            ],
+            "prebundle": {
+              "exclude": [
+                "@greatley-poshley/suite"
+              ]
+            }
+          },
           "configurations": {
             "production": {
               "buildTarget": "account-service-ui:build:production"
@@ -78,7 +100,10 @@
           "defaultConfiguration": "development"
         },
         "test": {
-          "builder": "@angular/build:unit-test"
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "setupFiles": ["src/test-setup.ts"]
+          }
         }
       }
     }

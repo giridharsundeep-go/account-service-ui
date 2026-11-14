@@ -1,3 +1,4 @@
+import {TeamMemberRemovalDialog} from '../shared/team-member-removal-dialog';
 import { ChatlyLauncher } from '../shared/chatly-launcher.service';
 import { TeamWorkComponent } from '../shared/team-work';
 
@@ -88,6 +89,7 @@ interface TeamView {
 })
 export class Teams implements OnInit, OnDestroy {
   readonly chatly=inject(ChatlyLauncher);
+  memberUpdateNotice='';
 
 
   baseUrl = environment.apiBaseUrlM;
@@ -957,27 +959,24 @@ export class Teams implements OnInit, OnDestroy {
   }
 
   removeMemberFromTeamInline(teamId: number, userId: number): void {
-    if (!this.selectedTeam) {
-      return;
-    }
-
-    if (Number(this.selectedTeam.id) !== Number(teamId)) {
-      return;
-    }
-
-    if (!confirm('Remove this user from the team?')) {
-      return;
-    }
-
-    const remainingIds = this.getTeamMembers(this.selectedTeam)
-      .map((member: TeamMemberView) => this.getMemberId(member))
-      .filter((id: number) =>
-        Number.isFinite(id) &&
-        id > 0 &&
-        Number(id) !== Number(userId)
-      );
-
-    this.updateTeamMembersInline(this.selectedTeam, remainingIds);
+    const team=this.selectedTeam;
+    if(!team || Number(team.id)!==Number(teamId))return;
+    const member=this.getTeamMembers(team).find(person=>this.getMemberId(person)===Number(userId));
+    if(!member)return;
+    const remainingIds=this.getTeamMembers(team).map(person=>this.getMemberId(person)).filter(id=>id>0&&id!==Number(userId));
+    this.dialog.open(TeamMemberRemovalDialog,{
+      width:'500px',maxWidth:'calc(100vw - 32px)',restoreFocus:true,ariaLabel:'Remove team member',
+      data:{teamName:team.name,name:this.getMemberName(member),email:this.getMemberEmail(member),designation:this.getMemberRoleLabel(member),
+        remove:()=>this.http.put<any>(`${this.baseUrl}/teams/${team.id}`,{name:team.name,description:team.description,memberIds:remainingIds},{headers:this.auth.getAuthHeaders()})}
+    }).afterClosed().subscribe(result=>{
+      if(!result?.removed)return;
+      if(Number(this.selectedTeam?.id)===Number(team.id)){
+        const updated=result.response?.data;
+        this.selectedTeam=updated?this.normalizeTeam(updated):{...team,members:this.getTeamMembers(team).filter(person=>this.getMemberId(person)!==Number(userId))};
+        this.memberUpdateNotice=`${this.getMemberName(member)} was removed from ${team.name}.`;
+      }
+      this.refreshTeamsList();this.cdr.markForCheck();
+    });
   }
 
   private updateTeamMembersInline(
@@ -988,7 +987,7 @@ export class Teams implements OnInit, OnDestroy {
 
     this.http.put<any>(
       `${this.baseUrl}/teams/${team.id}`,
-      this.buildTeamPayload(memberIds),
+      {name:team.name,description:team.description,memberIds},
       { headers: this.auth.getAuthHeaders() }
     ).subscribe({
       next: (res: any) => {
@@ -1013,7 +1012,7 @@ export class Teams implements OnInit, OnDestroy {
 
     this.http.put<any>(
       `${this.baseUrl}/teams/${team.id}`,
-      this.buildTeamPayload(memberIds),
+      {name:team.name,description:team.description,memberIds},
       { headers: this.auth.getAuthHeaders() }
     ).subscribe({
       next: (res: any) => {
@@ -1168,6 +1167,7 @@ export class Teams implements OnInit, OnDestroy {
   }
 
   openTeamDetails(team: TeamView): void {
+    this.memberUpdateNotice='';
     // Open immediately from the team-list record. This backend returns 404 for
     // GET /teams/:id, so avoid that unsupported request and use the existing
     // team row plus the optional membership relation endpoint when necessary.

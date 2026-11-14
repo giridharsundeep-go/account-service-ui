@@ -1,0 +1,17 @@
+:root{--gp-page:#fff;--gp-surface:#fff;--gp-surface-muted:#fff;--gp-text:#243247;--gp-muted:#68778e;--gp-border:var(--gp-border-color, #a0a6b1);--gp-accent:#1764d4;--gp-shadow:0 3px 14px #172b4d12;--gp-radius:10px;color-scheme:light}
+:root[data-theme=dark]{--gp-page:#121821;--gp-surface:#181f2b;--gp-surface-muted:#202b3b;--gp-text:#e3ebf7;--gp-muted:#afbed2;--gp-border:var(--gp-border-color, #a0a6b1);--gp-accent:#94bcff;--gp-shadow:0 3px 16px #0004;color-scheme:dark}
+html,body{background:var(--gp-page)!important;color:var(--gp-text)}
+:root:not([data-theme=dark]) :is(.workspace,.suite-page,.suite-body,.app-shell,.app-header,.sidebar,.main,.content,.canvas,.workspace-hero,.gp-workspace-hero,.surface,.card,.paper-canvas,.slide-viewport,.slide-center){background-color:#fff!important}
+:root[data-theme=dark] :is(main,aside,header,footer,dialog,nav,.workspace,.suite-page,.suite-body,.app-shell,.app-header,.sidebar,.main,.content,.canvas,.surface,.card,.workspace-hero,.gp-workspace-hero,.file-card,.document-card,.person-card,.member-card,.user-card,.stats-card,.stat-card,.ticket-card,.kanban-card,.board-column,.column,.work-item-dialog,.work-item-main,.detail-panel,.document-menu,.menu,.toolbar,.document-toolbar,.workspace-dialog,.office-tools,.apps-panel,.apps-trigger,.app-dialog,.file-titlebar,.document-titlebar,.file-menubar,.document-menubar,.paper-canvas,.slide-center,.slide-viewport,.slide-inspector,.slide-thumbnails,.conversation-list,.chat-list,.chat-main,.chat-window,.meeting-card,.meeting-controls,.sheet-charts,.sheet-charts article){background-color:var(--gp-surface)!important;color:var(--gp-text)!important;border-color:var(--gp-border-color, #a0a6b1)!important}
+:root[data-theme=dark] :is(h1,h2,h3,h4,strong,label,legend,summary,p,td,th,.muted,.message,.message-text,.thread-title){color:inherit}
+:root[data-theme=dark] :is(input,select,textarea,.button.outline,.icon-button,.text-button,.filter-trigger,.search-field,.search-box,.search-bar,.gp-control,.gp-field,.mat-mdc-text-field-wrapper,.mdc-notched-outline>*){background-color:var(--gp-surface)!important;color:var(--gp-text)!important;border-color:var(--gp-border-color, #a0a6b1)!important}
+:root[data-theme=dark] :is(table,thead,tbody,tr,td,th){background-color:var(--gp-surface)!important;border-color:var(--gp-border-color, #a0a6b1)!important}
+:root[data-theme=dark] input::placeholder,:root[data-theme=dark] textarea::placeholder{color:#a6b6ce!important}
+:root[data-theme=dark] :is(a,.text-link){color:#9fc4ff}
+:root[data-theme=dark] :is(.nav-item.active,.nav-item.selected,.selected,.current,.active-tab){background-color:#273b59;color:#bed6ff}
+/* Document and slide content retain their authored colors, including when the surrounding chrome is dark. */
+:root[data-theme=dark] .document-paper{background:#fff!important;color:#202124!important}:root[data-theme=dark] .document-paper :is(p,h1,h2,h3,td,th){background-color:transparent!important;color:inherit}
+:root[data-theme=dark] .slide-page,:root[data-theme=dark] .present-slide{color:#202124}
+:root[data-theme=dark] :is(.chat-bubble.mine,.message.mine){background:#21447a!important;color:#edf4ff!important}
+:root[data-theme=dark] :is(.chat-bubble,.message){border-color:var(--gp-border-color, #a0a6b1)}
+:root[data-theme=dark] .app-symbol:after{box-shadow:0 1px 4px #0005}

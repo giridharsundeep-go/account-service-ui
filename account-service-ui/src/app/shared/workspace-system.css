@@ -1,7 +1,7 @@
 :root {
   --gp-workspace-canvas: #ffffff;
   --gp-workspace-soft: #f6f9ff;
-  --gp-workspace-line: #dce4ef;
+  --gp-workspace-line: var(--gp-border-color, #a0a6b1);
   --gp-workspace-radius: 16px;
   --gp-workspace-shadow: 0 3px 12px rgba(31, 58, 100, .045);
   --gp-workspace-motion: cubic-bezier(.2, .75, .25, 1);
@@ -79,7 +79,7 @@ app-docs {
   gap: 16px;
   min-height: 94px;
   padding: 18px 22px;
-  border: 1px solid var(--gp-workspace-line);
+  border: 1px solid var(--gp-border-color, #a0a6b1);
   border-radius: var(--gp-workspace-radius);
   background: linear-gradient(110deg, #f7faff, #fff 72%);
   box-shadow: var(--gp-workspace-shadow);
@@ -102,7 +102,7 @@ app-docs {
 
 :is(.teams-page, .releases-page) :is(.overview-metric, .pulse-tile, .teams-workspace),
 :is(.projects-dashboard, .work-items-page, .testcases-page) :is(.project-table-shell, .work-items-table-shell, .directory-panel, .work-items-filter-panel) {
-  border-color: var(--gp-workspace-line, #dce4ef);
+  border-color: var(--gp-border-color, #a0a6b1);
   border-radius: var(--gp-workspace-radius, 16px);
   box-shadow: var(--gp-workspace-shadow, 0 3px 12px rgba(31, 58, 100, .045));
 }

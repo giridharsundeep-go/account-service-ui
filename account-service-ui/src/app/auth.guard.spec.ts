@@ -1,17 +1,52 @@
+import { PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { CanActivateFn } from '@angular/router';
+import { Router, UrlTree } from '@angular/router';
+import { AuthService } from './auth.service';
+import { AuthGuard } from './auth.guard';
 
-import { authGuardGuard } from './auth.guard-guard';
+describe('AuthGuard', () => {
+  it('allows server rendering without requiring a browser session', () => {
+    TestBed.configureTestingModule({
+      providers: [
+        AuthGuard,
+        { provide: PLATFORM_ID, useValue: 'server' },
+        { provide: AuthService, useValue: { isLoggedIn: () => false } },
+        { provide: Router, useValue: { createUrlTree: vi.fn() } },
+      ],
+    });
 
-describe('authGuardGuard', () => {
-  const executeGuard: CanActivateFn = (...guardParameters) =>
-    TestBed.runInInjectionContext(() => authGuardGuard(...guardParameters));
-
-  beforeEach(() => {
-    TestBed.configureTestingModule({});
+    expect(TestBed.inject(AuthGuard).canActivate()).toBe(true);
+    TestBed.resetTestingModule();
   });
 
-  it('should be created', () => {
-    expect(executeGuard).toBeTruthy();
+  it('sends an unauthenticated browser session to login', () => {
+    const loginTree = {} as UrlTree;
+    const createUrlTree = vi.fn(() => loginTree);
+    TestBed.configureTestingModule({
+      providers: [
+        AuthGuard,
+        { provide: PLATFORM_ID, useValue: 'browser' },
+        { provide: AuthService, useValue: { isLoggedIn: () => false } },
+        { provide: Router, useValue: { createUrlTree } },
+      ],
+    });
+
+    expect(TestBed.inject(AuthGuard).canActivate()).toBe(loginTree);
+    expect(createUrlTree).toHaveBeenCalledWith(['/login']);
+    TestBed.resetTestingModule();
+  });
+
+  it('allows a logged-in browser session', () => {
+    TestBed.configureTestingModule({
+      providers: [
+        AuthGuard,
+        { provide: PLATFORM_ID, useValue: 'browser' },
+        { provide: AuthService, useValue: { isLoggedIn: () => true } },
+        { provide: Router, useValue: { createUrlTree: vi.fn() } },
+      ],
+    });
+
+    expect(TestBed.inject(AuthGuard).canActivate()).toBe(true);
+    TestBed.resetTestingModule();
   });
 });

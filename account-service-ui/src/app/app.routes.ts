@@ -6,6 +6,8 @@ import { AuthGuard } from './auth.guard';
 export const routes: Routes = [
   {path:'forgot-password',loadComponent:()=>import('./password-setup').then(m=>m.PasswordSetup)},
   {path:'reset-password',loadComponent:()=>import('./password-setup').then(m=>m.PasswordSetup)},
+  {path:'verify-email',loadComponent:()=>import('./verify-email').then(m=>m.VerifyEmail)},
+  {path:'people',canActivate:[AuthGuard],loadComponent:()=>import('./people-access/people-access').then(m=>m.PeopleAccess)},
 
   // =========================================================
   // LOGIN

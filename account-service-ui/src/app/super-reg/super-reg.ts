@@ -1,3 +1,5 @@
+import {WorkspaceBrand} from '../shared/workspace-brand';
+import {AuthAppGallery} from '../shared/auth-app-gallery';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
@@ -29,7 +31,7 @@ import { AuthService } from '../auth.service';
 @Component({
   selector: 'app-super-reg',
   standalone: true,
-  imports: [
+  imports: [WorkspaceBrand,AuthAppGallery,
     CommonModule,
     ReactiveFormsModule,
     RouterLink,
@@ -44,6 +46,7 @@ import { AuthService } from '../auth.service';
   styleUrls: ['./super-reg.css', '../shared/field-controls.css']
 })
 export class SuperReg {
+ readonly currentYear=new Date().getFullYear();
   private readonly fb = inject(FormBuilder);
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);

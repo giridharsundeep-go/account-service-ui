@@ -1,3 +1,10 @@
 @import '@greatley-poshley/design-system/hero.css';
 
 :host{display:block;min-width:0;margin:0 0 24px}
+.gp-workspace-hero__heading{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;width:100%;min-width:0}
+.gp-workspace-hero__heading>h1{flex:1;min-width:0;margin-top:0}
+.gp-workspace-hero__heading .gp-workspace-hero__actions{flex:0 1 auto;justify-content:flex-end;align-self:flex-start;margin:0 0 0 auto}
+.gp-workspace-hero__actions>div{display:flex;justify-content:flex-end;align-items:center;gap:10px;flex-wrap:wrap}
+:host(.kb-board-hero) .gp-workspace-hero__heading{flex-wrap:wrap}
+:host(.kb-board-hero) .gp-workspace-hero__heading>h1{flex-basis:180px}
+@media(max-width:700px){.gp-workspace-hero__heading{flex-wrap:wrap}.gp-workspace-hero__heading .gp-workspace-hero__actions{justify-content:flex-end;margin-left:auto}}

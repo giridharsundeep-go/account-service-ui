@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.spec.json",
+  "include": [
+    "src/app/shared/workspace-pages.spec.ts",
+    "src/app/shared/actor-work.spec.ts",
+    "src/app/shared/person-card.spec.ts"
+  ],
+  "exclude": []
+}

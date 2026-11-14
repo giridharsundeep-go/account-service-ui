@@ -1,0 +1,317 @@
+@layer gp-post, gp-clarity;
+@import './post.css' layer(gp-post);
+/* Greatley Clarity: shared application chrome. Authored editor content is intentionally not targeted. */
+:root {
+  --gp-font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Inter, sans-serif;
+  --gp-page: #fff;
+  --gp-surface: #fff;
+  --gp-surface-muted: #f5f5f7;
+  --gp-text: #111113;
+  --gp-muted: #68686e;
+  --gp-border: var(--gp-border-color, #a0a6b1);
+  --gp-separator: var(--gp-border-color, #a0a6b1);
+  --gp-accent: #1769ff;
+  --gp-selection: #edf3ff;
+  --gp-shadow: 0 2px 10px rgb(0 0 0 / 4%);
+  --gp-float-shadow: 0 14px 42px rgb(0 0 0 / 12%);
+  --gp-radius: 20px;
+  --gp-control-radius: 999px;
+  --gp-field-radius: 16px;
+  --gp-field-height: 50px;
+  --gp-field-border: var(--gp-border-color, #a0a6b1);
+  --gp-field-border-hover: var(--gp-border-color, #a0a6b1);
+  --gp-field-border-focus: var(--gp-border-color, #a0a6b1);
+  --gp-field-background: var(--gp-surface);
+  --gp-field-text: var(--gp-text);
+  --gp-field-muted: var(--gp-muted);
+  --gp-brand-ink: var(--gp-text);
+  --gp-brand-navy: var(--gp-text);
+  --gp-brand-blue: var(--gp-accent);
+  --gp-brand-muted: var(--gp-muted);
+  --gp-brand-border: var(--gp-border-color, #a0a6b1);
+  --gp-workspace-line: var(--gp-border-color, #a0a6b1);
+  --gp-workspace-radius: 20px;
+  --gp-workspace-shadow: var(--gp-shadow);
+  --gp-card-shadow: var(--gp-shadow);
+  --gp-popover-radius: 22px;
+  --gp-popover-shadow: var(--gp-float-shadow);
+  --gp-space-page: clamp(20px, 3vw, 42px);
+  --gp-title-size: clamp(32px, 3.1vw, 46px);
+  --gp-visual-system: clarity;
+  color-scheme: light;
+}
+:root[data-theme='dark'] {
+  --gp-page: #101012;
+  --gp-surface: #18181c;
+  --gp-surface-muted: #242429;
+  --gp-text: #f5f5f7;
+  --gp-muted: #acacb6;
+  --gp-border: var(--gp-border-color, #a0a6b1);
+  --gp-separator: var(--gp-border-color, #a0a6b1);
+  --gp-accent: #8db6ff;
+  --gp-selection: #203250;
+  --gp-field-border: var(--gp-border-color, #a0a6b1);
+  --gp-field-border-hover: var(--gp-border-color, #a0a6b1);
+  --gp-field-border-focus: var(--gp-border-color, #a0a6b1);
+  --gp-shadow: 0 2px 12px rgb(0 0 0 / 14%);
+  --gp-float-shadow: 0 18px 50px rgb(0 0 0 / 42%);
+  color-scheme: dark;
+}
+@layer gp-clarity {
+html, body { font-family: var(--gp-font) !important; background: var(--gp-page) !important; color: var(--gp-text); -webkit-font-smoothing: antialiased; }
+/* App chrome has one type system. Neither canvas text nor authored documents inherit overrides. */
+:is(.app-header,.sidebar,.suite-body,.workspace-heading,.workspace-title,.page-heading,.workspace-dialog,.suite-dialog,.instru-dialog,.new-dialog,.event-dialog,.gp-workspace-hero,.work-items-page,.planning-page,.tc-page,.projects-dashboard,.teams-page,.users-page,.roles-container,.releases-page,.agile-dashboard,.conversation-list,.conversation-header,.file-titlebar,.file-menubar,.document-titlebar,.document-menubar,.office-tools,.toolbar,.document-toolbar,.slide-inspector,.sheet-footer,.account-workspace),
+:is(button,input,select,textarea):not(.document-paper *):not(.sheet-grid *):not(.slide-page *):not(.present-slide *) { font-family: var(--gp-font) !important; letter-spacing: normal; }
+/* Legacy components set font-family on individual text nodes; normalize UI text without touching authored content or icon fonts. */
+:root :is(h1,h2,h3,h4,h5,th,td,label,small,strong,span,p):not(.document-paper *):not(.sheet-grid *):not(.slide-page *):not(.present-slide *):not(pre *):not(code *):not(.material-icons):not(.material-symbols-outlined) { font-family:var(--gp-font) !important; }
+/* Large clear titles; sentence case and metadata stay readable. */
+:is(.workspace-title,.workspace-heading,.page-heading,.agile-heading,.gp-workspace-hero,.conversation-list>header,.account-card) h1,
+:is(.projects-title,.users-title,.teams-title,.roles-title,.releases-title,.planning-title,.work-items-title) {
+  font-size: var(--gp-title-size) !important; line-height: 1.12 !important; font-weight: 800 !important;
+  letter-spacing: -.045em !important; color: var(--gp-text) !important; overflow-wrap: anywhere;
+}
+:is(.section-heading,.surface>header,.profile-section-heading,.gp-person-profile-section) :is(h2,h3) { color:var(--gp-text) !important; font-weight:750 !important; letter-spacing:-.02em !important; }
+:is(.workspace-title,.workspace-heading,.page-heading,.section-heading,.agile-heading,.gp-workspace-hero) p { color:var(--gp-muted) !important; font-size:16px !important; line-height:1.55 !important; }
+:is(.eyebrow,.gp-workspace-hero__eyebrow) { font-size:11px !important; letter-spacing:.1em !important; font-weight:700 !important; color:var(--gp-muted) !important; }
+/* Decorative banners become compact, white page headings. Profile covers remain profile content. */
+:root :is(.gp-workspace-hero,.workspace-hero,.suite-hero) {
+  min-height:0 !important; padding:0 0 28px !important; margin:0 0 28px !important;
+  border:0 !important; border-bottom:1px solid var(--gp-border-color, #a0a6b1) !important; border-radius:0 !important;
+  background:var(--gp-page) !important; background-image:none !important; box-shadow:none !important; animation:none !important;
+  overflow:visible !important; gap:20px;
+}
+:root :is(.gp-workspace-hero,.workspace-hero,.suite-hero)::before,
+:root :is(.gp-workspace-hero,.workspace-hero,.suite-hero)::after,
+.gp-workspace-hero__art,.workspace-hero>svg,.workspace-hero>img,.suite-art,.hero-art,.hero-illustration { display:none !important; }
+.gp-workspace-hero__copy { width:100% !important; padding:0 !important; }
+.gp-workspace-hero__actions { gap:10px !important; margin-top:18px !important; }
+.gp-workspace-hero__eyebrow::before { display:none !important; }
+:is(.suite-body,.instru-page) { padding:var(--gp-space-page) !important; }
+:root :is(.app-header,.sidebar,.main,.content,.canvas,.suite-body,.workspace,.suite-page) { background-color:var(--gp-page) !important; color:var(--gp-text); }
+:root :is(.app-header,.sidebar) { border-color:var(--gp-border-color, #a0a6b1) !important; }
+.app-header { min-height:78px !important; height:auto !important; padding-block:12px !important; }
+.app-header .brand h2 { color:var(--gp-text) !important; font-family:var(--gp-font) !important; font-weight:800 !important; letter-spacing:-.035em !important; }
+.sidebar :is(.nav-item,.menu-item,.nav-link) { border-radius:14px !important; margin-block:3px; font-size:15px !important; font-weight:600 !important; color:var(--gp-text); }
+.sidebar :is(.nav-item.active,.nav-item.selected,.nav-item.current,.menu-item.active,.nav-link.active) { background:var(--gp-selection) !important; color:var(--gp-accent) !important; }
+/* Capsule actions share a 48px target; compact editor tools keep their own geometry. */
+:root :is(.button,.gp-button,.btn-primary,.btn-secondary,.create-button,.create-btn,.tc-primary,.primary-button,.secondary-button,.mat-mdc-button-base):not(.mat-mdc-icon-button):not(.mat-mdc-fab):not(.mat-mdc-mini-fab):not(.toolbar *):not(.document-toolbar *):not(.file-menubar *):not(.document-menubar *) {
+  min-height:48px !important; border-radius:var(--gp-control-radius) !important; padding-inline:20px !important;
+  font-size:15px !important; line-height:1.2 !important; font-weight:650 !important; letter-spacing:-.01em !important;
+  box-shadow:none !important; align-items:center; justify-content:center; gap:9px;
+}
+:root :is(.button.primary,.gp-primary,.btn-primary,.primary-button,.tc-primary,.mat-mdc-unelevated-button.mat-primary,.mat-mdc-raised-button.mat-primary) { background:#1769ff !important; border-color:var(--gp-border-color, #a0a6b1) !important; color:#fff !important; }
+:root :is(.button.outline,.gp-outline,.btn-secondary,.secondary-button,.mat-mdc-outlined-button) { background:var(--gp-surface) !important; border:1px solid var(--gp-border-color, #a0a6b1) !important; color:var(--gp-text) !important; }
+:root :is(.button.ghost,.gp-ghost) { background:transparent !important; color:var(--gp-accent) !important; }
+:root :is(.icon-button,.work-items-refresh,.new-chat,.planning-backlog-close) { width:44px !important; height:44px !important; min-width:44px !important; min-height:44px !important; border:1px solid var(--gp-border-color, #a0a6b1) !important; border-radius:50% !important; color:var(--gp-text) !important; background:var(--gp-surface) !important; display:inline-grid; place-items:center; box-shadow:none !important; }
+:root :is(.button,.gp-button,.icon-button):disabled { opacity:.45; }
+/* Search is always one outer capsule, with no nested box around its input. */
+:root :is(.search-field,.search-box,.search-bar,.inline-search,.work-items-search,.work-filter-search,.planning-backlog-search,.team-profile-member-search,.header-search,.global-search,.global-work-search-field,.global-project-search,.project-panel-search,.global-project-search,.global-work-search-field,.users-search,.roles-search,.search-wrapper,.matrix-search-input-frame,.search-shell,.google-search-shell,.kb-board-search,.docs-search,.team-search,.epics-filter-search,.add-testcases-search,.search-control,.release-search-field) {
+  min-height:50px !important; height:50px !important; border:1px solid var(--gp-border-color, #a0a6b1) !important;
+  border-radius:999px !important; background:var(--gp-surface) !important; color:var(--gp-muted) !important;
+  padding:0 18px !important; display:flex; align-items:center; gap:12px !important; box-shadow:none !important; min-width:0;
+}
+:root :is(.search-field,.search-box,.search-bar,.inline-search,.work-items-search,.work-filter-search,.planning-backlog-search,.team-profile-member-search,.header-search,.global-search,.global-work-search-field,.global-project-search,.project-panel-search,.global-project-search,.global-work-search-field,.users-search,.roles-search,.search-wrapper,.matrix-search-input-frame,.search-shell,.google-search-shell,.kb-board-search,.docs-search,.team-search,.epics-filter-search,.add-testcases-search,.search-control,.release-search-field) input {
+  flex:1; min-width:0 !important; width:100%; height:46px !important; min-height:0 !important;
+  border:0 !important; border-radius:0 !important; outline:0 !important; box-shadow:none !important;
+  background:transparent !important; color:var(--gp-text) !important; font-size:16px !important; padding:0 !important; margin:0 !important;
+}
+:root :is(.search-field,.search-box,.search-bar,.inline-search,.work-items-search,.work-filter-search,.planning-backlog-search,.team-profile-member-search,.header-search,.global-search,.global-work-search-field,.global-project-search,.users-search,.roles-search,.search-wrapper,.matrix-search-input-frame,.search-shell,.google-search-shell,.kb-board-search,.docs-search,.team-search,.epics-filter-search,.add-testcases-search,.search-control,.release-search-field) :is(svg,mat-icon,.search-icon) { flex:0 0 auto; margin:0 !important; position:static !important; transform:none !important; color:var(--gp-muted) !important; }
+:root :is(.search-field,.search-box,.search-bar,.inline-search,.work-items-search,.work-filter-search,.planning-backlog-search,.team-profile-member-search,.header-search,.global-search,.global-work-search-field,.global-project-search,.users-search,.roles-search,.search-wrapper,.matrix-search-input-frame,.search-shell,.google-search-shell,.kb-board-search,.docs-search,.team-search,.epics-filter-search,.add-testcases-search,.search-control,.release-search-field):focus-within { border-color:var(--gp-border-color, #a0a6b1) !important; }
+:root :is(input,select,textarea):not([type=checkbox]):not([type=radio]):not([type=color]):not([type=range]):not(.document-paper *):not(.slide-page *):not(.present-slide *):not(.sheet-grid *):not(.toolbar *):not(.document-toolbar *):not(.formula-bar *) { color:var(--gp-text); border-color:var(--gp-field-border); border-radius:var(--gp-field-radius); font-size:16px; }
+::placeholder { color:var(--gp-muted); opacity:1; }
+:root :is(.project-trigger,.global-project-trigger,.filter-trigger,.work-filter-trigger,.work-items-more,.planning-filter-trigger) { height:50px !important; border-radius:999px !important; font-size:15px !important; font-weight:600 !important; border-color:var(--gp-border-color, #a0a6b1) !important; background:var(--gp-surface) !important; color:var(--gp-text) !important; padding-inline:18px !important; }
+:root :is(.filter-trigger,.work-filter-trigger)[aria-expanded=true] { background:var(--gp-selection) !important; border-color:var(--gp-border-color, #a0a6b1) !important; color:var(--gp-accent) !important; }
+/* Paint Material's field border once. Native notched segments must not each get rounded corners. */
+:root .mat-mdc-form-field { --mdc-outlined-text-field-container-shape:16px; --mat-form-field-container-height:50px; --mat-form-field-container-vertical-padding:13px; }
+:root .mat-mdc-form-field .mdc-text-field--outlined { border:1px solid var(--gp-border-color, #a0a6b1) !important; border-radius:16px !important; background:var(--gp-surface) !important; box-shadow:none !important; }
+:root .mat-mdc-form-field .mdc-notched-outline { border:0 !important; }
+:root .mat-mdc-form-field .mdc-notched-outline>* { border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important; }
+:root .mat-mdc-form-field .mat-mdc-input-element { border:0 !important; border-radius:0 !important; background:transparent !important; outline:0 !important; box-shadow:none !important; }
+:root .mat-mdc-form-field .mdc-floating-label--float-above { background:var(--gp-surface) !important; padding-inline:5px; color:var(--gp-muted) !important; }
+:root .mat-mdc-form-field.mat-focused .mdc-text-field--outlined { border-color:var(--gp-border-color, #a0a6b1) !important; }
+:root :is(.mat-mdc-select-panel,.mat-mdc-autocomplete-panel,.mat-mdc-menu-panel,.work-filter-popover,.work-items-status-menu,.apps-panel,.popover,.document-menu,.menu) { border:1px solid var(--gp-border-color, #a0a6b1) !important; border-radius:22px !important; background:var(--gp-surface) !important; color:var(--gp-text) !important; box-shadow:var(--gp-float-shadow) !important; }
+:root :is(.mat-mdc-option,.work-filter-option,.person-option,.person-picker-option) { min-height:48px !important; font-size:15px !important; }
+/* Separators, not heavy colored boxes, carry list hierarchy. */
+:root :is(.surface,.profile-section-card,.stats-card,.stat-card,.overview-metric,.metric-card,.chart-card,.account-card,.file-card,.document-card,.meeting-card,.team-card,.project-card,.board-card,.release-card,.agent-card) { border-color:var(--gp-border-color, #a0a6b1) !important; border-radius:20px !important; background-color:var(--gp-surface) !important; box-shadow:var(--gp-shadow) !important; color:var(--gp-text); }
+:root :is(.file-card,.document-card,.meeting-card,.team-card,.project-card,.board-card,.release-card,.agent-card):hover { border-color:var(--gp-border-color, #a0a6b1) !important; box-shadow:0 4px 20px rgb(0 0 0 / 7%) !important; }
+:root :is(.overview-metric,.stats-card,.stat-card,.metric-card) strong { font-weight:750 !important; color:var(--gp-text) !important; }
+:root :is(.gp-avatar,.person-avatar,.member-avatar,.user-avatar,.assignee-avatar,.reporter-avatar,.editor-avatar,.app-symbol) { border-radius:24% !important; font-family:var(--gp-font) !important; font-weight:700 !important; }
+/* Compact people cards are shared with the Web Component's shadow stylesheet. */
+:root :is(.gp-person-surface,.gp-person-preview) { font-family:var(--gp-font) !important; background:var(--gp-surface) !important; color:var(--gp-text) !important; border-color:var(--gp-border-color, #a0a6b1) !important; border-radius:18px !important; box-shadow:var(--gp-shadow) !important; }
+:root .gp-person-surface { display:grid !important; grid-template-columns:56px minmax(0,1fr) !important; align-items:start !important; gap:8px 14px !important; padding:18px !important; text-align:left !important; height:100% !important; min-height:118px; }
+.gp-person-surface>.gp-person-cover { display:none !important; }
+.gp-person-surface>.gp-person-avatar { grid-column:1; grid-row:1 / span 4; width:56px !important; height:56px !important; margin:0 !important; border:0 !important; border-radius:24% !important; font-size:20px !important; }
+.gp-person-surface>.gp-person-copy { grid-column:2; grid-row:1; gap:5px !important; text-align:left !important; }
+:root .gp-person-copy strong { font-size:17px !important; font-weight:750 !important; color:var(--gp-text) !important; }
+:root .gp-person-designation { font-size:14px !important; color:var(--gp-muted) !important; }
+:root .gp-person-copy a { font-size:13px !important; color:var(--gp-muted) !important; }
+:root .gp-person-remove { grid-column:2; justify-self:start; margin:3px 0 0 !important; min-height:34px !important; padding:7px 13px !important; border-radius:999px !important; font-size:13px !important; color:var(--gp-accent) !important; background:var(--gp-selection) !important; }
+:root :is(.people-card-grid,.team-profile-member-grid,.team-members-grid,.members-grid,.project-member-grid,.user-selection-grid) { grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr)) !important; gap:14px !important; }
+/* Operational tables; rich document and spreadsheet cells retain authored typography. */
+:root :is(.mat-mdc-table,.users-table,.work-items-table,.projects-mat-table,.items-table,.google-table,.compact-work-table,.tc-table,.planning-table,.table-scroll>table,.table-wrap>table) { background:var(--gp-surface) !important; border-collapse:collapse; }
+:root :is(.mat-mdc-table,.users-table,.work-items-table,.projects-mat-table,.items-table,.google-table,.compact-work-table,.tc-table,.planning-table,.table-scroll>table,.table-wrap>table) :is(th,td) { font-family:var(--gp-font) !important; border-color:var(--gp-border-color, #a0a6b1) !important; border-inline:0 !important; line-height:1.45 !important; }
+:root :is(.mat-mdc-table,.users-table,.work-items-table,.projects-mat-table,.items-table,.google-table,.compact-work-table,.tc-table,.planning-table,.table-scroll>table,.table-wrap>table) th { height:50px !important; font-size:12px !important; color:var(--gp-muted) !important; font-weight:650 !important; letter-spacing:.02em !important; background:var(--gp-surface-muted) !important; }
+:root :is(.mat-mdc-table,.users-table,.work-items-table,.projects-mat-table,.items-table,.google-table,.compact-work-table,.tc-table,.planning-table,.table-scroll>table,.table-wrap>table) td { height:66px; padding-block:14px !important; font-size:15px !important; color:var(--gp-text) !important; }
+:root :is(.tabs,.profile-tabs,.calendar-view-tabs,.conversation-tabs,.list-filters,.actor-filters) button { font-family:var(--gp-font) !important; font-size:15px !important; font-weight:650 !important; }
+:root :is(.workspace-dialog,.suite-dialog,.instru-dialog,.forge-dialog,.tc-dialog,.new-dialog,.work-item-dialog,.document-share-dialog,.mat-mdc-dialog-surface) { border:1px solid var(--gp-border-color, #a0a6b1) !important; border-radius:24px !important; background:var(--gp-surface) !important; color:var(--gp-text) !important; box-shadow:var(--gp-float-shadow) !important; }
+:root :is(.workspace-dialog,.suite-dialog,.instru-dialog,.forge-dialog,.tc-dialog,.new-dialog,.work-item-dialog,.document-share-dialog) > :is(header,footer) { border-color:var(--gp-border-color, #a0a6b1) !important; gap:12px; }
+:root :is(.dialog-content,.dialog-body,.tc-dialog-scroll,.office-tool-body,.event-dialog-body) { padding:24px !important; }
+/* App-specific list anatomy: title, supporting text, trailing metadata/action. */
+.chatly-shell .conversation-list { padding-top:12px !important; border-color:var(--gp-border-color, #a0a6b1) !important; }
+.conversation-list>header { padding:16px 22px !important; }
+.conversation-list>header h1 { font-size:34px !important; margin:8px 0 0 !important; }
+.conversation-list>.search-field { margin:10px 18px 16px !important; }
+.chatly-shell .conversation { position:relative; display:flex; gap:14px !important; padding:18px 18px 18px 22px !important; min-height:102px !important; border:0 !important; border-radius:0 !important; background:var(--gp-surface) !important; }
+.chatly-shell .conversation::after { content:''; position:absolute; bottom:0; left:90px; right:18px; height:1px; background:var(--gp-separator); }
+.chatly-shell .conversation>.gp-avatar { width:54px !important; height:54px !important; font-size:19px !important; border-radius:24% !important; }
+.conversation-title strong { font-size:17px !important; font-weight:750 !important; color:var(--gp-text) !important; }
+.conversation-title small { font-size:12px !important; color:var(--gp-muted) !important; }
+.conversation-preview { font-size:14px !important; color:var(--gp-muted) !important; line-height:1.45 !important; display:-webkit-box !important; -webkit-line-clamp:2; -webkit-box-orient:vertical; white-space:normal !important; overflow:hidden; }
+.chatly-shell .conversation.selected { background:var(--gp-selection) !important; }
+.chatly-shell .conversation:not(.selected):hover { background:var(--gp-surface-muted) !important; }
+.unread-badge { color:white !important; background:#1769ff !important; border-radius:999px !important; min-width:20px; font-size:11px !important; }
+.conversation-heading h2 { color:var(--gp-text) !important; font-size:20px !important; font-weight:750 !important; }
+.chatly-shell .composer { border:1px solid var(--gp-border-color, #a0a6b1) !important; border-radius:24px !important; background:var(--gp-surface) !important; margin:12px 20px 18px !important; padding:12px 14px !important; }
+.chatly-shell .composer>textarea { border:0 !important; outline:0 !important; box-shadow:none !important; background:transparent !important; padding:8px !important; font-size:16px !important; }
+/* File-library chrome only. Document sheets, slide artwork and spreadsheet formatting are untouched. */
+:root :is(.file-titlebar,.document-titlebar,.file-menubar,.document-menubar,.toolbar,.document-toolbar) { border-color:var(--gp-border-color, #a0a6b1) !important; background:var(--gp-surface) !important; color:var(--gp-text) !important; }
+:root :is(.file-titlebar,.document-titlebar) { min-height:74px; padding-inline:24px !important; }
+:root :is(.file-titlebar,.document-titlebar) input { font-family:var(--gp-font) !important; color:var(--gp-text) !important; font-size:22px !important; font-weight:700 !important; }
+:root :is(.toolbar,.document-toolbar,.file-menubar,.document-menubar) :is(button,select,input) { font-family:var(--gp-font) !important; border-radius:10px; }
+:root :is(.document-card-copy h2,.file-card h2,.meeting-card h2,.service-row h3) { color:var(--gp-text) !important; font-size:19px !important; font-weight:750 !important; letter-spacing:-.02em !important; }
+:root :is(.document-card-copy small,.file-card .muted,.meeting-card p,.service-row .muted) { font-size:14px !important; color:var(--gp-muted) !important; }
+:root :is(.agenda-event,.release-row,.deployment-row,.service-row,.repo-row,.share-member,.person-row) { border-color:var(--gp-border-color, #a0a6b1) !important; padding-block:20px !important; }
+.calendar-navigation h2 { font-size:26px !important; color:var(--gp-text) !important; font-weight:750 !important; }
+.calendar-surface { border-color:var(--gp-border-color, #a0a6b1) !important; border-radius:20px !important; }
+.calendar-daynames { color:var(--gp-muted) !important; background:var(--gp-surface) !important; }
+.calendar-day { border-color:var(--gp-border-color, #a0a6b1) !important; }
+.calendar-day.today .day-number { background:#1769ff !important; color:white !important; }
+.account-card .account-form { gap:22px !important; }
+.account-card .section-heading h2 { font-size:32px !important; font-weight:800 !important; }
+.account-card .account-form>label { font-size:14px !important; color:var(--gp-text) !important; }
+.account-card .account-form input:not([type=checkbox]) { height:50px !important; border-radius:16px !important; border-color:var(--gp-border-color, #a0a6b1) !important; font-size:16px !important; }
+.account-card .password-field { border-radius:16px !important; border-color:var(--gp-border-color, #a0a6b1) !important; }
+.account-card .password-field input { border:0 !important; }
+.account-card .account-person strong { font-size:20px !important; color:var(--gp-text) !important; }
+:root :is(.stats-card,.stat-card,.surface,.chart-card) { --gp-local-muted:var(--gp-muted); }
+/* Keyboard focus stays visible on the outer control, including search wrappers. */
+:root :is(button,a,[role=button],[tabindex='0']):focus-visible { outline:2px solid var(--gp-accent) !important; outline-offset:3px !important; }
+:root :is(.search-field,.search-box,.search-bar,.inline-search,.work-items-search,.work-filter-search,.planning-backlog-search,.header-search):has(input:focus-visible) { outline:2px solid var(--gp-accent); outline-offset:2px; }
+@media(max-width:760px) {
+  :root { --gp-space-page:20px; --gp-title-size:34px; }
+  .app-header { padding-inline:10px !important; }
+  :root :is(.gp-workspace-hero,.workspace-hero,.suite-hero) { padding-bottom:22px !important; margin-bottom:22px !important; }
+  :root :is(.workspace-dialog,.suite-dialog,.instru-dialog,.forge-dialog,.tc-dialog,.new-dialog,.work-item-dialog) { max-width:calc(100vw - 20px) !important; border-radius:22px !important; }
+  :root :is(.dialog-content,.dialog-body,.tc-dialog-scroll,.office-tool-body,.event-dialog-body) { padding:20px !important; }
+  .conversation-list>header h1 { font-size:36px !important; }
+  .chatly-shell .composer { margin-inline:12px !important; }
+}
+@media(prefers-reduced-motion:no-preference) {
+  :is(.button,.gp-button,.conversation,.file-card,.document-card,.meeting-card,.service-row) { transition:background-color .16s ease, border-color .16s ease, box-shadow .16s ease !important; }
+}
+@media(prefers-reduced-motion:reduce) {
+  :is(.button,.gp-button,.conversation,.file-card,.document-card,.meeting-card,.service-row) { transition:none !important; animation:none !important; }
+}
+
+/* Directory and assignment rows use the same avatar and supporting designation. */
+:root :is(.gp-people-avatar,.member-option-avatar,.global-project-avatar,.ticket-person-avatar) { border-radius:24% !important; font-family:var(--gp-font) !important; font-weight:750 !important; }
+:root :is(.gp-people-grid,.team-profile-members-grid,.team-members-cards) { grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr)) !important; gap:14px !important; }
+:root .member-picker { background:var(--gp-surface) !important; color:var(--gp-text) !important; }
+:root .member-picker-heading h2 { font-family:var(--gp-font) !important; font-size:28px !important; font-weight:800 !important; letter-spacing:-.035em !important; color:var(--gp-text) !important; }
+:root .member-picker-list { gap:0 !important; }
+:root .member-option { border:0 !important; border-bottom:1px solid var(--gp-border-color, #a0a6b1) !important; border-radius:0 !important; box-shadow:none !important; background:var(--gp-surface) !important; padding:18px 12px !important; gap:14px !important; min-height:92px !important; }
+:root .member-option.is-selected { background:var(--gp-selection) !important; }
+:root .member-option-copy strong { color:var(--gp-text) !important; font-size:17px !important; font-weight:750 !important; }
+:root :is(.member-option-designation,.member-option-copy small,.member-option-meta small) { color:var(--gp-muted) !important; font-size:13px !important; }
+:root .member-option-avatar { width:52px !important; height:52px !important; font-size:19px !important; }
+:root .gp-people-option { padding-block:9px !important; gap:13px !important; }
+:root .gp-people-copy strong { color:var(--gp-text) !important; font-size:16px !important; font-weight:700 !important; }
+:root .gp-people-copy small { color:var(--gp-muted) !important; font-size:13px !important; }
+:root :is(.gp-people-search,.member-picker-summary,.member-picker-actions) { border-color:var(--gp-border-color, #a0a6b1) !important; background:var(--gp-surface) !important; }
+:root .gp-people-search { margin:8px 12px 12px; border:1px solid var(--gp-border-color, #a0a6b1) !important; border-radius:999px !important; height:48px; padding:0 14px !important; }
+:root .gp-people-search input { border:0 !important; outline:0 !important; border-radius:0 !important; background:transparent !important; height:44px !important; font-size:15px !important; box-shadow:none !important; }
+:root :is(.gp-people-kinds button,.people-chip,.planning-person-chip) { border-radius:999px !important; font-family:var(--gp-font) !important; font-weight:650 !important; }
+
+/* Astra's users list is a resizable grid, not a native table. Keep its layout and align its chrome. */
+:root :is(.matrix-data-frame,.matrix-row-scroller) { border-color:var(--gp-border-color, #a0a6b1) !important; background:var(--gp-surface) !important; }
+:root .matrix-data-frame { border-radius:20px !important; }
+:root .matrix-row .cell { border-color:var(--gp-border-color, #a0a6b1) !important; font-family:var(--gp-font) !important; }
+:root .matrix-header-row .cell,:root .matrix-row.header-row .cell { color:var(--gp-muted) !important; background:var(--gp-surface-muted) !important; font-size:12px !important; font-weight:650 !important; letter-spacing:.02em !important; }
+:root .matrix-row.data-row .cell { color:var(--gp-text) !important; font-size:15px !important; }
+:root .matrix-row.data-row:hover { background:var(--gp-surface-muted) !important; }
+:root :is(.matrix-search-input-frame,.search-shell,.google-search-shell,.kb-board-search,.docs-search,.team-search,.epics-filter-search,.add-testcases-search,.search-control,.release-search-field):has(input:focus-visible) { outline:2px solid var(--gp-accent) !important; outline-offset:2px; }
+
+/* Retire the old pseudo-element outline so outlined fields have exactly one stroke. */
+:root .mat-mdc-form-field .mdc-text-field--outlined::after { display:none !important; content:none !important; border:0 !important; }
+:root :is(.kb-button,.teams-create-button,.users-create-button,.roles-create-button,.projects-create-button,.kb-create-submit,.gp-workspace-hero__actions>button) { min-height:48px !important; height:48px !important; border-radius:999px !important; padding-inline:20px !important; font-family:var(--gp-font) !important; font-size:15px !important; line-height:1.2 !important; font-weight:650 !important; box-shadow:none !important; }
+:root :is(.teams-create-button,.users-create-button,.roles-create-button,.projects-create-button,.kb-button-primary,.kb-create-submit) { background:#1769ff !important; border:1px solid var(--gp-border-color, #a0a6b1) !important; color:#fff !important; }
+:root .kb-button-outline { background:var(--gp-surface) !important; border:1px solid var(--gp-border-color, #a0a6b1) !important; color:var(--gp-text) !important; }
+:root :is(.mat-mdc-card,.kb-work-card,.scrum-item-card,.kanban-work-item-card,.planning-backlog-card,.kb-detail-section-card,.work-item-section-card) { border-radius:18px !important; border-color:var(--gp-border-color, #a0a6b1) !important; background:var(--gp-surface) !important; color:var(--gp-text) !important; box-shadow:var(--gp-shadow) !important; }
+:root :is(.kb-work-card,.scrum-item-card,.kanban-work-item-card,.planning-backlog-card) :is(h3,.work-item-card-title,.kb-work-title) { font-size:17px !important; line-height:1.4 !important; font-weight:750 !important; color:var(--gp-text) !important; }
+:root .mat-mdc-card-title { color:var(--gp-text) !important; font-family:var(--gp-font) !important; font-size:19px !important; line-height:1.4 !important; font-weight:750 !important; }
+:root :is(.tc-dialog,.new-dialog,.event-dialog,.work-item-dialog,.workspace-dialog,.instru-dialog,.forge-dialog)>footer>button { min-height:48px !important; border-radius:999px !important; padding-inline:20px !important; font-family:var(--gp-font) !important; font-size:15px !important; font-weight:650 !important; }
+
+/* Validation remains distinct from neutral focus and selected UI states. */
+:root .mat-mdc-form-field.mat-form-field-invalid .mdc-text-field--outlined { border-color:var(--gp-border-color, #a0a6b1) !important; }
+:root .mat-mdc-form-field.mat-form-field-invalid .mdc-floating-label { color:#c23535 !important; }
+:root :is(input,select,textarea)[aria-invalid='true']:not(.mat-mdc-input-element) { border-color:var(--gp-border-color, #a0a6b1) !important; }
+
+}
+
+/* Density belongs to the control's context, never to nested layout wrappers. */
+@layer gp-clarity {
+  :root :is(app-products,app-boards) .header-search:has(> .search-shell) {
+    height:auto!important; min-height:0!important; padding:0!important; border:0!important;
+    border-radius:0!important; box-shadow:none!important; background:transparent!important;
+  }
+  :root :is(app-releases,.releases-page,.release-profile-page,.release-layout,.release-pulse,.release-status-date-row,.release-create-intro) {width:100%!important;max-width:none!important;min-width:0!important}
+  :root .kb-work-item-dialog .kb-item-title-row {grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px 24px!important;align-items:start!important}
+  :root .kb-work-item-dialog .kb-item-title-row>.kb-detail-status-cell {grid-column:1!important;grid-row:1!important;max-width:none!important}
+  :root .kb-work-item-dialog .kb-item-title-row>.kb-detail-priority-cell {grid-column:1!important;grid-row:2!important}
+  :root .kb-work-item-dialog .kb-item-title-row>.kb-detail-assignee-cell {grid-column:2!important;grid-row:1!important}
+  :root .kb-work-item-dialog .kb-item-title-row>.kb-detail-reporter-cell {grid-column:2!important;grid-row:2!important}
+  :root .kb-work-item-dialog .kb-item-title-row>.kb-detail-title-section {grid-column:1/-1!important;grid-row:3!important}
+  :root .gp-person-surface .gp-person-details {width:36px!important;min-width:36px!important;height:36px!important;min-height:36px!important;padding:0!important;grid-column:2!important;justify-self:end!important}
+  :root gp-workspace-shell[current=documents] :is(.suite-page,.suite-body,.document-titlebar) {width:100%!important;max-width:none!important;min-width:0!important}
+  :root gp-workspace-shell[editor-mode=true] :is(.toolbar,.document-toolbar,.file-menubar,.slide-arrange-tools,.sheet-data-tools) {display:flex!important;align-items:center!important;gap:6px!important;flex-wrap:wrap!important;padding:8px 12px!important;min-height:48px!important;height:auto!important;background:var(--gp-surface-muted)!important;border-radius:10px!important;box-shadow:none!important}
+  :root gp-workspace-shell[editor-mode=true] :is(.toolbar,.document-toolbar,.file-menubar,.slide-arrange-tools,.sheet-data-tools) :is(button,select,input:not([type=checkbox]):not([type=radio])) {height:34px!important;min-height:34px!important;width:auto!important;min-width:32px!important;max-width:200px!important;flex:0 0 auto!important;line-height:1.2!important;padding:4px 9px!important;border:1px solid transparent!important;border-radius:6px!important;font-size:14px!important;box-shadow:none!important;white-space:nowrap!important}
+  :root gp-workspace-shell[editor-mode=true] .toolbar input[type=number] {width:64px!important}
+  :root gp-workspace-shell[editor-mode=true] .toolbar input[type=color] {width:34px!important;padding:3px!important}
+  :root gp-workspace-shell[editor-mode=true] :is(.toolbar,.document-toolbar,.file-menubar) button:hover {background:var(--gp-selection)!important}
+  :root gp-workspace-shell[editor-mode=true] .sheet-footer {display:flex!important;align-items:center!important;flex-wrap:nowrap!important;gap:6px!important;padding:6px 12px!important;min-height:46px!important;overflow-x:auto!important;background:var(--gp-surface)!important;flex-shrink:0!important}
+  :root gp-workspace-shell[editor-mode=true] .sheet-footer button {height:34px!important;min-height:34px!important;min-width:34px!important;width:auto!important;flex:0 0 auto!important;padding:5px 12px!important;font-size:14px!important;line-height:22px!important;border-radius:6px!important;white-space:nowrap!important;color:var(--gp-text)!important}
+  :root gp-workspace-shell[editor-mode=true] .sheet-footer .sheet-tab.current {background:var(--gp-selection)!important;color:var(--gp-accent)!important;border-bottom:2px solid var(--gp-border-color, #a0a6b1)!important}
+  :root .chatly-shell .emoji-picker {max-width:100%!important;box-sizing:border-box!important;background:var(--gp-surface)!important;color:var(--gp-text)!important}
+  :root .chatly-shell .emoji-picker button {width:36px!important;min-width:36px!important;height:36px!important;min-height:36px!important;padding:4px!important;border:0!important;border-radius:8px!important;background:transparent!important;font-size:23px!important;line-height:28px!important;font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif!important;box-shadow:none!important}
+  :root .chatly-shell .emoji-picker button:hover {background:var(--gp-selection)!important}
+  :root .chatly-shell .emoji-picker header button {width:auto!important;font:13px/1.3 var(--gp-font)!important;padding:4px 8px!important}
+  :root gp-workspace-shell[current=meetings] .room-header {display:flex!important;justify-content:space-between!important;align-items:center!important;flex-wrap:wrap!important;gap:16px!important}
+  :root gp-workspace-shell[current=meetings] .room-layout {display:grid!important;grid-template-columns:minmax(0,1fr) minmax(260px,320px)!important;min-width:0!important;gap:16px!important}
+  :root gp-workspace-shell[current=meetings] .room-layout.no-chat {grid-template-columns:minmax(0,1fr)!important}
+  :root gp-workspace-shell[current=meetings] :is(.room-stage,.room-title,.video-grid,.meeting-chat) {min-width:0!important;max-width:100%!important}
+  :root gp-workspace-shell[current=meetings] .meeting-controls {display:flex!important;flex-wrap:wrap!important;gap:12px!important;justify-content:center!important;padding:12px!important;position:sticky!important;bottom:0!important}
+  :root gp-workspace-shell[current=meetings] .call-control {width:auto!important;min-width:44px!important;min-height:44px!important;height:auto!important;padding:10px 14px!important;border-radius:12px!important;line-height:1.3!important;font-size:14px!important;white-space:nowrap!important}
+  @media(max-width:700px) {
+    :root .kb-work-item-dialog .kb-item-title-row {gap:12px!important}
+    :root gp-workspace-shell[current=meetings] .room-layout {grid-template-columns:minmax(0,1fr)!important}
+    :root gp-workspace-shell[current=meetings] .meeting-chat {max-height:400px!important;overflow:auto!important}
+  }
+  @media(max-width:480px) {
+    :root .kb-work-item-dialog .kb-item-title-row {display:flex!important;flex-direction:column!important;align-items:stretch!important}
+  }
+}
+
+@layer gp-clarity {
+ :root .chatly-shell .composer {position:relative!important}
+ :root .chatly-shell .composer>.emoji-picker {position:absolute!important;top:auto!important;bottom:calc(100% + 8px)!important;right:0!important;width:min(390px,100%)!important;max-height:320px!important;overflow:auto!important;display:block!important;padding:12px!important;border:1px solid var(--gp-border-color, #a0a6b1)!important;border-radius:16px!important;box-shadow:var(--gp-float-shadow)!important;z-index:40!important}
+ :root .chatly-shell .composer>.emoji-picker>nav {display:flex!important;flex-wrap:wrap!important;gap:4px!important;margin-bottom:8px!important}
+ :root .chatly-shell .composer>.emoji-picker>nav button {font:13px/1.3 var(--gp-font)!important;width:auto!important;padding:4px 8px!important}
+ :root .chatly-shell .composer>.emoji-picker>div {display:grid!important;grid-template-columns:repeat(auto-fill,minmax(36px,1fr))!important;gap:4px!important}
+ :root gp-workspace-shell[editor-mode=true] :is(.file-titlebar,.document-titlebar) {display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:10px!important;width:100%!important;max-width:none!important;padding:12px 16px!important;border-bottom:1px solid var(--gp-border-color, #a0a6b1)!important;background:var(--gp-surface)!important}
+ :root gp-workspace-shell[editor-mode=true] .file-titlebar>input {flex:1 1 220px!important;min-width:100px!important;width:auto!important;max-width:none!important;font-size:20px!important;height:44px!important;min-height:44px!important;border:1px solid transparent!important;border-radius:8px!important;padding:6px 10px!important}
+ :root gp-workspace-shell[editor-mode=true] .document-title-copy {flex:1 1 220px!important;min-width:160px!important;max-width:none!important}
+ :root gp-workspace-shell[editor-mode=true] :is(.file-titlebar,.document-titlebar)>.button {min-height:40px!important;height:40px!important;font-size:14px!important;padding:6px 16px!important;flex-shrink:0!important}
+ :root gp-workspace-shell[editor-mode=true] .file-menubar details {position:relative!important}
+ :root gp-workspace-shell[editor-mode=true] .file-menubar .menu {position:absolute!important;z-index:500!important;min-width:220px!important;max-height:65dvh!important;overflow:auto!important;padding:8px!important;background:var(--gp-surface)!important;border:1px solid var(--gp-border-color, #a0a6b1)!important;border-radius:12px!important;box-shadow:var(--gp-float-shadow)!important}
+ :root gp-workspace-shell[editor-mode=true] .file-menubar .menu button {display:block!important;width:100%!important;max-width:none!important;text-align:left!important;white-space:normal!important;height:auto!important;min-height:36px!important}
+}

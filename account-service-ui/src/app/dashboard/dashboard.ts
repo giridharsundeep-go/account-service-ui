@@ -1,3 +1,5 @@
+import { deliveryIndicators } from './delivery-metrics';
+import { ActorIconComponent } from '../shared/actor-icon';
 import { Component, OnDestroy, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -15,7 +17,7 @@ import { WorkspaceSettingsService } from '../shared/workspace-settings.service';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, WorkspaceHeroComponent],
+  imports: [ActorIconComponent, CommonModule, FormsModule, WorkspaceHeroComponent],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css', '../shared/field-controls.css'],
 })
@@ -38,12 +40,18 @@ export class Dashboard implements OnDestroy {
   team = 'ALL';
   updated: Date | null = null;
   readonly colors = ['#7c3aed', '#4f46e5', '#2563eb', '#16a34a', '#eab308', '#ea580c', '#dc2626'];
+  private currentProject: number | null = null;
   private sync = effect(() => {
     this.dialog.revision();
     this.workflow.revision();
     const id = this.context.selectedProjectId();
     this.subscription?.unsubscribe();
-    this.team = 'ALL';
+    if (id !== this.currentProject) {
+      this.currentProject = id;
+      this.team = 'ALL';
+      this.updated = null;
+      this.snapshot = {items:[],sprints:[],releases:[],teams:[],users:[],unavailable:[]};
+    }
     if (!id) {
       this.snapshot = {
         items: [],
@@ -57,7 +65,13 @@ export class Dashboard implements OnDestroy {
     }
     this.refresh(id);
   });
+  autoRefresh = true;
+  private refreshTimer = typeof window === 'undefined' ? undefined : setInterval(() => {
+    if (this.autoRefresh && !this.loading && document.visibilityState === 'visible') this.refresh();
+  }, 30000);
+  get indicators() { return this.metric('indicators', () => deliveryIndicators(this.items, status => this.data.done(status))); }
   ngOnDestroy() {
+    clearInterval(this.refreshTimer);
     this.subscription?.unsubscribe();
   }
   refresh(id = this.context.selectedProjectId()) {
@@ -289,10 +303,11 @@ export class Dashboard implements OnDestroy {
   }
   get people() {
     return this.metric('people', () => {
-      const map = new Map<string, { name: string; open: number; done: number; color: string }>();
+      const map = new Map<string, { id: number | null; name: string; open: number; done: number; color: string }>();
       for (const i of this.execution) {
         const key = String(i.assigneeId ?? 'none');
         const row = map.get(key) ?? {
+          id: i.assigneeId,
           name: i.assignee,
           open: 0,
           done: 0,

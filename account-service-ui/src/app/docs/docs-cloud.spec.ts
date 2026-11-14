@@ -1,3 +1,5 @@
+import { signal } from '@angular/core';
+import { ProjectContextService } from '../project-context.service';
 import { ChangeDetectorRef } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
@@ -6,6 +8,7 @@ import { AuthService } from '../auth.service';
 import { Docs } from './docs';
 
 describe('Docs cloud workspace', () => {
+  const selectedProjectId=signal<number|null>(7);
   let docs: Docs;
   let http: {
     get: ReturnType<typeof vi.fn>;
@@ -14,9 +17,11 @@ describe('Docs cloud workspace', () => {
   };
 
   beforeEach(() => {
+    selectedProjectId.set(7);
     http = { get: vi.fn(() => of([])), post: vi.fn(), put: vi.fn() };
     TestBed.configureTestingModule({
       providers: [
+        {provide:ProjectContextService,useValue:{selectedProjectId,selectedProject:()=>({id:selectedProjectId(),name:'Platform'})}},
         { provide: HttpClient, useValue: http },
         {
           provide: AuthService,
@@ -47,9 +52,11 @@ describe('Docs cloud workspace', () => {
   it('loads the library using the authenticated session instead of depending on one storage format', async () => {
     await docs.loadInitialData(false);
     expect(docs.errorMessage).toBe('');
-    expect(http.get).toHaveBeenCalledTimes(3);
+    expect(http.get).toHaveBeenCalledTimes(1);
     for (const [url] of http.get.mock.calls) expect(String(url)).toContain('user_id=42');
   });
+
+  it('does not fetch an unscoped library when no project is selected', async()=>{selectedProjectId.set(null);await docs.loadInitialData(false);expect(http.get).not.toHaveBeenCalled();expect(docs.loading).toBe(false);});
 
   it('keeps the editor and its content open after saving a new document', async () => {
     docs.selectedSpace = { id: 1 };
