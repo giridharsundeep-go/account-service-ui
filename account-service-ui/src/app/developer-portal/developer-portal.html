@@ -1,0 +1,122 @@
+<main class="project-docs developer-portal">
+  <header class="developer-hero">
+    <div>
+      <span class="docs-eyebrow">GREATLEY POSHLEY · INTERNAL DEVELOPER PORTAL</span>
+      <h1>Developer Center</h1>
+      <p>One place for app ownership, AWS development deployments, API contracts, and security guidance.</p>
+    </div>
+    <span class="developer-internal-badge"><span aria-hidden="true">●</span> Internal use · sign-in required</span>
+  </header>
+
+  <nav class="docs-document-menu developer-page-nav" aria-label="Developer documentation pages">
+    <a href="#overview">Overview</a>
+    <a href="#deployment">AWS / EKS deployment</a>
+    <a href="#application-docs">App documentation</a>
+    <a href="#api-platform">API gateway</a>
+    <a href="#security">Security</a>
+  </nav>
+
+  <section id="overview" class="developer-section">
+    <header class="docs-library-header developer-section-heading">
+      <div><span class="docs-eyebrow">DEVELOPMENT ENVIRONMENT</span><h2>Shared AWS platform</h2></div>
+      <a class="developer-domain" href="https://developers.greatley-poshley.com/developers">developers.greatley-poshley.com</a>
+    </header>
+    <div class="developer-summary-grid">
+      <article><strong>32</strong><span>repository guides</span><small>UI, backend, and shared runtime projects</small></article>
+      <article><strong>1</strong><span>central API gateway</span><small>Route ownership, auth, throttles, and key plans</small></article>
+      <article><strong>EKS</strong><span>development cluster</span><small>Container images in ECR, workloads in Kubernetes</small></article>
+    </div>
+    <div class="developer-callout">
+      <strong>Development environment only</strong>
+      <p>This portal describes the intended AWS development setup. It is not connected to AWS yet, and it does not create clusters, API keys, deployments, or DNS records.</p>
+    </div>
+    <div class="developer-flow" aria-label="AWS development deployment flow">
+      <span>GitHub</span><i aria-hidden="true">→</i><span>GitHub Actions</span><i aria-hidden="true">→</i><span>Amazon ECR</span><i aria-hidden="true">→</i><span>Amazon EKS</span><i aria-hidden="true">→</i><span>API Gateway / app ingress</span>
+    </div>
+  </section>
+
+  <section id="deployment" class="developer-section docs-template-gallery">
+    <header class="developer-section-title"><div><span class="docs-eyebrow">INTERNAL PLAYBOOK</span><h2>AWS development deployment steps</h2></div><span>Start with one UI and one backend</span></header>
+    <ol class="developer-steps">
+      <li><span>01</span><div><h3>Confirm the repository contract</h3><p>For each of the 32 repos, record its default branch, owner, build command, container port, startup command, health path, environment variables, and dependencies. Keep API contracts in OpenAPI. The repository cards below show known local ports; fields marked “Confirm from repo” still need source verification.</p></div></li>
+      <li><span>02</span><div><h3>Set up the AWS development boundary</h3><p>Choose one AWS region and a non-production account, set a budget alert, and create a VPC with public ingress and private application subnets across at least two Availability Zones. Keep EKS worker nodes and MySQL data off public subnets.</p></div></li>
+      <li><span>03</span><div><h3>Create EKS and image repositories</h3><p>Create an Amazon EKS cluster with managed EC2 nodes for the development workloads. Create one Amazon ECR repository per deployable app. Install the EBS CSI driver before using persistent database volumes.</p></div></li>
+      <li><span>04</span><div><h3>Connect GitHub Actions without long-lived AWS keys</h3><p>Configure GitHub OIDC federation to assume a narrowly scoped AWS deployment role. On a protected branch, build the repo’s image, tag it with the commit SHA, scan it, push it to ECR, then update the Kubernetes release.</p></div></li>
+      <li><span>05</span><div><h3>Deploy into the development namespace</h3><p>Use a Helm chart or Kubernetes manifests per app. Define a Deployment, ClusterIP Service, readiness and liveness probes, resource requests and limits, and a ConfigMap for non-secret settings. Use separate namespaces for platform components and app workloads.</p></div></li>
+      <li><span>06</span><div><h3>Start each development MySQL instance with its backend</h3><p>For the requested per-backend MySQL container setup, package the backend and MySQL as a development-only Pod pair with one replica and an EBS-backed PersistentVolumeClaim for database files. Do not store database files in the container layer. Avoid scaling that coupled Pod horizontally. For shared or production data, move the database to Amazon RDS.</p></div></li>
+      <li><span>07</span><div><h3>Expose only approved entry points</h3><p>Keep backend Kubernetes Services private. Route public APIs through the central API Gateway using a private VPC Link integration to an internal load balancer. Expose UI hosts through an AWS Application Load Balancer with HTTPS and an approved host rule.</p></div></li>
+      <li><span>08</span><div><h3>Attach the domain and verify the release</h3><p>Create the Route 53 hosted zone and ACM certificates for <code>developers.greatley-poshley.com</code> and the API domain. Route the developer hostname to this app’s <code>/developers</code> path, or configure an ingress redirect from <code>/</code>. Cloudflare can remain the registrar while its nameservers point to Route 53; transfer registration only if you want registrar management in AWS too. Verify login, health checks, API authorization, logs, and rollback before inviting developers.</p></div></li>
+    </ol>
+    <aside class="developer-callout developer-storage-note"><strong>Persistent MySQL data is required.</strong><p>EBS-backed persistent volumes attach to EC2-backed EKS nodes; they cannot be mounted to Fargate Pods. Keep development databases single-replica and back them up before schema changes.</p></aside>
+  </section>
+
+  <section id="application-docs" class="developer-section">
+    <header class="docs-list-toolbar developer-section-title">
+      <div><span class="docs-eyebrow">SERVICE DIRECTORY</span><h2>Application documentation</h2><p>32 repository guides, with deployment notes and known local ports.</p></div>
+      <label class="developer-search"><span aria-hidden="true">⌕</span><input type="search" [(ngModel)]="query" placeholder="Search apps or repos" aria-label="Search app documentation"></label>
+    </header>
+    <div class="docs-document-grid developer-app-grid">
+      <article class="docs-document-card developer-app-card" *ngFor="let app of filteredApps" [id]="'app-' + app.slug">
+        <div class="docs-document-preview developer-app-preview">
+          <span class="developer-kind" [attr.data-kind]="app.kind">{{app.kind}}</span>
+          <h3>{{app.product}}</h3>
+          <code>{{app.repo}}</code>
+        </div>
+        <div class="docs-document-info developer-app-info">
+          <strong>{{app.repo}}</strong>
+          <span><i aria-hidden="true">↗</i>{{app.kind}}<small>Local port: {{app.port}}</small></span>
+          <p>{{app.purpose}}</p>
+          <details class="developer-app-details">
+            <summary>Deployment and ownership notes</summary>
+            <dl>
+              <div><dt>Image / artifact</dt><dd>{{app.kind === 'SDK' || app.kind === 'Platform' ? 'Version and publish the package; this repo is not a pod workload.' : 'Build an immutable image and push it to the matching Amazon ECR repository.'}}</dd></div>
+              <div><dt>Network</dt><dd>{{app.kind === 'UI' || app.kind === 'Website' ? 'Serve through HTTPS ingress. Route API calls through the approved API hostname.' : app.kind === 'SDK' || app.kind === 'Platform' ? 'No runtime service endpoint.' : 'Use a private Kubernetes Service; publish routes only through the central API Gateway.'}}</dd></div>
+              <div><dt>Complete before deployment</dt><dd>Confirm container port, health path, resource profile, configuration keys, database or event dependencies, and rollback procedure in this repository.</dd></div>
+            </dl>
+          </details>
+          <a class="developer-repo-link" [href]="repositoryUrl(app)" target="_blank" rel="noopener noreferrer">Open GitHub repository ↗</a>
+        </div>
+      </article>
+    </div>
+    <p class="docs-empty" *ngIf="!filteredApps.length">No app or repository matches that search.</p>
+  </section>
+
+  <section id="api-platform" class="developer-section docs-template-gallery">
+    <header class="developer-section-title"><div><span class="docs-eyebrow">API CATALOG AND CONTROL PLANE</span><h2>One central API Gateway</h2></div><span>AWS API Gateway REST API</span></header>
+    <p class="developer-lead">Use one logical gateway for developer-facing APIs, with a route registry that assigns every route to a service owner. Keep backend Services private inside EKS.</p>
+    <div class="developer-api-flow"><span>Client</span><i aria-hidden="true">→</i><span>API Gateway<br><small>authorizers · quotas · throttles · WAF</small></span><i aria-hidden="true">→</i><span>VPC Link v2</span><i aria-hidden="true">→</i><span>Internal ALB</span><i aria-hidden="true">→</i><span>EKS API Service</span></div>
+    <div class="developer-controls-grid">
+      <article><span>01</span><h3>Organize APIs and routes</h3><p>Use one gateway with route prefixes grouped by product, such as <code>/auth</code>, <code>/accounts</code>, <code>/chat</code>, <code>/documents</code>, and <code>/calendar</code>. Each entry needs an OpenAPI spec, owner, backend Service, data classification, stage, and deprecation date.</p></article>
+      <article><span>02</span><h3>Apply usage plans</h3><p>Create development and production plans per consumer. Set per-method rate and burst targets, plus quotas where useful. Use separate keys per app, environment, and integration so a leaked key can be revoked without affecting other clients.</p></article>
+      <article><span>03</span><h3>Keep keys out of code</h3><p>Use API Gateway generated key values. Store issuance metadata—owner, consumer, environment, plan, creation date, rotation date, and status—in the internal registry. Deliver values through an approved secret channel; never commit them or embed them in browser code.</p></article>
+      <article><span>04</span><h3>Protect identity separately</h3><p>API keys identify usage-plan consumers and support metering. They do not authenticate a user or grant authorization. Require the shared identity provider/JWT or a Lambda authorizer, and use IAM authorization for trusted service-to-service calls.</p></article>
+    </div>
+    <div class="developer-callout"><strong>Gateway policy</strong><p>Usage-plan throttles and quotas are best-effort targets, not hard security or cost limits. Pair them with AWS WAF rules, authorization, CloudWatch alarms, and AWS Budgets.</p></div>
+    <div class="developer-reference-links"><strong>AWS implementation references</strong><a href="https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-usage-plans.html" target="_blank" rel="noopener noreferrer">REST API usage plans and API keys ↗</a><a href="https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-private-integration.html" target="_blank" rel="noopener noreferrer">Private API Gateway integrations ↗</a><a href="https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html" target="_blank" rel="noopener noreferrer">EKS load balancer controller ↗</a><a href="https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html" target="_blank" rel="noopener noreferrer">EKS persistent EBS volumes ↗</a></div>
+  </section>
+
+  <section id="security" class="developer-section">
+    <header class="docs-library-header developer-section-heading"><div><span class="docs-eyebrow">INTERNAL SECURITY BASELINE</span><h2>Access, keys, and operations</h2></div></header>
+    <div class="developer-security-grid">
+      <article><h3>Developer portal access</h3><p>Keep the portal authenticated. Enforce access at the AWS ingress or identity layer as well as in the Angular route; a browser-side route guard is not an access-control boundary. Use the workspace identity provider or an ALB OIDC/Cognito rule and limit access to developer groups.</p></article>
+      <article><h3>Credential lifecycle</h3><p>Issue scoped, named keys per consumer and environment. Record owner and expiry, rotate by overlap-and-revoke, revoke immediately on suspected exposure, and review unused keys regularly. Never put secrets in GitHub, container images, frontend bundles, or logs.</p></article>
+      <article><h3>Network and data</h3><p>Use TLS for every public endpoint. Keep MySQL and internal APIs in private subnets, allow only required security-group paths, and use Kubernetes Secrets backed by AWS Secrets Manager or a secrets CSI integration for runtime credentials.</p></article>
+      <article><h3>Audit and recovery</h3><p>Enable API Gateway access logs, EKS control-plane logs, CloudTrail, and application metrics. Alert on 4xx/5xx spikes, throttling, unhealthy Pods, and database storage. Maintain an image rollback path and a tested database restore procedure.</p></article>
+    </div>
+  </section>
+
+  <footer class="developer-docs-footer">
+    <div><strong>Developer Center</strong><span>Internal documentation · Greatley Poshley</span></div>
+    <nav aria-label="Documentation links">
+      <a href="#overview">Overview</a>
+      <a href="#deployment">AWS / EKS deployment</a>
+      <a href="#application-docs">App docs ({{apps.length}})</a>
+      <a href="#api-platform">API gateway</a>
+      <a href="#security">Security baseline</a>
+    </nav>
+    <details class="developer-footer-app-links">
+      <summary>Open an app guide</summary>
+      <div><a *ngFor="let app of apps" [href]="'#app-' + app.slug">{{app.product}} · {{app.repo}}</a></div>
+    </details>
+  </footer>
+</main>
