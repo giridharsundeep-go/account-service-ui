@@ -21,9 +21,9 @@ Services that use the Professy API or Kafka/Redis without their own MySQL dataso
 
 ## Credentials in EKS
 
-Set `SPRING_PROFILES_ACTIVE=eks` on each database-backed Deployment. Populate `DB_USERNAME` and `DB_PASSWORD` from an AWS Secrets Manager secret using the cluster's secret integration, then expose them to the container through a Kubernetes Secret reference. Do not commit a credential manifest or put a password in `DB_URL`.
+Set `SPRING_PROFILES_ACTIVE=eks` on each database-backed Deployment. Populate `DB_PASSWORD` from an AWS Secrets Manager secret using the cluster's secret integration, then expose it to the container through a Kubernetes Secret reference. `DB_USERNAME` defaults to `admin`; set it from a secret/config value when you switch to a per-service account. Do not commit a credential manifest or put a password in `DB_URL`.
 
-The `admin` username can be supplied through the secret as requested. AWS recommends keeping the RDS master user out of applications; create least-privilege users with access only to their service schema and use `admin` for database administration.
+The EKS profile defaults `DB_USERNAME` to `admin` as requested, and you can override it per service. AWS recommends keeping the RDS master user out of applications; create least-privilege users with access only to their service schema and use `admin` for database administration.
 
 Example Deployment environment entries:
 
