@@ -50,10 +50,31 @@ function labels(release: DeploymentRelease): Record<string, string> {
 }
 
 type Workload = {
-  metadata?: { labels?: Record<string, string> };
-  spec?: { replicas?: number; type?: string };
-  status?: { readyReplicas?: number; loadBalancer?: { ingress?: { hostname?: string; ip?: string }[] } };
+  metadata?: { name?: string; labels?: Record<string, string>; annotations?: Record<string, string>;
+    creationTimestamp?: string; generation?: number };
+  spec?: {
+    replicas?: number;
+    type?: string;
+    selector?: { matchLabels?: Record<string, string> };
+    strategy?: { type?: string; rollingUpdate?: { maxSurge?: string | number; maxUnavailable?: string | number } };
+    template?: { spec?: { serviceAccountName?: string; automountServiceAccountToken?: boolean; containers?: {
+      name?: string; image?: string; ports?: { name?: string; containerPort?: number; protocol?: string }[];
+      resources?: { requests?: Record<string, string>; limits?: Record<string, string> };
+      readinessProbe?: { httpGet?: { path?: string; port?: number | string }; tcpSocket?: { port?: number | string };
+        periodSeconds?: number; timeoutSeconds?: number; failureThreshold?: number };
+    }[] } };
+  };
+  status?: {
+    readyReplicas?: number; updatedReplicas?: number; availableReplicas?: number; observedGeneration?: number;
+    conditions?: { type?: string; status?: string; reason?: string; message?: string; lastTransitionTime?: string }[];
+    loadBalancer?: { ingress?: { hostname?: string; ip?: string }[] };
+  };
 };
+
+function safeMetadata(metadata: Record<string, string> | undefined): Record<string, string> {
+  return Object.fromEntries(Object.entries(metadata ?? {}).filter(([key]) =>
+    !/(?:password|secret|token|credential|private.?key|api.?key)/i.test(key)));
+}
 
 async function findOwned(target: ClusterTarget, release: DeploymentRelease, kind: string): Promise<Workload | undefined> {
   const name = release.settings.app;
@@ -76,14 +97,77 @@ export async function checkDeploymentTarget(target: ClusterTarget): Promise<void
 export async function deploymentDetails(target: ClusterTarget, release: DeploymentRelease) {
   const deployment = await findOwned(target, release, 'deployment');
   if (!deployment) return null;
-  const service = release.settings.publicLoadBalancer ? await findOwned(target, release, 'service') : undefined;
+  const selector = Object.entries(labels(release)).map(([key, value]) => `${key}=${value}`).join(',');
+  const [service, podList, metricOutput] = await Promise.all([
+    release.settings.publicLoadBalancer ? findOwned(target, release, 'service') : undefined,
+    kubectl(target, ['get', 'pods', '--selector', selector, '-o', 'json'],
+      'Could not read deployment pods. Check pod list permission for this namespace.'),
+    kubectl(target, ['top', 'pods', '--containers', '--no-headers', '--selector', selector],
+      'Pod metrics are currently unavailable.').catch(() => ''),
+  ]);
   const loadBalancer = service?.spec?.type === 'LoadBalancer';
   const ingress = loadBalancer ? service?.status?.loadBalancer?.ingress?.[0] : undefined;
   const host = ingress?.hostname;
   const ip = ingress?.ip;
-  const endpoint = host && /^[a-zA-Z0-9.-]+$/.test(host) ?
-    `http://${host}` : ip && isIP(ip) ? `http://${isIP(ip) === 6 ? '[' + ip + ']' : ip}` : undefined;
-  return { ready: deployment.status?.readyReplicas ?? 0, desired: deployment.spec?.replicas ?? 0, loadBalancer, endpoint };
+  const scheme = release.settings.publicTlsCertificateArn ? 'https' : 'http';
+  const endpoint = release.hostname ? `${scheme}://${release.hostname}` : host && /^[a-zA-Z0-9.-]+$/.test(host) ?
+    `${scheme}://${host}` : ip && isIP(ip) ? `${scheme}://${isIP(ip) === 6 ? '[' + ip + ']' : ip}` : undefined;
+  const ready = deployment.status?.readyReplicas ?? 0;
+  const desired = deployment.spec?.replicas ?? 0;
+  const specs = deployment.spec?.template?.spec?.containers ?? [];
+  const metricRows = new Map<string, { cpu: string; memory: string }>();
+  for (const line of metricOutput.split(/\r?\n/)) {
+    const [pod, container, cpu, memory] = line.trim().split(/\s+/);
+    if (pod && container && cpu && memory) metricRows.set(`${pod}/${container}`, { cpu, memory });
+  }
+  const podItems = (JSON.parse(podList) as { items?: {
+    metadata?: { name?: string; creationTimestamp?: string; labels?: Record<string, string>; annotations?: Record<string, string> };
+    spec?: { nodeName?: string; serviceAccountName?: string; restartPolicy?: string; containers?: typeof specs };
+    status?: { phase?: string; podIP?: string; startTime?: string;
+      hostIP?: string; qosClass?: string; reason?: string; message?: string;
+      conditions?: { type?: string; status?: string; reason?: string; message?: string; lastTransitionTime?: string }[];
+      containerStatuses?: { name?: string; ready?: boolean; restartCount?: number;
+        state?: { waiting?: { reason?: string }; running?: { startedAt?: string };
+          terminated?: { reason?: string; exitCode?: number; finishedAt?: string } } }[];
+    };
+  }[] }).items ?? [];
+  const pods = podItems.map(pod => {
+    const statuses = new Map((pod.status?.containerStatuses ?? []).map(item => [item.name, item]));
+    const containers = (pod.spec?.containers ?? []).map(container => {
+      const status = statuses.get(container.name);
+      const state = status?.state?.waiting ? `Waiting · ${status.state.waiting.reason ?? 'Pending'}` :
+        status?.state?.terminated ? `Terminated · ${status.state.terminated.reason ?? status.state.terminated.exitCode ?? 'Exited'}` :
+          status?.state?.running ? 'Running' : status?.ready ? 'Ready' : 'Starting';
+      return { name: container.name, image: container.image, ready: status?.ready ?? false,
+        restartCount: status?.restartCount ?? 0, state, stateSince: status?.state?.running?.startedAt ??
+          status?.state?.terminated?.finishedAt,
+        ports: container.ports ?? [], resources: container.resources,
+        metrics: pod.metadata?.name && container.name ? metricRows.get(`${pod.metadata.name}/${container.name}`) : undefined };
+    });
+    const conditions = (pod.status?.conditions ?? []).map(condition => ({ type: condition.type, status: condition.status,
+      reason: condition.reason, message: condition.message, lastTransitionTime: condition.lastTransitionTime }));
+    return { name: pod.metadata?.name, phase: pod.status?.phase ?? 'Unknown', reason: pod.status?.reason,
+      message: pod.status?.message, labels: safeMetadata(pod.metadata?.labels), annotations: safeMetadata(pod.metadata?.annotations),
+      ready: conditions.some(condition => condition.type === 'Ready' && condition.status === 'True'),
+      nodeName: pod.spec?.nodeName, hostIP: pod.status?.hostIP, podIP: pod.status?.podIP,
+      serviceAccountName: pod.spec?.serviceAccountName, restartPolicy: pod.spec?.restartPolicy,
+      qosClass: pod.status?.qosClass, createdAt: pod.metadata?.creationTimestamp,
+      startedAt: pod.status?.startTime, restartCount: containers.reduce((total, container) => total + container.restartCount, 0),
+      conditions, containers };
+  });
+  return {
+    name: deployment.metadata?.name, namespace: target.namespace, createdAt: deployment.metadata?.creationTimestamp,
+    generation: deployment.metadata?.generation, observedGeneration: deployment.status?.observedGeneration,
+    ready, desired, updated: deployment.status?.updatedReplicas ?? 0, available: deployment.status?.availableReplicas ?? 0,
+    state: desired === 0 ? 'stopped' as const : ready >= desired ? 'running' as const : 'starting' as const,
+    strategy: deployment.spec?.strategy?.type ?? 'RollingUpdate', selector: deployment.spec?.selector?.matchLabels ?? {},
+    labels: safeMetadata(deployment.metadata?.labels), annotations: safeMetadata(deployment.metadata?.annotations),
+    serviceAccountName: deployment.spec?.template?.spec?.serviceAccountName || 'default',
+    automountServiceAccountToken: deployment.spec?.template?.spec?.automountServiceAccountToken ?? true,
+    rollingUpdate: deployment.spec?.strategy?.rollingUpdate,
+    conditions: deployment.status?.conditions ?? [], containers: specs, pods,
+    metricsAvailable: metricRows.size > 0, loadBalancer, endpoint,
+  };
 }
 
 export async function deploymentLogs(target: ClusterTarget, release: DeploymentRelease): Promise<string> {
@@ -139,6 +223,70 @@ async function publishArchive(
   return `${repository}@${digest}`;
 }
 
+function autoscalerManifest(target: ClusterTarget, release: DeploymentRelease): object {
+  const { app, scaling } = release.settings;
+  if (scaling.mode !== 'auto') throw new Error('CPU autoscaling is not enabled for this deployment.');
+  return {
+    apiVersion: 'autoscaling/v2', kind: 'HorizontalPodAutoscaler',
+    metadata: { name: app, namespace: target.namespace, labels: labels(release) },
+    spec: {
+      scaleTargetRef: { apiVersion: 'apps/v1', kind: 'Deployment', name: app },
+      minReplicas: scaling.min, maxReplicas: scaling.max,
+      metrics: [{ type: 'Resource', resource: { name: 'cpu',
+        target: { type: 'Utilization', averageUtilization: scaling.cpuPercent } } }],
+    },
+  };
+}
+
+async function applyAutoscaler(target: ClusterTarget, release: DeploymentRelease, dryRun = false): Promise<void> {
+  const work = await mkdtemp(join(tmpdir(), 'build-center-hpa-'));
+  const file = join(work, 'autoscaler.json');
+  try {
+    await writeFile(file, JSON.stringify(autoscalerManifest(target, release)));
+    const args = ['apply', '--server-side', `--field-manager=${fieldManager}`, '--force-conflicts',
+      ...(dryRun ? ['--dry-run=server'] : []), '-f', file];
+    await kubectl(target, args, 'Could not configure the CPU autoscaler. Check autoscaling permissions and the EKS API.');
+  } finally {
+    await rm(work, { recursive: true, force: true }).catch(() => {});
+  }
+}
+
+export async function setDeploymentPods(target: ClusterTarget, release: DeploymentRelease, running: boolean): Promise<void> {
+  const { app, scaling } = release.settings;
+  if (!(await findOwned(target, release, 'deployment'))) {
+    throw new Error(`The Build Center deployment ${app} was not found in namespace ${target.namespace}.`);
+  }
+  const autoscaler = await findOwned(target, release, 'hpa');
+  if (!running) {
+    if (autoscaler) {
+      await kubectl(target, ['delete', `hpa/${app}`, '--ignore-not-found'],
+        'Could not pause the CPU autoscaler. Check autoscaling delete permission.');
+    }
+    try {
+      await kubectl(target, ['scale', `deployment/${app}`, '--replicas=0'],
+        'Could not stop the pods. Check deployment scale permission.');
+    } catch (error) {
+      if (autoscaler && scaling.mode === 'auto') await applyAutoscaler(target, release).catch(() => {});
+      throw error;
+    }
+    return;
+  }
+
+  const desired = scaling.mode === 'auto' ? scaling.min : scaling.replicas;
+  if (scaling.mode === 'auto') await applyAutoscaler(target, release, true);
+  await kubectl(target, ['scale', `deployment/${app}`, `--replicas=${desired}`],
+    'Could not start the pods. Check deployment scale permission.');
+  if (scaling.mode === 'auto') {
+    try {
+      await applyAutoscaler(target, release);
+    } catch (error) {
+      await kubectl(target, ['scale', `deployment/${app}`, '--replicas=0'],
+        'Could not restore the stopped state after autoscaler setup failed.').catch(() => {});
+      throw error;
+    }
+  }
+}
+
 function manifests(target: ClusterTarget, release: DeploymentRelease, image: string,
                    secretEnv: Record<string, string> = {}): object[] {
   const { app, port, cpuMillicores, memoryMiB, scaling, configMap, secret, readinessPath } = release.settings;
@@ -184,23 +332,23 @@ function manifests(target: ClusterTarget, release: DeploymentRelease, image: str
       apiVersion: 'v1', kind: 'Service',
       metadata: loadBalancer ? { ...metadata, annotations: {
         'service.beta.kubernetes.io/aws-load-balancer-scheme': 'internet-facing',
+        ...(release.settings.publicTlsCertificateArn ? {
+          'service.beta.kubernetes.io/aws-load-balancer-backend-protocol': 'http',
+          'service.beta.kubernetes.io/aws-load-balancer-ssl-cert': release.settings.publicTlsCertificateArn,
+          'service.beta.kubernetes.io/aws-load-balancer-ssl-ports': '443',
+        } : {}),
       } } : metadata,
       spec: { type: loadBalancer ? 'LoadBalancer' : 'ClusterIP', selector,
-        ports: [{ name: 'http', port: loadBalancer ? 80 : port, targetPort: 'http' }] },
+        ports: loadBalancer ? [
+          { name: 'http', port: 80, targetPort: 'http' },
+          ...(release.settings.publicTlsCertificateArn ? [{ name: 'https', port: 443, targetPort: 'http' }] : []),
+        ] : [{ name: 'http', port, targetPort: 'http' }] },
     },
   ] as object[];
   if (scaling.mode === 'auto') {
-    resources.push({
-      apiVersion: 'autoscaling/v2', kind: 'HorizontalPodAutoscaler', metadata,
-      spec: {
-        scaleTargetRef: { apiVersion: 'apps/v1', kind: 'Deployment', name: app },
-        minReplicas: scaling.min, maxReplicas: scaling.max,
-        metrics: [{ type: 'Resource', resource: { name: 'cpu',
-          target: { type: 'Utilization', averageUtilization: scaling.cpuPercent } } }],
-      },
-    });
+    resources.push(autoscalerManifest(target, release));
   }
-  if (release.hostname) {
+  if (release.hostname && !loadBalancer) {
     resources.push({
       apiVersion: 'networking.k8s.io/v1', kind: 'Ingress', metadata,
       spec: { ingressClassName: target.ingressClass, rules: [{ host: release.hostname,

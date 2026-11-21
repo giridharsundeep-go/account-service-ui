@@ -17,13 +17,32 @@
         <tbody>
           @for (profile of data().profiles; track profile.targetId + profile.pipelineId) {
             <tr>
-              <td><strong>{{ profile.settings.app }}</strong><small>Environment and runtime settings saved</small></td>
+              <td><strong>{{ profile.settings.app }}</strong><small>Environment and runtime settings saved</small>
+                @if (profileRelease(profile); as release) {
+                  <small class="workload-state" [attr.data-state]="profile.workloadState === 'stopped' ? 'stopped' : 'running'">
+                    {{ profile.workloadState === 'stopped' ? 'Pods stopped' : release.status === 'succeeded' ? 'Pods running' : 'Deployment in progress' }}
+                  </small>
+                }
+              </td>
               <td>{{ pipelineName(profile.pipelineId) }}<small>Latest image: {{ latestImageFor(profile.pipelineId)?.version || 'No successful build' }}</small></td>
               <td>{{ targetName(profile.targetId) }}<small>{{ targetNamespace(profile.targetId) }}</small></td>
               <td>@if (profile.settings.scaling.mode === 'auto') { {{ profile.settings.scaling.min }}–{{ profile.settings.scaling.max }} pods · {{ profile.settings.scaling.cpuPercent }}% CPU } @else { {{ profile.settings.scaling.replicas }} fixed pod(s) }</td>
               <td class="configuration-actions">
                 <button type="button" class="primary" [disabled]="busy() || !latestImageFor(profile.pipelineId)" (click)="deployProfile(profile)">Deploy</button>
                 <button type="button" [disabled]="busy()" (click)="configureProfile(profile)">Edit configuration</button>
+                @if (profileRelease(profile); as release) {
+                  @if (release.status === 'succeeded' && canControlRelease(release)) {
+                    <button type="button" [disabled]="busy()" (click)="inspect(release)"
+                      [attr.aria-label]="'View pods and deployment details for ' + profile.settings.app">View pods/details</button>
+                    @if (profile.workloadState === 'stopped') {
+                      <button type="button" [disabled]="busy()" (click)="startProfile(profile)"
+                        [attr.aria-label]="'Start pods for ' + profile.settings.app">Start pods</button>
+                    } @else {
+                      <button type="button" [disabled]="busy()" (click)="stopProfile(profile)"
+                        [attr.aria-label]="'Stop pods for ' + profile.settings.app">Stop pods</button>
+                    }
+                  }
+                }
               </td>
             </tr>
           }
@@ -117,7 +136,17 @@
           <p class="wide field-note">Internet hostname: <strong>{{ publicSubdomain || 'app' }}.{{ target()?.domain }}</strong>. The cluster needs a working IngressClass and DNS/TLS route for this hostname.</p>
         }
         @if (exposure === 'load-balancer') {
-          <p class="wide field-note">AWS bills for the public load balancer. It serves HTTP on port 80.</p>
+          <label class="wide">Custom public hostname (optional)
+            <input name="publicCustomHostname" [(ngModel)]="publicCustomHostname" maxlength="253"
+              pattern="[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+" placeholder="professy.greatley-poshley.com">
+          </label>
+          @if (publicCustomHostname.trim()) {
+            <p class="wide field-note">Public URL: <strong>{{ publicTlsCertificateArn.trim() ? 'https' : 'http' }}://{{ publicCustomHostname }}</strong>.</p>
+            <label class="wide">AWS ACM certificate ARN for HTTPS
+              <input name="publicTlsCertificateArn" [(ngModel)]="publicTlsCertificateArn" required placeholder="arn:aws:acm:us-east-1:123456789012:certificate/…">
+            </label>
+          }
+          <p class="wide field-note">AWS creates an internet-facing load balancer. HTTP uses port 80; adding a certificate ARN enables HTTPS on port 443. Create a DNS CNAME for the hostname to the load balancer address.</p>
         }
       </fieldset>
       <fieldset>
@@ -204,7 +233,7 @@
               </td>
               <td><time [attr.datetime]="release.requestedAt">{{ release.requestedAt | date:'MMM d, y · HH:mm' }}</time></td>
               <td><button type="button" [disabled]="busy()" (click)="inspect(release)"
-                [attr.aria-label]="'Inspect ' + release.settings.app + ' release'">Details</button></td>
+                [attr.aria-label]="'View pods and deployment details for ' + release.settings.app">View pods/details</button></td>
             </tr>
           }
         </tbody>
@@ -225,10 +254,10 @@
           {{ release.progressPercent ?? 0 }}% · {{ release.message }}
         </p>
       </div>
-      @if (workload()?.workload?.endpoint; as endpoint) {
+      @if (release.hostname) {
+        <a class="button-link" [href]="(release.settings.publicTlsCertificateArn ? 'https://' : 'http://') + release.hostname" target="_blank" rel="noopener noreferrer">Open app ↗</a>
+      } @else if (workload()?.workload?.endpoint; as endpoint) {
         <a class="button-link" [href]="endpoint" target="_blank" rel="noopener noreferrer">Open app ↗</a>
-      } @else if (release.hostname) {
-        <a class="button-link" [href]="'https://' + release.hostname" target="_blank" rel="noopener noreferrer">Open app ↗</a>
       }
     </div>
     <dl class="release-details">
@@ -245,6 +274,7 @@
         } @else { {{ release.settings.scaling.replicas }} fixed replicas }
       </dd></div>
       @if (workload(); as live) {
+        <div><dt>Pod state</dt><dd>{{ live.workload ? (live.workload.state === 'stopped' ? 'Stopped' : live.workload.state === 'starting' ? 'Starting' : 'Running') : 'No deployment' }}</dd></div>
         <div><dt>Current pods</dt><dd>{{ live.workload ? live.workload.ready + ' of ' + live.workload.desired + ' ready' : 'No deployment' }}</dd></div>
       }
       @if (release.settings.publicLoadBalancer) {
@@ -262,6 +292,135 @@
       }
       @if (release.image) { <div class="wide"><dt>Published image</dt><dd><code>{{ release.image }}</code></dd></div> }
     </dl>
+    @if (workload()?.workload; as live) {
+      <section class="workload-details" aria-labelledby="deployment-live-details-heading">
+        <div class="details-heading">
+          <div><h3 id="deployment-live-details-heading">Deployment details</h3><p>Live Kubernetes configuration and status for this application.</p></div>
+          <span class="status" [attr.data-status]="live.state">{{ live.state === 'stopped' ? 'Stopped' : live.state === 'starting' ? 'Starting' : 'Running' }}</span>
+        </div>
+        <dl class="release-details live-deployment-metadata">
+          <div><dt>Deployment</dt><dd>{{ live.name || release.settings.app }}</dd></div>
+          <div><dt>Namespace</dt><dd>{{ live.namespace || release.namespace }}</dd></div>
+          <div><dt>Created</dt><dd>{{ live.createdAt ? (live.createdAt | date:'MMM d, y · HH:mm:ss') : '—' }}</dd></div>
+          <div><dt>Strategy</dt><dd>{{ live.strategy }}</dd></div>
+          <div><dt>Replicas</dt><dd>{{ live.ready }} ready · {{ live.updated }} updated · {{ live.available }} available · {{ live.desired }} desired</dd></div>
+          <div><dt>Observed generation</dt><dd>{{ live.observedGeneration ?? '—' }} / {{ live.generation ?? '—' }}</dd></div>
+          <div><dt>Service account</dt><dd>{{ live.serviceAccountName }} · token automount {{ live.automountServiceAccountToken ? 'enabled' : 'disabled' }}</dd></div>
+          @if (live.rollingUpdate) {
+            <div><dt>Rolling update</dt><dd>Max surge {{ live.rollingUpdate.maxSurge ?? '—' }} · max unavailable {{ live.rollingUpdate.maxUnavailable ?? '—' }}</dd></div>
+          }
+          <div class="wide"><dt>Pod selector</dt><dd><code>{{ selectorText(live.selector) }}</code></dd></div>
+          <div class="wide"><dt>Deployment labels</dt><dd class="metadata-values">@for (entry of (live.labels | keyvalue); track entry.key) { <span><code>{{ entry.key }}</code>={{ entry.value }}</span> }</dd></div>
+          @if (hasMetadata(live.annotations)) {
+            <div class="wide"><dt>Deployment annotations</dt><dd class="metadata-values">@for (entry of (live.annotations | keyvalue); track entry.key) { <span><code>{{ entry.key }}</code>={{ entry.value }}</span> }</dd></div>
+          }
+        </dl>
+        @if (live.conditions.length) {
+          <details class="kubernetes-conditions">
+            <summary>Deployment conditions ({{ live.conditions.length }})</summary>
+            <div class="condition-list">
+              @for (condition of live.conditions; track condition.type) {
+                <article>
+                  <strong>{{ condition.type || 'Condition' }}</strong><span class="status" [attr.data-status]="condition.status === 'True' ? 'succeeded' : 'failed'">{{ condition.status || 'Unknown' }}</span>
+                  @if (condition.reason) { <small>{{ condition.reason }}</small> }
+                  @if (condition.message) { <p>{{ condition.message }}</p> }
+                  @if (condition.lastTransitionTime) { <time>{{ condition.lastTransitionTime | date:'MMM d, y · HH:mm:ss' }}</time> }
+                </article>
+              }
+            </div>
+          </details>
+        }
+        @if (live.containers.length) {
+          <h4>Container configuration ({{ live.containers.length }})</h4>
+          <div class="pod-table-scroll" tabindex="0" aria-label="Deployment container configuration">
+            <table class="pod-details-table">
+              <thead><tr><th scope="col">Container</th><th scope="col">Image</th><th scope="col">Ports</th><th scope="col">Resources</th><th scope="col">Readiness probe</th></tr></thead>
+              <tbody>
+                @for (container of live.containers; track container.name) {
+                  <tr>
+                    <td><strong>{{ container.name || '—' }}</strong></td>
+                    <td><code>{{ container.image || '—' }}</code></td>
+                    <td>@for (port of container.ports ?? []; track port.containerPort) { <span>{{ port.name || 'http' }}:{{ port.containerPort }}/{{ port.protocol || 'TCP' }}<br></span> } @empty { — }</td>
+                    <td>Requests: {{ container.resources?.requests?.cpu || '—' }} CPU, {{ container.resources?.requests?.memory || '—' }} memory<br>Limits: {{ container.resources?.limits?.cpu || '—' }} CPU, {{ container.resources?.limits?.memory || '—' }} memory</td>
+                    <td>
+                      @if (container.readinessProbe?.httpGet; as probe) { HTTP GET {{ probe.path || '/' }} : {{ probe.port || release.settings.port }} }
+                      @else if (container.readinessProbe?.tcpSocket; as probe) { TCP : {{ probe.port || release.settings.port }} }
+                      @else { Not configured }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+        <div class="details-heading pod-details-heading">
+          <div><h4>Pods ({{ live.pods.length }})</h4><p>Current pod health, placement, restarts, and metrics.</p></div>
+          @if (live.pods.length && !live.metricsAvailable) { <span class="field-note">Pod metrics unavailable</span> }
+        </div>
+        @if (live.pods.length) {
+          <div class="pod-table-scroll" tabindex="0" aria-label="Deployment pods">
+            <table class="pod-details-table">
+              <thead><tr><th scope="col">Pod</th><th scope="col">Status</th><th scope="col">Node</th><th scope="col">Pod IP</th><th scope="col">Created</th><th scope="col">Restarts</th><th scope="col">CPU / memory</th><th scope="col">Details</th></tr></thead>
+              <tbody>
+                @for (pod of live.pods; track pod.name) {
+                  <tr>
+                    <td><code>{{ pod.name || '—' }}</code></td>
+                    <td><span class="status" [attr.data-status]="pod.ready ? 'succeeded' : 'failed'">{{ pod.ready ? 'Ready' : pod.phase }}</span><small>{{ pod.phase }}</small></td>
+                    <td>{{ pod.nodeName || 'Pending scheduling' }}</td>
+                    <td><code>{{ pod.podIP || '—' }}</code></td>
+                    <td>{{ pod.createdAt ? (pod.createdAt | date:'MMM d, y · HH:mm:ss') : '—' }}</td>
+                    <td>{{ pod.restartCount }}</td>
+                    <td>
+                      @for (container of pod.containers; track container.name) {
+                        <small>{{ container.name }}: {{ container.metrics?.cpu || '—' }} / {{ container.metrics?.memory || '—' }}</small>
+                      }
+                    </td>
+                    <td>
+                      <details class="pod-row-details">
+                        <summary>Pod and container details</summary>
+                        <dl class="pod-metadata">
+                          <div><dt>Pod start time</dt><dd>{{ pod.startedAt ? (pod.startedAt | date:'MMM d, y · HH:mm:ss') : '—' }}</dd></div>
+                          <div><dt>Host IP</dt><dd><code>{{ pod.hostIP || '—' }}</code></dd></div>
+                          <div><dt>Quality of service</dt><dd>{{ pod.qosClass || '—' }}</dd></div>
+                          <div><dt>Service account</dt><dd>{{ pod.serviceAccountName || 'default' }}</dd></div>
+                          <div><dt>Restart policy</dt><dd>{{ pod.restartPolicy || '—' }}</dd></div>
+                          @if (pod.reason) { <div class="wide"><dt>Status reason</dt><dd>{{ pod.reason }}@if (pod.message) { · {{ pod.message }} }</dd></div> }
+                          <div class="wide"><dt>Pod labels</dt><dd class="metadata-values">@for (entry of (pod.labels | keyvalue); track entry.key) { <span><code>{{ entry.key }}</code>={{ entry.value }}</span> }</dd></div>
+                          @if (hasMetadata(pod.annotations)) {
+                            <div class="wide"><dt>Pod annotations</dt><dd class="metadata-values">@for (entry of (pod.annotations | keyvalue); track entry.key) { <span><code>{{ entry.key }}</code>={{ entry.value }}</span> }</dd></div>
+                          }
+                        </dl>
+                        <div class="condition-list">
+                          @for (container of pod.containers; track container.name) {
+                            <article>
+                              <strong>{{ container.name || 'Container' }}</strong><span class="status" [attr.data-status]="container.ready ? 'succeeded' : 'failed'">{{ container.state }}</span>
+                              <code>{{ container.image || '—' }}</code>
+                              <small>{{ container.restartCount }} restart(s) · {{ container.ready ? 'Ready' : 'Not ready' }}@if (container.stateSince) { · since {{ container.stateSince | date:'MMM d, HH:mm:ss' }} }</small>
+                              @if (container.ports?.length) { <small>Ports: @for (port of container.ports; track port.containerPort) { {{ port.containerPort }}/{{ port.protocol || 'TCP' }}{{ !$last ? ', ' : '' }} }</small> }
+                              @if (container.metrics) { <small>Usage: {{ container.metrics.cpu }} CPU · {{ container.metrics.memory }} memory</small> }
+                            </article>
+                          }
+                          @for (condition of pod.conditions; track condition.type) {
+                            <article>
+                              <strong>{{ condition.type || 'Pod condition' }}</strong><span class="status" [attr.data-status]="condition.status === 'True' ? 'succeeded' : 'failed'">{{ condition.status || 'Unknown' }}</span>
+                              @if (condition.reason) { <small>{{ condition.reason }}</small> }
+                              @if (condition.message) { <p>{{ condition.message }}</p> }
+                              @if (condition.lastTransitionTime) { <time>{{ condition.lastTransitionTime | date:'MMM d, y · HH:mm:ss' }}</time> }
+                            </article>
+                          }
+                        </div>
+                      </details>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="empty-state">No pods are currently allocated to this deployment.</p>
+        }
+      </section>
+    }
     <section class="deployment-progress" aria-label="Deployment progress">
       <div class="progress-heading"><div><h3>Deployment progress</h3><p>{{ release.status === 'running' ? 'Updating automatically during rollout' : release.finishedAt ? 'Deployment finished' : 'Latest deployment activity' }}</p>@if (release.finishedAt) { <time>{{ release.finishedAt | date:'MMM d, y · HH:mm:ss' }}</time> }</div><strong>{{ release.progressPercent ?? (release.status === 'succeeded' ? 100 : 0) }}%</strong></div>
       <progress class="release-progress-bar" [value]="release.progressPercent ?? (release.status === 'succeeded' ? 100 : 0)" max="100" [attr.aria-label]="'Deployment ' + (release.progressPercent ?? 0) + '% complete'"></progress>
@@ -281,6 +440,13 @@
       <button type="button" [disabled]="busy()" (click)="inspect(release)">Refresh pod and service status</button>
       <button type="button" [disabled]="busy()" (click)="inspect(release, true)">Load current pod logs</button>
       <button type="button" [disabled]="busy() || !data().targets.length" (click)="edit(release)">Use release settings</button>
+      @if (release.status === 'succeeded' && canControlRelease(release)) {
+        @if (release.workloadState === 'stopped') {
+          <button type="button" [disabled]="busy()" (click)="startRelease(release)">Start pods</button>
+        } @else {
+          <button type="button" [disabled]="busy()" (click)="stopRelease(release)">Stop pods</button>
+        }
+      }
       @if (release.status === 'succeeded') {
         <button type="button" [disabled]="busy()" (click)="rollback(release)">Roll back to this release</button>
       }

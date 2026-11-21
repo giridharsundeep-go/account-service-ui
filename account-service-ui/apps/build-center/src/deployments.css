@@ -55,6 +55,10 @@
 }
 .release-table th { background: var(--surface-subtle); color: var(--text-muted); font-size: 13px; }
 .release-table small { display: block; margin-top: 3px; }
+.workload-state { color: var(--success); font-weight: 600; }
+.workload-state[data-state="stopped"] { color: var(--text-muted); }
+.status[data-status="stopped"] { --status-color: var(--text-muted); --status-background: var(--surface-subtle); }
+.status[data-status="starting"] { --status-color: light-dark(#8a5200, #f0c36a); --status-background: light-dark(#fff4ce, #493b20); }
 .release-table time { white-space: nowrap; }
 .release-table .selected-release { background: var(--accent-soft); }
 .configuration-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
@@ -64,6 +68,35 @@
   gap: 14px;
   padding: 0 20px 16px;
 }
+.workload-details { display: grid; gap: 12px; padding: 0 20px 20px; }
+.details-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.details-heading h3, .details-heading h4 { margin: 0; font-size: 16px; }
+.details-heading p { margin: 4px 0 0; font-size: 12px; }
+.live-deployment-metadata { margin: 0; padding: 14px; border: 1px solid var(--panel-border); border-radius: var(--panel-radius); background: var(--gp-surface); }
+.live-deployment-metadata > div, .pod-metadata > div { min-width: 0; }
+.metadata-values { display: flex; flex-wrap: wrap; gap: 6px; }
+.metadata-values > span { display: inline-flex; align-items: baseline; gap: 4px; max-width: 100%; padding: 3px 7px; border: 1px solid var(--panel-border); border-radius: 5px; background: var(--surface-subtle); overflow-wrap: anywhere; }
+.kubernetes-conditions { border: 1px solid var(--panel-border); border-radius: var(--panel-radius); background: var(--gp-surface); }
+.kubernetes-conditions > summary, .pod-row-details > summary { padding: 11px 13px; color: var(--accent); font-weight: 650; cursor: pointer; }
+.condition-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; padding: 0 12px 12px; }
+.condition-list article { display: grid; justify-items: start; gap: 5px; align-content: start; min-width: 0; padding: 10px; border: 1px solid var(--panel-border); border-radius: 7px; background: var(--surface-subtle); overflow-wrap: anywhere; }
+.condition-list article > p { margin: 0; font-size: 12px; }
+.condition-list article > time, .condition-list article > small { font-size: 11px; }
+.pod-details-heading { margin-top: 4px; }
+.pod-table-scroll { overflow: auto; max-width: 100%; border: 1px solid var(--panel-border); border-radius: var(--panel-radius); }
+.pod-details-table { width: 100%; min-width: 850px; border-collapse: collapse; text-align: left; }
+.pod-details-table :is(th, td) { padding: 10px 12px; border-bottom: 1px solid var(--panel-border); vertical-align: top; }
+.pod-details-table th { position: sticky; top: 0; z-index: 1; background: var(--surface-subtle); color: var(--text-muted); font-size: 12px; white-space: nowrap; }
+.pod-details-table td { font-size: 12px; }
+.pod-details-table td > small { display: block; margin-top: 4px; font-size: 11px; }
+.pod-details-table code, .release-details code { overflow-wrap: anywhere; }
+.pod-row-details { min-width: 190px; }
+.pod-row-details > summary { padding: 3px 0; }
+.pod-metadata { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; padding: 0 12px 12px; }
+.pod-metadata dt { color: var(--text-muted); font-size: 11px; }
+.pod-metadata dd { margin: 3px 0 0; overflow-wrap: anywhere; }
+.pod-metadata .wide { grid-column: 1 / -1; }
+.pod-row-details .condition-list { grid-template-columns: 1fr; }
 .release-actions { padding: 0 20px 16px; }
 .pod-log {
   overflow: auto;

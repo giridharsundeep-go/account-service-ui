@@ -9,7 +9,7 @@ import type { ClusterTarget } from './deployment-config';
 import { describeCluster, eksAccounts, eksTarget, listEksClusters, prepareEksConnection, withDeploymentTarget, withEksConfig } from './eks';
 import type { ResolvableTarget } from './eks';
 import { registerEksProvisioning } from './eks-provision-api';
-import { checkDeploymentTarget, deploymentDetails, deploymentLogs, deployRelease, kubectl } from './deployment-runner';
+import { checkDeploymentTarget, deploymentDetails, deploymentLogs, deployRelease, kubectl, setDeploymentPods } from './deployment-runner';
 import type { BuildRun, DeploymentProfile, DeploymentRelease, DeploymentSettings, DeploymentTarget, EksAccountOption, ImageRegistry } from './models';
 
 const active = new Map<string, string>();
@@ -115,16 +115,16 @@ function startRelease(orgId: string, target: ResolvableTarget, settings: Deploym
   const release: DeploymentRelease = {
     id: randomUUID(), targetId: target.id, targetName: target.name, namespace: target.namespace,
     settings, runId: 'run' in source ? source.run.id : source.previous.runId, pipelineId: build.pipelineId,
-    requestedAt: new Date().toISOString(), status: 'running', message: 'Checking the target workload',
+    requestedAt: new Date().toISOString(), status: 'running', workloadState: 'running', message: 'Checking the target workload',
     version: build.version,
     progressPercent: 3,
     progress: [{ at: new Date().toISOString(), message: 'Checking the target workload', percent: 3 }],
-    hostname: settings.publicHostname ? `${settings.publicSubdomain ?? settings.app}.${target.domain}` : undefined,
+    hostname: settings.publicCustomHostname ?? (settings.publicHostname ? `${settings.publicSubdomain ?? settings.app}.${target.domain}` : undefined),
     image: previous?.image, rollbackOf: previous?.id,
   };
   updateWorkspace(orgId, state => {
     state.releases.unshift(release);
-    if (run) saveProfile(state.deploymentProfiles, { targetId: target.id, pipelineId: run.pipelineId, settings });
+    saveProfile(state.deploymentProfiles, { targetId: target.id, pipelineId: build.pipelineId, settings, workloadState: 'running' });
   });
   active.set(key, release.id);
 
@@ -189,14 +189,27 @@ export function registerDeployments(api: Router): void {
       configurationMessages.push(message(error));
     }
     const activeIds = new Set(active.values());
-    const releases = state.releases.map(release =>
-      release.status === 'running' && !activeIds.has(release.id) ?
-        { ...release, status: 'failed', message: 'The deployment runner restarted. Check the workload before retrying.' } : release);
     const profiles = state.deploymentProfiles.map(profile => ({ ...profile,
+      workloadState: profile.workloadState ?? state.releases
+        .filter(release => release.targetId === profile.targetId && release.pipelineId === profile.pipelineId &&
+          release.settings.app === profile.settings.app && release.status === 'succeeded')
+        .sort((a, b) => Date.parse(b.requestedAt) - Date.parse(a.requestedAt))[0]?.workloadState ??
+          (state.releases.some(release => release.targetId === profile.targetId && release.pipelineId === profile.pipelineId &&
+            release.settings.app === profile.settings.app && release.status === 'succeeded') ? 'running' : undefined),
       envContent: readDeploymentEnvironment(orgId, profile.targetId, profile.pipelineId) ??
         [...Object.entries(profile.settings.runtimeEnv ?? {}).map(([name, value]) => `${name}=${value}`),
           ...(profile.settings.secretNames ?? []).map(name => `${name}=`)].join('\n'),
     }));
+    const releases = state.releases.map(release => {
+      const profile = profiles.find(item => item.targetId === release.targetId && item.pipelineId === release.pipelineId &&
+        item.settings.app === release.settings.app);
+      return {
+        ...release,
+        workloadState: release.workloadState ?? profile?.workloadState ?? (release.status === 'succeeded' ? 'running' : undefined),
+        ...(release.status === 'running' && !activeIds.has(release.id) ?
+          { status: 'failed' as const, message: 'The deployment runner restarted. Check the workload before retrying.' } : {}),
+      };
+    });
     response.json({ targets, releases, accounts, profiles, configurationMessage: configurationMessages.join(' ') });
   });
 
@@ -329,7 +342,10 @@ export function registerDeployments(api: Router): void {
           return;
         }
         settings.imageRegistry = imageRegistry;
-        const profile = { targetId: target.id, pipelineId: run.pipelineId, settings };
+        const savedProfile = readWorkspace(orgId).deploymentProfiles.find(item =>
+          item.targetId === target.id && item.pipelineId === run.pipelineId);
+        const profile: DeploymentProfile = { targetId: target.id, pipelineId: run.pipelineId, settings,
+          workloadState: doDeploy ? 'running' : savedProfile?.workloadState ?? 'running' };
         saveDeploymentEnvironment(orgId, target.id, run.pipelineId, envContent);
         updateWorkspace(orgId, state => saveProfile(state.deploymentProfiles, profile));
         if (!doDeploy) { response.json({ ...profile, envContent }); return; }
@@ -344,6 +360,57 @@ export function registerDeployments(api: Router): void {
 
   api.put('/deployments/profiles', saveOrDeploy(false));
   api.post('/deployments', saveOrDeploy(true));
+
+  function controlPods(running: boolean): RequestHandler {
+    return async (request, response) => {
+      const orgId = response.locals['orgId'] as string;
+      const release = findRelease(orgId, request.params['id']);
+      if (!release || release.status !== 'succeeded' || !release.image) {
+        response.status(409).json({ message: 'Only a successful deployment can be started or stopped.' });
+        return;
+      }
+      const latestSuccessful = readWorkspace(orgId).releases
+        .filter(item => item.targetId === release.targetId && item.pipelineId === release.pipelineId &&
+          item.namespace === release.namespace && item.settings.app === release.settings.app && item.status === 'succeeded')
+        .sort((a, b) => Date.parse(b.requestedAt) - Date.parse(a.requestedAt))[0];
+      if (latestSuccessful?.id !== release.id) {
+        response.status(409).json({ message: 'Start or stop controls are available only for the latest successful release.' });
+        return;
+      }
+      const target = findTarget(orgId, release.targetId);
+      if (!target || target.namespace !== release.namespace) {
+        response.status(409).json({ message: 'The original deployment target is unavailable.' });
+        return;
+      }
+      const anotherRollout = readWorkspace(orgId).releases.some(item => item.id !== release.id &&
+        item.status === 'running' && item.targetId === release.targetId && item.namespace === release.namespace &&
+        item.settings.app === release.settings.app);
+      if (anotherRollout) {
+        response.status(409).json({ message: 'A deployment rollout is already running for this application.' });
+        return;
+      }
+      const workloadState = running ? 'running' : 'stopped';
+      try {
+        await withDeploymentTarget(target, resolved => setDeploymentPods(resolved, release, running));
+        const updated = updateWorkspace(orgId, state => {
+          const current = state.releases.find(item => item.id === release.id);
+          if (!current) return undefined;
+          current.workloadState = workloadState;
+          const profile = state.deploymentProfiles.find(item => item.targetId === release.targetId &&
+            item.pipelineId === release.pipelineId && item.settings.app === release.settings.app);
+          if (profile) profile.workloadState = workloadState;
+          return current;
+        });
+        if (!updated) { response.sendStatus(404); return; }
+        response.json(updated);
+      } catch (error) {
+        response.status(409).json({ message: message(error) });
+      }
+    };
+  }
+
+  api.post('/deployments/:id/stop', controlPods(false));
+  api.post('/deployments/:id/start', controlPods(true));
 
   api.post('/deployments/:id/rollback', (request, response) => {
     const orgId = response.locals['orgId'] as string;

@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, KeyValuePipe } from '@angular/common';
 import { afterNextRender, Component, DestroyRef, computed, effect, inject, Injector, input, OnChanges, OnInit, signal, SimpleChanges, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { EksTargets } from './eks-targets';
@@ -14,8 +14,36 @@ interface DeploymentList {
 }
 
 interface WorkloadDetails {
-  workload: { ready: number; desired: number; loadBalancer?: boolean; endpoint?: string } | null;
+  workload: {
+    name?: string; namespace?: string; createdAt?: string; generation?: number; observedGeneration?: number;
+    ready: number; desired: number; updated: number; available: number;
+    state?: 'running' | 'stopped' | 'starting'; strategy: string; selector: Record<string, string>;
+    labels: Record<string, string>; annotations: Record<string, string>; serviceAccountName: string;
+    automountServiceAccountToken: boolean;
+    rollingUpdate?: { maxSurge?: string | number; maxUnavailable?: string | number };
+    conditions: { type?: string; status?: string; reason?: string; message?: string; lastTransitionTime?: string }[];
+    containers: DeploymentContainerDetails[]; pods: DeploymentPodDetails[]; metricsAvailable: boolean;
+    loadBalancer?: boolean; endpoint?: string;
+  } | null;
   log?: string;
+}
+
+interface DeploymentContainerDetails {
+  name?: string; image?: string;
+  ports?: { name?: string; containerPort?: number; protocol?: string }[];
+  resources?: { requests?: { cpu?: string; memory?: string }; limits?: { cpu?: string; memory?: string } };
+  readinessProbe?: { httpGet?: { path?: string; port?: number | string }; tcpSocket?: { port?: number | string };
+    periodSeconds?: number; timeoutSeconds?: number; failureThreshold?: number };
+}
+
+interface DeploymentPodDetails {
+  name?: string; phase: string; ready: boolean; reason?: string; message?: string; nodeName?: string;
+  hostIP?: string; podIP?: string; serviceAccountName?: string; restartPolicy?: string; qosClass?: string;
+  labels: Record<string, string>; annotations: Record<string, string>; createdAt?: string; startedAt?: string;
+  restartCount: number;
+  conditions: { type?: string; status?: string; reason?: string; message?: string; lastTransitionTime?: string }[];
+  containers: (DeploymentContainerDetails & { ready: boolean; restartCount: number; state: string; stateSince?: string;
+    metrics?: { cpu: string; memory: string } })[];
 }
 
 interface WorkerNode {
@@ -26,7 +54,7 @@ const sensitiveEnvironmentName = /(?:^|_)(?:PASSWORD|PASSWD|SECRET|TOKEN|API_KEY
 
 @Component({
   selector: 'app-deployments',
-  imports: [DatePipe, FormsModule, EksTargets],
+  imports: [DatePipe, KeyValuePipe, FormsModule, EksTargets],
   templateUrl: './deployments.html',
   styleUrls: ['./build-center.css', './deployments.css'],
 })
@@ -70,6 +98,8 @@ export class Deployments implements OnInit, OnChanges {
   protected envContent = '';
   protected app = '';
   protected publicSubdomain = '';
+  protected publicCustomHostname = '';
+  protected publicTlsCertificateArn = '';
   protected port = 8080;
   protected cpuMillicores = 250;
   protected memoryMiB = 512;
@@ -189,6 +219,57 @@ export class Deployments implements OnInit, OnChanges {
     });
   }
 
+  protected profileRelease(profile: DeploymentProfile): DeploymentRelease | undefined {
+    const releases = this.data().releases.filter(release => release.targetId === profile.targetId &&
+      release.pipelineId === profile.pipelineId && release.settings.app === profile.settings.app)
+      .sort((a, b) => Date.parse(b.requestedAt) - Date.parse(a.requestedAt));
+    return releases.find(release => release.status === 'running') ?? releases.find(release => release.status === 'succeeded');
+  }
+
+  protected canControlRelease(release: DeploymentRelease): boolean {
+    const latestSucceeded = this.data().releases.filter(item => item.targetId === release.targetId &&
+      item.pipelineId === release.pipelineId && item.namespace === release.namespace &&
+      item.settings.app === release.settings.app && item.status === 'succeeded')
+      .sort((a, b) => Date.parse(b.requestedAt) - Date.parse(a.requestedAt))[0];
+    return latestSucceeded?.id === release.id;
+  }
+
+  protected async stopProfile(profile: DeploymentProfile): Promise<void> {
+    const release = this.profileRelease(profile);
+    if (release) await this.setPodState(release, false);
+  }
+
+  protected async startProfile(profile: DeploymentProfile): Promise<void> {
+    const release = this.profileRelease(profile);
+    if (release) await this.setPodState(release, true);
+  }
+
+  protected async stopRelease(release: DeploymentRelease): Promise<void> {
+    await this.setPodState(release, false);
+  }
+
+  protected async startRelease(release: DeploymentRelease): Promise<void> {
+    await this.setPodState(release, true);
+  }
+
+  private async setPodState(release: DeploymentRelease, running: boolean): Promise<void> {
+    await this.act(async () => {
+      const updated = await this.session.request<DeploymentRelease>(
+        `/deployments/${release.id}/${running ? 'start' : 'stop'}`, 'POST');
+      this.data.update(data => ({
+        ...data,
+        profiles: data.profiles.map(profile => profile.targetId === release.targetId &&
+          profile.pipelineId === release.pipelineId && profile.settings.app === release.settings.app ?
+            { ...profile, workloadState: updated.workloadState } : profile),
+        releases: data.releases.map(item => item.id === updated.id ? updated : item),
+      }));
+      this.selectedId.set(updated.id);
+      const details = await this.session.request<WorkloadDetails>(`/deployments/${updated.id}/workload`);
+      this.workload.set(details);
+      this.syncWorkloadState(updated, details);
+    });
+  }
+
   protected selectPipeline(id: string): void {
     this.pipelineId.set(id);
     const latest = this.latestImageFor(id);
@@ -210,6 +291,14 @@ export class Deployments implements OnInit, OnChanges {
 
   protected targetNamespace(id: string): string {
     return this.data().targets.find(target => target.id === id)?.namespace ?? '';
+  }
+
+  protected selectorText(selector: Record<string, string>): string {
+    return Object.entries(selector).map(([key, value]) => `${key}=${value}`).join(', ');
+  }
+
+  protected hasMetadata(metadata: Record<string, string>): boolean {
+    return Object.keys(metadata).length > 0;
   }
 
   protected selectImage(runId: string): void {
@@ -344,6 +433,8 @@ export class Deployments implements OnInit, OnChanges {
       publicHostname: this.exposure === 'hostname',
       publicSubdomain: this.exposure === 'hostname' ? this.publicSubdomain.trim() : undefined,
       publicLoadBalancer: this.exposure === 'load-balancer',
+      publicCustomHostname: this.exposure === 'load-balancer' ? this.publicCustomHostname.trim().toLowerCase() || undefined : undefined,
+      publicTlsCertificateArn: this.exposure === 'load-balancer' ? this.publicTlsCertificateArn.trim() || undefined : undefined,
       imageRegistry: this.registry,
       scaling: this.mode === 'fixed' ? { mode: 'fixed', replicas: this.replicas } :
         { mode: 'auto', min: this.min, max: this.max, cpuPercent: this.cpuPercent },
@@ -371,8 +462,23 @@ export class Deployments implements OnInit, OnChanges {
     await this.act(async () => {
       const result = await this.session.request<WorkloadDetails>(
         `/deployments/${release.id}/workload${logs ? '?logs=true' : ''}`);
-      if (this.selectedId() === release.id) this.workload.set(result);
+      if (this.selectedId() === release.id) {
+        this.workload.set(result);
+        this.syncWorkloadState(release, result);
+      }
     });
+  }
+
+  private syncWorkloadState(release: DeploymentRelease, details: WorkloadDetails): void {
+    const state = details.workload?.state;
+    if (state !== 'running' && state !== 'stopped') return;
+    this.data.update(data => ({
+      ...data,
+      profiles: data.profiles.map(profile => profile.targetId === release.targetId &&
+        profile.pipelineId === release.pipelineId && profile.settings.app === release.settings.app ?
+          { ...profile, workloadState: state } : profile),
+      releases: data.releases.map(item => item.id === release.id ? { ...item, workloadState: state } : item),
+    }));
   }
 
   protected async rollback(release: DeploymentRelease): Promise<void> {
@@ -398,6 +504,8 @@ export class Deployments implements OnInit, OnChanges {
   private loadSettings(settings: DeploymentSettings, scannedEnvironment: string[] = []): void {
     this.app = settings.app;
     this.publicSubdomain = settings.publicSubdomain ?? settings.app;
+    this.publicCustomHostname = settings.publicCustomHostname ?? '';
+    this.publicTlsCertificateArn = settings.publicTlsCertificateArn ?? '';
     this.port = settings.port;
     this.cpuMillicores = settings.cpuMillicores;
     this.memoryMiB = settings.memoryMiB;

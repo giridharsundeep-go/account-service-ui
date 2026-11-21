@@ -71,17 +71,23 @@ function integer(value: unknown, min: number, max: number): value is number {
 
 export function deploymentSettings(input: unknown): DeploymentSettings | undefined {
   const { app, port, cpuMillicores, memoryMiB, readinessPath, configMap, secret, serviceAccount, nodeName, runtimeEnv,
-    secretNames, publicHostname, publicSubdomain, publicLoadBalancer, imageRegistry, scaling } = object(input);
+    secretNames, publicHostname, publicSubdomain, publicLoadBalancer, publicCustomHostname, publicTlsCertificateArn, imageRegistry, scaling } = object(input);
   const name = text(app);
   const subdomain = text(publicSubdomain);
+  const tlsCertificateArn = text(publicTlsCertificateArn);
+  const customHostname = text(publicCustomHostname).toLowerCase();
   const path = text(readinessPath);
   if (!dnsLabel.test(name) || !/^[a-z]/.test(name) ||
       !integer(port, 1, 65_535) || !integer(cpuMillicores, 1, 1_000_000) || !integer(memoryMiB, 1, 1_000_000) ||
       (path && !/^\/[A-Za-z0-9._~/%-]{0,199}$/.test(path)) || !optionalName(configMap) || !optionalName(secret) ||
       !optionalName(serviceAccount) || !optionalName(nodeName) || typeof publicHostname !== 'boolean' ||
       (publicLoadBalancer !== undefined && typeof publicLoadBalancer !== 'boolean') ||
-      (publicHostname && publicLoadBalancer) ||
       (publicHostname && subdomain && !dnsLabel.test(subdomain)) ||
+      (customHostname && (!publicLoadBalancer || customHostname.length > 253 || !customHostname.includes('.') ||
+        !customHostname.split('.').every(label => dnsLabel.test(label)))) ||
+      (tlsCertificateArn && !/^arn:aws:acm:[a-z0-9-]+:\d{12}:certificate\/[0-9a-f-]{36}$/.test(tlsCertificateArn)) ||
+      (customHostname && !tlsCertificateArn) ||
+      (tlsCertificateArn && !publicLoadBalancer) ||
       (imageRegistry !== undefined && imageRegistry !== 'ecr' && imageRegistry !== 'configured')) return;
   const { mode, replicas, min, max, cpuPercent } = object(scaling);
   if (runtimeEnv !== undefined && (!runtimeEnv || typeof runtimeEnv !== 'object' || Array.isArray(runtimeEnv))) return;
@@ -95,7 +101,8 @@ export function deploymentSettings(input: unknown): DeploymentSettings | undefin
   const common: Omit<DeploymentSettings, 'scaling'> = { app: name, port, cpuMillicores, memoryMiB, readinessPath: path || undefined,
     configMap: text(configMap) || undefined, secret: text(secret) || undefined,
     serviceAccount: text(serviceAccount) || undefined, nodeName: text(nodeName) || undefined,
-    publicHostname, publicSubdomain: publicHostname ? subdomain || name : undefined, publicLoadBalancer, imageRegistry,
+    publicHostname, publicSubdomain: publicHostname ? subdomain || name : undefined, publicLoadBalancer,
+    publicCustomHostname: customHostname || undefined, publicTlsCertificateArn: tlsCertificateArn || undefined, imageRegistry,
     runtimeEnv: vars.length ? Object.fromEntries(vars) as Record<string, string> : undefined,
     secretNames: secretKeys.length ? [...secretKeys] as string[] : undefined };
   if (mode === 'fixed' && integer(replicas, 1, 2_147_483_647)) return { ...common, scaling: { mode, replicas } };

@@ -166,6 +166,8 @@ export interface DeploymentSettings {
   publicHostname: boolean;
   publicSubdomain?: string;
   publicLoadBalancer?: boolean;
+  publicCustomHostname?: string;
+  publicTlsCertificateArn?: string;
   imageRegistry?: ImageRegistry;
   scaling: DeploymentScaling;
 }
@@ -174,6 +176,7 @@ export interface DeploymentProfile {
   targetId: string;
   pipelineId: string;
   settings: DeploymentSettings;
+  workloadState?: 'running' | 'stopped';
   /** Returned to the authorized admin UI; persisted separately as encrypted data. */
   envContent?: string;
 }
@@ -195,6 +198,7 @@ export interface DeploymentRelease {
   requestedAt: string;
   finishedAt?: string;
   status: 'running' | 'succeeded' | 'failed';
+  workloadState?: 'running' | 'stopped';
   message: string;
   progress?: DeploymentProgressEntry[];
   progressPercent?: number;
