@@ -231,13 +231,24 @@ export async function deployRelease(
     }
     if (!image) throw new Error('This release has no published image.');
     progress('Validating Kubernetes resources', image);
-    const file = join(work, 'workload.json');
-    await writeFile(file, JSON.stringify({ apiVersion: 'v1', kind: 'List', items: manifests(target, release, image, secretEnv) }));
-    const apply = ['apply', '--server-side', `--field-manager=${fieldManager}`, '-f', file];
-    await kubectl(target, [...apply, '--dry-run=server'],
-      'Kubernetes rejected the manifest during validation. Check the namespace permissions, policy, and resource settings.');
+    const resources = manifests(target, release, image, secretEnv) as { kind?: string }[];
+    const deployment = resources.find(resource => resource.kind === 'Deployment');
+    if (!deployment) throw new Error('The deployment manifest could not be prepared.');
+    const supportingResources = resources.filter(resource => resource !== deployment);
+    const deploymentFile = join(work, 'deployment.json');
+    const supportingFile = join(work, 'supporting-resources.json');
+    await writeFile(deploymentFile, JSON.stringify(deployment));
+    await writeFile(supportingFile, JSON.stringify({ apiVersion: 'v1', kind: 'List', items: supportingResources }));
+    const apply = ['apply', '--server-side', `--field-manager=${fieldManager}`];
+    await kubectl(target, [...apply, '--dry-run=server', '-f', supportingFile],
+      'Kubernetes rejected a supporting resource. Check the namespace permissions, policy, and resource settings.');
+    await kubectl(target, [...apply, '--force-conflicts', '--dry-run=server', '-f', deploymentFile],
+      'Kubernetes rejected the deployment manifest. Check the namespace permissions, policy, and resource settings.');
     progress('Applying Kubernetes resources', image);
-    await kubectl(target, apply, 'Could not apply every Kubernetes resource. Check the current workload before retrying.');
+    await kubectl(target, [...apply, '-f', supportingFile],
+      'Could not apply supporting Kubernetes resources. Check the current workload before retrying.');
+    await kubectl(target, [...apply, '--force-conflicts', '-f', deploymentFile],
+      'Could not apply the Kubernetes deployment. Check the current workload before retrying.');
     const { app, scaling } = release.settings;
     if (scaling.mode === 'fixed') {
       if (autoscaler) await kubectl(target, ['delete', `hpa/${app}`, '--ignore-not-found'],
