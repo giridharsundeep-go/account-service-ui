@@ -610,6 +610,12 @@
     <div class="drawer-body">
       <form (ngSubmit)="saveIssue()" #issueForm="ngForm">
 
+        <section class="issue-form-section issue-primary-section" aria-labelledby="issue-primary-heading">
+        <div class="section-heading">
+          <mat-icon>assignment</mat-icon>
+          <div><strong id="issue-primary-heading">Issue details</strong><span>Define the issue and where it belongs.</span></div>
+        </div>
+
         <div class="field-group">
           <label for="issue-title">Title</label>
           <input
@@ -677,6 +683,14 @@
               </mat-option>
             </mat-select>
           </div>
+        </div>
+
+        </section>
+
+        <section class="issue-form-section issue-people-section" aria-labelledby="issue-people-heading">
+        <div class="section-heading">
+          <mat-icon>group</mat-icon>
+          <div><strong id="issue-people-heading">Ownership</strong><span>Choose who is responsible and who reported it.</span></div>
         </div>
 
         <div class="form-row">
@@ -766,6 +780,7 @@
             </div>
           </div>
         </div>
+        </section>
 
         <section class="allocation-section">
           <div class="section-heading">
@@ -864,16 +879,20 @@
           </label>
         </section>
 
-        <div class="field-group">
-          <label for="issue-description">Description</label>
+        <section class="issue-form-section issue-description-section" aria-labelledby="issue-description-heading">
+          <div class="section-heading">
+            <mat-icon>notes</mat-icon>
+            <div><strong id="issue-description-heading">Description</strong><span>Add steps, context, and expected behavior.</span></div>
+          </div>
           <textarea
             id="issue-description"
             class="google-textarea"
             [(ngModel)]="currentIssue.description"
             name="description"
             rows="7"
+            aria-label="Issue description"
             [disabled]="isReadOnly()"></textarea>
-        </div>
+        </section>
 
         <footer class="drawer-footer" *ngIf="!isReadOnly()">
           <button

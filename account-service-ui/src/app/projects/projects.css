@@ -7065,36 +7065,40 @@ textarea,
   margin: 0;
 }
 
-.project-profile-view-tabs .saas-form-field .mat-mdc-text-field-wrapper {
-  min-height: 56px;
-  border-radius: 25px !important;
-  background: #ffffff !important;
+.project-profile-view-tabs .profile-edit-grid .project-form-subsection {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 10px 18px;
+  min-width: 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--gp-border-color, #a0a6b1);
 }
 
-.project-profile-view-tabs .saas-form-field .mdc-notched-outline {
-  border-radius: 25px !important;
+.project-profile-view-tabs .profile-edit-grid .project-form-subsection:first-child {
+  padding-top: 0;
+  border-top: 0;
 }
 
-.project-profile-view-tabs .saas-form-field .mdc-notched-outline__leading {
-  width: 25px !important;
-  border-radius: 25px 0 0 25px !important;
+.project-form-subsection-heading {
+  grid-column: 1 / -1;
+  margin-bottom: 2px;
 }
 
-.project-profile-view-tabs .saas-form-field .mdc-notched-outline__trailing {
-  border-radius: 0 25px 25px 0 !important;
+.project-form-subsection-heading h3 {
+  margin: 0;
+  color: #16191f;
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.4;
 }
 
-.project-profile-view-tabs .saas-form-field .mat-mdc-form-field-infix {
-  min-height: 56px;
-  box-sizing: border-box;
-  padding-top: 16px;
-  padding-bottom: 16px;
-}
-
-.project-profile-view-tabs .saas-form-field.mat-focused .mdc-notched-outline__leading,
-.project-profile-view-tabs .saas-form-field.mat-focused .mdc-notched-outline__notch,
-.project-profile-view-tabs .saas-form-field.mat-focused .mdc-notched-outline__trailing {
-  border-color: var(--gp-border-color, #a0a6b1) !important;
+.project-form-subsection-heading p {
+  margin: 3px 0 0;
+  color: #5f6b7a;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .project-profile-view-tabs .profile-edit-grid .project-form-full {
@@ -7140,6 +7144,11 @@ textarea,
   .project-profile-view-tabs .profile-edit-grid {
     grid-template-columns: minmax(0, 1fr);
     gap: 4px;
+  }
+
+  .project-profile-view-tabs .profile-edit-grid .project-form-subsection {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
   }
 
   .project-profile-view-tabs .profile-edit-grid .project-form-full {

@@ -163,7 +163,9 @@
   }
   :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.mat-mdc-form-field) { --mdc-outlined-text-field-container-shape: 4px; --mat-form-field-container-height: 40px; }
   :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) .mat-mdc-form-field .mdc-text-field--outlined {
-    border: 1px solid #879596 !important;
+    /* The shared app stylesheet draws the single field outline on the wrapper.
+       Do not also outline MDC's inner surface; that creates a double border. */
+    border: 0 !important;
     border-radius: 4px !important;
     background: #fff !important;
   }

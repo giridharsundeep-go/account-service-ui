@@ -536,14 +536,14 @@
       <div class="project-profile-title">
         <div class="project-profile-title-line">
           <h1>{{ profile.name || (isProfileCreating ? 'New project' : 'Untitled project') }}</h1>
-          <span class="project-status-badge project-header-status" [class.status-active]="profile.status === 'ACTIVE'" [class.status-hold]="profile.status === 'ON_HOLD'" [class.status-archived]="profile.status === 'ARCHIVED'"><span class="status-dot"></span>{{ profile.status || 'ACTIVE' | titlecase }}</span>
+          <span *ngIf="!isProfileEditing" class="project-status-badge project-header-status" [class.status-active]="profile.status === 'ACTIVE'" [class.status-hold]="profile.status === 'ON_HOLD'" [class.status-archived]="profile.status === 'ARCHIVED'"><span class="status-dot"></span>{{ profile.status || 'ACTIVE' | titlecase }}</span>
         </div>
-        <div class="project-profile-meta-line">
+        <div class="project-profile-meta-line" *ngIf="!isProfileEditing">
           <span class="project-code-meta"><span class="meta-label">Project code</span><strong>{{ profile.project_code || (isProfileCreating ? 'New project' : 'PRJ') }}</strong></span>
           <span class="project-meta-divider" aria-hidden="true"></span>
           <span class="project-priority-meta"><span class="meta-label">Priority</span><strong [class.priority-critical]="profile.priority === 'CRITICAL'" [class.priority-high]="profile.priority === 'HIGH'">{{ profile.priority | titlecase }}</strong></span>
         </div>
-        <p class="project-profile-code project-profile-product" *ngIf="getProductName(profile.product_id)"><mat-icon>domain</mat-icon>{{ getProductName(profile.product_id) }}</p>
+        <p class="project-profile-code project-profile-product" *ngIf="!isProfileEditing && getProductName(profile.product_id)"><mat-icon>domain</mat-icon>{{ getProductName(profile.product_id) }}</p>
       </div>
       <div class="project-profile-actions">
         <button *ngIf="!isProfileEditing && canManageProjects" mat-flat-button color="primary" type="button" (click)="editProjectInProfile(profile)"><mat-icon>edit</mat-icon> Edit project</button>
@@ -647,13 +647,19 @@
         <section class="profile-section-card profile-step-card">
           <div class="profile-section-heading"><div><h2>Overview</h2><p>Project description and key project details.</p></div><span class="profile-edit-label" *ngIf="isProfileEditing"><mat-icon>edit</mat-icon> Editing</span></div>
           <div class="project-profile-form-grid profile-edit-grid" *ngIf="isProfileEditing; else coreMetadataView">
-            <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Project name</mat-label><input matInput [(ngModel)]="projectForm.name" name="profileProjectName" required /></mat-form-field>
-            <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Status</mat-label><mat-select [(ngModel)]="projectForm.status" name="profileStatus"><mat-option value="ACTIVE">Active</mat-option><mat-option value="ON_HOLD">On hold</mat-option><mat-option value="COMPLETED">Completed · all sprints finished</mat-option><mat-option value="ARCHIVED">Archived</mat-option></mat-select></mat-form-field>
-            <mat-form-field appearance="outline" class="saas-form-field project-form-full"><mat-label>Description</mat-label><textarea matInput rows="3" [(ngModel)]="projectForm.description" name="profileDescription"></textarea></mat-form-field>
-            <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Project code</mat-label><input matInput [(ngModel)]="projectForm.project_code" name="profileProjectCode" /></mat-form-field>
-            <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Priority</mat-label><mat-select [(ngModel)]="projectForm.priority" name="profilePriority"><mat-option value="LOW">Low</mat-option><mat-option value="MEDIUM">Medium</mat-option><mat-option value="HIGH">High</mat-option><mat-option value="CRITICAL">Critical</mat-option></mat-select></mat-form-field>
-            <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Product</mat-label><mat-select [(ngModel)]="projectForm.product_id" name="profileProduct"><mat-option [value]="null">Unassigned</mat-option><mat-option *ngFor="let product of systemProducts" [value]="product.id">{{ product.name }}</mat-option></mat-select></mat-form-field>
-            <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Methodology</mat-label><mat-select [(ngModel)]="projectForm.methodology" name="profileMethodology"><mat-option value="AGILE_SCRUM">Agile Scrum</mat-option><mat-option value="WATERFALL_GANTT">Waterfall / Gantt</mat-option></mat-select></mat-form-field>
+            <section class="project-form-subsection" aria-labelledby="project-form-details-heading">
+              <header class="project-form-subsection-heading"><h3 id="project-form-details-heading">Project details</h3><p>Set the project name, status, and working description.</p></header>
+              <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Project name</mat-label><input matInput [(ngModel)]="projectForm.name" name="profileProjectName" required /></mat-form-field>
+              <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Status</mat-label><mat-select [(ngModel)]="projectForm.status" name="profileStatus"><mat-option value="ACTIVE">Active</mat-option><mat-option value="ON_HOLD">On hold</mat-option><mat-option value="COMPLETED">Completed · all sprints finished</mat-option><mat-option value="ARCHIVED">Archived</mat-option></mat-select></mat-form-field>
+              <mat-form-field appearance="outline" class="saas-form-field project-form-full"><mat-label>Description</mat-label><textarea matInput rows="3" [(ngModel)]="projectForm.description" name="profileDescription"></textarea></mat-form-field>
+            </section>
+            <section class="project-form-subsection" aria-labelledby="project-form-planning-heading">
+              <header class="project-form-subsection-heading"><h3 id="project-form-planning-heading">Planning configuration</h3><p>Organize the project for prioritization and delivery.</p></header>
+              <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Project code</mat-label><input matInput [(ngModel)]="projectForm.project_code" name="profileProjectCode" /></mat-form-field>
+              <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Priority</mat-label><mat-select [(ngModel)]="projectForm.priority" name="profilePriority"><mat-option value="LOW">Low</mat-option><mat-option value="MEDIUM">Medium</mat-option><mat-option value="HIGH">High</mat-option><mat-option value="CRITICAL">Critical</mat-option></mat-select></mat-form-field>
+              <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Product</mat-label><mat-select [(ngModel)]="projectForm.product_id" name="profileProduct"><mat-option [value]="null">Unassigned</mat-option><mat-option *ngFor="let product of systemProducts" [value]="product.id">{{ product.name }}</mat-option></mat-select></mat-form-field>
+              <mat-form-field appearance="outline" class="saas-form-field"><mat-label>Methodology</mat-label><mat-select [(ngModel)]="projectForm.methodology" name="profileMethodology"><mat-option value="AGILE_SCRUM">Agile Scrum</mat-option><mat-option value="WATERFALL_GANTT">Waterfall / Gantt</mat-option></mat-select></mat-form-field>
+            </section>
           </div>
           <ng-template #coreMetadataView>
             <section class="project-overview-description-block"><h2>Description</h2><p>{{ profile.description || 'No project description has been added yet.' }}</p></section>
@@ -1254,7 +1260,6 @@
             <input
               matInput
               [(ngModel)]="projectForm.name"
-              placeholder="Project name"
               required>
 
           </mat-form-field>
