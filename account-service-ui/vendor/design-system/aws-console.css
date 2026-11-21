@@ -169,6 +169,26 @@
     border-radius: 4px !important;
     background: #fff !important;
   }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) .mat-mdc-form-field .mat-mdc-text-field-wrapper {
+    box-sizing: border-box !important;
+    position: relative !important;
+    border: 1px solid #879596 !important;
+    border-radius: 4px !important;
+    background: #fff !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) .mat-mdc-form-field:focus-within .mat-mdc-text-field-wrapper {
+    border-color: #0972d3 !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) .mat-mdc-form-field .mdc-notched-outline,
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) .mat-mdc-form-field .mdc-notched-outline > * {
+    border: 0 !important;
+    outline: 0 !important;
+    box-shadow: none !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) .mat-mdc-form-field .mdc-floating-label--float-above {
+    padding-inline: 4px !important;
+    background: #fff !important;
+  }
   :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.mat-mdc-select-panel,.mat-mdc-autocomplete-panel,.mat-mdc-menu-panel,.work-filter-popover,.work-items-status-menu,.apps-panel,.popover,.document-menu,.menu,.workspace-dialog,.suite-dialog,.instru-dialog,.forge-dialog,.tc-dialog,.new-dialog,.work-item-dialog,.document-share-dialog,.mat-mdc-dialog-surface) {
     border: 1px solid #d5dbdb !important;
     border-radius: 6px !important;
