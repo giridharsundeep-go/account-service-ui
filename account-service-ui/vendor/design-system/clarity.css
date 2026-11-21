@@ -1,5 +1,6 @@
-@layer gp-post, gp-clarity;
+@layer gp-console, gp-clean, gp-post, gp-clarity;
 @import './post.css' layer(gp-post);
+@import './aws-console.css';
 /* Greatley Clarity: shared application chrome. Authored editor content is intentionally not targeted. */
 :root {
   --gp-font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Inter, sans-serif;

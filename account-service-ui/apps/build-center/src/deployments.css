@@ -1,0 +1,138 @@
+:host { display: grid; gap: 16px; }
+.deployment-panel { overflow: hidden; }
+.deployment-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 18px 20px;
+}
+.deployment-heading p { margin-top: 4px; }
+.cluster-notice { margin: 0 20px 16px; }
+.cluster-setup { display: grid; gap: 12px; }
+.cloud-settings .cloud-form { margin-top: 18px; padding: 0; }
+.cloud-settings .cloud-workers { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.cloud-settings .cloud-jobs-heading { padding-inline: 0; }
+.subnet-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 10px;
+  max-height: 240px;
+  overflow: auto;
+}
+.subnet-list small { display: block; }
+.release-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  padding: 0 20px 20px;
+}
+.release-form fieldset {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--panel-radius);
+  padding: 14px;
+}
+.release-form legend { padding-inline: 6px; font-weight: 650; }
+.release-form .runtime-config { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.release-form .release-actions { grid-column: 1 / -1; padding: 0; }
+.release-form small, .field-note { font-size: 13px; font-weight: 400; }
+.check-field { display: flex; align-items: center; gap: 8px; }
+.check-field input { min-height: auto; }
+.check-field strong { overflow-wrap: anywhere; }
+.release-table-scroll { overflow-x: auto; }
+.release-table { width: 100%; border-collapse: collapse; text-align: left; }
+.release-table th, .release-table td {
+  padding: 12px 16px;
+  border-top: 1px solid var(--panel-border);
+  vertical-align: middle;
+}
+.release-table th { background: var(--surface-subtle); color: var(--text-muted); font-size: 13px; }
+.release-table small { display: block; margin-top: 3px; }
+.release-table time { white-space: nowrap; }
+.release-table .selected-release { background: var(--accent-soft); }
+.configuration-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.release-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  padding: 0 20px 16px;
+}
+.release-actions { padding: 0 20px 16px; }
+.pod-log {
+  overflow: auto;
+  max-height: 340px;
+  margin: 0 20px 20px;
+  padding: 14px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--gp-control-radius);
+  background: var(--surface-subtle);
+  font: 13px/1.55 ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+.resume-endpoint { min-width: 220px; max-width: 340px; font-size: 12px; }
+.resume-endpoint small { font-size: 11px; font-weight: 400; line-height: 1.4; }
+.resume-network-note { display: block; max-width: 44ch; color: var(--failure); font-size: 11px; line-height: 1.45; }
+.worker-group-issue { display: block; max-width: 48ch; color: var(--failure); font-size: 11px; line-height: 1.45; overflow-wrap: anywhere; }
+.worker-capacity { display: block; min-width: 220px; max-width: 340px; font-size: 12px; }
+.worker-capacity select { font-size: 12px; }
+.node-selector { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 10px; }
+.node-selector label { min-width: 0; }
+.environment-editor { display: grid; gap: 8px; }
+.environment-heading { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
+.environment-heading h4 { margin: 0; font-size: 14px; }
+.environment-heading p { margin-top: 3px; font-size: 12px; font-weight: 400; }
+.env-code-editor {
+  width: 100%; min-height: 260px; resize: vertical; tab-size: 2;
+  border: 1px solid var(--panel-border); border-radius: 8px; padding: 14px;
+  color: var(--gp-text); background: var(--surface-subtle);
+  font: 13px/1.65 ui-monospace, SFMono-Regular, Consolas, monospace;
+  white-space: pre; overflow: auto;
+}
+.env-code-editor:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.build-version {
+  display: inline-flex; width: fit-content; align-items: center; margin: 2px 0;
+  padding: 2px 8px; border: 1px solid var(--panel-border); border-radius: 999px;
+  color: var(--gp-text); background: var(--surface-subtle); font-family: var(--gp-font); font-size: 12px; font-weight: 650; line-height: 1.5;
+}
+.release-current-status { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.release-current-status .status { flex: 0 0 auto; }
+.status-spinner {
+  display: inline-block; width: 12px; height: 12px; flex: 0 0 12px;
+  border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%;
+  animation: deployment-spin .75s linear infinite;
+}
+.status .status-spinner { width: 11px; height: 11px; flex-basis: 11px; }
+@keyframes deployment-spin { to { transform: rotate(360deg); } }
+.deployment-progress { padding: 0 20px 18px; }
+.progress-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 9px; }
+.progress-heading h3 { margin: 0; font-size: 15px; }
+.progress-heading p, .progress-heading time { display: block; margin-top: 3px; font-size: 12px; }
+.progress-heading > strong { color: var(--accent); font-size: 22px; font-variant-numeric: tabular-nums; }
+.release-progress-bar, .table-progress { display: block; width: 100%; accent-color: var(--accent); }
+.release-progress-bar { height: 9px; margin: 0 0 18px; }
+.table-progress { max-width: 160px; height: 5px; margin-top: 5px; }
+.deployment-progress h4 { margin: 0 0 10px; font-size: 13px; }
+.deployment-timeline { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.deployment-timeline li { display: grid; grid-template-columns: 24px 145px minmax(0, 1fr) 42px; align-items: start; gap: 9px; min-height: 38px; color: var(--text-muted); font-size: 13px; }
+.deployment-timeline li:not(:last-child) .progress-marker::after { position: absolute; top: 20px; bottom: -12px; left: 9px; width: 1px; background: var(--panel-border); content: ''; }
+.progress-marker { position: relative; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; color: var(--success); background: var(--surface-subtle); font-size: 12px; }
+.progress-current { color: var(--gp-text) !important; }
+.progress-current .progress-marker { color: var(--accent); }
+.progress-failed .progress-marker { color: var(--failure); }
+.deployment-timeline time { white-space: nowrap; font-size: 12px; }
+.deployment-timeline strong { color: var(--text-muted); text-align: right; font-size: 12px; font-variant-numeric: tabular-nums; }
+@container (max-width: 760px) { .release-form { grid-template-columns: 1fr; } }
+@container (max-width: 520px) {
+  .release-form fieldset, .release-form .runtime-config, .cloud-settings .cloud-workers { grid-template-columns: 1fr; }
+  .node-selector { grid-template-columns: 1fr; }
+  .deployment-timeline li { grid-template-columns: 24px minmax(0, 1fr) 38px; }
+  .deployment-timeline time { grid-column: 2; }
+  .deployment-timeline li > span:not(.progress-marker) { grid-column: 2; }
+  .deployment-timeline strong { grid-column: 3; grid-row: 1; }
+}

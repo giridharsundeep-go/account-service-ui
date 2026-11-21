@@ -1,0 +1,20 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ListQueuesForBuildCenterInventory",
+      "Effect": "Allow",
+      "Action": "sqs:ListQueues",
+      "Resource": "*"
+    },
+    {
+      "Sid": "ReadAndCreateQueuesForBuildCenter",
+      "Effect": "Allow",
+      "Action": [
+        "sqs:GetQueueAttributes",
+        "sqs:CreateQueue"
+      ],
+      "Resource": "arn:aws:sqs:*:AWS_ACCOUNT_ID:*"
+    }
+  ]
+}

@@ -7,6 +7,79 @@
   },
   "newProjectRoot": "projects",
   "projects": {
+    "build-center": {
+      "projectType": "application",
+      "root": "apps/build-center",
+      "sourceRoot": "apps/build-center/src",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "apps/build-center/src/main.ts",
+            "server": "apps/build-center/src/main.server.ts",
+            "index": "apps/build-center/src/index.html",
+            "outputPath": "dist/build-center",
+            "outputMode": "server",
+            "ssr": {
+              "entry": "apps/build-center/src/server.ts"
+            },
+            "tsConfig": "apps/build-center/tsconfig.app.json",
+            "assets": [
+              {
+                "glob": "OFL.txt",
+                "input": "node_modules/@greatley-poshley/design-system/fonts/poshley-sans",
+                "output": "assets/fonts/poshley-sans"
+              },
+              {
+                "glob": "TRADEMARKS.md",
+                "input": "node_modules/@greatley-poshley/design-system/fonts/poshley-sans",
+                "output": "assets/fonts/poshley-sans"
+              }
+            ],
+            "styles": [
+              "apps/build-center/src/styles.css",
+              "node_modules/@greatley-poshley/design-system/clarity.css"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "outputHashing": "all"
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "outputHashing": "all",
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "options": {
+            "allowedHosts": [
+              "localhost",
+              "127.0.0.1",
+              "[::1]"
+            ],
+            "prebundle": {
+              "exclude": [
+                "@greatley-poshley/suite"
+              ]
+            }
+          },
+          "configurations": {
+            "production": {
+              "buildTarget": "build-center:build:production"
+            },
+            "development": {
+              "buildTarget": "build-center:build:development"
+            }
+          },
+          "defaultConfiguration": "development"
+        }
+      }
+    },
     "account-service-ui": {
       "projectType": "application",
       "schematics": {},

@@ -7,7 +7,7 @@ export const workspaceVisualStyles = `
 :host([integrated-navigation="true"]) .canvas slot::slotted(.chatly-shell){width:100%;max-width:100%;margin-inline:auto}
 @media(max-width:800px){:host .canvas slot::slotted(*){width:100%!important;max-width:100%!important}}
 
-.sidebar{width:var(--navigation-width,218px)!important}.collapsed .sidebar{width:72px!important}.nav-resize{width:8px;margin-left:-4px;margin-right:-4px;position:relative;z-index:20;flex:0 0 8px;cursor:col-resize;touch-action:none;outline-offset:-2px}.nav-resize:after{content:"";position:absolute;inset:15px 3px;border-radius:8px;transition:background .15s}.nav-resize:hover:after,.nav-resize:focus-visible:after,.resizing .nav-resize:after{background:var(--gp-accent,#1764d4)}.resizing{user-select:none;cursor:col-resize}.collapsed .nav-resize,.public .nav-resize,.identity .nav-resize,:host([integrated-navigation="true"]) .nav-resize,:host([editor-mode="true"]) .nav-resize,:host([embedded="true"]) .nav-resize{display:none}.brand-group{min-width:280px!important;flex:0 0 auto!important}.brand{text-decoration:none}.product-label{display:flex!important;align-items:center;gap:7px;font-size:15px;font-weight:700;order:-1;white-space:nowrap}.header-search{max-width:none!important}@media(max-width:1050px){.brand-group{min-width:0!important}.product-label{display:none!important}}@media(max-width:800px){.sidebar{width:72px!important}.nav-resize{display:none}.shell.mobile-expanded .sidebar{width:218px!important}}
+.sidebar{width:var(--navigation-width,248px)!important}.collapsed .sidebar{width:72px!important}.nav-resize{width:8px;margin-left:-4px;margin-right:-4px;position:relative;z-index:20;flex:0 0 8px;cursor:col-resize;touch-action:none;outline-offset:-2px}.nav-resize:after{content:"";position:absolute;inset:15px 3px;border-radius:8px;transition:background .15s}.nav-resize:hover:after,.nav-resize:focus-visible:after,.resizing .nav-resize:after{background:var(--gp-accent,#1764d4)}.resizing{user-select:none;cursor:col-resize}.collapsed .nav-resize,.public .nav-resize,.identity .nav-resize,:host([integrated-navigation="true"]) .nav-resize,:host([editor-mode="true"]) .nav-resize,:host([embedded="true"]) .nav-resize{display:none}.brand-group{min-width:280px!important;flex:0 0 auto!important}.brand{text-decoration:none}.product-label{display:flex!important;align-items:center;gap:7px;font-size:15px;font-weight:700;order:-1;white-space:nowrap}.header-search{max-width:none!important}@media(max-width:1050px){.brand-group{min-width:0!important}.product-label{display:none!important}}@media(max-width:800px){.sidebar{width:72px!important}.nav-resize{display:none}.shell.mobile-expanded .sidebar{width:248px!important}}
 
 :host{font-family:var(--gp-font,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif)!important;color:var(--gp-text,#111113);font-size:15px}
 .shell,.header,.sidebar,.canvas,.footer{background:var(--gp-page,#fff)!important;color:var(--gp-text,#111113)!important;border-color:var(--gp-border-color, #a0a6b1)!important}
@@ -38,3 +38,76 @@ export const peopleVisualStyles = `
 
 @media(prefers-reduced-motion:no-preference){article{transition:box-shadow var(--gp-duration,280ms) ease,border-color 160ms ease,translate var(--gp-duration,280ms) var(--gp-ease,cubic-bezier(.22,1,.36,1))}:host(:hover) article{translate:0 -2px;box-shadow:0 6px 20px #0001!important}}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 `;
+
+/** AWS Console inspired chrome shared across every workspace application. */
+export const awsConsoleShellStyles = `@layer gp-flat-chrome {
+:host{font-family:var(--gp-font,'Poshley Sans',Arial,sans-serif)!important;color:#16191f!important;font-size:14px!important}
+.shell,.header,.sidebar,.canvas,.footer{background:#fff!important;color:#16191f!important;border-color:#d5dbdb!important}
+.header.header{height:64px!important;min-height:64px!important;padding:8px 20px!important;gap:16px!important;border-bottom:1px solid #d5dbdb!important;box-shadow:none!important}
+.brand{font-family:inherit!important;font-size:20px!important;font-weight:700!important;letter-spacing:-.02em!important;color:#16191f!important}
+.brand-group{min-width:200px!important;gap:12px!important}
+.header-actions{gap:6px!important}
+.icon-button{width:36px!important;height:36px!important;border:0!important;border-radius:4px!important;background:transparent!important;color:#414d5c!important}
+.icon-button:hover{background:#f2f3f3!important;color:#16191f!important}
+:host .search.search,.header .project-trigger.project-trigger{height:36px!important;min-height:36px!important;border:1px solid #879596!important;border-radius:4px!important;background:#fff!important;padding:0 10px!important;box-shadow:none!important;color:#414d5c!important}
+.search.search:focus-within,.header .project-trigger.project-trigger:focus-visible{border-color:#0972d3!important;box-shadow:0 0 0 1px #0972d3!important}
+.search.search input{height:34px!important;font:400 14px/1.4 var(--gp-font,'Poshley Sans',Arial,sans-serif)!important;color:#16191f!important}
+.search.search input::placeholder{color:#5f6b7a!important}
+.create.create,.signin.signin{height:36px!important;min-height:36px!important;padding:0 12px!important;border:1px solid #879596!important;border-radius:4px!important;background:#fff!important;color:#16191f!important;font:650 14px/1.2 var(--gp-font,'Poshley Sans',Arial,sans-serif)!important;box-shadow:none!important}
+.create.create:hover,.signin.signin:hover{background:#f2f3f3!important}
+.sidebar.sidebar{width:var(--navigation-width,248px)!important;background:#fff!important;border-right:1px solid #d5dbdb!important}
+.nav-scroll{padding:12px 8px!important}
+.nav-item{height:36px!important;min-height:36px!important;margin:2px 0!important;padding:0 10px!important;border-radius:4px!important;font:500 14px/1.4 var(--gp-font,'Poshley Sans',Arial,sans-serif)!important;color:#16191f!important;gap:10px!important}
+.nav-item.current{background:#fff!important;color:#0972d3!important;font-weight:650!important;border-left:3px solid #0972d3!important}
+.nav-item:not(.current):hover{background:#fff!important;color:#0972d3!important}
+.group-toggle{padding:8px 8px 5px!important;color:#5f6b7a!important;font-size:11px!important;font-weight:650!important;letter-spacing:.04em!important}
+.nav-group{margin-top:8px!important}
+.collapse{border:0!important;border-radius:4px!important;background:#fff!important;color:#5f6b7a!important}
+.panel.panel{top:calc(100% + 4px)!important;border:1px solid #d5dbdb!important;border-radius:6px!important;padding:12px!important;background:#fff!important;color:#16191f!important;box-shadow:0 4px 12px rgb(0 0 0 / 14%)!important}
+.panel-head strong{font-size:16px!important;font-weight:650!important;letter-spacing:0!important}
+.panel-action{border-radius:4px!important;color:#16191f!important;font-size:14px!important}
+.panel-action:hover,.project-row:hover{background:#fff!important;color:#0972d3!important}
+.notice{padding:10px 0!important;border-color:#d5dbdb!important}
+.notice strong{font-size:14px!important;font-weight:650!important}
+.notice p{font-size:13px!important;line-height:1.45!important;color:#5f6b7a!important}
+.project-row.project-row{min-height:40px!important;border-radius:4px!important}
+.footer.footer{padding:8px 20px!important;border-top:1px solid #d5dbdb!important;color:#5f6b7a!important;font-size:11px!important}
+.footer-links a{color:#0972d3!important}
+button:focus-visible,a:focus-visible{outline:2px solid #0972d3!important;outline-offset:2px!important}
+@media(max-width:800px){.header.header{height:auto!important;min-height:60px!important;padding:8px 12px!important}.sidebar.sidebar{border-right:0!important}.nav-item{height:40px!important;min-height:40px!important}}
+}`;
+
+export const awsConsoleLauncherStyles = `@layer gp-flat-chrome {
+:host{font-family:var(--gp-font,'Poshley Sans',Arial,sans-serif)!important;color:#16191f!important}
+button.launch.launch{width:auto!important;height:36px!important;min-height:36px!important;padding:0 8px!important;border:0!important;border-radius:4px!important;background:#fff!important;color:#414d5c!important;font:600 13px/1.2 var(--gp-font,'Poshley Sans',Arial,sans-serif)!important}
+button.launch.launch:hover{background:#fff!important;color:#0972d3!important}
+:host .panel.panel[role="dialog"]{width:min(900px,calc(100vw - 32px))!important;max-width:calc(100vw - 32px)!important;top:calc(100% + 6px)!important;padding:8px!important;border:1px solid #d5dbdb!important;border-radius:6px!important;background:#fff!important;box-shadow:0 4px 12px rgb(0 0 0 / 14%)!important}
+:host .apps-list{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:8px!important;padding:12px!important;background:#fff!important}
+.heading.heading{padding:10px 12px!important;color:#5f6b7a!important;font-size:12px!important;letter-spacing:0!important}
+.app.app,.app.app:hover,.app.app[aria-current="page"]{min-height:66px!important;padding:8px 10px!important;border-radius:4px!important;background:#fff!important;color:#16191f!important}
+.app.app[aria-current="page"]{box-shadow:inset 3px 0 #0972d3!important;color:#0972d3!important}
+.app strong{font-size:14px!important;font-weight:650!important}
+.app small{font-size:12px!important;color:#5f6b7a!important}
+.app i{width:34px!important;height:34px!important;border-radius:4px!important}
+ .workspace-tools{border-color:#d5dbdb!important;background:#fff!important}
+.workspace-tools button{border:1px solid #879596!important;border-radius:4px!important;background:#fff!important}
+.footer.footer{padding:10px 12px!important;border-color:#d5dbdb!important;background:#fff!important;font-size:11px!important;color:#5f6b7a!important}
+@media(max-width:520px){:host .panel.panel[role="dialog"]{width:min(700px,calc(100vw - 24px))!important}.apps-list{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:380px){:host .panel.panel[role="dialog"]{width:calc(100vw - 20px)!important;max-width:calc(100vw - 20px)!important}.apps-list{grid-template-columns:1fr!important}}
+}`;
+
+export const awsConsolePeopleStyles = `@layer gp-flat-chrome {
+:host{font-family:var(--gp-font,'Poshley Sans',Arial,sans-serif)!important;color:#16191f!important}
+article{border:1px solid #d5dbdb!important;border-radius:6px!important;background:#fff!important;box-shadow:none!important;translate:none!important}
+article.selected{border-color:#0972d3!important;background:#eaf4ff!important;box-shadow:0 0 0 1px #0972d3!important}
+:host(:hover) article{box-shadow:none!important;translate:none!important}
+.copy strong{font-size:14px!important;font-weight:650!important;letter-spacing:0!important}
+.designation,.email{color:#5f6b7a!important;font-size:13px!important}
+.details-button,.close-details{border:1px solid #879596!important;border-radius:4px!important;background:#fff!important;color:#16191f!important}
+.person-details.person-details{border:1px solid #d5dbdb!important;border-radius:6px!important;background:#fff!important;box-shadow:0 4px 12px rgb(0 0 0 / 14%)!important}
+}`;
+
+export const awsConsoleThemeStyles = `@layer gp-flat-chrome {
+button{width:36px!important;height:36px!important;border:0!important;border-radius:4px!important;background:transparent!important;color:#414d5c!important}
+button:hover{background:#f2f3f3!important;color:#16191f!important}
+}`;

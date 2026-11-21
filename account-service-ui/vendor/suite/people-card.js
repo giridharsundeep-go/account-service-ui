@@ -1,5 +1,5 @@
 import {cleanVisualStyles,borderlessVisualStyles} from './clean-visual-system.js';
-import {peopleVisualStyles} from './visual-system.js';
+import {peopleVisualStyles,awsConsolePeopleStyles} from './visual-system.js';
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 export function actorKind(id, type) {
@@ -67,7 +67,7 @@ article.selectable{cursor:pointer}article.selectable:hover{box-shadow:0 5px 18px
 @media(prefers-reduced-motion:reduce){article{transition:none}}
 ${peopleVisualStyles}
 :host{position:relative}.copy{padding-right:38px}.selectable .copy{padding-right:70px}.details-button{position:absolute;top:12px;right:12px;grid-column:2;justify-self:end;width:34px;height:34px;border:1px solid var(--gp-border-color, #a0a6b1);border-radius:50%;background:var(--gp-surface,#fff);color:var(--gp-text,#151519);cursor:pointer;font:20px system-ui}.selectable .details-button{right:42px}.person-details{padding:20px;margin-top:8px;border:1px solid var(--gp-border-color, #a0a6b1);border-radius:16px;box-shadow:var(--gp-float-shadow);background:var(--gp-surface,#fff);color:var(--gp-text,#151519);text-align:left}.person-details h3{margin:0 30px 16px 0}.person-details dl{display:grid;grid-template-columns:100px minmax(0,1fr);gap:10px;margin:0;font-size:14px}.person-details dd{margin:0;overflow-wrap:anywhere}.person-details dt{color:var(--gp-muted,#68686e)}.close-details{float:right;border:0;background:none;color:inherit;font-size:24px;cursor:pointer}
-${cleanVisualStyles('people')}${borderlessVisualStyles('people')}
+${cleanVisualStyles('people')}${borderlessVisualStyles('people')}${awsConsolePeopleStyles}
 </style><article aria-label="${escape(name + ', ' + (designation || 'Designation not set'))}"><span class="avatar" data-tone="${Math.abs(Number(p.id || p.userId || 0)) % 5}">${escape(initials)}</span><div class="copy"><strong><gp-actor-icon actor-id="${escape(p.id || p.userId)}" actor-type="${escape(p.actorType)}"></gp-actor-icon> <span class="person-name" title="${escape(name)}">${escape(name)}</span></strong><span class="designation" title="${escape(designation || 'Designation not set')}">${escape(designation || 'Designation not set')}</span></div><button class="details-button" type="button" aria-label="View profile details" aria-expanded="false" aria-haspopup="dialog">ⓘ</button><span class="check" aria-hidden="true" hidden></span></article><section class="person-details" popover="manual" hidden role="dialog" aria-label="Profile details"><button type="button" class="close-details" aria-label="Close profile">×</button><h3>${escape(name)}</h3><dl>${[["Designation",designation],["Email",p.email],["Department",p.department],["Division",p.division],["Function",p.functionName],["Location",p.location||p.city],["Phone",p.phone],["Employee ID",p.employeeCode||p.employee_id]].filter(([,value])=>value).map(([label,value])=>`<dt>${escape(label)}</dt><dd>${escape(value)}</dd>`).join('')}</dl></section>`;
       if (avatar) {
         const image = document.createElement('img'); image.src = avatar; image.alt = name;

@@ -1,0 +1,90 @@
+<section class="panel deployment-panel" aria-labelledby="cluster-targets-heading">
+  <div class="deployment-heading">
+    <div>
+      <h2 id="cluster-targets-heading">Cluster targets</h2>
+      @if (!targets().length) {
+        <p>Connect an EKS cluster to deploy images from Build Center.</p>
+        <p class="field-note">After connection, select a build to configure its scanned Dockerfile ENV names, Kubernetes Secrets, scaling, and intranet or internet exposure. Custom subdomains appear when the AWS connection has a base domain and working IngressClass.</p>
+      }
+    </div>
+    @if (!opened()) {
+      <button type="button" [disabled]="busy()" (click)="open()">Connect EKS cluster</button>
+    }
+  </div>
+  @if (configurationMessage()) { <p class="empty-state" role="alert">{{ configurationMessage() }}</p> }
+  @if (error()) { <p class="notice error cluster-notice" role="alert">{{ error() }}</p> }
+  @if (notice()) { <p class="notice cluster-notice" role="status">{{ notice() }}</p> }
+  @if (opened()) {
+    @if (accounts().length) {
+      <form #connection="ngForm" class="release-form" (ngSubmit)="connect()">
+        <fieldset>
+          <legend>AWS discovery</legend>
+          <label>AWS account
+            <select name="awsAccount" [ngModel]="accountId()" (ngModelChange)="selectAccount($event)" [disabled]="busy()" required>
+              @for (item of accounts(); track item.id) { <option [value]="item.id">{{ item.name }}</option> }
+            </select>
+          </label>
+          <label>AWS region
+            <select name="awsRegion" [ngModel]="region" (ngModelChange)="selectRegion($event)" [disabled]="busy()" required>
+              @for (item of account()?.regions; track item) { <option [value]="item">{{ item }}</option> }
+            </select>
+          </label>
+          <div class="actions wide">
+            <button type="button" [disabled]="busy() || !account() || !region" (click)="discover()">Find EKS clusters</button>
+          </div>
+          @if (clusters()?.length === 0) { <p class="wide field-note" role="status">No EKS clusters found in {{ region }}.</p> }
+        </fieldset>
+        <fieldset>
+          <legend>Deployment access</legend>
+          <label class="wide">EKS cluster
+            <select name="eksCluster" [(ngModel)]="cluster" [disabled]="busy() || !clusters()?.length" required>
+              <option value="">Select a discovered cluster</option>
+              @for (name of clusters(); track name) { <option [value]="name">{{ name }}</option> }
+            </select>
+          </label>
+          <label>Kubernetes namespace
+            <select name="namespace" [(ngModel)]="namespace" [disabled]="busy()" required>
+              @for (item of account()?.namespaces; track item) { <option [value]="item">{{ item }}</option> }
+            </select>
+          </label>
+          <label>Worker platform
+            <select name="workerPlatform" [(ngModel)]="platform" [disabled]="busy()" required>
+              <option value="linux/amd64">Linux x86-64</option>
+              <option value="linux/arm64">Linux ARM64 (Graviton)</option>
+            </select>
+          </label>
+        </fieldset>
+        <div class="actions release-actions">
+          <button type="submit" class="primary" [disabled]="busy() || connection.invalid || !cluster">Connect cluster</button>
+          <button type="button" [disabled]="busy()" (click)="opened.set(false)">Cancel</button>
+          @if (busy()) { <p role="status">Checking AWS and cluster access…</p> }
+        </div>
+      </form>
+    } @else {
+      <div class="cluster-notice cluster-setup">
+        <p>Connect an AWS account in Settings → Cloud providers, then refresh the account list.</p>
+        <div class="actions">
+          <button type="button" (click)="refreshAccounts.emit()">Refresh accounts</button>
+          <button type="button" (click)="opened.set(false)">Close</button>
+        </div>
+      </div>
+    }
+  }
+  @if (targets().length) {
+    <div class="release-table-scroll" tabindex="0" aria-label="Connected clusters">
+      <table class="release-table">
+        <thead><tr><th scope="col">Cluster</th><th scope="col">Namespace</th><th scope="col">Platform</th><th scope="col">Connection</th></tr></thead>
+        <tbody>
+          @for (target of targets(); track target.id) {
+            <tr>
+              <td><strong>{{ target.name }}</strong><small>{{ target.eks ? 'Amazon EKS · ' + target.eks.region : 'Kubernetes' }}</small></td>
+              <td>{{ target.namespace }}</td>
+              <td>{{ target.platform }}</td>
+              <td><button type="button" [disabled]="busy()" (click)="check(target)" [attr.aria-label]="'Check connection to ' + target.name">Check connection</button></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

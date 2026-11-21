@@ -12,17 +12,11 @@ const browserDistFolder = join(import.meta.dirname, '../browser');
 const app = express();
 const angularApp = new AngularNodeAppEngine();
 
-/**
- * Example Express Rest API endpoints can be defined here.
- * Uncomment and define endpoints as necessary.
- *
- * Example:
- * ```ts
- * app.get('/api/{*splat}', (req, res) => {
- *   // Handle API request
- * });
- * ```
- */
+// Preserve bookmarks from before Build Center moved to its own app.
+app.get('/build-center', (request, response) => {
+  const target = process.env['BUILD_CENTER_URL'] || `${request.protocol}://${request.hostname}:4212/`;
+  response.redirect(302, target);
+});
 
 /**
  * Serve static files from /browser

@@ -1,0 +1,45 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: build-center-metrics-reader
+  namespace: professy
+rules:
+  - apiGroups: [metrics.k8s.io]
+    resources: [pods]
+    verbs: [get, list]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: build-center-metrics-reader
+  namespace: professy
+subjects:
+  - kind: Group
+    name: greatley-build-center-deployer
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: build-center-metrics-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: build-center-metrics-node-reader
+rules:
+  - apiGroups: [metrics.k8s.io]
+    resources: [nodes]
+    verbs: [get, list]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: build-center-metrics-node-reader
+subjects:
+  - kind: Group
+    name: greatley-build-center-deployer
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: build-center-metrics-node-reader
+  apiGroup: rbac.authorization.k8s.io

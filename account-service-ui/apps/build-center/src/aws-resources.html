@@ -1,0 +1,304 @@
+<section class="aws-resources" aria-label="AWS resources">
+  <header class="aws-resource-heading">
+    <div><span class="resource-breadcrumb">{{ resourceBreadcrumb() }}</span><h2>{{ resourceTitle() }}</h2><p>{{ resourceDescription() }}</p></div>
+    <div class="resource-selectors">
+      @if (tab() !== 'cluster') {
+        <label>AWS account
+          <select [ngModel]="accountId()" (ngModelChange)="selectAccount($event)">
+            @for (account of accounts(); track account.id) { <option [value]="account.id">{{ account.name }}</option> }
+          </select>
+        </label>
+        <label>Region
+          <select [ngModel]="region()" (ngModelChange)="selectRegion($event)">
+            @for (region of availableRegions(); track region) { <option [value]="region">{{ region }}</option> }
+          </select>
+        </label>
+      } @else {
+        <label>Connected EKS target
+          <select [ngModel]="targetId()" (ngModelChange)="selectTarget($event)">
+            @for (target of targets(); track target.id) { <option [value]="target.id">{{ target.name }} · {{ target.namespace }}</option> }
+          </select>
+        </label>
+      }
+      <button type="button" [disabled]="loading() || busy()" (click)="refreshActive()">Refresh</button>
+    </div>
+  </header>
+
+  <div class="resource-layout">
+    <nav class="resource-nav" aria-label="AWS resources">
+      <span class="resource-nav-heading">Cloud resources</span>
+      <button type="button" [attr.aria-current]="tab() === 'queues' ? 'page' : null" (click)="setTab('queues')">SQS queues</button>
+      <button type="button" [attr.aria-current]="tab() === 'instances' ? 'page' : null" (click)="setTab('instances')">EC2 instances</button>
+      <button type="button" [attr.aria-current]="tab() === 'cluster' ? 'page' : null" (click)="setTab('cluster')">EKS cluster</button>
+    </nav>
+    <div class="resource-main">
+
+      @if (error()) {
+        <section class="resource-alert resource-alert-compact resource-request-alert" role="alert">
+          <span class="resource-alert-icon" aria-hidden="true">!</span>
+          <div class="resource-alert-copy"><span class="resource-eyebrow">AWS REQUEST</span><h4>Resource access needs attention</h4><p>{{ error() }}</p></div>
+        </section>
+      }
+      @if (notice()) { <p class="notice" role="status">{{ notice() }}</p> }
+      @if (loading()) { <p class="notice" role="status">Loading AWS resource details…</p> }
+
+  @if (tab() === 'queues') {
+    <section class="panel resource-panel" aria-labelledby="sqs-heading" aria-label="SQS queues">
+      <div class="resource-console-title">
+        <div><span class="resource-eyebrow">AMAZON SQS / QUEUES</span><h3 id="sqs-heading">Queues <span>({{ loading() || error() ? '—' : queues().length }})</span></h3></div>
+      </div>
+      <div class="resource-console-toolbar">
+        <label class="resource-search" aria-label="Search queues">
+          <span aria-hidden="true">⌕</span>
+          <input type="search" [ngModel]="queueSearch()" (ngModelChange)="queueSearch.set($event)" placeholder="Search queues by name">
+        </label>
+        <div class="resource-console-actions">
+          <button type="button" class="resource-refresh" aria-label="Refresh queues" title="Refresh queues" [disabled]="loading() || busy()" (click)="loadQueues()">↻</button>
+          <button type="button" [disabled]="!accountId()" (click)="focusQueueForm()">Create queue</button>
+        </div>
+      </div>
+      <p class="resource-context-note">Queue configuration and approximate message counts. Message contents are never displayed.</p>
+      @if (queueFormOpen() && accounts().length) {
+        <form class="create-queue" #queueForm="ngForm" (ngSubmit)="createQueue()">
+          <label>Queue name
+            <input id="aws-queue-name" name="queueName" [(ngModel)]="queueName" required minlength="1" maxlength="80"
+              pattern="[A-Za-z0-9_-]+(\.fifo)?" placeholder="professy-events">
+          </label>
+          <label class="queue-type">Queue type
+            <select name="fifo" [ngModel]="fifo()" (ngModelChange)="fifo.set($event)">
+              <option [ngValue]="false">Standard</option><option [ngValue]="true">FIFO</option>
+            </select>
+          </label>
+          <p class="queue-note">FIFO queues require a <code>.fifo</code> suffix. Content-based deduplication is enabled by default.</p>
+          <div class="actions"><button class="primary" type="submit" [disabled]="queueForm.invalid || busy() || !accountId()">{{ busy() ? 'Creating…' : 'Create queue' }}</button><button type="button" [disabled]="busy()" (click)="queueFormOpen.set(false)">Cancel</button></div>
+        </form>
+      } @else if (!accounts().length) {
+        <p class="empty-state">Connect an AWS account in Settings to create queues.</p>
+      }
+      <div class="resource-table-scroll">
+        <table class="resource-table">
+          <thead><tr><th>Queue name</th><th>Type</th><th>Messages available</th><th>Messages in flight</th><th>Messages delayed</th><th>Visibility timeout</th><th>Message retention</th></tr></thead>
+          <tbody>
+            @for (queue of filteredQueues(); track queue.url) {
+              <tr><th scope="row">{{ queue.name }}<small>{{ queue.arn }}</small></th>
+                <td>{{ queue.fifo ? 'FIFO' : 'Standard' }}</td><td>{{ queue.visible }}</td><td>{{ queue.inFlight }}</td><td>{{ queue.delayed }}</td>
+                <td>{{ formatSeconds(queue.visibilitySeconds) }}</td><td>{{ queue.retentionSeconds / 86400 | number:'1.0-1' }} days</td>
+              </tr>
+            } @empty {
+              @if (!loading() && !error() && accountId()) { <tr><td colspan="7" class="empty-state">{{ queueSearch() ? 'No queues match this search.' : 'No queues found in ' + region() + '.' }}</td></tr> }
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+
+  @if (tab() === 'instances') {
+    <section class="panel resource-panel" aria-labelledby="ec2-heading">
+      <div class="resource-panel-heading">
+        <div><h3 id="ec2-heading">EC2 instances</h3><p>Runtime is measured from launch time. CPU shows the last hour where CloudWatch data is available.</p></div>
+        <span class="count">{{ instances().length }} instances</span>
+      </div>
+      <div class="instance-actions">
+        <button type="button" [disabled]="busy() || !instances().some(i => i.state === 'running')" (click)="selectState('running')">Select all running</button>
+        <button type="button" [disabled]="busy() || !instances().some(i => i.state === 'stopped')" (click)="selectState('stopped')">Select all stopped</button>
+        <span class="selection-count">{{ selectedIds().size }} selected · {{ selectedEligibleCount() }} eligible for direct EC2 control</span>
+        <button type="button" [disabled]="busy() || !selectedEligibleCount('running')" (click)="changeInstances('stop')">Stop selected</button>
+        <button type="button" class="primary" [disabled]="busy() || !selectedEligibleCount('stopped')" (click)="changeInstances('start')">Start selected</button>
+      </div>
+      <p class="resource-caution">Running and stopped instances can be selected for review. Direct start/stop is limited to standalone EC2 instances; EKS and Auto Scaling workers must be managed through their scaling controls. Stopping an instance interrupts services, and EBS volumes may continue to incur charges.</p>
+      <div class="resource-table-scroll">
+        <table class="resource-table">
+          <thead><tr><th>Select</th><th>Instance</th><th>State / checks</th><th>Type / zone</th><th>CPU</th><th>Network in/out</th><th>Disk read/write</th><th>Runtime</th><th>Management</th></tr></thead>
+          <tbody>
+            @for (instance of instances(); track instance.id) {
+              <tr>
+                <td><input type="checkbox" [checked]="isSelected(instance.id)"
+                  (change)="toggleSelected(instance.id, $any($event.target).checked)" [attr.aria-label]="'Select ' + instance.name"></td>
+                <th scope="row">{{ instance.name }}<small><code>{{ instance.id }}</code></small></th>
+                <td><span class="resource-state" [attr.data-state]="instance.state">{{ instance.state }}</span>
+                  <small>{{ instance.state === 'running' ? 'System ' + (instance.systemStatus || '—') + ' · Instance ' + (instance.instanceStatus || '—') : 'Status checks on running instances' }}</small></td>
+                <td>{{ instance.type }}<small>{{ instance.availabilityZone }}</small></td>
+                <td>{{ instance.cpuAverage === undefined ? '—' : (instance.cpuAverage + '%') }}<small>{{ instance.cpuAverage === undefined ? 'No CloudWatch data' : '1 hour average' }}</small></td>
+                <td>{{ formatBytes(instance.networkInBytes) }} / {{ formatBytes(instance.networkOutBytes) }}<small>Received / sent · last hour</small></td>
+                <td>{{ formatBytes(instance.diskReadBytes) }} / {{ formatBytes(instance.diskWriteBytes) }}<small>Read / written · last hour</small></td>
+                <td>{{ uptime(instance) }}<small>{{ instance.launchTime | date:'MMM d, y · HH:mm' }}</small></td>
+                <td>{{ instance.managedBy || 'Standalone EC2' }}
+                  <small>{{ instance.nodeGroup || instance.privateIp || instance.publicIp || '' }}</small>
+                  @if (!instance.eligibleForStartStop && instance.eksCluster) {
+                    <button type="button" class="text-action" (click)="setTab('cluster')">Manage in EKS</button>
+                  }
+                  @if (!instance.eligibleForStartStop && !instance.eksCluster) { <small>Manage through its Auto Scaling group</small> }
+                </td>
+              </tr>
+            } @empty {
+              @if (!loading() && accountId()) { <tr><td colspan="9" class="empty-state">No EC2 instances found in {{ region() }}.</td></tr> }
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="resource-footnote">EC2 does not report memory usage by default. Install the CloudWatch Agent and grant its metric permissions before adding memory charts.</p>
+    </section>
+  }
+
+  @if (tab() === 'cluster') {
+    @if (!targets().length) {
+      <section class="panel resource-panel"><p class="empty-state">Connect an EKS cluster from Deployments before viewing nodes and pods.</p></section>
+    } @else if (overview(); as data) {
+      <section class="panel resource-panel" aria-labelledby="cluster-heading">
+        <div class="resource-panel-heading">
+          <div><span class="resource-eyebrow">CLUSTER DETAILS</span><h3 id="cluster-heading">{{ data.cluster }}</h3><p>Namespace <code>{{ data.namespace }}</code> · Live worker and workload inventory.</p></div>
+          <span class="cluster-health" [attr.data-state]="data.errors.nodes || data.errors.workloads ? 'degraded' : 'healthy'"><span></span>{{ data.errors.nodes || data.errors.workloads ? 'Partial visibility' : 'Connected' }}</span>
+        </div>
+        <div class="cluster-summary" aria-label="Cluster summary">
+          <article><span>Worker nodes</span><strong>{{ data.errors.nodes ? '—' : data.nodes.length }}</strong><small>{{ data.errors.nodes ? 'Inventory permission required' : readyNodeCount(data.nodes) + ' ready' }}</small></article>
+          <article><span>Running pods</span><strong>{{ data.errors.workloads ? '—' : runningPodCount(data.pods) }}</strong><small>{{ data.errors.workloads ? 'Namespace access required' : 'Across ' + data.pods.length + ' total pods' }}</small></article>
+          <article><span>Managed node groups</span><strong>{{ data.errors.nodeGroups ? '—' : data.nodeGroups.length }}</strong><small>{{ data.errors.nodeGroups ? 'AWS inventory permission required' : 'EKS managed capacity' }}</small></article>
+          <article><span>Resource metrics</span><strong>{{ data.errors.nodeMetrics || data.errors.podMetrics ? 'Unavailable' : 'Active' }}</strong><small>CPU and memory via Metrics API</small></article>
+        </div>
+        @if (data.errors.nodes) { <p class="resource-caution">{{ data.errors.nodes }}</p> }
+        @if (data.errors.workloads) { <p class="resource-caution">{{ data.errors.workloads }}</p> }
+        @if (data.errors.nodeMetrics || data.errors.podMetrics) {
+          <section class="resource-alert" aria-labelledby="metrics-alert-heading" role="status">
+            <span class="resource-alert-icon" aria-hidden="true">!</span>
+            <div class="resource-alert-copy">
+              <span class="resource-eyebrow">METRICS INTEGRATION</span>
+              <h4 id="metrics-alert-heading">Kubernetes resource metrics are unavailable</h4>
+              <p>{{ data.errors.nodeMetrics || data.errors.podMetrics }}</p>
+            </div>
+            <button type="button" class="primary" [disabled]="busy()" (click)="setupMetrics()">
+              {{ busy() ? 'Setting up…' : 'Set up resource metrics' }}
+            </button>
+          </section>
+        }
+
+        <div class="resource-subheading">
+          <div><h4>Worker node groups</h4><p>Create managed EC2 workers or change a group’s running capacity. The EKS control plane remains active.</p></div>
+          <button type="button" class="primary" [disabled]="busy() || nodeGroupLoading()" (click)="openNodeGroupForm()">
+            {{ nodeGroupLoading() ? 'Loading options…' : 'Create node group' }}
+          </button>
+        </div>
+        @if (nodeGroupFormOpen()) {
+          <form class="nodegroup-form" #nodeGroupForm="ngForm" (ngSubmit)="createNodeGroup(nodeGroupForm)">
+            <div class="nodegroup-form-heading">
+              <div><h5>Create managed node group</h5><p>Choose the EC2 worker configuration and initial capacity for this cluster.</p></div>
+              <button type="button" [disabled]="busy()" (click)="nodeGroupFormOpen.set(false)">Close</button>
+            </div>
+            @if (nodeGroupOptions(); as options) {
+              @if (!options.roleConfigured) {
+                <p class="resource-caution">Configure the EC2 node role ARN in Settings → Cloud providers before creating workers.</p>
+              }
+              <div class="nodegroup-fields">
+                <label>Node group name
+                  <input name="nodeGroupName" [(ngModel)]="nodeGroupName" required maxlength="63" pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,62}">
+                </label>
+                <label>EC2 instance type
+                  <input name="instanceType" [(ngModel)]="instanceType" required pattern="[a-z0-9][a-z0-9-]{0,30}\.[a-z0-9][a-z0-9-]{0,30}" placeholder="t4g.medium">
+                </label>
+                <label>Capacity type
+                  <select name="capacityType" [(ngModel)]="capacityType">
+                    <option value="ON_DEMAND">On-Demand</option><option value="SPOT">Spot</option>
+                  </select>
+                </label>
+                <label>Worker disk (GiB)
+                  <input name="diskGiB" [(ngModel)]="diskGiB" type="number" required min="1" max="16384">
+                </label>
+                <label>Minimum workers
+                  <input name="minNodes" [(ngModel)]="minNodes" type="number" required min="0">
+                </label>
+                <label>Desired workers
+                  <input name="desiredNodes" [(ngModel)]="desiredNodes" type="number" required min="1" [max]="maxNodes">
+                </label>
+                <label>Maximum workers
+                  <input name="maxNodes" [(ngModel)]="maxNodes" type="number" required [min]="desiredNodes">
+                </label>
+              </div>
+              <fieldset class="nodegroup-subnets">
+                <legend>Cluster subnets</legend>
+                <p>Select available subnets in at least two Availability Zones. These are the subnets configured on the EKS cluster.</p>
+                @for (subnet of options.subnets; track subnet.id) {
+                  <label class="check-field">
+                    <input type="checkbox" [checked]="selectedWorkerSubnets().includes(subnet.id)" [disabled]="subnet.state !== 'available' || busy()"
+                      (change)="toggleWorkerSubnet(subnet.id, $any($event.target).checked)">
+                    <span>{{ subnet.name || subnet.id }} <small>{{ subnet.zone }} · {{ subnet.state }}</small></span>
+                  </label>
+                } @empty {
+                  <p class="field-note">No cluster subnets were returned by AWS.</p>
+                }
+                <small>{{ selectedWorkerZones() }} of 2 required Availability Zones selected · image platform {{ options.platform }}</small>
+              </fieldset>
+              <p class="resource-caution">Desired workers launch EC2 instances and incur charges. Creating a node group requires <code>eks:CreateNodegroup</code>, <code>iam:PassRole</code>, and subnet/instance describe permissions.</p>
+              <div class="actions">
+                <button type="submit" class="primary" [disabled]="busy() || nodeGroupLoading() || !options.roleConfigured || selectedWorkerZones() < 2">
+                  {{ busy() ? 'Submitting…' : 'Create node group and workers' }}
+                </button>
+                <button type="button" [disabled]="busy()" (click)="nodeGroupFormOpen.set(false)">Cancel</button>
+              </div>
+            }
+            @if (nodeGroupLoading()) { <p class="field-note" role="status">Loading cluster networking and node role details…</p> }
+          </form>
+        }
+        @if (data.errors.nodeGroups) {
+          <section class="resource-alert resource-alert-compact" role="status">
+            <span class="resource-alert-icon" aria-hidden="true">!</span>
+            <div class="resource-alert-copy"><span class="resource-eyebrow">AWS IAM ACCESS</span><h4>Node group inventory is restricted</h4><p>{{ data.errors.nodeGroups }}</p></div>
+          </section>
+        }
+        @if (data.nodeGroups.length) {
+          <div class="resource-table-scroll"><table class="resource-table">
+            <thead><tr><th>Node group</th><th>Status</th><th>Workers</th><th>Capacity</th><th>Actions</th></tr></thead>
+            <tbody>@for (group of data.nodeGroups; track group.name) {
+              <tr><th scope="row">{{ group.name }}</th><td>{{ group.status }}</td><td>{{ group.desired }} desired</td>
+                <td>{{ group.min }}–{{ group.max }}</td><td class="table-actions">
+                  <button type="button" [disabled]="busy() || group.status !== 'ACTIVE' || group.desired === 0" (click)="scaleNodeGroup(group, 'stop')">Stop workers</button>
+                  <button type="button" class="primary" [disabled]="busy() || group.status !== 'ACTIVE' || group.desired > 0" (click)="scaleNodeGroup(group, 'start')">Start 1 worker</button>
+                </td></tr>
+            }</tbody>
+          </table></div>
+        } @else if (!loading() && !data.errors.nodeGroups) {
+          <p class="resource-empty-row">No managed node groups are attached to this cluster.</p>
+        }
+
+        <div class="resource-subheading"><h4>Cluster nodes</h4><p>Pods per node shows the current placement in this connected namespace.</p></div>
+        <div class="resource-table-scroll"><table class="resource-table">
+          <thead><tr><th>Node</th><th>Health</th><th>Instance / zone</th><th>CPU usage / capacity</th><th>Memory usage / capacity</th><th>Pods</th></tr></thead>
+          <tbody>@for (node of data.nodes; track node.name) {
+            <tr><th scope="row">{{ node.name }}<small>{{ node.internalIp }}</small></th>
+              <td><span class="resource-state" [attr.data-state]="node.ready ? 'running' : 'failed'">{{ node.ready ? 'Ready' : 'Not ready' }}</span></td>
+              <td>{{ node.instanceType || '—' }}<small>{{ node.zone }}</small></td>
+              <td class="resource-metric-cell">
+                {{ formatCpu(node.cpuUsage) }} <span class="resource-metric-capacity">/ {{ formatCpu(node.cpuAllocatable || node.cpuCapacity) }}</span>
+                @if (node.cpuUsage && (node.cpuAllocatable || node.cpuCapacity)) {
+                  <progress class="resource-metric-progress" max="100" [value]="metricPercent(node.cpuUsage, node.cpuAllocatable || node.cpuCapacity, 'cpu') ?? 0" aria-label="Node CPU utilization"></progress>
+                  <small>{{ metricPercent(node.cpuUsage, node.cpuAllocatable || node.cpuCapacity, 'cpu') | number:'1.0-1' }}% of allocatable</small>
+                }
+              </td>
+              <td class="resource-metric-cell">
+                {{ formatMemory(node.memoryUsage) }} <span class="resource-metric-capacity">/ {{ formatMemory(node.memoryAllocatable || node.memoryCapacity) }}</span>
+                @if (node.memoryUsage && (node.memoryAllocatable || node.memoryCapacity)) {
+                  <progress class="resource-metric-progress" max="100" [value]="metricPercent(node.memoryUsage, node.memoryAllocatable || node.memoryCapacity, 'memory') ?? 0" aria-label="Node memory utilization"></progress>
+                  <small>{{ metricPercent(node.memoryUsage, node.memoryAllocatable || node.memoryCapacity, 'memory') | number:'1.0-1' }}% of allocatable</small>
+                }
+              </td>
+              <td>{{ podsOnNode(node.name) }}</td></tr>
+          } @empty { @if (!loading()) { <tr><td colspan="6" class="empty-state">No nodes returned for this cluster.</td></tr> } }</tbody>
+        </table></div>
+
+        <div class="resource-subheading"><h4>Pods by service</h4><p>Each pod lists the service label, assigned node, readiness, restarts, and current resource metrics where available.</p></div>
+        <div class="resource-table-scroll"><table class="resource-table">
+          <thead><tr><th>Service / pod</th><th>State</th><th>Node</th><th>Ready</th><th>Restarts</th><th>CPU</th><th>Memory</th></tr></thead>
+          <tbody>@for (pod of data.pods; track pod.name) {
+            <tr><th scope="row">{{ pod.service }}<small>{{ pod.name }}</small></th>
+              <td><span class="resource-state" [attr.data-state]="pod.state === 'Running' ? 'running' : 'pending'">{{ pod.state }}</span></td>
+              <td>{{ pod.node }}</td><td>{{ pod.readyContainers }} / {{ pod.totalContainers }}</td><td>{{ pod.restarts }}</td>
+              <td>{{ formatCpu(pod.cpuUsage) }}</td><td>{{ formatMemory(pod.memoryUsage) }}</td></tr>
+          } @empty { @if (!loading() && !data.errors.workloads) { <tr><td colspan="7" class="empty-state">No pods in this namespace.</td></tr> } }</tbody>
+        </table></div>
+      </section>
+    } @else if (!loading()) {
+      <section class="panel resource-panel"><p class="empty-state">Choose a connected cluster to view its workers and service pods.</p></section>
+    }
+  }
+    </div>
+  </div>
+</section>

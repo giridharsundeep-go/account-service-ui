@@ -1,0 +1,732 @@
+/* AWS Console inspired UI defaults shared by every app importing Clarity.
+   Keep the Greatley Poshley typeface and brand, while using AWS's compact,
+   high contrast navigation, controls, panels and operational tables. */
+@layer gp-console {
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) {
+    --gp-page: #ffffff !important;
+    --gp-surface: #ffffff !important;
+    --gp-surface-muted: #ffffff !important;
+    --gp-navigation: #ffffff !important;
+    --gp-text: #16191f !important;
+    --gp-muted: #5f6b7a !important;
+    --gp-border: #d5dbdb !important;
+    --gp-separator: #d5dbdb !important;
+    --gp-accent: #0972d3 !important;
+    --gp-selection: #ffffff !important;
+    --gp-radius: 6px !important;
+    --gp-field-radius: 4px !important;
+    --gp-control-radius: 4px !important;
+    --gp-field-height: 40px !important;
+    --gp-field-border: #879596 !important;
+    --gp-field-border-hover: #545b64 !important;
+    --gp-field-border-focus: #0972d3 !important;
+    --gp-shadow: none !important;
+    --gp-card-shadow: none !important;
+    --gp-float-shadow: 0 4px 12px rgb(0 0 0 / 14%) !important;
+    --gp-popover-radius: 6px !important;
+    --gp-space-page: 24px !important;
+    --gp-title-size: 28px !important;
+    color-scheme: light;
+  }
+
+  /* A saved dark preference must not reintroduce gray or dark product surfaces. */
+  :root[data-theme="dark"] {
+    --gp-page: #ffffff !important;
+    --gp-surface: #ffffff !important;
+    --gp-surface-muted: #ffffff !important;
+    --gp-navigation: #ffffff !important;
+    --gp-text: #16191f !important;
+    --gp-muted: #5f6b7a !important;
+    --gp-border: #d5dbdb !important;
+    --gp-separator: #d5dbdb !important;
+    --gp-selection: #ffffff !important;
+    --gp-shadow: none !important;
+    --gp-card-shadow: none !important;
+    color-scheme: light !important;
+  }
+
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(html,body,app-root,#app) {
+    background: #ffffff !important;
+    color: #16191f !important;
+  }
+
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) body {
+    background: #fff !important;
+    color: #16191f !important;
+  }
+
+  /* App headings use AWS Console's compact hierarchy. */
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.workspace-title,.workspace-heading,.page-heading,.agile-heading,.gp-workspace-hero,.projects-title,.users-title,.teams-title,.roles-title,.releases-title,.planning-title,.work-items-title) {
+    color: #16191f !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.workspace-title,.workspace-heading,.page-heading,.projects-title,.users-title,.teams-title,.roles-title,.releases-title,.planning-title,.work-items-title) h1 {
+    font-size: 28px !important;
+    line-height: 1.25 !important;
+    font-weight: 650 !important;
+    letter-spacing: 0 !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.section-heading,.directory-heading,.tc-page-heading,.roles-workspace-header,.team-profile-section-header,.kb-activity-heading) :is(h2,h3) {
+    font-size: 20px !important;
+    line-height: 1.35 !important;
+    font-weight: 650 !important;
+    letter-spacing: 0 !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.page-heading,.workspace-heading,.agile-heading,.roadmap-heading,.retro-heading) {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+    padding-bottom: 16px !important;
+    margin-bottom: 18px !important;
+    border-bottom: 1px solid #d5dbdb !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.page-actions,.heading-actions,.gp-workspace-hero__actions) {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.breadcrumb,.breadcrumbs,.resource-breadcrumb,.page-breadcrumb) {
+    color: #5f6b7a !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+  }
+
+  /* Crisp controls with visible keyboard focus and consistent sizing. */
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.button,.gp-button,.btn-primary,.btn-secondary,.create-button,.create-btn,.tc-primary,.primary-button,.secondary-button,.mat-mdc-button-base):not(.mat-mdc-icon-button):not(.mat-mdc-fab):not(.mat-mdc-mini-fab):not(.toolbar *):not(.document-toolbar *):not(.file-menubar *):not(.document-menubar *) {
+    min-height: 36px !important;
+    border-radius: 4px !important;
+    padding-inline: 14px !important;
+    font-size: 14px !important;
+    font-weight: 650 !important;
+    letter-spacing: 0 !important;
+    box-shadow: none !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.button.primary,.gp-primary,.btn-primary,.primary-button,.tc-primary,.mat-mdc-unelevated-button.mat-primary,.mat-mdc-raised-button.mat-primary) {
+    background: #0972d3 !important;
+    border-color: #0972d3 !important;
+    color: #fff !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.button.outline,.gp-outline,.btn-secondary,.secondary-button,.mat-mdc-outlined-button) {
+    border: 1px solid #879596 !important;
+    border-radius: 4px !important;
+    background: #fff !important;
+    color: #16191f !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(input,select,textarea):not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]):not(.document-paper *):not(.slide-page *):not(.present-slide *):not(.sheet-grid *):not(.toolbar *):not(.document-toolbar *):not(.formula-bar *) {
+    border-radius: 4px !important;
+    border-color: #879596 !important;
+    background-color: #fff !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]),select):not(.document-paper *):not(.slide-page *):not(.present-slide *):not(.sheet-grid *):not(.toolbar *):not(.document-toolbar *):not(.formula-bar *) {
+    min-height: 36px !important;
+    padding: 6px 10px !important;
+    color: #16191f !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) textarea:not(.document-paper *):not(.slide-page *):not(.present-slide *):not(.sheet-grid *):not(.formula-bar *) {
+    min-height: 96px !important;
+    padding: 8px 10px !important;
+    color: #16191f !important;
+    background: #fff !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) label:not(.document-paper *):not(.slide-page *):not(.present-slide *):not(.sheet-grid *) {
+    gap: 5px !important;
+    color: #414d5c !important;
+    font-size: 12px !important;
+    font-weight: 650 !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.field-hint,.form-hint,.helper-text,.field-description,.form-description) {
+    color: #5f6b7a !important;
+    font-size: 12px !important;
+    line-height: 1.45 !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(input,select,textarea):focus-visible:not(.document-paper *):not(.slide-page *):not(.present-slide *):not(.sheet-grid *) {
+    outline: 2px solid #0972d3 !important;
+    outline-offset: 1px !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) input:-webkit-autofill,
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) input:-webkit-autofill:hover,
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+    -webkit-text-fill-color: #16191f !important;
+    caret-color: #16191f !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.search-field,.search-box,.search-bar,.inline-search,.work-items-search,.work-filter-search,.planning-backlog-search,.team-profile-member-search,.header-search,.global-search,.global-work-search-field,.global-project-search,.project-panel-search,.users-search,.roles-search,.search-wrapper,.matrix-search-input-frame,.search-shell,.google-search-shell,.kb-board-search,.docs-search,.team-search,.epics-filter-search,.add-testcases-search,.search-control,.release-search-field) {
+    min-height: 38px !important;
+    height: 38px !important;
+    border: 1px solid #879596 !important;
+    border-radius: 4px !important;
+    background: #fff !important;
+    padding-inline: 10px !important;
+    box-shadow: none !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.mat-mdc-form-field) { --mdc-outlined-text-field-container-shape: 4px; --mat-form-field-container-height: 40px; }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) .mat-mdc-form-field .mdc-text-field--outlined {
+    border: 1px solid #879596 !important;
+    border-radius: 4px !important;
+    background: #fff !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.mat-mdc-select-panel,.mat-mdc-autocomplete-panel,.mat-mdc-menu-panel,.work-filter-popover,.work-items-status-menu,.apps-panel,.popover,.document-menu,.menu,.workspace-dialog,.suite-dialog,.instru-dialog,.forge-dialog,.tc-dialog,.new-dialog,.work-item-dialog,.document-share-dialog,.mat-mdc-dialog-surface) {
+    border: 1px solid #d5dbdb !important;
+    border-radius: 6px !important;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 14%) !important;
+  }
+
+  /* Flat surfaces and thin dividers let operational data dominate the page. */
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.surface,.profile-section-card,.stats-card,.stat-card,.overview-metric,.metric-card,.chart-card,.account-card,.file-card,.document-card,.meeting-card,.team-card,.project-card,.board-card,.release-card,.agent-card,.mat-mdc-card) {
+    border: 1px solid #d5dbdb !important;
+    border-radius: 6px !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.panel,.settings-panel,.resource-panel,.detail-panel,.overview-panel,.list-panel,.table-panel,.form-panel,.profile-section,.detail-section,.settings-section,.aws-empty-state) {
+    border: 1px solid #d5dbdb !important;
+    border-radius: 6px !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.overview-grid,.overview-cards,.metric-grid,.service-card-grid,.resource-summary-grid,.aws-overview-grid) {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit,minmax(min(100%,210px),1fr)) !important;
+    gap: 12px !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.overview-grid,.overview-cards,.metric-grid,.service-card-grid,.resource-summary-grid,.aws-overview-grid) > * {
+    min-width: 0;
+    border: 1px solid #d5dbdb !important;
+    border-radius: 6px !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.aws-detail-grid,.detail-grid,.resource-detail-grid) {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit,minmax(min(100%,320px),1fr)) !important;
+    gap: 16px !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.aws-list,.resource-list,.activity-list,.build-list,.pipeline-list) {
+    border-top: 1px solid #d5dbdb !important;
+    background: #fff !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.aws-list,.resource-list,.activity-list,.build-list,.pipeline-list) > * {
+    border-bottom: 1px solid #d5dbdb !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.empty-state-illustration,.aws-empty-state img,.aws-empty-state svg) {
+    max-width: 180px !important;
+    max-height: 150px !important;
+    object-fit: contain !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.tabs,.profile-tabs,.calendar-view-tabs,.conversation-tabs,.list-filters,.actor-filters) {
+    gap: 0 !important;
+    border-bottom: 1px solid #d5dbdb !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.tabs,.profile-tabs,.calendar-view-tabs,.conversation-tabs,.list-filters,.actor-filters) button {
+    min-height: 38px !important;
+    padding: 8px 14px !important;
+    border: 0 !important;
+    border-bottom: 2px solid transparent !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: #414d5c !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.tabs,.profile-tabs,.calendar-view-tabs,.conversation-tabs,.list-filters,.actor-filters) button:is(.active,.selected,[aria-selected="true"]) {
+    border-bottom-color: #0972d3 !important;
+    color: #0972d3 !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.resource-nav,.service-nav,.side-navigation) button:is(.active,.selected,[aria-current="page"]) {
+    border-radius: 4px !important;
+    border-left: 3px solid #0972d3 !important;
+    background: #fff !important;
+    color: #0972d3 !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.mat-mdc-table,.users-table,.work-items-table,.projects-mat-table,.items-table,.google-table,.compact-work-table,.tc-table,.planning-table,.table-scroll>table,.table-wrap>table,.resource-table,.release-table) {
+    width: 100%;
+    border-collapse: collapse !important;
+    background: #fff !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.mat-mdc-table,.users-table,.work-items-table,.projects-mat-table,.items-table,.google-table,.compact-work-table,.tc-table,.planning-table,.table-scroll>table,.table-wrap>table,.resource-table,.release-table) :is(th,td) {
+    border-color: #d5dbdb !important;
+    border-inline: 0 !important;
+    line-height: 1.4 !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.mat-mdc-table,.users-table,.work-items-table,.projects-mat-table,.items-table,.google-table,.compact-work-table,.tc-table,.planning-table,.table-scroll>table,.table-wrap>table,.resource-table,.release-table) th {
+    height: 42px !important;
+    background: #ffffff !important;
+    color: #414d5c !important;
+    font-size: 12px !important;
+    font-weight: 650 !important;
+    text-align: left;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.mat-mdc-table,.users-table,.work-items-table,.projects-mat-table,.items-table,.google-table,.compact-work-table,.tc-table,.planning-table,.table-scroll>table,.table-wrap>table,.resource-table,.release-table) td {
+    min-height: 48px;
+    height: auto !important;
+    padding-block: 10px !important;
+    color: #16191f !important;
+    font-size: 14px !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.mat-mdc-table,.users-table,.work-items-table,.projects-mat-table,.items-table,.google-table,.compact-work-table,.tc-table,.planning-table,.table-scroll>table,.table-wrap>table,.resource-table,.release-table) tbody tr:hover {
+    background: #ffffff !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.table-scroll,.table-wrap,.resource-table-scroll,.release-table-scroll) { max-width: 100%; overflow-x: auto; }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) a:not(.brand):not(.nav-item):not(.panel-action) { color: #0972d3; }
+
+  /* Apply the console surface language to product pages too. The older app
+     styles use product-specific names such as agile-panel and team-card. */
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(
+    .agile-panel,.dashboard-welcome-panel,.agile-metrics>article,.delivery-indicators>article,.agile-signal-strip>article,
+    .tc-stats>article,.roadmap-stats>article,.metrics-strip>article,.summary-grid>article,.people-stat-grid>article,
+    .gp-metric-grid>article,.desk-metrics>article,.overview-grid>article,.dash-grid>*,
+    .surface,.card,.mat-mdc-card,.gp-person-surface,.dashboard-card,.overview-panel,.detail-panel,.detail-section,
+    article[class*="-card"]:not([class*="-card-"]),section[class*="-card"]:not([class*="-card-"]),div[class*="-card"]:not([class*="-card-"]),
+    article[class*="-panel"]:not([class*="-panel-"]),section[class*="-panel"]:not([class*="-panel-"]),div[class*="-panel"]:not([class*="-panel-"]),
+    article[class*="-surface"]:not([class*="-surface-"]),section[class*="-surface"]:not([class*="-surface-"]),div[class*="-surface"]:not([class*="-surface-"]),
+    article[class*="-tile"]:not([class*="-tile-"]),section[class*="-tile"]:not([class*="-tile-"]),div[class*="-tile"]:not([class*="-tile-"])
+  ):not(.document-paper *):not(.sheet-grid *):not(.slide-page *):not(.present-slide *):not(.thumb-preview *) {
+    border: 1px solid #d5dbdb !important;
+    border-radius: 4px !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.dashboard-page,.agile-dashboard,.projects-dashboard,.products-page,.teams-page,.users-page,.roles-container,.work-items-page,.planning-page,.tc-page,.issues-container,.releases-page,.directory-section,.docs-shell,.calendar-surface,.conversation-list,.mail-list,.instru-page) {
+    background: #fff !important;
+    color: #16191f !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) main :is(h1,.page-title,.dashboard-title,.directory-title,.workspace-title) {
+    color: #16191f !important;
+    font-size: 28px !important;
+    line-height: 1.25 !important;
+    font-weight: 650 !important;
+    letter-spacing: 0 !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) main :is(.agile-panel,.resource-panel,.deployment-panel,.directory-panel,.settings-panel,.table-panel,.detail-panel,.section-box) > header :is(h2,h3),
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) main :is(.agile-panel,.resource-panel,.deployment-panel,.directory-panel,.settings-panel,.table-panel,.detail-panel,.section-box) > :is(h2,h3) {
+    color: #16191f !important;
+    font-size: 18px !important;
+    line-height: 1.35 !important;
+    font-weight: 650 !important;
+    letter-spacing: 0 !important;
+  }
+
+  /* Resource and work tables use the same compact header and row separators. */
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) table:not(.document-paper table):not(.sheet-grid table):not(.slide-page table):not(.present-slide table) {
+    width: 100%;
+    border-collapse: collapse !important;
+    background: #fff !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) table:not(.document-paper table):not(.sheet-grid table):not(.slide-page table):not(.present-slide table) :is(th,td) {
+    border: 0 !important;
+    border-bottom: 1px solid #d5dbdb !important;
+    line-height: 1.4 !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) table:not(.document-paper table):not(.sheet-grid table):not(.slide-page table):not(.present-slide table) th {
+    height: 42px !important;
+    background: #fff !important;
+    color: #414d5c !important;
+    font-size: 12px !important;
+    font-weight: 650 !important;
+    text-align: left;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) table:not(.document-paper table):not(.sheet-grid table):not(.slide-page table):not(.present-slide table) td {
+    min-height: 44px;
+    padding-block: 9px !important;
+    color: #16191f !important;
+    font-size: 14px !important;
+  }
+
+  /* Dense inventories read as rows, not a stack of decorative cards. */
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(
+    .repo-row,.service-row,.source-row,.agenda-event,.deployment-row,.trace-row,.timeline-row,.matrix-row,.scope-item,
+    .linked-item,.kb-linked-item,.release-list-row,.project-row,.user-row,.team-row,.directory-row,.issue-table-row,
+    .work-item-row,.task-row,.story-row,.epic-directory-row,.testcase-row,.alert-service-row,.org-row,.setting-row,
+    .data-row,.preview-row,.activity-row,.mail-row,.meeting-list .meeting-row
+  ):not(.kanban-board *):not(.document-paper *):not(.sheet-grid *):not(.slide-page *):not(.present-slide *) {
+    border-radius: 0 !important;
+    border-bottom: 1px solid #d5dbdb !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+
+  /* Content actions and filters use the same compact console controls. */
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) main button:not([class*="icon"]):not([class*="chip"]):not([class*="pill"]):not(.tabs button):not(.profile-tabs button):not(.list-filters button):not(.document-paper *):not(.sheet-grid *):not(.slide-page *):not(.present-slide *):not(.toolbar *):not(.document-toolbar *):not(.file-menubar *):not(.document-menubar *) {
+    min-height: 36px !important;
+    border-radius: 4px !important;
+    box-shadow: none !important;
+    font-size: 14px !important;
+    letter-spacing: 0 !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) main button:is(.primary,.gp-primary,.btn-primary,.primary-button,[class*="-primary"]):not(.document-paper *):not(.sheet-grid *):not(.slide-page *):not(.present-slide *) {
+    border-color: #0972d3 !important;
+    background: #0972d3 !important;
+    color: #fff !important;
+  }
+}
+/* Final app-content pass. Some product styles are scoped through #gp-app and
+   therefore outrank the base rules above; match that scope here so all apps
+   share the same compact AWS Console surfaces, not only the suite header. */
+@layer gp-console {
+  :root[data-gp-layout="clean"] #gp-app :is(main,.main,.content,.suite-body,.suite-page,.workspace,.dashboard-page,.agile-dashboard,.projects-dashboard,.products-page,.teams-page,.users-page,.roles-container,.work-items-page,.planning-page,.tc-page,.issues-container,.releases-page,.directory-section,.docs-shell,.calendar-surface,.instru-page) {
+    background-color: #fff !important;
+    color: #16191f !important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app app-workspace-hero {
+    display: block !important;
+    margin: 0 0 16px !important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app app-workspace-hero .gp-workspace-hero {
+    display: block !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 0 14px !important;
+    overflow: visible !important;
+    border: 0 !important;
+    border-bottom: 1px solid #d5dbdb !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    animation: none !important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app app-workspace-hero .gp-workspace-hero__copy {
+    width: 100% !important;
+    padding: 0 !important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app app-workspace-hero .gp-workspace-hero__heading {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 16px !important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app app-workspace-hero .gp-workspace-hero__heading h1 {
+    flex: 1 1 auto !important;
+    min-width: 180px !important;
+    margin: 0 !important;
+    color: #16191f !important;
+    font-size: 28px !important;
+    line-height: 1.25 !important;
+    font-weight: 650 !important;
+    letter-spacing: 0 !important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app app-workspace-hero .gp-workspace-hero__actions {
+    display: flex !important;
+    flex: 0 1 auto !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    min-width: 0 !important;
+    max-width: 70% !important;
+    margin: 0 !important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app app-workspace-hero .gp-workspace-hero__actions > div {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    width: auto !important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app app-workspace-hero .gp-workspace-hero__actions :is(select,input:not([type="checkbox"]),textarea) {
+    width: auto !important;
+    max-width: min(240px, 38vw) !important;
+    min-width: 130px !important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app app-workspace-hero .gp-workspace-hero__actions label {
+    display: inline-flex !important;
+    align-items: center !important;
+    width: auto !important;
+    white-space: nowrap !important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app app-workspace-hero .gp-workspace-hero__actions button {
+    width: auto !important;
+    flex: 0 0 auto !important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app app-workspace-hero .gp-workspace-hero__copy > p {
+    margin: 6px 0 0 !important;
+    color: #5f6b7a !important;
+    font-size: 14px !important;
+    line-height: 1.45 !important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app .agile-dashboard .agile-heading {
+    margin: 0 0 12px !important;
+    padding: 0 0 12px !important;
+    border-bottom: 1px solid #d5dbdb !important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app .agile-dashboard .agile-heading h1 {
+    margin: 4px 0 !important;
+    color: #16191f !important;
+    font-size: 22px !important;
+    line-height: 1.3 !important;
+    font-weight: 650 !important;
+    letter-spacing: 0 !important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app .agile-dashboard :is(.delivery-indicators,.agile-metrics,.agile-signal-strip,.agile-chart-grid,.agile-grid) {
+    gap: 12px !important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app .agile-dashboard :is(.delivery-indicators,.agile-metrics,.agile-signal-strip) {
+    margin-block: 12px !important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app .agile-dashboard :is(.delivery-indicators>article,.agile-metrics>article,.agile-signal-strip>article,.agile-panel) {
+    min-width: 0 !important;
+    padding: 14px !important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app .agile-dashboard .agile-metrics>article {
+    border-top-width: 1px !important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app .agile-dashboard :is(.delivery-indicators strong,.agile-metrics strong) {
+    color: #16191f !important;
+    font-size: 24px !important;
+    line-height: 1.2 !important;
+    font-weight: 650 !important;
+  }
+
+  @media (max-width: 760px) {
+    :root[data-gp-layout="clean"] #gp-app app-workspace-hero .gp-workspace-hero__heading {
+      align-items: flex-start !important;
+      flex-direction: column !important;
+    }
+
+    :root[data-gp-layout="clean"] #gp-app app-workspace-hero .gp-workspace-hero__actions {
+      max-width: 100% !important;
+      justify-content: flex-start !important;
+    }
+  }
+
+  :root[data-gp-layout="clean"] #gp-app :is(.dashboard-welcome-panel,.agile-panel,.agile-metrics>article,.delivery-indicators>article,.agile-signal-strip>article,.agile-freshness>article,.tc-stats>article,.roadmap-stats>article,.metrics-strip>article,.summary-grid>article,.people-stat-grid>article,.gp-metric-grid>article,.desk-metrics>article,.overview-grid>article,.dash-grid>*,.overview-metric,.stats-card,.stat-card,.metric-card,.chart-card,.surface,.card,.mat-mdc-card,.gp-person-surface,.dashboard-card,.overview-panel,.detail-panel,.detail-section,.profile-section-card,.form-section-card,.kb-work-card,.kb-column,.team-profile-stat-card,.release-profile-stat-card,.release-profile-card,.release-directory-card,.project-allocated-team,.docs-document-card,.directory-panel,.project-table-shell,.work-items-table-card,.team-summary-card,.profile-person-card,.person-card,.roadmap-surface,.tc-table-card,.project-overview-info-card) {
+    border: 1px solid #d5dbdb !important;
+    border-radius: 4px !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app :is(article,section,div)[class*="-card"]:not([class*="-card-"]):not(.document-paper *):not(.sheet-grid *):not(.slide-page *):not(.present-slide *):not(.thumb-preview *),
+  :root[data-gp-layout="clean"] #gp-app :is(article,section,div)[class*="-panel"]:not([class*="-panel-"]):not(.document-paper *):not(.sheet-grid *):not(.slide-page *):not(.present-slide *):not(.thumb-preview *),
+  :root[data-gp-layout="clean"] #gp-app :is(article,section,div)[class*="-surface"]:not([class*="-surface-"]):not(.document-paper *):not(.sheet-grid *):not(.slide-page *):not(.present-slide *):not(.thumb-preview *),
+  :root[data-gp-layout="clean"] #gp-app :is(article,section,div)[class*="-tile"]:not([class*="-tile-"]):not(.document-paper *):not(.sheet-grid *):not(.slide-page *):not(.present-slide *):not(.thumb-preview *) {
+    border-color: #d5dbdb !important;
+    border-radius: 4px !important;
+    background-color: #fff !important;
+    box-shadow: none !important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app main :is(h1,.page-title,.dashboard-title,.directory-title,.workspace-title,.projects-title,.users-title,.teams-title,.roles-title,.releases-title,.planning-title,.work-items-title) {
+    color: #16191f !important;
+    font-size: 28px !important;
+    line-height: 1.25 !important;
+    font-weight: 650 !important;
+    letter-spacing: 0 !important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app main :is(.agile-panel,.resource-panel,.deployment-panel,.directory-panel,.settings-panel,.table-panel,.detail-panel,.section-box,.profile-section-card,.form-section-card) > :is(header,h2,h3) :is(h2,h3),
+  :root[data-gp-layout="clean"] #gp-app main :is(.agile-panel,.resource-panel,.deployment-panel,.directory-panel,.settings-panel,.table-panel,.detail-panel,.section-box,.profile-section-card,.form-section-card) > :is(h2,h3) {
+    color: #16191f !important;
+    font-size: 18px !important;
+    line-height: 1.35 !important;
+    font-weight: 650 !important;
+    letter-spacing: 0 !important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app :is(.tabs,.profile-tabs,.calendar-view-tabs,.conversation-tabs,.list-filters,.actor-filters) {
+    gap: 0 !important;
+    border-bottom: 1px solid #d5dbdb !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app :is(.tabs,.profile-tabs,.calendar-view-tabs,.conversation-tabs,.list-filters,.actor-filters) button {
+    min-height: 38px !important;
+    border: 0 !important;
+    border-bottom: 2px solid transparent !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: #414d5c !important;
+    box-shadow: none !important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app :is(.tabs,.profile-tabs,.calendar-view-tabs,.conversation-tabs,.list-filters,.actor-filters) button:is(.active,.selected,[aria-selected="true"]) {
+    border-bottom-color: #0972d3 !important;
+    color: #0972d3 !important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app main :is(button,.button,.gp-button,.btn-primary,.btn-secondary,.create-button,.create-btn,.primary-button,.secondary-button):not([class*="icon"]):not([class*="chip"]):not([class*="pill"]):not(.document-paper *):not(.sheet-grid *):not(.slide-page *):not(.present-slide *):not(.toolbar *):not(.document-toolbar *):not(.file-menubar *):not(.document-menubar *) {
+    min-height: 36px !important;
+    border-radius: 4px !important;
+    box-shadow: none !important;
+    font-size: 14px !important;
+    letter-spacing: 0 !important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app main :is(input,select,textarea):not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]):not(.document-paper *):not(.slide-page *):not(.present-slide *):not(.sheet-grid *):not(.toolbar *):not(.document-toolbar *):not(.formula-bar *) {
+    min-height: 36px !important;
+    border-radius: 4px !important;
+    border-color: #879596 !important;
+    background-color: #fff !important;
+    color: #16191f !important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app main table:not(.document-paper table):not(.sheet-grid table):not(.slide-page table):not(.present-slide table) {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    background: #fff !important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app main table:not(.document-paper table):not(.sheet-grid table):not(.slide-page table):not(.present-slide table) :is(th,td) {
+    border: 0 !important;
+    border-bottom: 1px solid #d5dbdb !important;
+    line-height: 1.4 !important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app main table:not(.document-paper table):not(.sheet-grid table):not(.slide-page table):not(.present-slide table) th {
+    height: 42px !important;
+    background: #fff !important;
+    color: #414d5c !important;
+    font-size: 12px !important;
+    font-weight: 650 !important;
+    text-align: left;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app main table:not(.document-paper table):not(.sheet-grid table):not(.slide-page table):not(.present-slide table) td {
+    min-height: 44px !important;
+    padding-block: 9px !important;
+    color: #16191f !important;
+    font-size: 14px !important;
+  }
+}
+
+/* Console structure overrides shared by the full Greatley Poshley suite. */
+@layer gp-console {
+  :root[data-gp-layout="clean"] {
+    --gp-page:#fff!important;--gp-surface:#fff!important;--gp-surface-muted:#f5f7f9!important;
+    --gp-navigation:#fff!important;--gp-text:#16191f!important;--gp-muted:#5f6b7a!important;
+    --gp-border:#d5dbdb!important;--gp-separator:#d5dbdb!important;--gp-accent:#0972d3!important;
+    --gp-selection:#eaf3fb!important;--gp-radius:6px!important;--gp-control-radius:4px!important;
+    --gp-field-radius:4px!important;--gp-field-height:36px!important;--gp-field-border:#879596!important;
+    --gp-field-border-hover:#545b64!important;--gp-field-border-focus:#0972d3!important;
+    --gp-shadow:none!important;--gp-card-shadow:none!important;--gp-float-shadow:0 4px 12px rgb(0 0 0 / 14%)!important;
+    --gp-popover-radius:6px!important;--gp-space-page:24px!important;--gp-title-size:24px!important;color-scheme:light!important;
+  }
+  :root[data-gp-layout="clean"][data-theme="dark"] {
+    --gp-page:#fff!important;--gp-surface:#fff!important;--gp-surface-muted:#f5f7f9!important;--gp-navigation:#fff!important;
+    --gp-text:#16191f!important;--gp-muted:#5f6b7a!important;--gp-border:#d5dbdb!important;--gp-separator:#d5dbdb!important;
+    --gp-accent:#0972d3!important;--gp-selection:#eaf3fb!important;--gp-field-border:#879596!important;color-scheme:light!important;
+  }
+  :root[data-gp-layout="clean"] :is(html,body,app-root,#app,#gp-app) {background:#fff!important;color:#16191f!important;}
+  :root[data-gp-layout="clean"] #gp-app :is(main,.main,.content,.canvas,.suite-body,.suite-page,.workspace,.dashboard-page,.agile-dashboard,.projects-dashboard,.products-page,.teams-page,.users-page,.roles-container,.work-items-page,.planning-page,.tc-page,.issues-container,.releases-page,.directory-section,.docs-shell,.calendar-surface,.instru-page) {
+    min-width:0!important;max-width:100%!important;background:#fff!important;color:#16191f!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app main :is(h1,.page-title,.dashboard-title,.directory-title,.workspace-title,.projects-title,.users-title,.teams-title,.roles-title,.releases-title,.planning-title,.work-items-title) {
+    color:#16191f!important;font-size:24px!important;line-height:1.3!important;font-weight:650!important;letter-spacing:0!important;
+  }
+
+  /* Standard AWS-style panels and status strips. */
+  :root[data-gp-layout="clean"] #gp-app :is(.surface,.card,.panel,.section-box,.table-panel,.table-card,.table-container,.table-shell,.profile-section-card,.detail-panel,.form-section-card,.dashboard-card,.overview-panel,.settings-card,.mat-mdc-card,.plan-card,.deployment-card,.resource-card):not(.document-paper *):not(.sheet-grid *):not(.slide-page *):not(.present-slide *):not(.thumb-preview *) {
+    min-width:0!important;border:1px solid #d5dbdb!important;border-radius:6px!important;background:#fff!important;box-shadow:none!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app :is(.notice,.alert,.inline-message,.status-banner,.callout,.info-banner) {
+    border:1px solid #b8d8f2!important;border-left:3px solid #0972d3!important;border-radius:4px!important;background:#f1f8fe!important;color:#16191f!important;box-shadow:none!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app :is(.error,.error-message,.alert-danger,.status-error) {color:#b12704!important;}
+
+  /* Tables keep a clear header row and scroll horizontally instead of collapsing columns. */
+  :root[data-gp-layout="clean"] #gp-app :is(.table-container,.table-shell,.table-scroll,.table-wrap,.table-responsive,.data-table-wrapper,.mat-mdc-table-container,.projects-table-wrapper,.users-table-wrapper,.work-items-table-wrapper) {
+    display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;overflow-x:auto!important;overscroll-behavior-inline:contain;
+  }
+  :root[data-gp-layout="clean"] #gp-app main :is(table,.mat-mdc-table,.users-table,.work-items-table,.projects-mat-table,.items-table,.google-table,.compact-work-table,.tc-table,.planning-table) {
+    width:100%!important;min-width:640px;max-width:none!important;table-layout:auto!important;border-collapse:collapse!important;background:#fff!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app main :is(th,td,.mat-mdc-header-cell,.mat-mdc-cell,.mat-mdc-footer-cell) {
+    min-width:0!important;max-width:560px;overflow-wrap:anywhere!important;word-break:normal!important;white-space:normal!important;vertical-align:middle!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app main :is(th,.mat-mdc-header-cell) {
+    height:auto!important;min-height:40px!important;padding:10px 12px!important;background:#fff!important;color:#414d5c!important;font-size:12px!important;font-weight:650!important;border-bottom:1px solid #d5dbdb!important;text-align:left!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app main :is(td,.mat-mdc-cell,.mat-mdc-footer-cell) {
+    height:auto!important;min-height:44px!important;padding:10px 12px!important;background:#fff!important;color:#16191f!important;font-size:14px!important;border-bottom:1px solid #d5dbdb!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app :is(.grid,.card-grid,.metric-grid,.stats-grid,.overview-grid,.summary-grid,.resource-grid,.deployment-grid,.settings-grid,.form-grid,.field-grid,.directory-grid,.people-card-grid,.team-members-grid,.members-grid)>* {min-width:0!important;max-width:100%!important;}
+  :root[data-gp-layout="clean"] #gp-app :is(.board-column,.kanban-column,.retro-column,.kb-column,.column) {min-width:0!important;max-width:100%!important;overflow-wrap:anywhere!important;}
+
+  /* Consistent fields, tab bars and focus indicators. */
+  :root[data-gp-layout="clean"] #gp-app main :is(button,.button,.gp-button,.btn-primary,.btn-secondary,.create-button,.create-btn,.primary-button,.secondary-button,.mat-mdc-button-base):not(.mat-mdc-icon-button):not(.mat-mdc-fab):not(.mat-mdc-mini-fab):not(.toolbar *):not(.document-toolbar *):not(.file-menubar *):not(.document-menubar *) {
+    min-height:36px!important;border-radius:4px!important;box-shadow:none!important;font-size:14px!important;letter-spacing:0!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app main :is(.button.primary,.gp-primary,.btn-primary,.primary-button,.tc-primary,.mat-mdc-unelevated-button.mat-primary,.mat-mdc-raised-button.mat-primary) {background:#0972d3!important;border-color:#0972d3!important;color:#fff!important;}
+  :root[data-gp-layout="clean"] #gp-app main :is(.button.outline,.gp-outline,.btn-secondary,.secondary-button,.mat-mdc-outlined-button) {background:#fff!important;border:1px solid #879596!important;color:#16191f!important;}
+  :root[data-gp-layout="clean"] #gp-app main :is(input,select,textarea):not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]):not(.document-paper *):not(.slide-page *):not(.present-slide *):not(.sheet-grid *):not(.toolbar *):not(.document-toolbar *):not(.formula-bar *) {
+    min-height:36px!important;border-radius:4px!important;border-color:#879596!important;background:#fff!important;color:#16191f!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app :is(input,select,textarea,button,a):focus-visible {outline:2px solid #0972d3!important;outline-offset:2px!important;}
+  :root[data-gp-layout="clean"] #gp-app :is(.tabs,.profile-tabs,.calendar-view-tabs,.conversation-tabs,.list-filters,.actor-filters) {gap:0!important;border-bottom:1px solid #d5dbdb!important;border-radius:0!important;background:#fff!important;}
+  :root[data-gp-layout="clean"] #gp-app :is(.tabs,.profile-tabs,.calendar-view-tabs,.conversation-tabs,.list-filters,.actor-filters) button {min-height:38px!important;border:0!important;border-bottom:2px solid transparent!important;border-radius:0!important;background:#fff!important;color:#414d5c!important;box-shadow:none!important;}
+  :root[data-gp-layout="clean"] #gp-app :is(.tabs,.profile-tabs,.calendar-view-tabs,.conversation-tabs,.list-filters,.actor-filters) button:is(.active,.selected,[aria-selected="true"]) {border-bottom-color:#0972d3!important;color:#0972d3!important;}
+
+  /* Login, signup and account exit use the same compact white workspace language. */
+  :root[data-gp-layout="clean"] .gp-auth-page {min-height:100dvh!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;display:flex!important;flex-direction:column!important;background:#fff!important;color:#16191f!important;color-scheme:light!important;}
+  :root[data-gp-layout="clean"] .gp-auth-header {height:56px!important;min-height:56px!important;padding:8px 24px!important;display:flex!important;align-items:center!important;border:0!important;border-bottom:1px solid #d5dbdb!important;background:#fff!important;}
+  :root[data-gp-layout="clean"] .gp-auth-header>a {gap:10px!important;color:#16191f!important;text-decoration:none!important;}
+  :root[data-gp-layout="clean"] .gp-auth-split {flex:1!important;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(360px,440px)!important;align-items:center!important;gap:48px!important;width:min(1120px,calc(100% - 48px))!important;min-height:calc(100dvh - 112px)!important;margin:0 auto!important;padding:32px 0!important;background:#fff!important;}
+  :root[data-gp-layout="clean"] .gp-auth-gallery {height:auto!important;min-width:0!important;padding:24px!important;justify-content:flex-start!important;background:#fff!important;color:#16191f!important;}
+  :root[data-gp-layout="clean"] .gp-auth-gallery-content {max-width:560px!important;width:100%!important;}
+  :root[data-gp-layout="clean"] .gp-auth-gallery h1 {font-size:30px!important;line-height:1.25!important;font-weight:650!important;letter-spacing:0!important;margin:0 0 12px!important;color:#16191f!important;}
+  :root[data-gp-layout="clean"] .gp-auth-gallery p {font-size:14px!important;line-height:1.55!important;color:#5f6b7a!important;margin:0 0 28px!important;}
+  :root[data-gp-layout="clean"] .gp-auth-app-grid {grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:18px 12px!important;}
+  :root[data-gp-layout="clean"] .gp-auth-app {gap:8px!important;font-size:13px!important;font-weight:500!important;color:#16191f!important;}
+  :root[data-gp-layout="clean"] .gp-auth-app img {width:40px!important;height:40px!important;}
+  :root[data-gp-layout="clean"] .gp-auth-form-pane {min-width:0!important;padding:0!important;border:0!important;background:#fff!important;color:#16191f!important;}
+  :root[data-gp-layout="clean"] .gp-auth-form-content {width:100%!important;max-width:440px!important;margin:0!important;padding:24px!important;border:1px solid #d5dbdb!important;border-radius:6px!important;background:#fff!important;box-shadow:none!important;}
+  :root[data-gp-layout="clean"] .gp-auth-form-content h2 {font:650 22px/1.35 var(--gp-font)!important;letter-spacing:0!important;margin:0 0 8px!important;color:#16191f!important;}
+  :root[data-gp-layout="clean"] .gp-auth-subtitle {font-size:14px!important;line-height:1.5!important;color:#5f6b7a!important;margin:0 0 18px!important;}
+  :root[data-gp-layout="clean"] .gp-auth-form {gap:16px!important;margin:18px 0 0!important;}
+  :root[data-gp-layout="clean"] .gp-auth-form>label {gap:6px!important;font-size:12px!important;color:#414d5c!important;font-weight:650!important;}
+  :root[data-gp-layout="clean"] .gp-auth-form input:not([type="checkbox"]),:root[data-gp-layout="clean"] .gp-auth-password {height:36px!important;min-height:36px!important;border:1px solid #879596!important;border-radius:4px!important;background:#fff!important;}
+  :root[data-gp-layout="clean"] .gp-auth-form input:not([type="checkbox"]) {padding:0 10px!important;font:400 14px/1.4 var(--gp-font)!important;color:#16191f!important;}
+  :root[data-gp-layout="clean"] .gp-auth-form .gp-auth-password input {height:34px!important;min-height:34px!important;border:0!important;}
+  :root[data-gp-layout="clean"] .gp-auth-password button {padding:6px 10px!important;color:#0972d3!important;}
+  :root[data-gp-layout="clean"] .gp-auth-submit,:root[data-gp-layout="clean"] .gp-auth-form-content .primary-action {width:100%!important;min-height:36px!important;padding:0 14px!important;border:1px solid #0972d3!important;border-radius:4px!important;background:#0972d3!important;color:#fff!important;font:650 14px/1.2 var(--gp-font)!important;box-shadow:none!important;}
+  :root[data-gp-layout="clean"] .gp-auth-switch {font-size:13px!important;line-height:1.5!important;color:#5f6b7a!important;margin:18px 0 0!important;}
+  :root[data-gp-layout="clean"] .gp-auth-form-content a {color:#0972d3!important;}
+  :root[data-gp-layout="clean"] .gp-auth-signed-in .gp-auth-signout {min-height:36px!important;border:1px solid #879596!important;border-radius:4px!important;background:#fff!important;color:#16191f!important;font:600 14px var(--gp-font)!important;}
+  :root[data-gp-layout="clean"] .gp-auth-footer {min-height:56px!important;border-top:1px solid #d5dbdb!important;background:#fff!important;color:#5f6b7a!important;font:400 12px/1.5 var(--gp-font)!important;}
+  :root[data-gp-layout="clean"] .main:has(.signup-card) {min-height:100dvh!important;height:auto!important;align-items:flex-start!important;padding:56px 24px!important;background:#fff!important;}
+  :root[data-gp-layout="clean"] .main:has(.signup-card) .container {width:min(100%,1040px)!important;max-width:1040px!important;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(360px,480px)!important;align-items:center!important;gap:48px!important;padding:0!important;text-align:left!important;}
+  :root[data-gp-layout="clean"] .main:has(.signup-card) .logo h1 {font:650 30px/1.25 var(--gp-font)!important;letter-spacing:0!important;color:#16191f!important;}
+  :root[data-gp-layout="clean"] .main:has(.signup-card) .signup-card {width:100%!important;padding:24px!important;border:1px solid #d5dbdb!important;border-radius:6px!important;background:#fff!important;}
+  :root[data-gp-layout="clean"] .main:has(.signup-card) .title {font-size:22px!important;line-height:1.35!important;font-weight:650!important;color:#16191f!important;}
+  :root[data-gp-layout="clean"] .main:has(.signup-card) .form-grid {gap:12px!important;}
+  :root[data-gp-layout="clean"] .main:has(.signup-card) :is(.gp-button,.gp-button-light) {height:36px!important;min-height:36px!important;border:1px solid #0972d3!important;border-radius:4px!important;background:#0972d3!important;color:#fff!important;font:650 14px/1.2 var(--gp-font)!important;}
+  :root[data-gp-layout="clean"] .main:has(.signup-card) .gp-button-light {background:#fff!important;color:#16191f!important;border-color:#879596!important;}
+
+  @media(max-width:800px) {
+    :root[data-gp-layout="clean"] .gp-auth-split {grid-template-columns:minmax(0,1fr)!important;width:min(100% - 32px,520px)!important;min-height:auto!important;gap:12px!important;padding:20px 0!important;}
+    :root[data-gp-layout="clean"] .gp-auth-gallery {padding:8px 0!important;}
+    :root[data-gp-layout="clean"] .gp-auth-gallery-content>p,:root[data-gp-layout="clean"] .gp-auth-app-grid {display:none!important;}
+    :root[data-gp-layout="clean"] .gp-auth-form-pane {grid-row:1!important;}
+    :root[data-gp-layout="clean"] .gp-auth-form-content {max-width:none!important;padding:20px!important;}
+    :root[data-gp-layout="clean"] .main:has(.signup-card) .container {width:min(100%,520px)!important;grid-template-columns:minmax(0,1fr)!important;gap:12px!important;}
+    :root[data-gp-layout="clean"] .main:has(.signup-card) .logo h1 {font-size:24px!important;margin-bottom:4px!important;}
+  }
+  @media(max-width:480px) {
+    :root[data-gp-layout="clean"] .gp-auth-header {padding-inline:16px!important;}
+    :root[data-gp-layout="clean"] .gp-auth-app-grid {grid-template-columns:repeat(3,minmax(0,1fr))!important;}
+    :root[data-gp-layout="clean"] .main:has(.signup-card) {padding:24px 16px!important;}
+    :root[data-gp-layout="clean"] .main:has(.signup-card) .form-grid {grid-template-columns:minmax(0,1fr)!important;}
+  }
+}

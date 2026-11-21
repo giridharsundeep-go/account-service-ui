@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: professy-backend-config
+  namespace: professy
+data:
+  DB_URL: jdbc:mysql://greatley-poshley.cynui8840ddn.us-east-1.rds.amazonaws.com:3306/professy?sslMode=REQUIRED
+  APP_EVENTS_TRANSPORT: sqs
+  AWS_REGION: us-east-1
+  SQS_TICKET_EVENTS_QUEUE_URL: replace-with-ticket-events-fifo-url
+  SQS_ACCOUNT_MAIL_QUEUE_URL: replace-with-account-mail-fifo-url
+  APP_UI_URL: https://professy-ui.greatley-poshley.com
+  SPRING_APPLICATION_JSON: '{"app":{"cors":{"allowed-origin-patterns":"https://professy-ui.greatley-poshley.com"}}}'
+  APP_MEDIA_PUBLIC_BASE_URL: https://professy-backend.greatley-poshley.com/media/avatars
+  JPA_DDL_AUTO: update
+  APP_MEDIA_DIRECTORY: /tmp/professy/avatars
+  ATTACHMENT_DIRECTORY: /tmp/professy/attachments
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: professy-ui-config
+  namespace: professy
+data:
+  NG_ALLOWED_HOSTS: professy-ui.greatley-poshley.com

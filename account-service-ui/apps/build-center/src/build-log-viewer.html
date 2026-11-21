@@ -1,0 +1,141 @@
+<div class="log-header">
+  <div class="log-title">
+    <button type="button" class="back" (click)="closed.emit()"><span aria-hidden="true">←</span> Build history</button>
+    <div class="title-line">
+      <h1 #heading tabindex="-1">Build <code [title]="run().tag">{{ run().id.slice(0, 8) }}</code></h1>
+      <span class="build-state" [attr.data-state]="run().status">{{ run().status | titlecase }}</span>
+    </div>
+    <p>{{ pipelineName() }}</p>
+  </div>
+  @if (run().artifact) {
+    <button type="button" class="download" [disabled]="downloadPending()" (click)="archiveRequested.emit()">
+      Download image <span aria-hidden="true">↓</span>
+    </button>
+  }
+</div>
+
+<dl class="build-meta">
+  <div><dt>Branch</dt><dd>{{ run().branch }}</dd></div>
+  <div><dt>Commit</dt><dd>
+    @if (run().commit || run().requestedCommit; as commit) {
+      <code [title]="commit">{{ commit.slice(0, 12) }}</code>
+    } @else { — }
+  </dd></div>
+  <div><dt>Environment</dt><dd>{{ run().environment }}</dd></div>
+  <div><dt>Trigger</dt><dd>{{ run().trigger === 'push' ? 'GitHub push' : 'Manual' }}</dd></div>
+  <div><dt>Submitted</dt><dd>{{ run().startedAt | date:'MMM d, HH:mm:ss' }}</dd></div>
+  @if (elapsed()) { <div><dt>Elapsed</dt><dd>{{ elapsed() }}</dd></div> }
+</dl>
+
+@if (run().message) {
+  <p class="build-message" [attr.data-state]="run().status" role="status">{{ run().message }}</p>
+}
+
+<div class="detail-tabs" role="tablist" aria-label="Build result views" (keydown)="moveTab($event)">
+  @for (tab of detailTabs; track tab.id) {
+    <button type="button" role="tab" [id]="'run-tab-' + tab.id" [attr.aria-selected]="detail() === tab.id"
+      [attr.aria-controls]="detail() === tab.id ? 'run-panel-' + tab.id : null" [tabIndex]="detail() === tab.id ? 0 : -1"
+      (click)="detail.set(tab.id)">{{ tab.label }}</button>
+  }
+</div>
+
+@switch (detail()) {
+  @case ('logs') {
+  <section class="log-console" role="tabpanel" id="run-panel-logs" aria-labelledby="run-tab-logs">
+    <div class="console-toolbar">
+      <div class="console-heading">
+        <div class="console-title">
+          <h2>Build output</h2>
+          @if (active()) { <span class="live">Live</span> }
+        </div>
+        <div class="console-utilities">
+          <button type="button" [disabled]="!text()" (click)="copyLog()">Copy log</button>
+          <button type="button" [disabled]="pending()" (click)="reload.emit()">Refresh</button>
+        </div>
+      </div>
+      <div class="console-actions">
+        <input type="search" aria-label="Search log" placeholder="Search output" [value]="query()"
+          #searchLog (input)="query.set(searchLog.value); scrollToFirstLine()">
+        <select aria-label="Build phase" #stageFilter [value]="phase() ?? ''" (change)="selectPhase(stageFilter.value)">
+          <option value="">All phases</option>
+          @for (stage of stages(); track stage.id) { <option [value]="stage.id">{{ stage.label }}</option> }
+        </select>
+        <button type="button" class="error-toggle" [attr.aria-pressed]="errorsOnly()" [disabled]="!lines().length"
+          (click)="errorsOnly.set(!errorsOnly()); scrollToFirstLine()">Errors <span>{{ errorCount() }}</span></button>
+        <button type="button" [attr.aria-pressed]="wrap()" (click)="wrap.set(!wrap())">Wrap lines</button>
+        <button type="button" [attr.aria-pressed]="follow() && !filtered()" [disabled]="filtered() || !lines().length"
+          (click)="follow.set(!follow())">Follow output</button>
+      </div>
+    </div>
+    @if (error()) { <p class="log-error" role="alert">{{ error() }}</p> }
+    <div #logConsole class="console-output" [class.wrap]="wrap()" tabindex="0" role="region"
+      aria-label="Build log lines" (scroll)="pauseOnScroll($event)">
+      @if (visibleLines().length) {
+        <ol class="log-lines" role="list">
+          @for (line of visibleLines(); track line.number) {
+            <li [class.error-line]="line.error" [attr.value]="line.number">
+              <span class="line-number" aria-hidden="true">{{ line.number }}</span><code>{{ line.message }}</code>
+            </li>
+          }
+        </ol>
+      } @else if (text() === null && pending()) {
+        <p class="console-empty" role="status">Loading build output…</p>
+      } @else if (lines().length) {
+        <p class="console-empty" role="status">No lines match the current filters.</p>
+      } @else if (!error()) {
+        <p class="console-empty" role="status">{{ active() ? 'Waiting for runner output…' : 'No log output was recorded.' }}</p>
+      }
+    </div>
+    <div class="console-footer">
+      <span>{{ visibleLines().length }} of {{ lines().length }} lines</span>
+      <span role="status">{{ copyStatus() }}</span>
+    </div>
+  </section>
+  }
+  @case ('phases') {
+    <section class="detail-panel" role="tabpanel" id="run-panel-phases" aria-labelledby="run-tab-phases">
+      <h2>Build phases</h2>
+      <table class="detail-table">
+        <thead><tr><th scope="col">Phase</th><th scope="col">Status</th><th scope="col">Output</th></tr></thead>
+        <tbody>
+          @for (stage of stages(); track stage.id) {
+            <tr>
+              <th scope="row">{{ stage.label }}</th>
+              <td><span class="stage-state" [attr.data-state]="stage.state">{{ stage.state }}</span></td>
+              <td><button type="button" class="link-button" (click)="showPhaseLog(stage.id)">View phase log</button></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  }
+  @case ('details') {
+    <section class="detail-panel" role="tabpanel" id="run-panel-details" aria-labelledby="run-tab-details">
+      <h2>Run configuration</h2>
+      <dl class="detail-fields">
+        <div><dt>Pipeline</dt><dd>{{ pipelineName() }}</dd></div>
+        <div><dt>Build tag</dt><dd>{{ run().tag }}</dd></div>
+        <div><dt>Docker image</dt><dd>{{ run().imageName }}</dd></div>
+        <div><dt>Commit</dt><dd>{{ run().commit || run().requestedCommit || '—' }}</dd></div>
+        @if (run().finishedAt; as finishedAt) {
+          <div><dt>Completed</dt><dd>{{ finishedAt | date:'medium' }}</dd></div>
+        }
+      </dl>
+    </section>
+  }
+  @case ('artifacts') {
+    <section class="detail-panel" role="tabpanel" id="run-panel-artifacts" aria-labelledby="run-tab-artifacts">
+      <h2>Image archive</h2>
+      @if (run().artifact; as artifact) {
+        <dl class="detail-fields">
+          <div><dt>Image</dt><dd>{{ artifact.image }}</dd></div>
+          <div><dt>Archive path</dt><dd>{{ artifact.path }}</dd></div>
+          <div><dt>SHA-256</dt><dd><code>{{ artifact.sha256 }}</code></dd></div>
+        </dl>
+        <div class="artifact-action">
+          <button type="button" class="download" [disabled]="downloadPending()" (click)="archiveRequested.emit()">Download image</button>
+        </div>
+      } @else { <p class="artifact-action">This build has no image archive.</p> }
+    </section>
+  }
+}

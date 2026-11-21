@@ -1,0 +1,117 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: FIFO queues and dead-letter queues for Professy ticket notifications and account mail.
+Resources:
+  TicketEventsDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub '${AWS::StackName}-ticket-events-dlq.fifo'
+      FifoQueue: true
+      SqsManagedSseEnabled: true
+      MessageRetentionPeriod: 1209600
+  TicketEventsQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub '${AWS::StackName}-ticket-events.fifo'
+      FifoQueue: true
+      SqsManagedSseEnabled: true
+      VisibilityTimeout: 60
+      ReceiveMessageWaitTimeSeconds: 20
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt TicketEventsDeadLetterQueue.Arn
+        maxReceiveCount: 5
+  AccountMailDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub '${AWS::StackName}-account-mail-dlq.fifo'
+      FifoQueue: true
+      SqsManagedSseEnabled: true
+      MessageRetentionPeriod: 1209600
+  AccountMailQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub '${AWS::StackName}-account-mail.fifo'
+      FifoQueue: true
+      SqsManagedSseEnabled: true
+      VisibilityTimeout: 60
+      ReceiveMessageWaitTimeSeconds: 20
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt AccountMailDeadLetterQueue.Arn
+        maxReceiveCount: 5
+  BackendPublisherRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: pods.eks.amazonaws.com}
+            Action: ['sts:AssumeRole', 'sts:TagSession']
+            Condition:
+              StringEquals:
+                aws:RequestTag/kubernetes-namespace: professy
+                aws:RequestTag/kubernetes-service-account: professy-backend
+      Policies:
+        - PolicyName: PublishProfessyEvents
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 'sqs:SendMessage'
+                Resource: [!GetAtt TicketEventsQueue.Arn, !GetAtt AccountMailQueue.Arn]
+  TicketConsumerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: pods.eks.amazonaws.com}
+            Action: ['sts:AssumeRole', 'sts:TagSession']
+            Condition:
+              StringEquals:
+                aws:RequestTag/kubernetes-namespace: professy
+                aws:RequestTag/kubernetes-service-account: professy-notification-service
+      Policies:
+        - PolicyName: ConsumeTicketEvents
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: ['sqs:ReceiveMessage', 'sqs:DeleteMessage']
+                Resource: !GetAtt TicketEventsQueue.Arn
+  MailConsumerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: pods.eks.amazonaws.com}
+            Action: ['sts:AssumeRole', 'sts:TagSession']
+            Condition:
+              StringEquals:
+                aws:RequestTag/kubernetes-namespace: professy
+                aws:RequestTag/kubernetes-service-account: professy-email-service
+      Policies:
+        - PolicyName: ConsumeAccountMail
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: ['sqs:ReceiveMessage', 'sqs:DeleteMessage']
+                Resource: !GetAtt AccountMailQueue.Arn
+Outputs:
+  TicketEventsQueueUrl:
+    Value: !Ref TicketEventsQueue
+  TicketEventsQueueArn:
+    Value: !GetAtt TicketEventsQueue.Arn
+  AccountMailQueueUrl:
+    Value: !Ref AccountMailQueue
+  AccountMailQueueArn:
+    Value: !GetAtt AccountMailQueue.Arn
+  BackendPublisherRoleArn:
+    Value: !GetAtt BackendPublisherRole.Arn
+  TicketConsumerRoleArn:
+    Value: !GetAtt TicketConsumerRole.Arn
+  MailConsumerRoleArn:
+    Value: !GetAtt MailConsumerRole.Arn

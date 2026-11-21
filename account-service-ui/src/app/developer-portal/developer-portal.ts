@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { appUrl } from '@greatley-poshley/suite';
 
 type AppKind = 'UI' | 'API' | 'Realtime API' | 'Worker' | 'SDK' | 'Platform' | 'Website';
 
@@ -22,6 +23,7 @@ interface AppGuide {
 })
 export class DeveloperPortal {
   query = '';
+  readonly buildCenterUrl = appUrl('build-center');
 
   readonly apps: AppGuide[] = [
     { repo: 'account-service-ui', slug: 'account-service-ui', product: 'Professy', kind: 'UI', port: '4200', purpose: 'Main Professy workspace interface.' },

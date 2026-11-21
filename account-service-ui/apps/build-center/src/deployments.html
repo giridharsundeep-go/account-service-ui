@@ -1,0 +1,292 @@
+@if (error()) { <p class="notice error" role="alert">{{ error() }}</p> }
+@if (notice()) { <p class="notice" role="status">{{ notice() }}</p> }
+@if (loading()) { <p class="notice" role="status">Loading deployment targets…</p> }
+@if (!loading()) {
+  <app-eks-targets [accounts]="data().accounts" [targets]="data().targets"
+    [configurationMessage]="data().configurationMessage || ''" (connected)="onTargetConnected($event)" (refreshAccounts)="refresh()" />
+}
+<section class="panel deployment-panel deployment-configurations" aria-labelledby="deployment-configurations-heading">
+  <div class="deployment-heading">
+    <div><h2 id="deployment-configurations-heading">Deployment configurations</h2><p>Saved app settings are scoped to a pipeline and cluster.</p></div>
+    <button type="button" class="primary" (click)="openForm()">Configure deployment</button>
+  </div>
+  @if (data().profiles.length) {
+    <div class="release-table-scroll" tabindex="0" aria-label="Saved deployment configurations">
+      <table class="release-table">
+        <thead><tr><th scope="col">Application</th><th scope="col">Pipeline</th><th scope="col">Cluster target</th><th scope="col">Pod scaling</th><th scope="col"><span class="release-table-action">Actions</span></th></tr></thead>
+        <tbody>
+          @for (profile of data().profiles; track profile.targetId + profile.pipelineId) {
+            <tr>
+              <td><strong>{{ profile.settings.app }}</strong><small>Environment and runtime settings saved</small></td>
+              <td>{{ pipelineName(profile.pipelineId) }}<small>Latest image: {{ latestImageFor(profile.pipelineId)?.version || 'No successful build' }}</small></td>
+              <td>{{ targetName(profile.targetId) }}<small>{{ targetNamespace(profile.targetId) }}</small></td>
+              <td>@if (profile.settings.scaling.mode === 'auto') { {{ profile.settings.scaling.min }}–{{ profile.settings.scaling.max }} pods · {{ profile.settings.scaling.cpuPercent }}% CPU } @else { {{ profile.settings.scaling.replicas }} fixed pod(s) }</td>
+              <td class="configuration-actions">
+                <button type="button" class="primary" [disabled]="busy() || !latestImageFor(profile.pipelineId)" (click)="deployProfile(profile)">Deploy</button>
+                <button type="button" [disabled]="busy()" (click)="configureProfile(profile)">Edit configuration</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else if (!loading()) {
+    <p class="empty-state">No deployment configuration is saved yet. Select a pipeline, image, and cluster to configure one.</p>
+  }
+</section>
+@if (data().targets.length && formOpen()) {
+  <section class="panel deployment-panel" aria-labelledby="new-release-heading">
+    <div class="deployment-heading">
+      <div><h2 id="new-release-heading">Deploy an image</h2><p>Choose a build and configure how it runs in Kubernetes.</p></div>
+    </div>
+    <form #form="ngForm" (ngSubmit)="submit()" class="release-form">
+      <fieldset>
+        <legend>Target and image</legend>
+        <label class="wide">Cluster target
+          <select name="target" required [ngModel]="targetId()" (ngModelChange)="selectTarget($event)">
+            <option value="">Select a target</option>
+            @for (item of data().targets; track item.id) {
+              <option [value]="item.id">{{ item.name }} · {{ item.namespace }} · {{ item.platform }}</option>
+            }
+          </select>
+        </label>
+        <label class="wide">Pipeline
+          <select id="release-pipeline" name="pipeline" required [ngModel]="pipelineId()" (ngModelChange)="selectPipeline($event)">
+            <option value="">Select a pipeline</option>
+            @for (pipeline of pipelineOptions(); track pipeline.id) {
+              <option [value]="pipeline.id">{{ pipeline.name }} · {{ pipeline.environment }}</option>
+            }
+          </select>
+        </label>
+        <label class="wide">Build image
+          <select id="release-image" name="image" required [ngModel]="runId" (ngModelChange)="selectImage($event)">
+            <option value="">{{ pipelineImages().length ? 'Select a build image' : pipelineId() ? 'No successful images for this pipeline' : 'Select a pipeline first' }}</option>
+            @for (image of pipelineImages(); track image.id) {
+              <option [value]="image.id">{{ image.version || 'v1.0' }} · {{ image.imageName }} · {{ image.branch }} · {{ image.commit?.slice(0, 7) || image.tag.slice(6, 13) }} · {{ image.startedAt | date:'MMM d, HH:mm' }}</option>
+            }
+          </select>
+        </label>
+        @if (pipelineImages().length) {
+          <p class="wide field-note">Latest successful build selected: <strong>{{ pipelineImages()[0].version || 'v1.0' }}</strong>. Select another version to deploy an earlier image.</p>
+        }
+        <label class="wide">Image registry
+          <select name="registry" [(ngModel)]="registry" required>
+            <option value="">Select a cluster target first</option>
+            @for (option of registryOptions(); track option) {
+              <option [value]="option">{{ option === 'ecr' ? 'Amazon ECR' : 'Configured registry' }}</option>
+            }
+          </select>
+        </label>
+        @if (registry === 'ecr') {
+          <p class="wide field-note">Build Center creates or reuses a private ECR repository for this app in the cluster's AWS account and region.</p>
+        }
+        @if (target()?.eks) {
+          <div class="wide node-selector">
+            <label>Worker node
+              <select name="nodeName" [(ngModel)]="nodeName" [disabled]="nodesLoading()">
+                <option value="">Automatic scheduling</option>
+                @for (node of compatibleNodes(); track node.name) {
+                  <option [value]="node.name">{{ node.name }} · {{ node.instanceType || 'EC2 worker' }} · {{ node.zone }} · {{ node.cpu }} CPU / {{ node.memory }}</option>
+                }
+              </select>
+            </label>
+            <button type="button" [disabled]="nodesLoading() || busy()" (click)="loadNodes()">{{ nodesLoading() ? 'Loading nodes…' : 'Refresh nodes' }}</button>
+          </div>
+          @if (nodesError()) { <p class="wide notice error" role="alert">{{ nodesError() }}</p> }
+          @if (!nodesLoading() && !nodesError() && !compatibleNodes().length) {
+            <p class="wide field-note">No Ready worker nodes matching this image architecture. Finish EKS worker node group setup before deploying.</p>
+          }
+          @if (nodeName) {
+            <p class="wide field-note">Replicas will be pinned to <strong>{{ nodeName }}</strong>. If that node is unavailable or lacks capacity, pods will remain Pending.</p>
+          }
+        }
+        <label>App name <input name="app" [(ngModel)]="app" required maxlength="63" pattern="[a-z]([a-z0-9\-]*[a-z0-9])?" placeholder="professy-backend"></label>
+        <label>Container port <input name="port" [(ngModel)]="port" type="number" required min="1" max="65535"></label>
+        <label class="wide">Service exposure
+          <select name="exposure" [(ngModel)]="exposure">
+            <option value="private">Intranet · cluster only</option>
+            @if (target()?.eks) { <option value="load-balancer">Internet · AWS public load balancer</option> }
+            @if (target()?.domain && target()?.ingressClass) { <option value="hostname">Internet · custom subdomain</option> }
+          </select>
+        </label>
+        @if (exposure === 'hostname') {
+          <label class="wide">Public subdomain
+            <input name="publicSubdomain" [(ngModel)]="publicSubdomain" required maxlength="63"
+              pattern="[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?" placeholder="professy-backend">
+          </label>
+          <p class="wide field-note">Internet hostname: <strong>{{ publicSubdomain || 'app' }}.{{ target()?.domain }}</strong>. The cluster needs a working IngressClass and DNS/TLS route for this hostname.</p>
+        }
+        @if (exposure === 'load-balancer') {
+          <p class="wide field-note">AWS bills for the public load balancer. It serves HTTP on port 80.</p>
+        }
+      </fieldset>
+      <fieldset>
+        <legend>Resources and scaling</legend>
+        <label>CPU request (millicores) <input name="cpu" [(ngModel)]="cpuMillicores" type="number" required min="1"></label>
+        <label>Memory request (MiB) <input name="memory" [(ngModel)]="memoryMiB" type="number" required min="1"></label>
+        <label>Scaling mode
+          <select name="mode" [(ngModel)]="mode">
+            <option value="fixed">Fixed replicas</option>
+            <option value="auto">CPU autoscaling</option>
+          </select>
+        </label>
+        @if (mode === 'fixed') {
+          <label>Replicas <input name="replicas" [(ngModel)]="replicas" type="number" required min="1"></label>
+        } @else {
+          <label>Target CPU utilization (%) <input name="cpuPercent" [(ngModel)]="cpuPercent" type="number" required min="1"></label>
+          <label>Minimum pods <input name="min" [(ngModel)]="min" type="number" required min="1"></label>
+          <label>Maximum pods <input name="max" [(ngModel)]="max" type="number" required [min]="min"></label>
+          <p class="wide field-note">CPU utilization is measured against the CPU request. Metrics Server must be enabled on the cluster.</p>
+        }
+      </fieldset>
+      <fieldset class="runtime-config wide">
+        <legend>Runtime configuration</legend>
+        <label>ConfigMap name <input name="configMap" [(ngModel)]="configMap" placeholder="Optional"></label>
+        <label>Kubernetes Secret name <input name="secret" [(ngModel)]="secret" placeholder="Existing Secret or auto-created on deploy"></label>
+        <label>Kubernetes service account <input name="serviceAccount" [(ngModel)]="serviceAccount" placeholder="Optional"></label>
+        <label>HTTP readiness path <input name="readiness" [(ngModel)]="readinessPath" placeholder="Optional · defaults to a TCP check"></label>
+        <div class="wide environment-editor">
+          <div class="environment-heading"><div><h4>Application environment (.env)</h4><p>One KEY=value per line. Sensitive values are encrypted at rest in Build Center and applied through a Kubernetes Secret during deployment.</p></div>
+          </div>
+          @if (dockerfileEnv() === null) {
+            <p class="field-note">This image predates Dockerfile scanning. Run a new build to populate Dockerfile ENV names automatically.</p>
+          } @else {
+            <p class="field-note">Scanned the selected build's Dockerfile: {{ dockerfileEnv()?.length }} ENV name(s). Keep one variable on each line; blank values are passed as empty strings.</p>
+          }
+          <textarea id="envContent" class="env-code-editor" name="envContent" [(ngModel)]="envContent" spellcheck="false" autocapitalize="off" autocomplete="off"
+            aria-label="Deployment environment variables" placeholder="DB_URL=jdbc:mysql://host:3306/database&#10;DB_USERNAME=admin&#10;DB_PASSWORD=&#10;JWT_SECRET=&#10;KAFKA_BOOTSTRAP_SERVERS=" rows="12"></textarea>
+          <p class="field-note">Save settings to encrypt and retain the .env document for this pipeline and cluster. Enter required passwords and secrets before deploying.</p>
+        </div>
+        <p class="wide field-note">Kafka configuration remains available in the application; set <code>APP_EVENTS_TRANSPORT=sqs</code> to use SQS. Use an EKS service account with Pod Identity for AWS access.</p>
+      </fieldset>
+      <div class="actions release-actions">
+        <button type="submit" class="primary" [disabled]="form.invalid || busy() || (target()?.eks && (nodesLoading() || nodesError() !== '' || !compatibleNodes().length))">Deploy image</button>
+        <button type="button" [disabled]="form.invalid || busy()" (click)="submit(false)">Save app settings</button>
+        @if (data().releases.length) { <button type="button" (click)="formOpen.set(false)" [disabled]="busy()">Cancel</button> }
+      </div>
+    </form>
+  </section>
+}
+
+<section class="panel deployment-panel" aria-labelledby="release-history-heading">
+    <div class="deployment-heading">
+      <div><h2 id="release-history-heading">Deployment history</h2></div>
+    <div class="actions">
+      <button type="button" (click)="refresh()">Refresh</button>
+      @if (data().targets.length && data().releases.length && !formOpen()) {
+        <button type="button" class="primary" (click)="openForm()">Configure deployment</button>
+      }
+    </div>
+  </div>
+  @if (data().releases.length) {
+    <div class="release-table-scroll" tabindex="0" aria-label="Release history">
+      <table class="release-table">
+        <thead><tr><th scope="col">Application / version</th><th scope="col">Pipeline</th><th scope="col">Target</th><th scope="col">Status</th><th scope="col">Started</th><th scope="col"><span class="release-table-action">Actions</span></th></tr></thead>
+        <tbody>
+          @for (release of data().releases; track release.id) {
+            <tr [class.selected-release]="selectedId() === release.id">
+              <td><strong>{{ release.settings.app }}</strong>
+                @if (release.version) { <small>{{ release.version }}</small> }
+                @if (release.hostname) { <small>{{ release.hostname }}</small> }
+              </td>
+              <td>{{ pipelineName(release.pipelineId) }}</td>
+              <td>{{ release.targetName }}<small>{{ release.namespace }}</small></td>
+              <td>
+                <span class="status" [attr.data-status]="release.status">
+                  @if (release.status === 'running') { <span class="status-spinner" aria-hidden="true"></span> }
+                  {{ release.status === 'succeeded' ? 'Deployed' : release.status === 'running' ? 'Rolling out' : 'Failed' }}
+                </span>
+                @if (release.status === 'running') {
+                  <small>{{ release.progressPercent ?? 0 }}% · {{ release.message }}</small>
+                  <progress class="table-progress" [value]="release.progressPercent ?? 0" max="100" [attr.aria-label]="'Deployment ' + (release.progressPercent ?? 0) + '% complete'"></progress>
+                }
+                @if (release.rollbackOf) { <small>Rollback</small> }
+              </td>
+              <td><time [attr.datetime]="release.requestedAt">{{ release.requestedAt | date:'MMM d, y · HH:mm' }}</time></td>
+              <td><button type="button" [disabled]="busy()" (click)="inspect(release)"
+                [attr.aria-label]="'Inspect ' + release.settings.app + ' release'">Details</button></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else if (!loading()) {
+    <p class="empty-state">Deploy a build to see its rollout here.</p>
+  }
+</section>
+@if (selected(); as release) {
+  <section class="panel deployment-panel" aria-labelledby="release-detail-heading">
+    <div class="deployment-heading">
+      <div>
+        <h2 id="release-detail-heading">{{ release.settings.app }} @if (release.version) { <span class="build-version">{{ release.version }}</span> }</h2>
+        <p class="release-current-status" aria-live="polite">
+          @if (release.status === 'running') { <span class="status-spinner" aria-hidden="true"></span> }
+          <span class="status" [attr.data-status]="release.status">{{ release.status === 'succeeded' ? 'Deployed' : release.status === 'running' ? 'In progress' : 'Failed' }}</span>
+          {{ release.progressPercent ?? 0 }}% · {{ release.message }}
+        </p>
+      </div>
+      @if (workload()?.workload?.endpoint; as endpoint) {
+        <a class="button-link" [href]="endpoint" target="_blank" rel="noopener noreferrer">Open app ↗</a>
+      } @else if (release.hostname) {
+        <a class="button-link" [href]="'https://' + release.hostname" target="_blank" rel="noopener noreferrer">Open app ↗</a>
+      }
+    </div>
+    <dl class="release-details">
+      <div><dt>Target</dt><dd>{{ release.targetName }} / {{ release.namespace }}</dd></div>
+      <div><dt>Exposure</dt><dd>
+        @if (release.hostname) { Internet · {{ release.hostname }} }
+        @else if (release.settings.publicLoadBalancer) { Internet · AWS public load balancer }
+        @else { Intranet · cluster only }
+      </dd></div>
+      <div><dt>Worker placement</dt><dd>{{ release.settings.nodeName || 'Kubernetes scheduler' }}</dd></div>
+      <div><dt>Scaling</dt><dd>
+        @if (release.settings.scaling.mode === 'auto') {
+          {{ release.settings.scaling.min }}–{{ release.settings.scaling.max }} replicas · {{ release.settings.scaling.cpuPercent }}% CPU
+        } @else { {{ release.settings.scaling.replicas }} fixed replicas }
+      </dd></div>
+      @if (workload(); as live) {
+        <div><dt>Current pods</dt><dd>{{ live.workload ? live.workload.ready + ' of ' + live.workload.desired + ' ready' : 'No deployment' }}</dd></div>
+      }
+      @if (release.settings.publicLoadBalancer) {
+        <div class="wide"><dt>Public endpoint</dt><dd>
+          @if (workload()?.workload?.endpoint; as endpoint) {
+            <code>{{ endpoint }}</code>
+          } @else if (workload()?.workload?.loadBalancer) {
+            Waiting for AWS to assign an address
+          } @else if (workload()) {
+            No active public load balancer
+          } @else {
+            Refresh pod and service status to check the public address
+          }
+        </dd></div>
+      }
+      @if (release.image) { <div class="wide"><dt>Published image</dt><dd><code>{{ release.image }}</code></dd></div> }
+    </dl>
+    <section class="deployment-progress" aria-label="Deployment progress">
+      <div class="progress-heading"><div><h3>Deployment progress</h3><p>{{ release.status === 'running' ? 'Updating automatically during rollout' : release.finishedAt ? 'Deployment finished' : 'Latest deployment activity' }}</p>@if (release.finishedAt) { <time>{{ release.finishedAt | date:'MMM d, y · HH:mm:ss' }}</time> }</div><strong>{{ release.progressPercent ?? (release.status === 'succeeded' ? 100 : 0) }}%</strong></div>
+      <progress class="release-progress-bar" [value]="release.progressPercent ?? (release.status === 'succeeded' ? 100 : 0)" max="100" [attr.aria-label]="'Deployment ' + (release.progressPercent ?? 0) + '% complete'"></progress>
+      <h4>Live deployment log</h4>
+      <ol class="deployment-timeline" aria-live="polite">
+        @for (entry of release.progress ?? []; track entry.at + entry.message; let last = $last) {
+          <li [class.progress-current]="release.status === 'running' && last" [class.progress-failed]="release.status === 'failed' && last" [class.progress-complete]="release.status === 'succeeded' || (release.status === 'running' && !last)">
+            <span class="progress-marker" aria-hidden="true">@if (release.status === 'running' && last) { <span class="status-spinner"></span> } @else if (release.status === 'failed' && last) { ! } @else { ✓ }</span>
+            <time [attr.datetime]="entry.at">{{ entry.at | date:'MMM d, HH:mm:ss' }}</time>
+            <span>{{ entry.message }}</span>
+            <strong>{{ entry.percent ?? release.progressPercent ?? 0 }}%</strong>
+          </li>
+        }
+      </ol>
+    </section>
+    <div class="actions release-actions">
+      <button type="button" [disabled]="busy()" (click)="inspect(release)">Refresh pod and service status</button>
+      <button type="button" [disabled]="busy()" (click)="inspect(release, true)">Load current pod logs</button>
+      <button type="button" [disabled]="busy() || !data().targets.length" (click)="edit(release)">Use release settings</button>
+      @if (release.status === 'succeeded') {
+        <button type="button" [disabled]="busy()" (click)="rollback(release)">Roll back to this release</button>
+      }
+    </div>
+    @if (workload()?.log !== undefined) {
+      <pre class="pod-log" aria-label="Current pod logs">{{ workload()?.log || 'The current pods have no log output.' }}</pre>
+    }
+  </section>
+}

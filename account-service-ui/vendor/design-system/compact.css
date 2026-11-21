@@ -376,9 +376,253 @@
   }
 }
 
+/* Final shared page-content pass. Keep the Greatley typeface and brand blue,
+   while giving feature pages the same restrained AWS Console geometry. These
+   rules are deliberately scoped to application UI and leave office canvases
+   and authored documents untouched. */
+@layer gp-compact {
+  :root[data-gp-layout="clean"] #gp-app main :is(.epics-page,.issues-container,.work-items-page,.kb-page,.planning-page,.roadmap-page,.tc-page,.releases-page,.projects-dashboard,.products-page,.teams-page,.users-page,.roles-container,.agile-dashboard,.instru-page,.desk-page,.post-workspace) {
+    min-width:0!important;
+    max-width:100%!important;
+    background:#fff!important;
+    color:#16191f!important;
+    font-family:var(--gp-font)!important;
+  }
+
+  /* Let grid and flex columns shrink to the viewport instead of widening the
+     whole page. Wide data sets scroll inside their own table/board region. */
+  :root[data-gp-layout="clean"] #gp-app main :is(.agile-grid,.agile-chart-grid,.dashboard-grid,.overview-grid,.summary-grid,.metrics-grid,.people-stat-grid,.project-grid,.project-overview-grid,.release-overview-grid,.tc-stats,.kb-workspace,.kb-workspace.with-filter-panel,.kb-board,.kb-columns,.epics-boards-kanban,.work-items-filter-row,.work-items-selection-bar,.compact-work-filters,.workspace-directory,.directory-section,.results-area,.hierarchy-results) {
+    min-width:0!important;
+    max-width:100%!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app main :is(.agile-grid,.agile-chart-grid,.dashboard-grid,.overview-grid,.summary-grid,.metrics-grid,.people-stat-grid,.project-grid,.project-overview-grid,.release-overview-grid,.tc-stats,.kb-workspace,.kb-columns,.epics-boards-kanban,.workspace-directory,.directory-section,.results-area,.hierarchy-results) > * {
+    min-width:0!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app main :is(.work-items-table-scroll,.compact-table-scroll,.table-scroll,.table-wrap,.table-responsive,.resource-table-scroll,.release-table-scroll,.tc-table-scroll,.kb-columns,.epics-boards-kanban) {
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    overflow-x:auto!important;
+    overscroll-behavior-x:contain;
+    scrollbar-color:#879596 #f2f3f3;
+    scrollbar-width:thin;
+  }
+  :root[data-gp-layout="clean"] #gp-app main :is(.work-items-table-scroll,.compact-table-scroll,.table-scroll,.table-wrap,.table-responsive,.resource-table-scroll,.release-table-scroll,.tc-table-scroll,.kb-columns,.epics-boards-kanban)::-webkit-scrollbar {height:10px!important;}
+  :root[data-gp-layout="clean"] #gp-app main :is(.work-items-table-scroll,.compact-table-scroll,.table-scroll,.table-wrap,.table-responsive,.resource-table-scroll,.release-table-scroll,.tc-table-scroll,.kb-columns,.epics-boards-kanban)::-webkit-scrollbar-thumb {border:2px solid #f2f3f3!important;border-radius:4px!important;background:#879596!important;}
+
+  /* Work items: fit the standard columns in the page at desktop widths and
+     retain an explicit, contained horizontal scroll on narrower screens. */
+  :root[data-gp-layout="clean"] #gp-app .work-items-page {padding:16px 20px 24px!important;overflow-x:hidden!important;}
+  :root[data-gp-layout="clean"] #gp-app .work-items-table-card {width:100%!important;max-width:100%!important;min-width:0!important;border:1px solid #d5dbdb!important;border-radius:4px!important;box-shadow:none!important;}
+  :root[data-gp-layout="clean"] #gp-app .work-items-table-scroll {max-height:calc(100dvh - 300px)!important;min-height:250px!important;overflow:auto!important;}
+  :root[data-gp-layout="clean"] #gp-app table.work-items-table {width:100%!important;min-width:960px!important;table-layout:fixed!important;}
+  :root[data-gp-layout="clean"] #gp-app .work-items-table .work-select-column {width:44px!important;}
+  :root[data-gp-layout="clean"] #gp-app .work-items-table .mat-column-work {width:30%!important;min-width:250px!important;}
+  :root[data-gp-layout="clean"] #gp-app .work-items-table .mat-column-assignee,
+  :root[data-gp-layout="clean"] #gp-app .work-items-table .mat-column-reporter {width:13%!important;min-width:120px!important;}
+  :root[data-gp-layout="clean"] #gp-app .work-items-table .mat-column-priority {width:8%!important;min-width:78px!important;}
+  :root[data-gp-layout="clean"] #gp-app .work-items-table .mat-column-status {width:10%!important;min-width:92px!important;}
+  :root[data-gp-layout="clean"] #gp-app .work-items-table .mat-column-resolution {width:10%!important;min-width:90px!important;}
+  :root[data-gp-layout="clean"] #gp-app .work-items-table .mat-column-created {width:105px!important;min-width:105px!important;}
+  :root[data-gp-layout="clean"] #gp-app .work-items-table .mat-mdc-cell {height:50px!important;padding:7px 10px!important;}
+  :root[data-gp-layout="clean"] #gp-app .work-items-table .work-item-open {max-width:100%!important;min-width:0!important;}
+  :root[data-gp-layout="clean"] #gp-app .work-items-table .work-item-open strong {display:block!important;max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;}
+  :root[data-gp-layout="clean"] #gp-app .work-items-table .work-person-cell {min-width:0!important;}
+
+  /* Epics and stories use a project selector/search bar, not a second app
+     masthead. Keep that toolbar compact and use square AWS-style surfaces. */
+  :root[data-gp-layout="clean"] #gp-app .epics-page {padding:0 20px 24px!important;min-height:0!important;overflow-x:hidden!important;}
+  :root[data-gp-layout="clean"] #gp-app .epics-page > header.google-header.epics-google-header {
+    position:static!important;display:grid!important;grid-template-columns:minmax(180px,260px) minmax(240px,1fr) auto!important;
+    align-items:center!important;gap:12px!important;width:100%!important;min-height:58px!important;height:auto!important;
+    margin:0 0 12px!important;padding:10px 12px!important;border:1px solid #d5dbdb!important;border-radius:4px!important;
+    background:#fff!important;box-shadow:none!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app .epics-page .epics-project-picker,
+  :root[data-gp-layout="clean"] #gp-app .epics-page .epics-project-select {min-width:0!important;max-width:100%!important;border-radius:4px!important;}
+  :root[data-gp-layout="clean"] #gp-app .epics-page .epics-search-shell {width:100%!important;min-width:0!important;height:38px!important;min-height:38px!important;border-radius:4px!important;}
+  :root[data-gp-layout="clean"] #gp-app .epics-page .epics-search-shell input {height:34px!important;font-size:14px!important;}
+  :root[data-gp-layout="clean"] #gp-app .epics-page .epics-current-sprint-strip,
+  :root[data-gp-layout="clean"] #gp-app .epics-page .filters-panel,
+  :root[data-gp-layout="clean"] #gp-app .epics-page .work-table-section,
+  :root[data-gp-layout="clean"] #gp-app .epics-page .compact-directory {
+    min-width:0!important;max-width:100%!important;border:1px solid #d5dbdb!important;border-radius:4px!important;
+    background:#fff!important;box-shadow:none!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app .epics-page .work-table-section {padding:0!important;overflow:hidden!important;}
+  :root[data-gp-layout="clean"] #gp-app .epics-page .work-table-heading {min-width:0!important;padding:14px 16px!important;border-bottom:1px solid #d5dbdb!important;background:#fff!important;}
+  :root[data-gp-layout="clean"] #gp-app .epics-page .work-table-heading h2 {margin:0!important;color:#16191f!important;font-size:18px!important;font-weight:650!important;}
+  :root[data-gp-layout="clean"] #gp-app .epics-page .work-table-heading p {margin:4px 0 0!important;color:#5f6b7a!important;font-size:13px!important;}
+  :root[data-gp-layout="clean"] #gp-app .epics-page .compact-table-scroll {max-width:100%!important;overflow:auto!important;}
+  :root[data-gp-layout="clean"] #gp-app .epics-page table.compact-work-table {min-width:980px!important;width:100%!important;table-layout:auto!important;}
+  :root[data-gp-layout="clean"] #gp-app .epics-page .compact-work-table .mat-mdc-header-row {height:40px!important;background:#f2f3f3!important;}
+  :root[data-gp-layout="clean"] #gp-app .epics-page .compact-work-table .mat-mdc-row {height:48px!important;background:#fff!important;}
+  :root[data-gp-layout="clean"] #gp-app .epics-page .compact-work-table .mat-mdc-cell {padding:8px 12px!important;}
+  :root[data-gp-layout="clean"] #gp-app .epics-page .compact-work-table .mat-mdc-row:hover {background:#f2f8fd!important;}
+  :root[data-gp-layout="clean"] #gp-app .epics-page .epics-current-sprint-strip {padding:12px 16px!important;}
+
+  /* Ticket views share a compact toolbar, filter strip, result groups and data
+     table. Headers remain sticky only at the workspace level. */
+  :root[data-gp-layout="clean"] #gp-app .issues-container {padding:0 20px 24px!important;min-height:0!important;overflow-x:hidden!important;}
+  :root[data-gp-layout="clean"] #gp-app .issues-container > header.google-header {
+    position:static!important;width:100%!important;height:auto!important;min-height:56px!important;margin:0 0 12px!important;
+    padding:10px 12px!important;border:1px solid #d5dbdb!important;border-radius:4px!important;
+    background:#fff!important;box-shadow:none!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app .issues-container .google-search-shell {width:100%!important;max-width:none!important;height:38px!important;min-height:38px!important;border:1px solid #879596!important;border-radius:4px!important;background:#fff!important;box-shadow:none!important;}
+  :root[data-gp-layout="clean"] #gp-app .issues-container .search-context,
+  :root[data-gp-layout="clean"] #gp-app .issues-container .search-tabs,
+  :root[data-gp-layout="clean"] #gp-app .issues-container .results-summary,
+  :root[data-gp-layout="clean"] #gp-app .issues-container .results-area,
+  :root[data-gp-layout="clean"] #gp-app .issues-container .filter-panel {width:100%!important;max-width:100%!important;}
+  :root[data-gp-layout="clean"] #gp-app .issues-container .search-context {min-height:60px!important;margin:0!important;padding:10px 0!important;border-bottom:1px solid #d5dbdb!important;}
+  :root[data-gp-layout="clean"] #gp-app .issues-container .search-tabs {height:auto!important;min-height:42px!important;margin:0!important;border-bottom:1px solid #d5dbdb!important;}
+  :root[data-gp-layout="clean"] #gp-app .issues-container .results-summary {min-height:54px!important;margin:0!important;padding:10px 0!important;border-bottom:1px solid #d5dbdb!important;}
+  :root[data-gp-layout="clean"] #gp-app .issues-container .results-area {padding:14px 0 24px!important;}
+  :root[data-gp-layout="clean"] #gp-app .issues-container .result-group,
+  :root[data-gp-layout="clean"] #gp-app .issues-container .google-table-shell,
+  :root[data-gp-layout="clean"] #gp-app .issues-container .filter-panel-inner,
+  :root[data-gp-layout="clean"] #gp-app .issues-container .impact-panel,
+  :root[data-gp-layout="clean"] #gp-app .issues-container .relationship-section {
+    min-width:0!important;border:1px solid #d5dbdb!important;border-radius:4px!important;background:#fff!important;box-shadow:none!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app .issues-container .result-group {margin:0 0 12px!important;overflow:hidden!important;}
+  :root[data-gp-layout="clean"] #gp-app .issues-container .result-group-header {min-width:0!important;min-height:48px!important;background:#fff!important;}
+  :root[data-gp-layout="clean"] #gp-app .issues-container .result-group-header:hover,
+  :root[data-gp-layout="clean"] #gp-app .issues-container .issue-result:hover {background:#f2f8fd!important;}
+  :root[data-gp-layout="clean"] #gp-app .issues-container .issue-result {min-width:0!important;min-height:44px!important;}
+  :root[data-gp-layout="clean"] #gp-app .issues-container .table-scroll {max-width:100%!important;overflow:auto!important;}
+  :root[data-gp-layout="clean"] #gp-app .issues-container table.google-table {width:100%!important;min-width:1000px!important;table-layout:auto!important;}
+  :root[data-gp-layout="clean"] #gp-app .issues-container .drawer-panel.issue-modal {border:1px solid #d5dbdb!important;border-radius:4px!important;box-shadow:0 8px 24px rgb(0 0 0 / 18%)!important;}
+
+  /* Kanban lanes keep a deliberate horizontal board, with a visible scroll
+     track and consistent column surfaces so later lanes are discoverable. */
+  :root[data-gp-layout="clean"] #gp-app main :is(.kb-columns,.epics-page .epics-boards-kanban) {
+    grid-auto-flow:column!important;grid-template-columns:none!important;grid-auto-columns:minmax(250px,1fr)!important;
+    align-items:stretch!important;scroll-snap-type:x proximity!important;padding-bottom:14px!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app .kb-columns > .kb-column,
+  :root[data-gp-layout="clean"] #gp-app .epics-page .epics-boards-kanban > .kanban-column {
+    min-width:250px!important;max-width:none!important;border:1px solid #d5dbdb!important;border-radius:4px!important;
+    background:#fff!important;box-shadow:none!important;scroll-snap-align:start;
+  }
+  :root[data-gp-layout="clean"] #gp-app main :is(.kb-column-header,.epics-page .epics-boards-kanban .column-header) {min-height:42px!important;background:#f2f3f3!important;border-bottom:1px solid #d5dbdb!important;}
+  :root[data-gp-layout="clean"] #gp-app main :is(.kb-work-card,.epics-page .epics-boards-kanban .kanban-work-item-card) {border:1px solid #d5dbdb!important;border-radius:4px!important;background:#fff!important;box-shadow:none!important;}
+
+  @media(max-width:760px) {
+    :root[data-gp-layout="clean"] #gp-app .work-items-page,
+    :root[data-gp-layout="clean"] #gp-app .epics-page,
+    :root[data-gp-layout="clean"] #gp-app .issues-container {padding-inline:12px!important;}
+    :root[data-gp-layout="clean"] #gp-app .epics-page > header.google-header.epics-google-header {grid-template-columns:minmax(0,1fr)!important;}
+  }
+}
+
 @layer gp-compact {
  .editor-actions { display:flex!important;align-items:center!important;gap:8px!important;flex-wrap:wrap;flex:none; }
  .document-provenance { display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:12px 20px;color:var(--gp-muted,#555);font-size:12px; }
  .document-provenance strong { display:inline-flex;align-items:center;gap:5px; }
  @media(max-width:900px){.editor-actions{gap:4px!important}.editor-actions .button{padding-inline:12px!important}}
+}
+
+/* AWS Console page-content contract. This lives in gp-compact because that
+   layer is deliberately earlier than the legacy product layers for important
+   declarations; app-scoped rules here win over old component card geometry. */
+@layer gp-compact {
+  :root[data-gp-layout="clean"] #gp-app :is(main,.main,.content,.suite-body,.suite-page,.workspace,.dashboard-page,.agile-dashboard,.projects-dashboard,.products-page,.teams-page,.users-page,.roles-container,.work-items-page,.planning-page,.tc-page,.issues-container,.releases-page,.directory-section,.docs-shell,.calendar-surface,.instru-page) {
+    background-color:#fff!important;
+    color:#16191f!important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app :is(.dashboard-welcome-panel,.agile-panel,.agile-metrics>article,.delivery-indicators>article,.agile-signal-strip>article,.agile-freshness>article,.tc-stats>article,.roadmap-stats>article,.metrics-strip>article,.summary-grid>article,.people-stat-grid>article,.gp-metric-grid>article,.desk-metrics>article,.overview-grid>article,.dash-grid>*,.overview-metric,.stats-card,.stat-card,.metric-card,.chart-card,.surface,.card,.mat-mdc-card,.gp-person-surface,.dashboard-card,.overview-panel,.detail-panel,.detail-section,.profile-section-card,.form-section-card,.kb-work-card,.kb-column,.team-profile-stat-card,.release-profile-stat-card,.release-profile-card,.release-directory-card,.project-allocated-team,.docs-document-card,.directory-panel,.project-table-shell,.work-items-table-card,.team-summary-card,.profile-person-card,.person-card,.roadmap-surface,.tc-table-card,.project-overview-info-card) {
+    border:1px solid #d5dbdb!important;
+    border-radius:4px!important;
+    background:#fff!important;
+    box-shadow:none!important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app :is(article,section,div)[class*="-card"]:not([class*="-card-"]):not(.document-paper *):not(.sheet-grid *):not(.slide-page *):not(.present-slide *):not(.thumb-preview *),
+  :root[data-gp-layout="clean"] #gp-app :is(article,section,div)[class*="-panel"]:not([class*="-panel-"]):not(.document-paper *):not(.sheet-grid *):not(.slide-page *):not(.present-slide *):not(.thumb-preview *),
+  :root[data-gp-layout="clean"] #gp-app :is(article,section,div)[class*="-surface"]:not([class*="-surface-"]):not(.document-paper *):not(.sheet-grid *):not(.slide-page *):not(.present-slide *):not(.thumb-preview *),
+  :root[data-gp-layout="clean"] #gp-app :is(article,section,div)[class*="-tile"]:not([class*="-tile-"]):not(.document-paper *):not(.sheet-grid *):not(.slide-page *):not(.present-slide *):not(.thumb-preview *) {
+    border-color:#d5dbdb!important;
+    border-radius:4px!important;
+    background-color:#fff!important;
+    box-shadow:none!important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app main :is(h1,.page-title,.dashboard-title,.directory-title,.workspace-title,.projects-title,.users-title,.teams-title,.roles-title,.releases-title,.planning-title,.work-items-title) {
+    color:#16191f!important;
+    font-size:24px!important;
+    line-height:1.3!important;
+    font-weight:650!important;
+    letter-spacing:0!important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app main :is(.agile-panel,.resource-panel,.deployment-panel,.directory-panel,.settings-panel,.table-panel,.detail-panel,.section-box,.profile-section-card,.form-section-card) > :is(h2,h3),
+  :root[data-gp-layout="clean"] #gp-app main :is(.agile-panel,.resource-panel,.deployment-panel,.directory-panel,.settings-panel,.table-panel,.detail-panel,.section-box,.profile-section-card,.form-section-card) > header :is(h2,h3) {
+    color:#16191f!important;
+    font-size:16px!important;
+    line-height:1.4!important;
+    font-weight:650!important;
+    letter-spacing:0!important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app app-workspace-hero {display:block!important;margin:0 0 14px!important;}
+  :root[data-gp-layout="clean"] #gp-app app-workspace-hero .gp-workspace-hero {
+    display:block!important;min-height:0!important;margin:0!important;padding:0 0 12px!important;
+    overflow:visible!important;border:0!important;border-bottom:1px solid #d5dbdb!important;
+    border-radius:0!important;background:#fff!important;box-shadow:none!important;animation:none!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app app-workspace-hero .gp-workspace-hero__copy {width:100%!important;padding:0!important;}
+  :root[data-gp-layout="clean"] #gp-app app-workspace-hero .gp-workspace-hero__heading {display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important;}
+  :root[data-gp-layout="clean"] #gp-app app-workspace-hero .gp-workspace-hero__heading h1 {
+    flex:1 1 auto!important;min-width:180px!important;margin:0!important;color:#16191f!important;
+    font-size:24px!important;line-height:1.3!important;font-weight:650!important;letter-spacing:0!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app app-workspace-hero .gp-workspace-hero__actions {
+    display:flex!important;flex:0 1 auto!important;align-items:center!important;justify-content:flex-end!important;
+    min-width:0!important;max-width:70%!important;margin:0!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app app-workspace-hero .gp-workspace-hero__actions>div {display:flex!important;align-items:center!important;justify-content:flex-end!important;flex-wrap:wrap!important;gap:8px!important;width:auto!important;}
+  :root[data-gp-layout="clean"] #gp-app app-workspace-hero .gp-workspace-hero__actions :is(select,input:not([type="checkbox"]),textarea) {width:auto!important;max-width:min(240px,38vw)!important;min-width:130px!important;}
+  :root[data-gp-layout="clean"] #gp-app app-workspace-hero .gp-workspace-hero__actions label {display:inline-flex!important;align-items:center!important;width:auto!important;white-space:nowrap!important;}
+  :root[data-gp-layout="clean"] #gp-app app-workspace-hero .gp-workspace-hero__actions button {width:auto!important;flex:0 0 auto!important;}
+  :root[data-gp-layout="clean"] #gp-app app-workspace-hero .gp-workspace-hero__copy>p {margin:5px 0 0!important;color:#5f6b7a!important;font-size:14px!important;line-height:1.45!important;}
+
+  :root[data-gp-layout="clean"] #gp-app .agile-dashboard .agile-heading {margin:0 0 12px!important;padding:0 0 12px!important;border-bottom:1px solid #d5dbdb!important;}
+  :root[data-gp-layout="clean"] #gp-app .agile-dashboard .agile-heading h1 {margin:4px 0!important;color:#16191f!important;font-size:20px!important;line-height:1.3!important;font-weight:650!important;letter-spacing:0!important;}
+  :root[data-gp-layout="clean"] #gp-app .agile-dashboard :is(.delivery-indicators,.agile-metrics,.agile-signal-strip,.agile-chart-grid,.agile-grid) {gap:12px!important;}
+  :root[data-gp-layout="clean"] #gp-app .agile-dashboard :is(.delivery-indicators,.agile-metrics,.agile-signal-strip) {margin-block:12px!important;}
+  :root[data-gp-layout="clean"] #gp-app .agile-dashboard :is(.delivery-indicators>article,.agile-metrics>article,.agile-signal-strip>article,.agile-panel) {min-width:0!important;padding:14px!important;}
+  :root[data-gp-layout="clean"] #gp-app .agile-dashboard .agile-metrics>article {border-top-width:1px!important;}
+  :root[data-gp-layout="clean"] #gp-app .agile-dashboard :is(.delivery-indicators strong,.agile-metrics strong) {color:#16191f!important;font-size:22px!important;line-height:1.2!important;font-weight:650!important;}
+  :root[data-gp-layout="clean"] #gp-app .agile-dashboard .metric-explanation {padding:10px 12px!important;border-left:3px solid #0972d3!important;background:#f2f8fd!important;color:#414d5c!important;}
+
+  :root[data-gp-layout="clean"] #gp-app :is(.tabs,.profile-tabs,.calendar-view-tabs,.conversation-tabs,.list-filters,.actor-filters) {gap:0!important;border-bottom:1px solid #d5dbdb!important;border-radius:0!important;background:#fff!important;}
+  :root[data-gp-layout="clean"] #gp-app :is(.tabs,.profile-tabs,.calendar-view-tabs,.conversation-tabs,.list-filters,.actor-filters) button {
+    min-height:36px!important;border:0!important;border-bottom:2px solid transparent!important;border-radius:0!important;
+    background:transparent!important;color:#414d5c!important;box-shadow:none!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app :is(.tabs,.profile-tabs,.calendar-view-tabs,.conversation-tabs,.list-filters,.actor-filters) button:is(.active,.selected,[aria-selected="true"]) {border-bottom-color:#0972d3!important;color:#0972d3!important;}
+
+  :root[data-gp-layout="clean"] #gp-app main :is(button,.button,.gp-button,.btn-primary,.btn-secondary,.create-button,.create-btn,.primary-button,.secondary-button):not([class*="icon"]):not([class*="chip"]):not([class*="pill"]):not(.document-paper *):not(.sheet-grid *):not(.slide-page *):not(.present-slide *):not(.toolbar *):not(.document-toolbar *):not(.file-menubar *):not(.document-menubar *) {
+    min-height:36px!important;border-radius:4px!important;box-shadow:none!important;font-size:14px!important;letter-spacing:0!important;
+  }
+  :root[data-gp-layout="clean"] #gp-app main :is(input,select,textarea):not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]):not(.document-paper *):not(.slide-page *):not(.present-slide *):not(.sheet-grid *):not(.toolbar *):not(.document-toolbar *):not(.formula-bar *) {
+    min-height:36px!important;border-radius:4px!important;border-color:#879596!important;background-color:#fff!important;color:#16191f!important;
+  }
+
+  :root[data-gp-layout="clean"] #gp-app main table:not(.document-paper table):not(.sheet-grid table):not(.slide-page table):not(.present-slide table) {width:100%!important;border-collapse:collapse!important;background:#fff!important;}
+  :root[data-gp-layout="clean"] #gp-app main table:not(.document-paper table):not(.sheet-grid table):not(.slide-page table):not(.present-slide table) :is(th,td) {border:0!important;border-bottom:1px solid #d5dbdb!important;line-height:1.4!important;}
+  :root[data-gp-layout="clean"] #gp-app main table:not(.document-paper table):not(.sheet-grid table):not(.slide-page table):not(.present-slide table) th {height:40px!important;background:#fff!important;color:#414d5c!important;font-size:12px!important;font-weight:650!important;text-align:left;}
+  :root[data-gp-layout="clean"] #gp-app main table:not(.document-paper table):not(.sheet-grid table):not(.slide-page table):not(.present-slide table) td {min-height:42px!important;padding-block:8px!important;color:#16191f!important;font-size:14px!important;}
+
+  :root[data-gp-layout="clean"] #gp-app :is(.repo-row,.service-row,.source-row,.agenda-event,.deployment-row,.trace-row,.timeline-row,.matrix-row,.scope-item,.linked-item,.kb-linked-item,.release-list-row,.project-row,.user-row,.team-row,.directory-row,.issue-table-row,.work-item-row,.task-row,.story-row,.epic-directory-row,.testcase-row,.alert-service-row,.org-row,.setting-row,.data-row,.preview-row,.activity-row,.mail-row,.meeting-list .meeting-row):not(.kanban-board *):not(.document-paper *):not(.sheet-grid *):not(.slide-page *):not(.present-slide *) {
+    border-radius:0!important;border-bottom:1px solid #d5dbdb!important;background:#fff!important;box-shadow:none!important;
+  }
+
+  @media(max-width:760px) {
+    :root[data-gp-layout="clean"] #gp-app app-workspace-hero .gp-workspace-hero__heading {align-items:flex-start!important;flex-direction:column!important;}
+    :root[data-gp-layout="clean"] #gp-app app-workspace-hero .gp-workspace-hero__actions {max-width:100%!important;justify-content:flex-start!important;}
+  }
 }

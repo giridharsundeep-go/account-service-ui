@@ -1,0 +1,275 @@
+<section class="panel settings-panel cloud-settings" aria-labelledby="cloud-providers-heading">
+  <h2 id="cloud-providers-heading">Cloud providers</h2>
+  <div class="setting-row">
+    <div>
+      <div class="heading-title">
+        <h3>Amazon Web Services</h3>
+        @if (data().accounts.length) { <span class="status" data-status="succeeded">Connected</span> }
+      </div>
+      <p>Connect Amazon ECR and EKS for image publishing and Kubernetes deployments.</p>
+    </div>
+    <div class="actions">
+      @if (!accountSetupOpen()) {
+        <button type="button" [disabled]="loading() || busy()" (click)="openAccountSetup()">Connect AWS account</button>
+      }
+      @if (!editorOpen() && data().accounts.length) {
+        <button type="button" [disabled]="busy()" (click)="deployTo.emit('')">Go to deployments</button>
+        <button type="button" class="primary" [disabled]="busy()" (click)="openEditor()">Create EKS cluster</button>
+      }
+    </div>
+  </div>
+  @if (loading()) { <p class="provider-notice" role="status">Loading cloud providers…</p> }
+  @if (data().configurationMessage) { <p class="notice error provider-notice" role="alert">{{ data().configurationMessage }}</p> }
+  @if (error()) { <p class="notice error provider-notice" role="alert">{{ error() }}</p> }
+  @if (notice()) { <p class="notice provider-notice" role="status">{{ notice() }}</p> }
+  @if (accountSetupOpen()) {
+    @if (sources()?.length) {
+      <form #accountForm="ngForm" class="release-form cloud-form" (ngSubmit)="connectAccount(accountForm)">
+        <fieldset>
+          <legend>AWS connection</legend>
+          <label>AWS authentication method
+            <select name="awsSource" [ngModel]="awsAccount.source" (ngModelChange)="selectAwsSource($event)" required>
+              @for (source of sources(); track source.id) { <option [value]="source.id">{{ source.name }}</option> }
+            </select>
+          </label>
+          @if (awsAccount.source === 'credentials') {
+            <p class="wide field-note">Use a non-root IAM Identity Center profile or a scoped IAM principal for EKS deployments. Root credentials cannot use the configured deployment-role flow and should not be stored in Build Center.</p>
+            <label>AWS access key ID
+              <input name="accessKeyId" [(ngModel)]="awsAccount.accessKeyId" required autocomplete="off"
+                spellcheck="false" placeholder="AKIA…">
+            </label>
+            <label>AWS secret access key
+              <input name="secretAccessKey" [(ngModel)]="awsAccount.secretAccessKey" type="password" required
+                autocomplete="new-password" placeholder="Enter secret access key">
+            </label>
+          <label class="wide">Session token <input name="sessionToken" [(ngModel)]="awsAccount.sessionToken"
+            type="password" autocomplete="new-password" [required]="awsAccount.accessKeyId.startsWith('ASIA')"
+            placeholder="Required for temporary AWS keys"></label>
+          }
+          <label>Connection name <input name="awsName" [(ngModel)]="awsAccount.name" required maxlength="100" placeholder="Greatley Poshley"></label>
+          <label>AWS region <input name="awsRegion" [(ngModel)]="awsAccount.region" required pattern="[a-z]{2}(-[a-z0-9]+)+-[0-9]+"></label>
+          <label>Kubernetes namespace
+            <input #awsNamespaceField="ngModel" name="awsNamespace" [ngModel]="awsAccount.namespace"
+              (ngModelChange)="setAwsNamespace($event, awsNamespaceField)"
+              required maxlength="63" pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?">
+          </label>
+          <p class="wide field-note">Use lowercase letters, numbers, and hyphens. For example, professy.</p>
+          <label class="check-field wide">
+            <input name="awsProvisioning" type="checkbox" [(ngModel)]="enableProvisioning">
+            <span>Enable EKS cluster creation</span>
+          </label>
+        </fieldset>
+        <fieldset>
+          <legend>Custom domains (optional)</legend>
+          <label class="wide">Base domain <input name="awsDomain" [(ngModel)]="awsAccount.domain" [required]="!!awsAccount.ingressClass" placeholder="greatley-poshley.com"></label>
+          <label class="wide">Existing IngressClass <input name="awsIngress" [(ngModel)]="awsAccount.ingressClass" [required]="!!awsAccount.domain" placeholder="traefik"></label>
+          <p class="wide field-note">Set both fields to enable app subdomains. DNS and TLS must already route to the ingress controller.</p>
+        </fieldset>
+        @if (enableProvisioning) {
+          <fieldset>
+            <legend>Existing IAM roles</legend>
+            <p class="wide field-note">Enter three different IAM role ARNs from this AWS account. The deployment role must be a role ARN, not the account root ARN.</p>
+            <label class="wide">EKS cluster role ARN <input name="clusterRole" [(ngModel)]="roles.clusterRoleArn" required></label>
+            <label class="wide">EC2 node role ARN <input name="nodeRole" [(ngModel)]="roles.nodeRoleArn" required></label>
+            <label class="wide">Kubernetes deployment role ARN <input name="deployRole" [(ngModel)]="roles.deploymentRoleArn" required></label>
+          </fieldset>
+        }
+        <div class="actions release-actions">
+          <button type="submit" class="primary" [disabled]="busy()">Connect account</button>
+          <button type="button" (click)="closeAccountSetup()" [disabled]="busy()">Cancel</button>
+        </div>
+      </form>
+    } @else {
+      <div class="provider-setup">
+        @if (busy()) {
+          <p role="status">Loading approved AWS identities…</p>
+        } @else if (sources()) {
+          <p>No AWS identity is available. Enter access keys or configure an AWS CLI profile on the Build Center server.</p>
+        }
+        <div class="actions">
+          <button type="button" [disabled]="busy()" (click)="openAccountSetup()">Refresh identities</button>
+          <button type="button" [disabled]="busy()" (click)="accountSetupOpen.set(false)">Close</button>
+        </div>
+      </div>
+    }
+  }
+  @if (editorOpen() && !provisioningAccounts().length) {
+    <div class="provider-setup">
+      <p>Connect an AWS account with approved roles for the EKS control plane, EC2 workers, and Kubernetes deployments.</p>
+      <div class="actions">
+        <button type="button" (click)="openAccountSetup()">Set up cluster creation</button>
+        <button type="button" (click)="editorOpen.set(false)">Close</button>
+      </div>
+    </div>
+  }
+  @if (editorOpen() && provisioningAccounts().length) {
+    <form #form="ngForm" class="release-form cloud-form" (ngSubmit)="create(form)">
+      <fieldset>
+        <legend>AWS account and region</legend>
+        <label>AWS account
+          <select name="account" [ngModel]="accountId()" (ngModelChange)="selectAccount($event)" [disabled]="busy()" required>
+            @for (item of provisioningAccounts(); track item.id) { <option [value]="item.id">{{ item.name }}</option> }
+          </select>
+        </label>
+        <label>AWS region
+          <select name="region" [ngModel]="draft.region" (ngModelChange)="selectRegion($event)" [disabled]="busy()" required>
+            @for (region of account()?.regions; track region) { <option [value]="region">{{ region }}</option> }
+          </select>
+        </label>
+        <div class="actions wide">
+          <button type="button" [disabled]="busy() || !account() || !draft.region" (click)="loadOptions()">Load AWS options</button>
+          @if (busy() && !options()) { <p role="status">Checking AWS access…</p> }
+        </div>
+      </fieldset>
+      @if (options(); as aws) {
+        <fieldset>
+          <legend>Control plane</legend>
+          <label>Cluster name <input name="cluster" [(ngModel)]="draft.cluster" required maxlength="100" pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,99}" placeholder="greatley-poshley"></label>
+          <label>Kubernetes version
+            <select name="version" [(ngModel)]="draft.kubernetesVersion" required>
+              @for (version of aws.versions; track version) { <option [value]="version">{{ version }}</option> }
+            </select>
+          </label>
+          <label>App namespace
+            <select name="namespace" [(ngModel)]="draft.namespace" required>
+              @for (namespace of account()?.namespaces; track namespace) { <option [value]="namespace">{{ namespace }}</option> }
+            </select>
+          </label>
+          <label>Public API IPv4 CIDR <input name="cidr" [(ngModel)]="draft.publicAccessCidr" placeholder="Optional · default is private"></label>
+          <p class="wide field-note">Leave empty only when Build Center runs in the VPC or over VPN. For this local Build Center, enter its current public egress IP as a restricted CIDR, usually with /32.</p>
+        </fieldset>
+        <fieldset class="wide">
+          <legend>VPC and subnets</legend>
+          <label>VPC
+            <select name="vpc" [ngModel]="vpc()" (ngModelChange)="selectVpc($event)" required>
+              <option value="">Select a VPC</option>
+              @for (item of vpcs(); track item) { <option [value]="item">{{ item }}</option> }
+            </select>
+          </label>
+          <p class="field-note">Choose one subnet in each of two Availability Zones. EKS requires two subnet zones even with one worker; this does not launch two workers. For Professy, select the VPC that can reach RDS and Kafka.</p>
+          @if (vpc()) {
+            <p class="wide field-note" role="status">
+              @if (hasZonePair()) {Subnets selected in two Availability Zones.}
+              @else {Select subnets from at least two different Availability Zones to continue.}
+            </p>
+          }
+          @if (vpc()) {
+            <div class="wide subnet-list">
+              @for (subnet of subnets(); track subnet.id) {
+                <label class="check-field">
+                  <input type="checkbox" [checked]="selected().includes(subnet.id)" (change)="selectSubnet(subnet.id, $any($event.target).checked)">
+                  <span>{{ subnet.name || subnet.id }} <small>{{ subnet.zone }} · {{ subnet.name ? subnet.id : subnet.zoneId }}</small></span>
+                </label>
+              }
+            </div>
+          }
+        </fieldset>
+        <fieldset class="wide cloud-workers">
+          <legend>EC2 managed node group</legend>
+          <label>Node group name <input name="nodes" [(ngModel)]="draft.nodeGroup" required maxlength="100" pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,99}"></label>
+          <label>EC2 instance type <input name="instance" [(ngModel)]="draft.instanceType" required pattern="[a-z0-9][a-z0-9-]{0,30}\.[a-z0-9][a-z0-9-]{0,30}" placeholder="t4g.medium"></label>
+          <label>Capacity type
+            <select name="capacity" [(ngModel)]="draft.capacityType">
+              <option value="ON_DEMAND">On-Demand</option>
+              <option value="SPOT">Spot</option>
+            </select>
+          </label>
+          <label>Worker disk (GiB) <input name="disk" [(ngModel)]="draft.diskGiB" type="number" min="1" max="16384" required></label>
+          <label>Minimum workers <input name="minNodes" [(ngModel)]="draft.minNodes" type="number" min="0" required></label>
+          <label>Desired workers <input name="desiredNodes" [(ngModel)]="draft.desiredNodes" type="number" [min]="draft.minNodes > 1 ? draft.minNodes : 1" required></label>
+          <label>Maximum workers <input name="maxNodes" [(ngModel)]="draft.maxNodes" type="number" [min]="draft.desiredNodes" required></label>
+          <p class="wide field-note">Metrics Server is installed for app autoscaling. Automatic worker scaling requires a separate Cluster Autoscaler.</p>
+        </fieldset>
+      }
+      <div class="actions release-actions">
+        @if (options()) {
+          <button type="submit" class="primary" [disabled]="busy()">Create cluster and workers</button>
+        }
+        <button type="button" [disabled]="busy()" (click)="editorOpen.set(false)">Cancel</button>
+        @if (options()) { <p class="field-note">AWS bills the EKS control plane and worker resources once created.</p> }
+      </div>
+    </form>
+  }
+  @if (data().accounts.length && !accountSetupOpen() && !editorOpen()) {
+    <div class="release-table-scroll" tabindex="0" aria-label="Connected AWS accounts">
+      <table class="release-table">
+        <thead><tr><th scope="col">Connection</th><th scope="col">AWS region</th><th scope="col">Kubernetes namespace</th><th scope="col">EKS cluster creation</th></tr></thead>
+        <tbody>
+          @for (account of data().accounts; track account.id) {
+            <tr>
+              <td><strong>{{ account.name }}</strong></td>
+              <td>{{ account.regions.join(', ') }}</td>
+              <td>{{ account.namespaces.join(', ') }}</td>
+              <td>{{ account.provisioning ? 'Enabled' : 'Requires IAM roles' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+  @if (data().jobs.length) {
+    <div class="deployment-heading cloud-jobs-heading">
+      <h3>EKS clusters</h3>
+      <button type="button" (click)="refresh()">Refresh status</button>
+    </div>
+    <div class="release-table-scroll" tabindex="0" aria-label="EKS provisioning status">
+      <table class="release-table">
+        <thead><tr><th scope="col">Cluster</th><th scope="col">Workers</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead>
+        <tbody>
+          @for (job of data().jobs; track job.id) {
+            <tr>
+              <td><strong>{{ job.settings.cluster }}</strong><small>{{ job.settings.region }} · {{ job.settings.namespace }}</small>
+                <small>{{ job.settings.publicAccessCidr ? 'Public API allowlist · ' + job.settings.publicAccessCidr : 'Private API endpoint' }}</small>
+              </td>
+              <td>{{ job.settings.instanceType }}<small>{{ job.settings.desiredNodes }} desired · {{ job.settings.minNodes }}–{{ job.settings.maxNodes }}</small>
+                @if (job.workerGroupStatus) { <small>Node group: {{ job.workerGroupStatus }}</small> }
+              </td>
+              <td>
+                <span class="status" [attr.data-status]="job.status === 'ready' ? 'succeeded' : job.status">{{ stage(job) }}</span>
+                <small>{{ jobMessage(job) }}</small>
+                @if (job.message.includes('AmazonEKSWorkerNodeMinimalPolicy')) { <small>Current IAM check: {{ workerPolicyStatus(job) }}</small> }
+                @for (issue of job.workerGroupIssues ?? []; track issue.code + issue.message) {
+                  <small class="worker-group-issue">{{ issue.code }}: {{ issue.message }}</small>
+                }
+              </td>
+              <td>
+                @if (job.targetId; as targetId) {
+                  <button type="button" (click)="deployTo.emit(targetId)">Deploy an app</button>
+                  <button type="button" (click)="manageNodes.emit(targetId)">Manage node groups</button>
+                } @else if (job.status === 'failed' || job.status === 'paused') {
+                  <label class="resume-endpoint">Public EKS API CIDR (optional)
+                    <input type="text" [ngModel]="endpointCidr(job.id)" (ngModelChange)="setEndpointCidr(job.id, $event)"
+                      [ngModelOptions]="{standalone: true}" placeholder="203.0.113.10/32" [attr.aria-label]="'Public EKS API CIDR for ' + job.settings.cluster">
+                    <small>If this Build Center is outside the VPC, add its current public egress IP. Resume adds this CIDR and preserves existing endpoint allowlist entries.</small>
+                  </label>
+                  @if (!job.settings.publicAccessCidr) {
+                    <small class="resume-network-note">This setup created a private-only EKS API endpoint. The saved job has no public CIDR, so a local Build Center cannot reach Kubernetes unless this machine is connected to the VPC or VPN. Enter the current egress IP as <code>x.x.x.x/32</code>, then resume setup.</small>
+                  }
+                  @if (needsNodeRolePolicy(job)) {
+                    <small class="worker-group-issue">The EC2 node role lacks the standard permissions workers need to register with EKS. Attaching this policy changes the configured IAM role.</small>
+                    <button type="button" [disabled]="busy()" (click)="attachWorkerPolicy(job)">Attach AmazonEKSWorkerNodePolicy</button>
+                  }
+                  @if (!job.workerGroupStatus || job.workerGroupStatus === 'CREATE_FAILED') {
+                    <label class="worker-capacity">Replacement worker capacity
+                      <select [ngModel]="workerCapacity(job)" (ngModelChange)="setWorkerCapacity(job, $event)" [ngModelOptions]="{standalone: true}">
+                        <option value="SPOT">Spot · lower cost, capacity may vary</option>
+                        <option value="ON_DEMAND">On-Demand · stable capacity</option>
+                      </select>
+                    </label>
+                  }
+                  @if (job.workerGroupStatus === 'CREATE_FAILED') {
+                    <button type="button" [disabled]="busy()" (click)="deleteFailedWorkers(job)">Delete failed worker group</button>
+                  }
+                  <button type="button" [disabled]="busy()" (click)="createWorkers(job)">
+                    {{ workerActionLabel(job) }}
+                  </button>
+                  <button type="button" [disabled]="busy()" (click)="resume(job)">Resume setup</button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

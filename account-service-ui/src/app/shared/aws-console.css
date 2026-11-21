@@ -1,0 +1,182 @@
+/* AWS Console inspired UI defaults shared by every app importing Clarity.
+   Keep the Greatley Poshley typeface and brand, while using AWS's compact,
+   high contrast navigation, controls, panels and operational tables. */
+@layer gp-clean {
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) {
+    --gp-page: #ffffff !important;
+    --gp-surface: #ffffff !important;
+    --gp-surface-muted: #ffffff !important;
+    --gp-navigation: #ffffff !important;
+    --gp-text: #16191f !important;
+    --gp-muted: #5f6b7a !important;
+    --gp-border: #d5dbdb !important;
+    --gp-separator: #d5dbdb !important;
+    --gp-accent: #0972d3 !important;
+    --gp-selection: #ffffff !important;
+    --gp-radius: 6px !important;
+    --gp-field-radius: 4px !important;
+    --gp-control-radius: 4px !important;
+    --gp-field-height: 40px !important;
+    --gp-field-border: #879596 !important;
+    --gp-field-border-hover: #545b64 !important;
+    --gp-field-border-focus: #0972d3 !important;
+    --gp-shadow: none !important;
+    --gp-card-shadow: none !important;
+    --gp-float-shadow: 0 4px 12px rgb(0 0 0 / 14%) !important;
+    --gp-popover-radius: 6px !important;
+    --gp-space-page: 24px !important;
+    --gp-title-size: 28px !important;
+    color-scheme: light;
+  }
+
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) body {
+    background: #fff !important;
+    color: #16191f !important;
+  }
+
+  /* App headings use AWS Console's compact hierarchy. */
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.workspace-title,.workspace-heading,.page-heading,.agile-heading,.gp-workspace-hero,.projects-title,.users-title,.teams-title,.roles-title,.releases-title,.planning-title,.work-items-title) {
+    color: #16191f !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.workspace-title,.workspace-heading,.page-heading,.projects-title,.users-title,.teams-title,.roles-title,.releases-title,.planning-title,.work-items-title) h1 {
+    font-size: 28px !important;
+    line-height: 1.25 !important;
+    font-weight: 650 !important;
+    letter-spacing: 0 !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.section-heading,.directory-heading,.tc-page-heading,.roles-workspace-header,.team-profile-section-header,.kb-activity-heading) :is(h2,h3) {
+    font-size: 20px !important;
+    line-height: 1.35 !important;
+    font-weight: 650 !important;
+    letter-spacing: 0 !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.page-heading,.workspace-heading,.agile-heading,.roadmap-heading,.retro-heading) {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+    padding-bottom: 16px !important;
+    margin-bottom: 18px !important;
+    border-bottom: 1px solid #d5dbdb !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.page-actions,.heading-actions,.gp-workspace-hero__actions) {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.breadcrumb,.breadcrumbs,.resource-breadcrumb,.page-breadcrumb) {
+    color: #5f6b7a !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+  }
+
+  /* Crisp controls with visible keyboard focus and consistent sizing. */
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.button,.gp-button,.btn-primary,.btn-secondary,.create-button,.create-btn,.tc-primary,.primary-button,.secondary-button,.mat-mdc-button-base):not(.mat-mdc-icon-button):not(.mat-mdc-fab):not(.mat-mdc-mini-fab):not(.toolbar *):not(.document-toolbar *):not(.file-menubar *):not(.document-menubar *) {
+    min-height: 36px !important;
+    border-radius: 4px !important;
+    padding-inline: 14px !important;
+    font-size: 14px !important;
+    font-weight: 650 !important;
+    letter-spacing: 0 !important;
+    box-shadow: none !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.button.primary,.gp-primary,.btn-primary,.primary-button,.tc-primary,.mat-mdc-unelevated-button.mat-primary,.mat-mdc-raised-button.mat-primary) {
+    background: #0972d3 !important;
+    border-color: #0972d3 !important;
+    color: #fff !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.button.outline,.gp-outline,.btn-secondary,.secondary-button,.mat-mdc-outlined-button) {
+    border: 1px solid #879596 !important;
+    border-radius: 4px !important;
+    background: #fff !important;
+    color: #16191f !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(input,select,textarea):not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]):not(.document-paper *):not(.slide-page *):not(.present-slide *):not(.sheet-grid *):not(.toolbar *):not(.document-toolbar *):not(.formula-bar *) {
+    border-radius: 4px !important;
+    border-color: #879596 !important;
+    background-color: #fff;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(input,select,textarea):focus-visible:not(.document-paper *):not(.slide-page *):not(.present-slide *):not(.sheet-grid *) {
+    outline: 2px solid #0972d3 !important;
+    outline-offset: 1px !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.search-field,.search-box,.search-bar,.inline-search,.work-items-search,.work-filter-search,.planning-backlog-search,.team-profile-member-search,.header-search,.global-search,.global-work-search-field,.global-project-search,.project-panel-search,.users-search,.roles-search,.search-wrapper,.matrix-search-input-frame,.search-shell,.google-search-shell,.kb-board-search,.docs-search,.team-search,.epics-filter-search,.add-testcases-search,.search-control,.release-search-field) {
+    min-height: 38px !important;
+    height: 38px !important;
+    border: 1px solid #879596 !important;
+    border-radius: 4px !important;
+    background: #fff !important;
+    padding-inline: 10px !important;
+    box-shadow: none !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.mat-mdc-form-field) { --mdc-outlined-text-field-container-shape: 4px; --mat-form-field-container-height: 40px; }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) .mat-mdc-form-field .mdc-text-field--outlined {
+    border: 1px solid #879596 !important;
+    border-radius: 4px !important;
+    background: #fff !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.mat-mdc-select-panel,.mat-mdc-autocomplete-panel,.mat-mdc-menu-panel,.work-filter-popover,.work-items-status-menu,.apps-panel,.popover,.document-menu,.menu,.workspace-dialog,.suite-dialog,.instru-dialog,.forge-dialog,.tc-dialog,.new-dialog,.work-item-dialog,.document-share-dialog,.mat-mdc-dialog-surface) {
+    border: 1px solid #d5dbdb !important;
+    border-radius: 6px !important;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 14%) !important;
+  }
+
+  /* Flat surfaces and thin dividers let operational data dominate the page. */
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.surface,.profile-section-card,.stats-card,.stat-card,.overview-metric,.metric-card,.chart-card,.account-card,.file-card,.document-card,.meeting-card,.team-card,.project-card,.board-card,.release-card,.agent-card,.mat-mdc-card) {
+    border: 1px solid #d5dbdb !important;
+    border-radius: 6px !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.tabs,.profile-tabs,.calendar-view-tabs,.conversation-tabs,.list-filters,.actor-filters) {
+    gap: 0 !important;
+    border-bottom: 1px solid #d5dbdb !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.tabs,.profile-tabs,.calendar-view-tabs,.conversation-tabs,.list-filters,.actor-filters) button {
+    min-height: 38px !important;
+    padding: 8px 14px !important;
+    border: 0 !important;
+    border-bottom: 2px solid transparent !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: #414d5c !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.tabs,.profile-tabs,.calendar-view-tabs,.conversation-tabs,.list-filters,.actor-filters) button:is(.active,.selected,[aria-selected="true"]) {
+    border-bottom-color: #0972d3 !important;
+    color: #0972d3 !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.mat-mdc-table,.users-table,.work-items-table,.projects-mat-table,.items-table,.google-table,.compact-work-table,.tc-table,.planning-table,.table-scroll>table,.table-wrap>table,.resource-table,.release-table) {
+    width: 100%;
+    border-collapse: collapse !important;
+    background: #fff !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.mat-mdc-table,.users-table,.work-items-table,.projects-mat-table,.items-table,.google-table,.compact-work-table,.tc-table,.planning-table,.table-scroll>table,.table-wrap>table,.resource-table,.release-table) :is(th,td) {
+    border-color: #d5dbdb !important;
+    border-inline: 0 !important;
+    line-height: 1.4 !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.mat-mdc-table,.users-table,.work-items-table,.projects-mat-table,.items-table,.google-table,.compact-work-table,.tc-table,.planning-table,.table-scroll>table,.table-wrap>table,.resource-table,.release-table) th {
+    height: 42px !important;
+    background: #ffffff !important;
+    color: #414d5c !important;
+    font-size: 12px !important;
+    font-weight: 650 !important;
+    text-align: left;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.mat-mdc-table,.users-table,.work-items-table,.projects-mat-table,.items-table,.google-table,.compact-work-table,.tc-table,.planning-table,.table-scroll>table,.table-wrap>table,.resource-table,.release-table) td {
+    min-height: 48px;
+    height: auto !important;
+    padding-block: 10px !important;
+    color: #16191f !important;
+    font-size: 14px !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.mat-mdc-table,.users-table,.work-items-table,.projects-mat-table,.items-table,.google-table,.compact-work-table,.tc-table,.planning-table,.table-scroll>table,.table-wrap>table,.resource-table,.release-table) tbody tr:hover {
+    background: #f9fafb !important;
+  }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) :is(.table-scroll,.table-wrap,.resource-table-scroll,.release-table-scroll) { max-width: 100%; overflow-x: auto; }
+  :root:is([data-gp-layout="clean"],:not([data-gp-layout="clean"])) a:not(.brand):not(.nav-item):not(.panel-action) { color: #0972d3; }
+}

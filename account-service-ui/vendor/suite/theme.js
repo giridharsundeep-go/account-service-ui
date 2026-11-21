@@ -1,6 +1,26 @@
-import {cleanVisualStyles,borderlessVisualStyles} from './clean-visual-system.js';
-let active='light';
-function saved(){try{return document.cookie.split('; ').find(s=>s.startsWith('gp_theme='))?.split('=')[1]||localStorage.getItem('gp.workspace.theme')||'light';}catch{return 'light';}}
-export function applyTheme(value=saved()){if(typeof document==='undefined')return;active=['light','dark','system'].includes(value)?value:'light';const theme=active==='system'?((typeof matchMedia==='function'&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light'):active;document.documentElement.dataset.theme=theme;document.documentElement.style.colorScheme=theme;document.dispatchEvent(new CustomEvent('gp-theme-change',{detail:active}));}
-export function setTheme(value){try{localStorage.setItem('gp.workspace.theme',value);document.cookie='gp_theme='+value+'; Path=/; Max-Age=31536000; SameSite=Lax';}catch{}applyTheme(value);}
-export function defineTheme(){if(typeof window==='undefined')return;applyTheme();window.addEventListener('storage',event=>{if(event.key==='gp.workspace.theme')applyTheme();});document.addEventListener('visibilitychange',()=>{if(!document.hidden)applyTheme();});if(typeof matchMedia==='function')matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>applyTheme());if(customElements.get('gp-theme-toggle'))return;customElements.define('gp-theme-toggle',class extends HTMLElement{connectedCallback(){if(this.shadowRoot)return;const root=this.attachShadow({mode:'open'});root.innerHTML=`<style>:host{display:inline-flex}button{font:inherit;display:grid;place-items:center;cursor:pointer;width:44px;height:44px;border:1px solid var(--gp-border-color, #a0a6b1);border-radius:50%;color:var(--gp-text,#344054);background:var(--gp-surface,#fff)}svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.7}button:focus-visible{outline:2px solid #4988e9;outline-offset:2px}${cleanVisualStyles('theme')}${borderlessVisualStyles('theme')}</style><button type="button" aria-label="Switch to dark theme" title="Switch to dark theme"><svg viewBox="0 0 24 24"><path d="M20 14A8 8 0 0 1 10 4a8 8 0 1 0 10 10Z"/></svg></button>`;root.querySelector('button').onclick=()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');this.update=()=>{const dark=document.documentElement.dataset.theme==='dark';root.querySelector('button').setAttribute('aria-label','Switch to '+(dark?'light':'dark')+' theme');root.querySelector('button').title='Switch to '+(dark?'light':'dark')+' theme';};document.addEventListener('gp-theme-change',this.update);this.update();}disconnectedCallback(){document.removeEventListener('gp-theme-change',this.update);}});}
+let initialized=false;
+
+/** Keep suite chrome on the shared light console palette across every app. */
+export function applyTheme(){
+  if(typeof document==='undefined')return;
+  document.documentElement.dataset.theme='light';
+  document.documentElement.style.colorScheme='light';
+  document.dispatchEvent(new CustomEvent('gp-theme-change',{detail:'light'}));
+}
+
+/** Retain the existing API while enforcing the suite-wide white surface. */
+export function setTheme(){
+  try{
+    localStorage.setItem('gp.workspace.theme','light');
+    document.cookie='gp_theme=light; Path=/; Max-Age=31536000; SameSite=Lax';
+  }catch{}
+  applyTheme();
+}
+
+export function defineTheme(){
+  if(typeof window==='undefined'||initialized)return;
+  initialized=true;
+  applyTheme();
+  window.addEventListener('storage',event=>{if(event.key==='gp.workspace.theme')applyTheme();});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)applyTheme();});
+}

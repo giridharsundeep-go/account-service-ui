@@ -1,0 +1,18 @@
+[
+  {
+    "id": "professy-aws",
+    "name": "Greatley Poshley AWS",
+    "workspaceId": "REPLACE_WITH_PASSPORT_WORKSPACE_ID",
+    "awsAccountId": "REPLACE_WITH_12_DIGIT_AWS_ACCOUNT_ID",
+    "profile": "professy-deploy",
+    "regions": ["us-east-1"],
+    "namespaces": ["professy"],
+    "domain": "greatley-poshley.com",
+    "ingressClass": "traefik",
+    "provisioning": {
+      "clusterRoleArn": "arn:aws:iam::REPLACE_WITH_12_DIGIT_AWS_ACCOUNT_ID:role/professy-eks-control-plane",
+      "nodeRoleArn": "arn:aws:iam::REPLACE_WITH_12_DIGIT_AWS_ACCOUNT_ID:role/professy-eks-workers",
+      "deploymentRoleArn": "arn:aws:iam::REPLACE_WITH_12_DIGIT_AWS_ACCOUNT_ID:role/professy-kubernetes-deployer"
+    }
+  }
+]

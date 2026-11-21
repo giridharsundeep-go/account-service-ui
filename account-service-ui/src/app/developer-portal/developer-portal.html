@@ -14,6 +14,7 @@
     <a href="#application-docs">App documentation</a>
     <a href="#api-platform">API gateway</a>
     <a href="#security">Security</a>
+    <a [href]="buildCenterUrl">Build Center ↗</a>
   </nav>
 
   <section id="overview" class="developer-section">
@@ -28,7 +29,8 @@
     </div>
     <div class="developer-callout">
       <strong>Development environment only</strong>
-      <p>This portal describes the intended AWS development setup. It is not connected to AWS yet, and it does not create clusters, API keys, deployments, or DNS records.</p>
+      <p>This portal describes the intended AWS development setup.</p>
+      <p>Open <a [href]="buildCenterUrl">Build Center</a> to configure GitHub pipelines and track their Docker image archives.</p>
     </div>
     <div class="developer-flow" aria-label="AWS development deployment flow">
       <span>GitHub</span><i aria-hidden="true">→</i><span>GitHub Actions</span><i aria-hidden="true">→</i><span>Amazon ECR</span><i aria-hidden="true">→</i><span>Amazon EKS</span><i aria-hidden="true">→</i><span>API Gateway / app ingress</span>
@@ -113,6 +115,7 @@
       <a href="#application-docs">App docs ({{apps.length}})</a>
       <a href="#api-platform">API gateway</a>
       <a href="#security">Security baseline</a>
+      <a [href]="buildCenterUrl">Build Center</a>
     </nav>
     <details class="developer-footer-app-links">
       <summary>Open an app guide</summary>

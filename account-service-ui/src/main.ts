@@ -1,6 +1,6 @@
 import {bootstrapApplication} from '@angular/platform-browser';
 import {Router} from '@angular/router';
-import {appConfig} from './app/app.config';import {App} from './app/app';import {SuiteAuth,defineWorkspaceShell} from '@greatley-poshley/suite';
+import {appConfig} from './app/app.config';import {App} from './app/app';import {SuiteAuth} from '@greatley-poshley/suite';import {defineWorkspaceShell} from '../vendor/suite/index.js';
 defineWorkspaceShell();
 async function start(){
  const original=new URL(location.href);original.searchParams.delete('sso_code');original.searchParams.delete('sso_state');let destination=original.pathname+original.search+original.hash;

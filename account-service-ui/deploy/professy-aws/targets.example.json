@@ -1,0 +1,16 @@
+[
+  {
+    "id": "professy-eks",
+    "name": "Professy · AWS us-east-1",
+    "workspaceId": "REPLACE_WITH_PASSPORT_WORKSPACE_ID",
+    "namespace": "professy",
+    "kubeconfig": "~/.kube/build-center-professy",
+    "context": "professy-eks",
+    "platform": "linux/arm64",
+    "registry": "ghcr.io/replace-with-github-owner",
+    "registryAuthFile": "~/.config/professy/registry-auth.json",
+    "imagePullSecret": "registry-pull",
+    "domain": "greatley-poshley.com",
+    "ingressClass": "traefik"
+  }
+]

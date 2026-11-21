@@ -1,0 +1,21 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadManagedNodeGroups",
+      "Effect": "Allow",
+      "Action": [
+        "eks:ListNodegroups"
+      ],
+      "Resource": "arn:aws:eks:us-east-1:123456789012:cluster/CLUSTER_NAME"
+    },
+    {
+      "Sid": "DescribeManagedNodeGroups",
+      "Effect": "Allow",
+      "Action": [
+        "eks:DescribeNodegroup"
+      ],
+      "Resource": "arn:aws:eks:us-east-1:123456789012:nodegroup/CLUSTER_NAME/*"
+    }
+  ]
+}

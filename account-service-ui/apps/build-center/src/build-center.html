@@ -1,0 +1,528 @@
+<gp-workspace-shell
+  current="build-center"
+  [user]="session.user()"
+  [token]="session.token()"
+  [attr.active-page]="navigationPage()"
+  [attr.hide-create]="view() === 'resources' ? 'true' : null"
+  [attr.search-value]="query()"
+  search-placeholder="Search pipelines"
+  [attr.create-label]="createLabel()"
+  (gp-navigate)="navigate($event)"
+  (gp-create)="create()"
+  (gp-search-input)="search($event)"
+  (gp-search)="search($event, true)"
+  (gp-signout)="signOut()">
+<section class="build-center" [class.aws-console-view]="view() === 'resources'" aria-label="Build Center" data-gp-preserve-borders>
+  @if (!loggedRun() && view() !== 'resources') {
+    <header class="page-heading">
+      <div class="heading-title">
+          <h1>{{ view() === 'pipelines' && projectOpen() ? selected()?.name : view() === 'builds' && selectedBuild() ? 'Build ' + selectedBuild()?.tag?.slice(0, 14) : pageTitle() }}</h1>
+        @if (view() === 'builds' && activeRuns()) {
+          <span class="status" data-status="running">{{ activeRuns() }} in progress</span>
+        }
+      </div>
+      @if (view() !== 'settings' && view() !== 'resources' && ((view() === 'pipelines' && projectOpen() && !editorOpen()) || (view() !== 'pipelines' && pipelines().length))) {
+        <div class="actions">
+          @if ((view() === 'builds' || view() === 'images') && !selectedBuild()) {
+            <label class="pipeline-scope">Pipeline
+              <select [ngModel]="scopeAll() ? '' : selected()?.id" (ngModelChange)="selectPipelineById($event)">
+                <option value="">All pipelines</option>
+                @for (pipeline of pipelines(); track pipeline.id) {
+                  <option [value]="pipeline.id">{{ pipeline.name }}</option>
+                }
+              </select>
+            </label>
+          }
+          @if (!selectedBuild() && (view() === 'pipelines' || !scopeAll())) {
+          <button type="button" class="primary run-button" [disabled]="busy() || !provider()?.connected || !provider()?.runnerConfigured"
+            [attr.aria-describedby]="provider() && (!provider()?.connected || !provider()?.runnerConfigured) ? 'build-blocker' : null"
+            (click)="start()"><span class="play" aria-hidden="true"></span>Run build</button>
+          }
+        </div>
+      }
+    </header>
+  }
+
+  @if (error()) { <p class="notice error" role="alert">{{ error() }}</p> }
+  @if (view() === 'builds' && batchNotice() && !loggedRun()) { <p class="notice" role="status">{{ batchNotice() }}</p> }
+  @if (loading()) { <p class="notice" role="status">Loading Build Center…</p> }
+
+  @if (view() === 'settings' && provider(); as status) {
+    <section class="panel settings-panel">
+      <h2>Repository providers</h2>
+      <div class="setting-row">
+        <div>
+          <div class="heading-title">
+            <h3>GitHub</h3>
+            @if (status.connected) { <span class="status" data-status="succeeded">Connected</span> }
+          </div>
+          @if (status.connected) {
+            @if (status.account) { <p>{{ status.account }}</p> }
+          } @else if (status.installUrl) {
+            <p>Finish selecting repositories for {{ status.account }} on GitHub.</p>
+          } @else if (status.canManage) {
+            <p>Connect a personal account or organization and choose the repositories to build.</p>
+          } @else {
+            <p>A workspace administrator can connect GitHub for this workspace.</p>
+          }
+        </div>
+        <div class="actions">
+          @if (status.installUrl) {
+            <a class="button-link primary" [href]="status.installUrl">Finish on GitHub ↗</a>
+            <button type="button" [disabled]="busy()" (click)="verifyInstallation()">Check installation</button>
+          } @else if (status.connected && status.appUrl) {
+            <a class="button-link" [href]="status.appUrl" target="_blank" rel="noopener noreferrer">Manage on GitHub ↗</a>
+          } @else if (!status.connected && status.canManage && !githubSetup()) {
+            <button type="button" class="primary" [disabled]="busy()" (click)="connectProvider()">Connect GitHub</button>
+          }
+        </div>
+      </div>
+      @if (providerNotice()) { <p class="provider-notice" role="status">{{ providerNotice() }}</p> }
+      @if (githubSetup() && status.canManage && !status.connected && !status.installUrl) {
+        <form class="provider-setup" #gitHubForm="ngForm" (ngSubmit)="continueToGitHub()">
+          <label>
+            GitHub account type
+            <select name="accountType" [(ngModel)]="githubAccountType">
+              <option value="personal">Personal account</option>
+              <option value="organization">Organization</option>
+            </select>
+          </label>
+          @if (githubAccountType === 'organization') {
+            <label>
+              Organization name
+              <input name="organization" [(ngModel)]="githubOrganization" required maxlength="39" pattern="[A-Za-z0-9][A-Za-z0-9\-]{0,38}" placeholder="my-organization">
+            </label>
+          }
+          <p>GitHub will prompt you to create a private GitHub App and choose repository access. Build Center requests read-only access.</p>
+          <div class="actions">
+            <button type="submit" class="primary" [disabled]="gitHubForm.invalid || busy()">Continue to GitHub ↗</button>
+            <button type="button" [disabled]="busy()" (click)="githubSetup.set(false)">Cancel</button>
+          </div>
+        </form>
+      }
+    </section>
+    @if (status.canManage) { <app-cloud-providers (deployTo)="deployToTarget($event)" (manageNodes)="manageNodeGroups($event)" /> }
+    <section class="panel settings-panel">
+      <h2>Build runner</h2>
+      <div class="setting-row">
+        <div>
+          <div class="heading-title"><h3>Docker Buildx</h3><span class="status" [attr.data-status]="status.runnerConfigured ? 'succeeded' : 'failed'">{{ status.runnerConfigured ? 'Ready' : 'Unavailable' }}</span></div>
+          <p>{{ status.runnerMessage }}</p>
+        </div>
+        <button type="button" [disabled]="busy()" (click)="checkRunner()">Check runner</button>
+      </div>
+      <div class="setting-row">
+        <div><h3>GitHub push trigger</h3><p>{{ status.webhookConfigured ? 'Webhook configured' : 'Set up the GitHub webhook to run pipelines on push.' }}</p></div>
+      </div>
+    </section>
+  }
+
+  @if (view() !== 'settings') {
+    @if (provider(); as status) {
+      @if (view() !== 'deployments' && view() !== 'resources' && !loggedRun() && (!status.connected || !status.runnerConfigured)) {
+        <div class="notice" id="build-blocker" role="status">
+          <p>{{ status.connected ? status.runnerMessage : 'Connect GitHub in Settings to check out your repository.' }}</p>
+          <button type="button" (click)="showView('settings')">Open settings</button>
+        </div>
+      }
+    }
+
+    @if (view() === 'pipelines' && editorOpen()) {
+      <section class="panel editor-panel">
+        <h2>{{ editing() ? 'Edit pipeline' : 'New pipeline' }}</h2>
+        @if (provider()?.connected) {
+          <div class="actions">
+            <button type="button" [disabled]="busy()" (click)="loadRepositories()">Load GitHub repositories</button>
+            @if (repositories().length) {
+              <label>Import repository
+                <select (change)="chooseRepository($event)"><option value="">Choose a repository</option>
+                  @for (repo of repositories(); track repo.id) {
+                    <option [value]="repo.url">{{ repo.fullName }}</option>
+                  }
+                </select>
+              </label>
+            }
+          </div>
+        }
+        <form #form="ngForm" class="pipeline-form" (ngSubmit)="savePipeline()">
+          <label>Pipeline name <input name="name" [(ngModel)]="draft.name" required maxlength="100" placeholder="professy-backend"></label>
+          <label>GitHub repository URL <input name="repo" [(ngModel)]="draft.repositoryUrl" type="url" required placeholder="https://github.com/owner/repository"></label>
+          <label>Branch <input name="branch" [(ngModel)]="draft.branch" required></label>
+          <label>Environment <input name="environment" [(ngModel)]="draft.environment" required></label>
+          <label>Build recipe
+            <select name="recipe" [ngModel]="draft.recipe || 'repository'" (ngModelChange)="draft.recipe = $event">
+              @for (recipe of recipes; track recipe) { <option [value]="recipe">{{ recipeLabels[recipe] }}</option> }
+            </select>
+          </label>
+          @if (!draft.recipe || draft.recipe === 'repository' || draft.recipe === 'gradle-mirror') {
+            <label>Dockerfile path <input name="dockerfile" [(ngModel)]="draft.dockerfile" required></label>
+          }
+          <label>Build context <input name="context" [(ngModel)]="draft.context" required></label>
+          <label>Image platform
+            <select name="platform" [ngModel]="draft.platform || ''" (ngModelChange)="draft.platform = $event || undefined">
+              <option value="">Build runner default</option>
+              <option value="linux/amd64">Linux x86-64</option>
+              <option value="linux/arm64">Linux ARM64</option>
+            </select>
+          </label>
+          <label>Docker image name <input name="imageName" [(ngModel)]="draft.imageName" required placeholder="professy-backend"></label>
+          <label>Artifact folder <input name="artifactPath" [(ngModel)]="draft.artifactPath" required placeholder="development/professy-backend"></label>
+          @if (awsConnections().length) {
+            <label class="wide">Amazon ECR destination
+              <select name="awsConnection" [(ngModel)]="draft.awsConnectionId" required>
+                @for (account of awsConnections(); track account.id) {
+                  <option [value]="account.id">{{ account.name }} · {{ account.regions[0] }}</option>
+                }
+              </select>
+            </label>
+            <p class="wide field-note">Each successful build is published to this account's private ECR repository.</p>
+          } @else {
+            <p class="wide field-note">Connect an AWS account in Settings to publish each build to Amazon ECR.</p>
+          }
+          <label class="wide">Build trigger
+            <select name="trigger" [(ngModel)]="draft.trigger">
+              <option value="manual">Manual</option>
+              <option value="push" [disabled]="!provider()?.webhookConfigured && draft.trigger !== 'push'">GitHub push</option>
+            </select>
+          </label>
+          <label class="wide">Build variables
+            <textarea name="buildArgs" rows="3" [(ngModel)]="buildArgs" placeholder="APP_ENV=development"></textarea>
+            <small>Passed to Docker as build arguments. Enter one nonsecret NAME=value per line.</small>
+          </label>
+          <div class="actions wide">
+            <button type="submit" class="primary" [disabled]="form.invalid || busy()">Save pipeline</button>
+            <button type="button" (click)="editorOpen.set(false)">Cancel</button>
+          </div>
+        </form>
+      </section>
+    }
+
+    @if (view() === 'pipelines') {
+      <section role="tabpanel" id="build-view-pipelines" aria-labelledby="build-tab-pipelines">
+        @if (projectOpen() && selected()) {
+          <div class="project-breadcrumb">
+            <button type="button" class="text-action" (click)="showPipelineList()">Pipelines</button>
+            <span aria-hidden="true">›</span><span>{{ selected()?.name }}</span>
+          </div>
+          @if (selected(); as project) {
+            <section class="panel project-details">
+              <div class="panel-heading">
+                <h2>Pipeline configuration</h2>
+                <div class="actions">
+                  <button type="button" (click)="editPipeline(project)">Edit pipeline</button>
+                  <button type="button" [attr.aria-expanded]="preview()" (click)="preview.set(!preview())">
+                    {{ preview() ? 'Hide preview' : 'Preview build' }}
+                  </button>
+                  <button type="button" (click)="selectPipelineById(project.id); showView('builds')">Build history</button>
+                </div>
+              </div>
+              <dl class="pipeline-fields">
+                <div><dt>Source repository</dt><dd><a [href]="project.repositoryUrl" target="_blank" rel="noopener noreferrer">{{ project.repositoryUrl.replace('https://github.com/', '') }} ↗</a></dd></div>
+                <div><dt>Branch</dt><dd>{{ project.branch }}</dd></div>
+                <div><dt>Environment</dt><dd>{{ project.environment }}</dd></div>
+                <div><dt>Build recipe</dt><dd>{{ recipeLabels[project.recipe || 'repository'] }}</dd></div>
+                <div><dt>Build context</dt><dd><code>{{ project.context }}</code></dd></div>
+                @if (!project.recipe || project.recipe === 'repository' || project.recipe === 'gradle-mirror') {
+                  <div><dt>Dockerfile</dt><dd><code>{{ project.dockerfile }}</code></dd></div>
+                }
+                <div><dt>Build trigger</dt><dd>{{ project.trigger === 'push' ? 'GitHub push' : 'Manual' }}</dd></div>
+                <div><dt>Docker image</dt><dd><code>{{ project.imageName }}</code></dd></div>
+                @if (project.awsConnectionId) {
+                  <div><dt>Amazon ECR</dt><dd>{{ awsConnectionName(project.awsConnectionId) }}</dd></div>
+                }
+                <div><dt>Archive folder</dt><dd><code>{{ project.artifactPath }}/</code></dd></div>
+              </dl>
+              @if (preview()) {
+                <ol class="preview" aria-label="Build preview">
+                  <li><strong>Checkout</strong><code>{{ project.branch }}</code></li>
+                  <li><strong>Docker build</strong><code>{{ recipeLabels[project.recipe || 'repository'] }}</code></li>
+                  <li><strong>Image export</strong><code>{{ project.artifactPath }}/</code></li>
+                </ol>
+              }
+            </section>
+            <section class="panel project-details">
+              <div class="panel-heading"><h2>Build variables</h2></div>
+              @if ((project.buildArgs | keyvalue).length) {
+                <div class="build-table-scroll" tabindex="0" role="region" aria-label="Build variables">
+                  <table class="build-table variable-table">
+                    <thead><tr><th scope="col">Name</th><th scope="col">Value</th></tr></thead>
+                    <tbody>
+                      @for (variable of project.buildArgs | keyvalue; track variable.key) {
+                        <tr><th scope="row"><code>{{ variable.key }}</code></th><td><code>{{ variable.value }}</code></td></tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              } @else { <p class="empty-state">This pipeline uses the defaults in its build recipe.</p> }
+            </section>
+            <section class="panel history-panel pipeline-build-history">
+              <div class="panel-heading">
+                <div class="heading-title"><h2>Recent builds</h2><span class="count">{{ pipelineBuilds().length }}</span></div>
+                <button type="button" (click)="selectPipelineById(project.id); showView('builds')">View all builds</button>
+              </div>
+              @if (recentPipelineBuilds().length) {
+                <div class="build-table-scroll" tabindex="0" role="region" aria-label="Recent pipeline builds">
+                  <table class="build-table">
+                    <thead><tr><th scope="col">Build</th><th scope="col">Status</th><th scope="col">Source</th><th scope="col">Image</th><th scope="col">Started</th></tr></thead>
+                    <tbody>
+                      @for (run of recentPipelineBuilds(); track run.id) {
+                        <tr>
+                          <th scope="row"><button type="button" class="text-action" (click)="showBuild(run)">{{ run.tag.slice(0, 14) }}</button><small class="build-version">{{ run.version || 'v1.0' }}</small></th>
+                          <td><span class="status" [attr.data-status]="run.status">{{ run.status | titlecase }}</span></td>
+                          <td class="source-cell">{{ run.branch }} @if (run.commit || run.requestedCommit; as commit) { <small><code>{{ commit.slice(0, 8) }}</code></small> }</td>
+                          <td>{{ run.artifact ? run.imageName : '—' }}</td>
+                          <td class="date-cell"><time [attr.datetime]="run.startedAt">{{ run.startedAt | date:'MMM d, y' }}<small>{{ run.startedAt | date:'HH:mm:ss' }}</small></time></td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              } @else {
+                <p class="empty-state">No builds yet. Run this pipeline to produce its first image.</p>
+              }
+            </section>
+          }
+        } @else {
+          <section class="panel history-panel">
+            <div class="panel-heading">
+              <div class="heading-title"><h2 id="pipeline-list-heading">Build projects</h2><span class="count">{{ pipelines().length }}</span></div>
+              <div class="actions">
+                <input type="search" class="history-search" #projectSearch [value]="query()" aria-label="Find pipeline" placeholder="Find a pipeline"
+                  (input)="query.set(projectSearch.value)">
+                <button type="button" [disabled]="busy() || !checkedPipelines().size || !provider()?.connected || !provider()?.runnerConfigured"
+                  (click)="startSelected()">Start selected @if (checkedPipelines().size) { ({{ checkedPipelines().size }}) }</button>
+                <button type="button" class="primary" (click)="openEditor()">New pipeline</button>
+              </div>
+            </div>
+            @if (filteredPipelines().length) {
+              <div class="build-table-scroll" tabindex="0" role="region" aria-labelledby="pipeline-list-heading">
+                <table class="build-table project-table">
+                  <thead><tr>
+                    <th scope="col" class="selection-cell"><input type="checkbox" aria-label="Select all shown pipelines" #allPipelines
+                      [checked]="allPipelinesChecked()" (change)="toggleVisiblePipelines(allPipelines.checked)"></th>
+                    <th scope="col">Name</th><th scope="col">Branch</th><th scope="col">Environment</th>
+                    <th scope="col">Latest build</th>
+                  </tr></thead>
+                  <tbody>
+                    @for (project of filteredPipelines(); track project.id) {
+                      <tr>
+                        <td class="selection-cell"><input type="checkbox" #projectCheck [attr.aria-label]="'Select ' + project.name"
+                          [checked]="checkedPipelines().has(project.id)" (change)="togglePipelines([project.id], projectCheck.checked)"></td>
+                        <th scope="row"><button type="button" class="text-action" (click)="openPipeline(project)">{{ project.name }}</button></th>
+                        <td class="source-cell">{{ project.branch }}</td><td>{{ project.environment }}</td>
+                        <td>
+                          @if (latestRuns().get(project.id); as run) {
+                            <button type="button" class="text-action run-status-action" (click)="showLog(run)">
+                              <span class="status" [attr.data-status]="run.status">{{ run.status | titlecase }}</span>
+                              <span class="sr-only">View {{ project.name }} build log</span>
+                            </button>
+                          } @else { <span class="muted-label">No runs</span> }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else if (!loading()) {
+              <p class="empty-state">{{ pipelines().length ? 'No pipelines match your search.' : 'Choose a GitHub repository to create your first pipeline.' }}</p>
+            }
+          </section>
+        }
+      </section>
+    }
+
+    @if (view() === 'builds') {
+      <section id="build-view-builds" class="tab-content">
+        @if (selectedBuild(); as build) {
+          <div class="project-breadcrumb">
+            <button type="button" class="text-action" (click)="closeBuild()">Build history</button>
+            <span aria-hidden="true">›</span><span>Build {{ build.tag.slice(0, 14) }}</span>
+          </div>
+          <section class="panel build-profile">
+            <div class="panel-heading">
+              <div class="heading-title"><h2>Build details</h2><span class="status" [attr.data-status]="build.status">{{ build.status | titlecase }}</span></div>
+              <div class="actions">
+                @if (build.artifact) { <button type="button" [disabled]="busy()" (click)="download(build)">Download image archive</button> }
+                <button type="button" (click)="showLog(build)">View logs</button>
+              </div>
+            </div>
+            <dl class="pipeline-fields build-profile-fields">
+              <div><dt>Pipeline</dt><dd>{{ projectNames().get(build.pipelineId) ?? build.imageName }}</dd></div>
+              <div><dt>Version</dt><dd><span class="build-version">{{ build.version || 'v1.0' }}</span></dd></div>
+              <div><dt>Build tag</dt><dd><code>{{ build.tag }}</code></dd></div>
+              <div><dt>Source branch</dt><dd>{{ build.branch }}</dd></div>
+              <div><dt>Commit</dt><dd><code>{{ build.commit || build.requestedCommit || 'Not available' }}</code></dd></div>
+              <div><dt>Environment</dt><dd>{{ build.environment }}</dd></div>
+              <div><dt>Started</dt><dd><time [attr.datetime]="build.startedAt">{{ build.startedAt | date:'MMM d, y · HH:mm:ss' }}</time></dd></div>
+              @if (build.finishedAt) { <div><dt>Finished</dt><dd><time [attr.datetime]="build.finishedAt">{{ build.finishedAt | date:'MMM d, y · HH:mm:ss' }}</time></dd></div> }
+              @if (build.message) { <div class="build-message"><dt>Build message</dt><dd>{{ build.message }}</dd></div> }
+            </dl>
+          </section>
+          <section class="panel build-image-panel">
+            <div class="panel-heading"><div class="heading-title"><h2>Images produced</h2><span class="count">{{ build.artifact ? 1 : 0 }}</span></div></div>
+            @if (build.artifact; as artifact) {
+              <article class="image-record build-image-record">
+                <div class="image-main">
+                  <div class="image-label"><span class="image-glyph" aria-hidden="true"></span><div><h3>{{ build.imageName }}</h3><code [title]="artifact.image">{{ artifact.image }}</code></div></div>
+                  <div class="image-size"><strong>{{ archiveSize(artifact.sizeBytes) }}</strong><small>Docker archive</small></div>
+                  <div class="build-image-actions">
+                    <button type="button" class="download-button" [disabled]="busy()" (click)="download(build)">Download</button>
+                    @if (provider()?.canManage && build.status === 'succeeded') {
+                      <button type="button" class="primary" (click)="deployImage(build)">Deploy image</button>
+                    }
+                  </div>
+                </div>
+                <dl class="image-fields">
+                  <div><dt>Archive path</dt><dd><code>{{ artifact.path }}</code></dd></div>
+                  <div><dt>SHA-256</dt><dd><code>{{ artifact.sha256 }}</code></dd></div>
+                </dl>
+              </article>
+            } @else {
+              <p class="empty-state">This build did not produce a Docker image archive.</p>
+            }
+          </section>
+        } @else if (loggedRun(); as run) {
+          <app-build-log-viewer [pipelineName]="projectNames().get(run.pipelineId) ?? run.imageName" [run]="run" [text]="selectedLog()?.text ?? null"
+            [pending]="selectedLog()?.pending ?? false" [error]="selectedLog()?.error ?? ''" [downloadPending]="busy()"
+            (closed)="closeLog()" (reload)="readLog()" (archiveRequested)="download(run)" />
+        } @else {
+          <section class="panel history-panel">
+            <div class="panel-heading">
+              <div class="heading-title"><h2 id="build-history-heading" tabindex="-1">Build history</h2>
+                @if (runs().length) { <span class="count">{{ runs().length }}</span> }
+              </div>
+              <div class="actions">
+                @if (runs().length) {
+                  <input type="search" class="history-search" aria-label="Search builds" placeholder="Search builds"
+                    #runSearch [value]="runQuery()" (input)="runQuery.set(runSearch.value)">
+                  <select aria-label="Build status" [ngModel]="runFilter()" (ngModelChange)="runFilter.set($event)">
+                    <option value="all">All statuses</option>
+                    <option value="active">In progress</option>
+                    <option value="succeeded">Succeeded</option>
+                    <option value="failed">Failed</option>
+                    <option value="stopped">Stopped</option>
+                  </select>
+                }
+                @if (selected()) {
+                  <button type="button" [disabled]="refreshing()" (click)="refresh()">Refresh</button>
+                }
+              </div>
+            </div>
+            @if (filteredRuns().length) {
+              <div class="build-table-scroll" tabindex="0" role="region" aria-labelledby="build-history-heading">
+                <table class="build-table">
+                  <thead><tr>
+                    <th scope="col">Build</th><th scope="col">Pipeline</th><th scope="col">Status</th><th scope="col">Source</th>
+                    <th scope="col">Submitted</th><th scope="col"><span class="sr-only">Actions</span></th>
+                  </tr></thead>
+                  <tbody>
+                    @for (run of filteredRuns(); track run.id) {
+                      <tr>
+                        <th scope="row">
+                          <button type="button" class="text-action" [title]="run.tag" [id]="'open-log-' + run.id" (click)="showBuild(run)">
+                            {{ run.tag.slice(0, 14) }}
+                          </button>
+                          <small class="build-version">{{ run.version || 'v1.0' }}</small>
+                          <small>{{ run.trigger === 'push' ? 'GitHub push' : 'Manual' }}</small>
+                        </th>
+                        <td class="source-cell">{{ projectNames().get(run.pipelineId) ?? run.imageName }}</td>
+                        <td><span class="status" [attr.data-status]="run.status">{{ run.status | titlecase }}</span></td>
+                        <td class="source-cell">
+                          <span>{{ run.branch }}</span>
+                          @if (run.commit || run.requestedCommit; as commit) {
+                            <small><code [title]="commit">{{ commit.slice(0, 8) }}</code></small>
+                          }
+                        </td>
+                        <td class="date-cell">
+                          <time [attr.datetime]="run.startedAt">{{ run.startedAt | date:'MMM d, y' }}
+                            <small>{{ run.startedAt | date:'HH:mm:ss' }}</small>
+                          </time>
+                        </td>
+                        <td class="row-actions">
+                          <button type="button" (click)="showLog(run)">View log <span aria-hidden="true">→</span></button>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else if (runs().length) {
+              <div class="empty-state" role="status">
+                <p>No builds match your filters.</p>
+                <button type="button" (click)="runQuery.set(''); runFilter.set('all')">Clear filters</button>
+              </div>
+            } @else {
+              <p class="empty-state" role="status">{{ refreshing() || loading() ? 'Loading builds…' : selected() ? 'Run the selected pipeline to start its build history.' : 'Create a pipeline to start building images.' }}</p>
+            }
+          </section>
+        }
+      </section>
+    }
+
+    @if (view() === 'images') {
+      <section class="panel image-panel" id="build-view-images">
+        <div class="panel-heading">
+          <div class="heading-title"><h2>Image archives</h2>
+            @if (images().length) { <span class="count">{{ images().length }}</span> }
+          </div>
+          @if (selected()) { <button type="button" [disabled]="refreshing()" (click)="refresh()">Refresh</button> }
+        </div>
+        @for (run of images(); track run.id) {
+          @if (run.artifact; as artifact) {
+            <article class="image-record">
+              <div class="image-main">
+                <div class="image-label">
+                  <span class="image-glyph" aria-hidden="true"></span>
+                  <div>
+                    <h3>{{ run.imageName }}</h3>
+                    <span class="build-version">{{ run.version || 'v1.0' }}</span>
+                    <code [title]="run.tag">{{ run.tag.slice(0, 14) }}</code>
+                  </div>
+                </div>
+                <div class="image-size"><strong>{{ archiveSize(artifact.sizeBytes) }}</strong><small>Docker archive</small></div>
+                <time [attr.datetime]="run.startedAt">{{ run.startedAt | date:'MMM d, y' }}<small>{{ run.startedAt | date:'HH:mm:ss' }}</small></time>
+                <div class="image-actions">
+                  <button type="button" class="download-button" [disabled]="busy()" (click)="download(run)">Download <span aria-hidden="true">↓</span></button>
+                  <button type="button" (click)="showBuild(run)">Build details</button>
+                  @if (provider()?.canManage && run.status === 'succeeded') {
+                    <button type="button" class="primary" (click)="deployImage(run)">Deploy image</button>
+                  }
+                </div>
+              </div>
+              <details class="image-details">
+                <summary>Archive details</summary>
+                <dl class="image-fields">
+                  <div><dt>Image</dt><dd><code>{{ artifact.image }}</code></dd></div>
+                  <div><dt>Archive path</dt><dd><code>{{ artifact.path }}</code></dd></div>
+                  <div><dt>SHA-256</dt><dd><code>{{ artifact.sha256 }}</code></dd></div>
+                </dl>
+                <button type="button" (click)="showLog(run)">View build log</button>
+              </details>
+            </article>
+          }
+        } @empty {
+          <p class="empty-state" role="status">{{ refreshing() || loading() ? 'Loading archives…' : 'Docker archives appear after a successful build.' }}</p>
+        }
+      </section>
+    }
+    @if (view() === 'deployments') {
+      <section id="build-view-deployments">
+        @if (provider()?.canManage) {
+          <app-deployments [images]="deployableImages()" [pipelines]="pipelines()" [initialRunId]="deploymentImage() || latestDeployableImage()?.id || ''" [initialTargetId]="deploymentTarget()" />
+        } @else if (!loading()) {
+          <p class="notice">A workspace administrator can configure targets and deploy images.</p>
+        }
+      </section>
+    }
+    @if (view() === 'resources') {
+      <section id="build-view-resources">
+        @if (provider()?.canManage) {
+          <app-aws-resources [initialTargetId]="resourceTarget()" [initialResource]="resourceSection()" (resourceChange)="setResourceSection($event)" />
+        } @else if (!loading()) {
+          <p class="notice">A workspace administrator can manage AWS resources.</p>
+        }
+      </section>
+    }
+  }
+</section>
+</gp-workspace-shell>
